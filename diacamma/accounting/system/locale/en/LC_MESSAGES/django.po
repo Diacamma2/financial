@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-28 14:45+0000\n"
+"POT-Creation-Date: 2020-03-20 17:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,11 +55,11 @@ msgstr ""
 "{[br/]}After validation, you begin '%s'.{[br/]}{[br/]}{[i]}{[u]}Warning:{[/"
 "u]} Your retained earnings must be completed.{[/i]}"
 
-#: system/default.py:130
+#: system/default.py:127
 msgid "Affect of profit/deficit"
 msgstr "Affect of profit/deficit"
 
-#: system/default.py:164
+#: system/default.py:161
 #, python-format
 msgid ""
 "Do you want to begin '%s'? {[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your "
@@ -68,55 +68,55 @@ msgstr ""
 "Do you want to begin '%s'? {[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your "
 "retained earnings must be completed.{[/i]}"
 
-#: system/default.py:177
+#: system/default.py:174
 msgid "Fiscal year closing - Result"
 msgstr "Fiscal year closing - Result"
 
-#: system/default.py:188
+#: system/default.py:198
 msgid "Fiscal year closing - Third"
 msgstr "Fiscal year closing - Third"
 
-#: system/default.py:234
+#: system/default.py:245
 msgid "Retained earnings - Balance sheet"
 msgstr "Retained earnings - Balance sheet"
 
-#: system/default.py:247
+#: system/default.py:258
 msgid "Retained earnings - Third party debt"
 msgstr "Retained earnings - Third party debt"
 
-#: system/default.py:269
+#: system/default.py:279
 msgid "immobilizations & stock"
 msgstr "immobilizations & stock"
 
-#: system/default.py:272 system/default.py:283 system/default.py:294
-#: system/default.py:306 system/default.py:317
+#: system/default.py:282 system/default.py:293 system/default.py:304
+#: system/default.py:316 system/default.py:327
 msgid "Sub-total"
 msgstr "Sub-total"
 
-#: system/default.py:280
+#: system/default.py:290
 msgid "receivables"
 msgstr "receivables"
 
-#: system/default.py:291
+#: system/default.py:301
 msgid "values & availabilities"
 msgstr "values & availabilities"
 
-#: system/default.py:303
+#: system/default.py:313
 msgid "capital"
 msgstr "capital"
 
-#: system/default.py:314
+#: system/default.py:324
 msgid "liabilities"
 msgstr "liabilities"
 
-#: system/default.py:328 system/default.py:329
+#: system/default.py:338 system/default.py:339
 msgid "Total"
 msgstr "Total"
 
-#: system/default.py:346
+#: system/default.py:356
 msgid "result (deficit)"
 msgstr "result (deficit)"
 
-#: system/default.py:348
+#: system/default.py:358
 msgid "result (profit)"
 msgstr "result (profit)"

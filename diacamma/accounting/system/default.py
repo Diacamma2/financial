@@ -23,16 +23,17 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
+from functools import reduce
 import re
 
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
+from django.db.models.aggregates import Sum
+from django.db.models import Q
 
 from lucterios.framework.tools import get_icon_path
 from lucterios.framework.xferadvance import TITLE_OK, TITLE_CANCEL
-from diacamma.accounting.models import AccountLink
-from diacamma.accounting.tools import get_amount_from_format_devise,\
-    correct_accounting_code
+from diacamma.accounting.tools import get_amount_from_format_devise, correct_accounting_code
 
 
 class DefaultSystemAccounting(object):
@@ -84,7 +85,6 @@ class DefaultSystemAccounting(object):
         return '', -1
 
     def _create_custom_for_profit(self, year, custom, val_profit):
-        from django.db.models import Q
         from lucterios.framework.xfercomponents import XferCompImage, XferCompLabelForm, XferCompSelect
         if val_profit > 0.0001:
             type_profit = _('profit')
@@ -116,8 +116,6 @@ class DefaultSystemAccounting(object):
 
     def _get_profit(self, year):
         from diacamma.accounting.models import EntryLineAccount, get_amount_sum
-        from django.db.models.aggregates import Sum
-        from django.db.models import Q
         query = Q(account__code__startswith=self.NEGATIF_ACCOUNT) | Q(account__code__startswith=self.POSITIF_ACCOUNT)
         query &= Q(account__year=year)
         val_profit = get_amount_sum(EntryLineAccount.objects.filter(query).aggregate(Sum('amount')))
@@ -125,7 +123,6 @@ class DefaultSystemAccounting(object):
 
     def _create_profit_entry(self, year, profit_account):
         from diacamma.accounting.models import Journal, EntryAccount, EntryLineAccount, ChartsAccount
-        from django.db.models import Q
         paym_journ = Journal.objects.get(id=5)
         paym_desig = _('Affect of profit/deficit')
         new_entry = EntryAccount.objects.create(year=year, journal=paym_journ, designation=paym_desig, date_value=year.begin)
@@ -183,22 +180,42 @@ class DefaultSystemAccounting(object):
                 new_entry.add_entry_line(revenue - expense, self.POSITIF_ACCOUNT)
             new_entry.closed()
 
+    def _add_sumline_in_account(self, last_account_id, sum_account, new_entry):
+        from diacamma.accounting.models import EntryLineAccount
+        if abs(sum_account) > 0.0001:
+            new_line = EntryLineAccount()
+            new_line.entry = new_entry
+            new_line.account_id = last_account_id
+            new_line.amount = sum_account
+            new_line.third = None
+            new_line.save()
+            return True
+        return False
+
     def _create_thirds_ending_entry(self, year):
-        from diacamma.accounting.models import EntryAccount, EntryLineAccount
+        from diacamma.accounting.models import ChartsAccount, AccountLink, EntryAccount, EntryLineAccount
+        from lucterios.CORE.parameters import Params
         end_desig = _("Fiscal year closing - Third")
 
         last_account_id = 0
         sum_account = 0.0
         new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=end_desig, date_value=year.end)
-        for entry_line in EntryLineAccount.objects.filter(account__code__regex=self.get_third_mask(), account__year=year, link__isnull=True, third__isnull=False).order_by('account'):
-            if (last_account_id != entry_line.account_id) and (abs(sum_account) > 0.0001):
+        nolettering_account = ChartsAccount.objects.filter(year=year, code__in=Params.getvalue("accounting-lettering-check").split('{[br/]}')).order_by('code').distinct()
+        for account_item in nolettering_account:
+            amounts_by_third = EntryLineAccount.objects.filter(Q(account=account_item)).order_by('third').values('third').annotate(amount=Sum('amount'))
+            sum_account = reduce(lambda item1, item2: item1 + item2, [float(item['amount']) for item in amounts_by_third], 0.0)
+            self._add_sumline_in_account(account_item.id, sum_account, new_entry)
+            for amount_and_third in amounts_by_third:
                 new_line = EntryLineAccount()
                 new_line.entry = new_entry
-                new_line.account_id = last_account_id
-                new_line.amount = sum_account
-                new_line.third = None
+                new_line.amount = -1 * float(amount_and_third['amount'])
+                new_line.account = account_item
+                new_line.third_id = amount_and_third['third']
                 new_line.save()
-                sum_account = 0
+        for entry_line in EntryLineAccount.objects.filter(account__code__regex=self.get_third_mask(), account__year=year, link__isnull=True, third__isnull=False).exclude(account__in=nolettering_account).order_by('account'):
+            if last_account_id != entry_line.account_id:
+                if self._add_sumline_in_account(last_account_id, sum_account, new_entry):
+                    sum_account = 0
             last_account_id = entry_line.account_id
             new_line = EntryLineAccount()
             new_line.entry = new_entry
@@ -215,13 +232,7 @@ class DefaultSystemAccounting(object):
         if last_account_id == 0:
             new_entry.delete()
         else:
-            if abs(sum_account) > 0.0001:
-                new_line = EntryLineAccount()
-                new_line.entry = new_entry
-                new_line.account_id = last_account_id
-                new_line.amount = sum_account
-                new_line.third = None
-                new_line.save()
+            self._add_sumline_in_account(last_account_id, sum_account, new_entry)
             new_entry.closed()
 
     def finalize_year(self, year):
@@ -257,7 +268,6 @@ class DefaultSystemAccounting(object):
         return
 
     def fill_fiscalyear_balancesheet(self, grid, currentfilter, lastfilter):
-        from django.db.models import Q
         from diacamma.accounting.tools_reports import convert_query_to_account, add_cell_in_grid, add_item_in_grid, fill_grid, get_spaces
         cash_filter = Q(account__code__regex=self.get_cash_mask())
         third_filter = Q(account__code__regex=self.get_third_mask())

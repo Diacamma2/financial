@@ -29,7 +29,6 @@ from logging import getLogger
 from re import match
 from csv import DictReader
 from _csv import QUOTE_NONE
-from functools import reduce
 
 from django.db import models
 from django.db.models.functions import Concat
@@ -470,6 +469,10 @@ class FiscalYear(LucteriosModel):
     def __str__(self):
         status = get_value_if_choices(self.status, self._meta.get_field('status'))
         return _("Fiscal year from %(begin)s to %(end)s [%(status)s]") % {'begin': get_date_formating(self.begin), 'end': get_date_formating(self.end), 'status': status}
+
+    @property
+    def toText(self):
+        return _("Fiscal year from %(begin)s to %(end)s") % {'begin': get_date_formating(self.begin), 'end': get_date_formating(self.end)}
 
     def set_context(self, xfer):
         setattr(self, 'last_user', xfer.request.user)
@@ -1772,6 +1775,8 @@ def accounting_checkparam():
     Parameter.check_and_create(name='accounting-sizecode', typeparam=1, title=_("accounting-sizecode"), args="{'Min':3, 'Max':50}", value='3')
     Parameter.check_and_create(name='accounting-needcost', typeparam=3, title=_("accounting-needcost"), args="{}", value='False')
     Parameter.check_and_create(name='accounting-code-report-filter', typeparam=0, title=_("accounting-code-report-filter"), args="{'Multi':False}", value='')
+    Parameter.check_and_create(name="accounting-lettering-check", typeparam=0, title=_("accounting-lettering-check"), args="{'Multi':True}", value='',
+                               meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_third_mask()) & django.db.models.Q(year__is_actif=True)", "code", False)')
 
     LucteriosGroup.redefine_generic(_("# accounting (administrator)"), FiscalYear.get_permission(True, True, True),
                                     ChartsAccount.get_permission(True, True, True), Budget.get_permission(True, True, True),
