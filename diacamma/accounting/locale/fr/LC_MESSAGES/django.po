@@ -1101,7 +1101,7 @@ msgstr "(dé)lettrage"
 
 #: views_entries.py:355
 msgid "Do you want unlink this entry?"
-msgstr "Voulez-vous déletter cette ligne d'écriture ?"
+msgstr "Voulez-vous délettrer cette ligne d'écriture ?"
 
 #: views_entries.py:361
 msgid "Cost"
