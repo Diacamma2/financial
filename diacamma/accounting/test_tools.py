@@ -64,6 +64,7 @@ def change_legal(name):
     ourdetails.tel1 = "01-23-45-67-89"
     ourdetails.email = "%s@worldcompany.com" % name
     ourdetails.save()
+    return ourdetails
 
 
 def initial_contacts():

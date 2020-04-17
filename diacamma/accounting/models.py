@@ -728,7 +728,7 @@ class ChartsAccount(LucteriosModel):
 
     @property
     def has_validated(self):
-        return EntryAccount.objects.filter(entrylineaccount__account=self, close=True).distinct().count() > 0
+        return (self.id is not None) and (EntryAccount.objects.filter(entrylineaccount__account=self, close=True).distinct().count() > 0)
 
     @classmethod
     def get_account(cls, code, year):
