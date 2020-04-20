@@ -197,8 +197,6 @@ class DefaultSystemAccounting(object):
         from lucterios.CORE.parameters import Params
         end_desig = _("Fiscal year closing - Third")
 
-        last_account_id = 0
-        sum_account = 0.0
         new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=end_desig, date_value=year.end)
         nolettering_account = ChartsAccount.objects.filter(year=year, code__in=Params.getvalue("accounting-lettering-check").split('{[br/]}')).order_by('code').distinct()
         for account_item in nolettering_account:
@@ -212,6 +210,9 @@ class DefaultSystemAccounting(object):
                 new_line.account = account_item
                 new_line.third_id = amount_and_third['third']
                 new_line.save()
+
+        last_account_id = None
+        sum_account = 0.0
         for entry_line in EntryLineAccount.objects.filter(account__code__regex=self.get_third_mask(), account__year=year, link__isnull=True, third__isnull=False).exclude(account__in=nolettering_account).order_by('account'):
             if last_account_id != entry_line.account_id:
                 if self._add_sumline_in_account(last_account_id, sum_account, new_entry):

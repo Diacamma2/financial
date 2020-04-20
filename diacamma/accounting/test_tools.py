@@ -176,6 +176,14 @@ def set_accounting_system(country='FR'):
     signal_and_lock.Signal.call_signal("param_change", ['accounting-system'])
 
 
+def get_accounting_system():
+    country_list = {'FR': 'diacamma.accounting.system.french.FrenchSystemAcounting', 'BE': 'diacamma.accounting.system.belgium.BelgiumSystemAcounting'}
+    for contry, account_system in country_list.items():
+        if account_system == Params.getvalue("accounting-system"):
+            return contry
+    return None
+
+
 def default_compta_fr(status=0, with12=True, with8=False):
     from diacamma.payoff.views_conf import paramchange_payoff
     paramchange_payoff([])
