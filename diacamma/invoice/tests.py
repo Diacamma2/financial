@@ -1651,9 +1651,9 @@ class BillTest(InvoiceTest):
 
     def test_send_bill(self):
         default_articles()
-        configSMTP('localhost', 2025)
+        configSMTP('localhost', 2125)
         server = TestReceiver()
-        server.start(2025)
+        server.start(2125)
         try:
             self.assertEqual(0, server.count())
             details = [{'article': 0, 'designation': 'article 0', 'price': '100.00', 'quantity': 1}]
@@ -1686,9 +1686,9 @@ class BillTest(InvoiceTest):
 
     def test_send_bill_saved(self):
         default_articles()
-        configSMTP('localhost', 2025)
+        configSMTP('localhost', 2225)
         server = TestReceiver()
-        server.start(2025)
+        server.start(2225)
         try:
             self.assertEqual(0, server.count())
             details = [{'article': 0, 'designation': 'article 0', 'price': '100.00', 'quantity': 1}]
@@ -1711,9 +1711,9 @@ class BillTest(InvoiceTest):
 
     def test_send_multi_bill(self):
         default_articles()
-        configSMTP('localhost', 2025)
+        configSMTP('localhost', 2325)
         server = TestReceiver()
-        server.start(2025)
+        server.start(2325)
         try:
             self._create_bill([{'article': 5, 'designation': 'article 5', 'price': '100', 'quantity': 1}], 1, '2015-04-01', 6, True)
             self._create_bill([{'article': 5, 'designation': 'article 5', 'price': '100', 'quantity': 1}], 3, '2015-04-02', 4, True)
@@ -1782,9 +1782,9 @@ class BillTest(InvoiceTest):
 
     def test_send_multi_bill_saved(self):
         default_articles()
-        configSMTP('localhost', 2025)
+        configSMTP('localhost', 2425)
         server = TestReceiver()
-        server.start(2025)
+        server.start(2425)
         try:
             self._create_bill([{'article': 5, 'designation': 'article 5', 'price': '100', 'quantity': 1}], 1, '2015-04-01', 6, True)
             self._create_bill([{'article': 5, 'designation': 'article 5', 'price': '100', 'quantity': 1}], 3, '2015-04-02', 4, True)

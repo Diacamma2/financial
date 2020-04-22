@@ -383,9 +383,9 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.check_payment(2, 'facture A-1 - 1 avril 2015')
 
     def test_send_bill(self):
-        configSMTP('localhost', 2025)
+        configSMTP('localhost', 2525)
         server = TestReceiver()
-        server.start(2025)
+        server.start(2525)
         try:
             self.factory.xfer = ResponsabilityModify()
             self.calljson('/lucterios.contacts/responsabilityModify', {'legal_entity': '7', 'individual': '3', "SAVE": "YES"}, False)
