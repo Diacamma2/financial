@@ -728,7 +728,7 @@ class StorageTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
         self.assert_count_equal('', 3)
         self.assert_json_equal('LABELFORM', 'result', "5 éléments ont été importés")
-        self.assert_json_equal('LABELFORM', 'import_error', ["article 'XYZ0' inconnu !"])
+        self.assert_json_equal('LABELFORM', 'import_error', ["article 'XYZ0' inconnu(e) !"])
         self.assertEqual(len(self.json_actions), 1)
 
         self.factory.xfer = StorageSheetShow()
