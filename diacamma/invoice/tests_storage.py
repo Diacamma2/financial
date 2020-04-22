@@ -726,8 +726,9 @@ class StorageTest(InvoiceTest):
                                                                 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
                                                                 "fld_article": "num", "fld_price": "prix", "fld_quantity": "qty", }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
-        self.assert_count_equal('', 2)
+        self.assert_count_equal('', 3)
         self.assert_json_equal('LABELFORM', 'result', "5 éléments ont été importés")
+        self.assert_json_equal('LABELFORM', 'import_error', ["article 'XYZ0' inconnu !"])
         self.assertEqual(len(self.json_actions), 1)
 
         self.factory.xfer = StorageSheetShow()

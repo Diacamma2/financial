@@ -297,25 +297,29 @@ class Article(LucteriosModel, CustomizeObject):
             new_item = super(Article, cls).import_data(rowdata, dateformat)
             if new_item is not None:
                 new_item.set_custom_values(rowdata)
-                if ('categories' in rowdata.keys()) and (rowdata['categories'] is not None) and (rowdata['categories'] != ''):
-                    cat = Category.objects.filter(name__iexact=rowdata['categories']).distinct()
+                if ('categories' in rowdata.keys()) and (rowdata['categories'] is not None) and (rowdata['categories'].strip() != ''):
+                    cat = Category.objects.filter(name__iexact=rowdata['categories'].strip()).distinct()
                     if len(cat) > 0:
                         cat_ids = [cat[0].id]
                         for cat_item in new_item.categories.all():
                             cat_ids.append(cat_item.id)
                         new_item.categories.set(Category.objects.filter(id__in=cat_ids).distinct())
                         new_item.save()
-                if ('provider.third.contact' in rowdata.keys()) and (rowdata['provider.third.contact'] is not None) and (rowdata['provider.third.contact'] != ''):
+                    else:
+                        cls.import_logs.append(_("Category '%s' unknown !"))
+                if ('provider.third.contact' in rowdata.keys()) and (rowdata['provider.third.contact'] is not None) and (rowdata['provider.third.contact'].strip() != ''):
                     if ('provider.reference' in rowdata.keys()) and (rowdata['provider.reference'] is not None):
                         reference = rowdata['provider.reference']
                     else:
                         reference = ''
-                    q_legalentity = Q(contact__legalentity__name__iexact=rowdata['provider.third.contact'])
+                    q_legalentity = Q(contact__legalentity__name__iexact=rowdata['provider.third.contact'].strip())
                     q_individual = Q(completename__icontains=rowdata['provider.third.contact'])
                     thirds = Third.objects.annotate(completename=Concat('contact__individual__lastname', Value(' '),
                                                                         'contact__individual__firstname')).filter(q_legalentity | q_individual).distinct()
                     if len(thirds) > 0:
                         Provider.objects.get_or_create(article=new_item, third=thirds[0], reference=reference)
+                    else:
+                        cls.import_logs.append(_("Provider '%s' unknown !") % rowdata['provider.third.contact'].strip())
             return new_item
         except ValidationError:
             logging.getLogger('lucterios.framwork').exception("import_data")

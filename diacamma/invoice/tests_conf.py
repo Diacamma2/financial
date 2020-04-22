@@ -473,8 +473,9 @@ class ConfigTest(LucteriosTest):
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': 'categorie',
                                                           'fld_provider.third.contact': 'fournisseur', 'fld_provider.reference': 'ref', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
-        self.assert_count_equal('', 2)
+        self.assert_count_equal('', 3)
         self.assert_json_equal('LABELFORM', 'result', "4 éléments ont été importés")
+        self.assert_json_equal('LABELFORM', 'import_error', [])        
         self.assert_json_equal('', '#result/formatstr', "{[center]}{[i]}%s{[/i]}{[/center]}")
         self.assertEqual(len(self.json_actions), 1)
 
@@ -538,8 +539,9 @@ class ConfigTest(LucteriosTest):
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': 'categorie',
                                                           'fld_provider.third.contact': 'fournisseur', 'fld_provider.reference': 'ref', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
-        self.assert_count_equal('', 2)
+        self.assert_count_equal('', 3)
         self.assert_json_equal('LABELFORM', 'result', "4 éléments ont été importés")
+        self.assert_json_equal('LABELFORM', 'import_error', [])        
         self.assertEqual(len(self.json_actions), 1)
 
         self.factory.xfer = ArticleShow()
@@ -575,8 +577,9 @@ class ConfigTest(LucteriosTest):
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': '',
                                                           'fld_provider.third.contact': '', 'fld_provider.reference': '', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
-        self.assert_count_equal('', 2)
+        self.assert_count_equal('', 3)
         self.assert_json_equal('LABELFORM', 'result', "4 éléments ont été importés")
+        self.assert_json_equal('LABELFORM', 'import_error', [])        
         self.assertEqual(len(self.json_actions), 1)
 
         self.factory.xfer = ArticleList()
@@ -647,8 +650,9 @@ class ConfigTest(LucteriosTest):
                                                           "fld_vat": "", "fld_stockable": "stock?",
                                                           "fld_custom_1": "color", "fld_custom_2": "size", }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
-        self.assert_count_equal('', 2)
+        self.assert_count_equal('', 3)
         self.assert_json_equal('LABELFORM', 'result', "4 éléments ont été importés")
+        self.assert_json_equal('LABELFORM', 'import_error', [])        
         self.assertEqual(len(self.json_actions), 1)
 
         self.factory.xfer = ArticleList()

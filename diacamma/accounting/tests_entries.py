@@ -1071,8 +1071,14 @@ class EntryTest(LucteriosTest):
                                                                   'fld_debit': 'debit', 'fld_credit': 'credit', 'fld_third': 'third',
                                                                   'fld_reference': 'ref', 'fld_costaccounting': 'cost'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountImport')
-        self.assert_count_equal('', 3)
+        self.assert_count_equal('', 4)
         self.assert_json_equal('LABELFORM', 'result', "4 éléments ont été importés")
+        self.assert_json_equal('LABELFORM', 'import_error', ["Écriture comptable non équilibré{[br/]}total crédit=333,00\xa0€ - total débit=0,00\xa0€",
+                                                             'Code comptable "515" inconnu !',
+                                                             "Comptabilité analytique 'bad' inconnue !",
+                                                             "Comptabilité analytique 'close' inconnue !",
+                                                             "Tiers 'Valjean Jean' inconnu !",
+                                                             "Date '2015-12-31' invalide !"])
         self.assert_count_equal('entryline', 10)
         self.assert_json_equal('', 'entryline/@0/entry.num', None)
         self.assert_json_equal('', 'entryline/@0/link', None)

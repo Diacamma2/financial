@@ -1103,7 +1103,9 @@ class EntryAccount(LucteriosModel):
             if check_balance:
                 _no_change, debit_rest, credit_rest = self.serial_control(self.get_serial())
                 if abs(debit_rest - credit_rest) >= 0.001:
-                    raise LucteriosException(GRAVE, "Account entry not balanced: sum credit=%.3f / sum debit=%.3f / %s" % (debit_rest, credit_rest, self.get_description()))
+                    raise LucteriosException(GRAVE, _("Account entry not balanced{[br/]}total credit=%s - total debit=%s%s") % (get_amount_from_format_devise(debit_rest, 4),
+                                                                                                                                get_amount_from_format_devise(credit_rest, 4),
+                                                                                                                                self.get_description()))
             if Params.getvalue("accounting-needcost"):
                 for entryline in self.entrylineaccount_set.all():
                     if (entryline.account.type_of_account in (3, 4, 5)) and (entryline.costaccounting_id is None):
@@ -1303,6 +1305,7 @@ class EntryLineAccount(LucteriosModel):
 
     @classmethod
     def initialize_import(cls):
+        super(EntryLineAccount, cls).initialize_import()
         if hasattr(cls, 'entry_imported'):
             del cls.entry_imported
         if hasattr(cls, 'serial_entry_imported'):
@@ -1320,16 +1323,20 @@ class EntryLineAccount(LucteriosModel):
             cls.serial_entry_imported = ""
         account = ChartsAccount.objects.filter(code=rowdata['account'], year_id=rowdata['entry.year']).first()
         third = None
-        if 'third' in rowdata:
-            q_legalentity = Q(contact__legalentity__name=rowdata['third'])
+        if ('third' in rowdata) and (rowdata['third'].strip() != ''):
+            q_legalentity = Q(contact__legalentity__name=rowdata['third'].strip())
             q_individual = Q(completename=rowdata['third'])
             third = Third.objects.annotate(completename=Concat('contact__individual__lastname',
                                                                Value(' '),
                                                                'contact__individual__firstname')).annotate(num_entryline=Count('entrylineaccount')).filter(q_legalentity | q_individual).first()
+            if third is None:
+                cls.import_logs.append(_("Third '%s' unknown !") % rowdata['third'].strip())
 
         costaccounting = None
-        if 'costaccounting' in rowdata:
-            costaccounting = CostAccounting.objects.filter(name=rowdata['costaccounting'], status=0).first()
+        if ('costaccounting' in rowdata) and (rowdata['costaccounting'].strip() != ''):
+            costaccounting = CostAccounting.objects.filter(name=rowdata['costaccounting'].strip(), status=0).first()
+            if costaccounting is None:
+                cls.import_logs.append(_("Cost accounting '%s' unknown !") % rowdata['costaccounting'].strip())
         reference = rowdata['reference'] if 'reference' in rowdata else None
         if account is not None:
             cls.serial_entry_imported = cls.entry_imported.add_new_entryline(cls.serial_entry_imported, 0, account.id,
@@ -1337,6 +1344,8 @@ class EntryLineAccount(LucteriosModel):
                                                                              third=third.id if third is not None else 0,
                                                                              costaccounting=costaccounting.id if costaccounting is not None else 0,
                                                                              reference=reference)
+        else:
+            cls.import_logs.append(_("Account code '%s' unknown !") % rowdata['account'])
         return new_item
 
     @classmethod
@@ -1345,11 +1354,17 @@ class EntryLineAccount(LucteriosModel):
         if hasattr(cls, 'entry_imported'):
             if not hasattr(cls, 'serial_entry_imported'):
                 cls.serial_entry_imported = ""
-            _no_change, debit_rest, credit_rest = cls.entry_imported.serial_control(cls.serial_entry_imported)
-            if (debit_rest < 0.0001) and (credit_rest < 0.0001) and (len(cls.serial_entry_imported) > 0) and cls.entry_imported.check_date(checking=True):
-                new_item = cls.entry_imported
-                new_item.save()
-                new_item.save_entrylineaccounts(cls.serial_entry_imported)
+            if not cls.entry_imported.check_date(checking=True):
+                cls.import_logs.append(_("Invalid date '%s' !") % cls.entry_imported.date_value)
+            else:
+                _no_change, debit_rest, credit_rest = cls.entry_imported.serial_control(cls.serial_entry_imported)
+                if (debit_rest < 0.0001) and (credit_rest < 0.0001) and (len(cls.serial_entry_imported) > 0):
+                    new_item = cls.entry_imported
+                    new_item.save()
+                    new_item.save_entrylineaccounts(cls.serial_entry_imported)
+                elif len(cls.entry_imported.get_entrylineaccounts(cls.serial_entry_imported)) > 1:
+                    cls.import_logs.append(_("Account entry not balanced{[br/]}total credit=%s - total debit=%s%s") % (get_amount_from_format_devise(debit_rest, 7),
+                                                                                                                       get_amount_from_format_devise(credit_rest, 7), ''))
             del cls.serial_entry_imported
             del cls.entry_imported
         return new_item
