@@ -235,7 +235,7 @@ class Supporting(LucteriosModel):
             return (pdf_name, pdf_file)
 
     def send_email(self, subject, message, model):
-        fct_mailing_mod = import_module('lucterios.mailing.functions')
+        fct_mailing_mod = import_module('lucterios.mailing.email_functions')
         fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)], cclist=self.get_cclist(), withcopy=True)
 
     def get_document_filename(self):

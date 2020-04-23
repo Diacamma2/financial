@@ -193,7 +193,7 @@ class SupportingThirdValid(XferSave):
 def can_send_email(xfer):
     from django.utils.module_loading import import_module
     if apps.is_installed("lucterios.mailing"):
-        fct_mailing_mod = import_module('lucterios.mailing.functions')
+        fct_mailing_mod = import_module('lucterios.mailing.email_functions')
         return fct_mailing_mod.will_mail_send()
     else:
         return False
