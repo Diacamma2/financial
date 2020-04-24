@@ -702,7 +702,7 @@ class AdminTest(LucteriosTest):
         self.assert_json_equal('', 'journal/@4/name', 'Opérations diverses')
         self.assert_json_equal('', 'journal/@4/is_default', False)
 
-        self.assert_json_equal('LABELFORM', 'accounting-devise-iso', 'EUR')
+        self.assert_json_equal('LABELFORM', 'accounting-devise-iso', 'Euro Member Countries (EUR / €)')
         self.assert_json_equal('LABELFORM', 'accounting-devise-prec', '2')
         self.assert_json_equal('LABELFORM', 'accounting-sizecode', '3')
         self.assert_json_equal('LABELFORM', 'accounting-needcost', 'Non')
