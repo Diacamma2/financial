@@ -1767,7 +1767,7 @@ class BillTest(InvoiceTest):
             self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations.')
             self.assertEqual(email_msg.status, 2)
             self.assertEqual(email_msg.recipients, "invoice.Bill id||8||1;2;3;4\n")
-            self.assertEqual(email_msg.email_to_send, "invoice.Bill:4:8\ninvoice.Bill:3:8\ninvoice.Bill:2:8\ninvoice.Bill:1:8")
+            self.assertEqual(email_msg.email_to_send, "invoice.Bill:1:8\ninvoice.Bill:2:8\ninvoice.Bill:3:8\ninvoice.Bill:4:8")
 
             self.assertEqual(1, len(LucteriosScheduler.get_list()))
             LucteriosScheduler.stop_scheduler()
@@ -1802,7 +1802,7 @@ class BillTest(InvoiceTest):
             self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations')
             self.assertEqual(email_msg.status, 2)
             self.assertEqual(email_msg.recipients, "invoice.Bill id||8||1;2;3;4\n")
-            self.assertEqual(email_msg.email_to_send, "invoice.Bill:4:0\ninvoice.Bill:3:0\ninvoice.Bill:2:0\ninvoice.Bill:1:0")
+            self.assertEqual(email_msg.email_to_send, "invoice.Bill:1:0\ninvoice.Bill:2:0\ninvoice.Bill:3:0\ninvoice.Bill:4:0")
 
             self.assertEqual(1, len(LucteriosScheduler.get_list()))
             LucteriosScheduler.stop_scheduler()
@@ -1812,7 +1812,7 @@ class BillTest(InvoiceTest):
                 _msg, _msg_txt, msg_file = server.get_msg_index(msg_index)
                 self.save_pdf(base64_content=msg_file.get_payload(), ident=msg_index + 1)
                 # print('Content-Type:', msg_file.get('Content-Type', ''))
-                check_pdfreport(self, 'Bill', 4 - msg_index, True, msg_file.get_payload())
+                check_pdfreport(self, 'Bill', msg_index + 1, True, msg_file.get_payload())
         finally:
             server.stop()
 
