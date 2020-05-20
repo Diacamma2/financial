@@ -1103,9 +1103,9 @@ class EntryAccount(LucteriosModel):
             if check_balance:
                 _no_change, debit_rest, credit_rest = self.serial_control(self.get_serial())
                 if abs(debit_rest - credit_rest) >= 0.001:
-                    raise LucteriosException(GRAVE, _("Account entry not balanced{[br/]}total credit=%s - total debit=%s%s") % (get_amount_from_format_devise(debit_rest, 4),
-                                                                                                                                get_amount_from_format_devise(credit_rest, 4),
-                                                                                                                                self.get_description()))
+                    raise LucteriosException(GRAVE, _("Account entry not balanced{[br/]}total credit=%(credit)s - total debit=%(debit)s%(info)s") % {'credit': get_amount_from_format_devise(debit_rest, 7),
+                                                                                                                                                     'debit': get_amount_from_format_devise(credit_rest, 7),
+                                                                                                                                                     'info': self.get_description()})
             if Params.getvalue("accounting-needcost"):
                 for entryline in self.entrylineaccount_set.all():
                     if (entryline.account.type_of_account in (3, 4, 5)) and (entryline.costaccounting_id is None):
@@ -1363,8 +1363,10 @@ class EntryLineAccount(LucteriosModel):
                     new_item.save()
                     new_item.save_entrylineaccounts(cls.serial_entry_imported)
                 elif len(cls.entry_imported.get_entrylineaccounts(cls.serial_entry_imported)) > 1:
-                    cls.import_logs.append(_("Account entry not balanced{[br/]}total credit=%s - total debit=%s%s") % (get_amount_from_format_devise(debit_rest, 7),
-                                                                                                                       get_amount_from_format_devise(credit_rest, 7), ''))
+                    cls.import_logs.append(_("Account entry not balanced{[br/]}total credit=%(credit)s - total debit=%(debit)s%(info)s") % {'credit': get_amount_from_format_devise(debit_rest, 7),
+                                                                                                                                            'debit': get_amount_from_format_devise(credit_rest, 7), 'info': ''})
+                elif len(cls.entry_imported.get_entrylineaccounts(cls.serial_entry_imported)) == 1:
+                    cls.import_logs.append(_("Account entry '%s' with only one line") % cls.entry_imported.designation)
             del cls.serial_entry_imported
             del cls.entry_imported
         return new_item
@@ -1613,6 +1615,9 @@ class Budget(LucteriosModel):
 
     budget = LucteriosVirtualField(verbose_name=_('code'), compute_from='get_budget')
     montant = LucteriosVirtualField(verbose_name=_('amount'), compute_from='get_montant', format_string=lambda: format_with_devise(2))
+
+    def __str__(self):
+        return "[%s] %s : %s" % (self.year, self.budget, get_amount_from_format_devise(self.montant, 2))
 
     @classmethod
     def get_default_fields(cls):
