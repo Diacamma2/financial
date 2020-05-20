@@ -25,8 +25,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from shutil import rmtree
 
-from django.utils import six
-
 from lucterios.CORE.models import Parameter
 from lucterios.CORE.parameters import Params
 from lucterios.framework.filetools import get_user_dir

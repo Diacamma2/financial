@@ -32,14 +32,13 @@ from django.db import models
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Max
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 from django.utils.module_loading import import_module
 from django.utils import six
 from django_fsm import FSMIntegerField, transition
 
-from lucterios.framework.models import LucteriosModel, get_value_if_choices,\
-    LucteriosVirtualField, LucteriosDecimalField, correct_db_field
+from lucterios.framework.models import LucteriosModel, correct_db_field
+from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField
 from lucterios.framework.tools import get_date_formating, get_bool_textual
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.printgenerators import ReportingGenerator

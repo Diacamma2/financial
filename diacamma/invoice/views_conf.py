@@ -28,8 +28,7 @@ from django.utils.translation import ugettext_lazy as _
 from lucterios.framework.xferadvance import XferListEditor, TITLE_MODIFY, TITLE_DELETE, TITLE_ADD
 from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.xferadvance import XferDelete
-from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, CLOSE_NO, SELECT_MULTI, SELECT_SINGLE,\
-    FORMTYPE_MODAL
+from lucterios.framework.tools import ActionsManage, MenuManage, CLOSE_NO, SELECT_MULTI, SELECT_SINGLE, FORMTYPE_MODAL
 from lucterios.framework.xfercomponents import XferCompButton
 from lucterios.framework import signal_and_lock
 from lucterios.CORE.parameters import Params

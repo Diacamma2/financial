@@ -48,7 +48,7 @@ from lucterios.framework.xfergraphic import XferContainerAcknowledge, \
 from lucterios.framework.xfercomponents import XferCompLabelForm, \
     XferCompEdit, XferCompImage, XferCompMemo, XferCompSelect, XferCompCheck
 from lucterios.framework.error import LucteriosException, MINOR, IMPORTANT
-from lucterios.framework.models import get_value_if_choices
+from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.CORE.models import PrintModel
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.xferprint import XferPrintReporting

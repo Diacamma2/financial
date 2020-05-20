@@ -34,9 +34,8 @@ from django.utils import six
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheckList, XferCompGrid, XferCompButton, XferCompEdit,\
     XferCompUpLoad, XferCompImage
-from lucterios.framework.tools import CLOSE_NO, FORMTYPE_REFRESH, ActionsManage, FORMTYPE_MODAL,\
-    format_to_string
-from lucterios.framework.models import get_value_if_choices
+from lucterios.framework.tools import CLOSE_NO, FORMTYPE_REFRESH, ActionsManage, FORMTYPE_MODAL, format_to_string
+from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.framework.filetools import save_from_base64, open_image_resize, get_user_path
 from lucterios.CORE.parameters import Params
 

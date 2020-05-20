@@ -42,7 +42,8 @@ from django.utils import six
 from django.db.models.signals import pre_save
 from django_fsm import FSMIntegerField, transition
 
-from lucterios.framework.models import LucteriosModel, get_value_if_choices, LucteriosVirtualField
+from lucterios.framework.models import LucteriosModel
+from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField
 from lucterios.framework.tools import get_date_formating, get_format_value, convert_date
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.filetools import read_file, xml_validator, save_file, get_user_path

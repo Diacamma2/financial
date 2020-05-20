@@ -39,8 +39,9 @@ from django.utils.dateformat import DateFormat
 from django.utils import six, timezone
 from django_fsm import FSMIntegerField, transition
 
-from lucterios.framework.models import LucteriosModel, get_value_if_choices, get_obj_contains,\
-    LucteriosVirtualField, LucteriosDecimalField, correct_db_field
+from lucterios.framework.models import LucteriosModel, correct_db_field
+from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField,\
+    get_obj_contains
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent

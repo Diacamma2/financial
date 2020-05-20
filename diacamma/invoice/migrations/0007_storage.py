@@ -6,7 +6,7 @@ import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 from django_fsm import FSMIntegerField
-from lucterios.framework.models import LucteriosDecimalField
+from lucterios.framework.model_fields import LucteriosDecimalField
 
 
 class Migration(migrations.Migration):
