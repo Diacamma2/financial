@@ -394,11 +394,17 @@ class Article(LucteriosModel, CustomizeObject):
             return False
         return True
 
-    def get_stockage_total(self):
+    def get_stockage_total_num(self):
         for val in self.get_stockage_values():
             if val[0] == 0:
-                format_txt = "N%d" % int(self.qtyDecimal)
-                return format_to_string(float(val[2]), format_txt, None)
+                return float(val[2])
+        return None
+
+    def get_stockage_total(self):
+        value = self.get_stockage_total_num()
+        if value is not None:
+            format_txt = "N%d" % int(self.qtyDecimal)
+            return format_to_string(value, format_txt, None)
         return None
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):

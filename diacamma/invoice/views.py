@@ -453,11 +453,16 @@ class ArticleList(XferListEditor):
         if len(self.categories_filter) > 0:
             for cat_item in Category.objects.filter(id__in=self.categories_filter):
                 items = items.filter(categories__in=[cat_item])
-        return items.distinct()
+        if self.show_stockable == 3:
+            new_items = QuerySet(model=Article)
+            new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num() > 0]
+            return new_items
+        else:
+            return items.distinct()
 
     def fillresponse_header(self):
         show_filter = self.getparam('show_filter', 0)
-        show_stockable = self.getparam('stockable', -1)
+        self.show_stockable = self.getparam('stockable', -1)
         ref_filter = self.getparam('ref_filter', '')
         self.categories_filter = self.getparam('cat_filter', ())
         show_storagearea = self.getparam('storagearea', 0)
@@ -481,7 +486,8 @@ class ArticleList(XferListEditor):
         self.fill_from_model(0, 5, False, ['stockable'])
         sel_stock = self.get_components('stockable')
         sel_stock.select_list.insert(0, (-1, '---'))
-        sel_stock.set_value(show_stockable)
+        sel_stock.select_list.append((3, _('with stock')))
+        sel_stock.set_value(self.show_stockable)
         sel_stock.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
 
         cat_list = Category.objects.all()
@@ -509,8 +515,11 @@ class ArticleList(XferListEditor):
             self.filter &= Q(reference__icontains=ref_filter) | Q(designation__icontains=ref_filter)
         if show_filter == 0:
             self.filter &= Q(isdisabled=False)
-        if show_stockable != -1:
-            self.filter &= Q(stockable=show_stockable)
+        if self.show_stockable != -1:
+            if self.show_stockable != 3:
+                self.filter &= Q(stockable=self.show_stockable)
+            else:
+                self.filter &= ~Q(stockable=0)
         if show_storagearea != 0:
             self.filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
         self.add_action(ArticleSearch.get_action(_("Search"), "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)

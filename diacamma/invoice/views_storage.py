@@ -37,7 +37,7 @@ from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferD
 from lucterios.CORE.xferprint import XferPrintAction
 from lucterios.CORE.views import ObjectImport
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompGrid, XferCompSelect, XferCompCheckList, GRID_ORDER, XferCompDate,\
-    XferCompEdit, XferCompImage
+    XferCompEdit, XferCompImage, XferCompCheck
 from lucterios.framework.xferbasic import NULL_VALUE
 
 from diacamma.accounting.tools import format_with_devise
@@ -241,6 +241,8 @@ class StorageSituation(XferListEditor):
     def fillresponse_header(self):
         show_storagearea = self.getparam('storagearea', 0)
         self.categories_filter = self.getparam('cat_filter', ())
+        self.hide_empty = self.getparam('hide_empty', True)
+
         ref_filter = self.getparam('ref_filter', '')
         sel_stock = XferCompSelect('storagearea')
         sel_stock.set_needed(False)
@@ -258,6 +260,13 @@ class StorageSituation(XferListEditor):
         edt.description = _('ref./designation')
         edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(edt)
+
+        ckc = XferCompCheck("hide_empty")
+        ckc.set_value(self.hide_empty)
+        ckc.set_location(0, 6)
+        ckc.description = _('hide articles without quantity')
+        ckc.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        self.add_component(ckc)
 
         cat_list = Category.objects.all()
         if len(cat_list) > 0:
@@ -287,7 +296,7 @@ class StorageSituation(XferListEditor):
         item_id = 0
         total_val = 0.0
         for item in self.get_items_from_filter():
-            if item['data_sum'] > 0:
+            if (item['data_sum'] > 0) or not self.hide_empty:
                 item_id += 1
                 area_id = item['storagesheet__storagearea']
                 art = Article.objects.get(id=item['article'])

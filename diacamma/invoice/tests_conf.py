@@ -240,7 +240,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/articleList', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
         self.assert_count_equal('', 6)
-        self.assert_select_equal('stockable', 4)  # nb=4
+        self.assert_select_equal('stockable', 5)  # nb=4
         self.assert_grid_equal('article', {'reference': "référence", 'designation': "désignation", 'price': "prix", 'unit': "unité", 'isdisabled': "désactivé ?", 'accountposting': "code d'imputation comptable", 'stockable': "stockable"}, 0)
         self.assert_count_equal('#article/actions', 3)
 
@@ -400,6 +400,12 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
         self.assert_count_equal('', 7)
         self.assert_count_equal('article', 1)
+
+        self.factory.xfer = ArticleList()
+        self.calljson('/diacamma.invoice/articleList', {'show_filter': 1, 'stockable': 3}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
+        self.assert_count_equal('', 7)
+        self.assert_count_equal('article', 0)
 
         self.factory.xfer = ArticleList()
         self.calljson('/diacamma.invoice/articleList', {'show_filter': 1, 'cat_filter': '2'}, False)
