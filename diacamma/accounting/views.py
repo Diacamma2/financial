@@ -163,7 +163,7 @@ class ThirdSave(XferContainerAcknowledge):
             self.redirect_action(WrapAction('', '', url_text=redirect_after_save), params={'third': self.item.id})
 
 
-@ActionsManage.affect_list(_('Disabled'), '')
+@ActionsManage.affect_list(_('Disabled'), 'images/down.png')
 @MenuManage.describ('accounting.add_third')
 class ThirdDisable(XferContainerAcknowledge):
     model = Third

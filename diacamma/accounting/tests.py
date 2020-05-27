@@ -93,7 +93,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdAdd', {'modelname': 'contacts.LegalEntity'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdAdd')
         self.assert_comp_equal(('SELECT', 'modelname'), 'contacts.LegalEntity', (1, 0, 4, 1))
-        self.assert_grid_equal('legal_entity', {"name": "nom", "tel1": "tel1", "tel2": "tel2", "email": "courriel"}, 3)  # nb=4
+        self.assert_grid_equal('legal_entity', {"name": "dénomination", "tel1": "tel1", "tel2": "tel2", "email": "courriel"}, 3)  # nb=4
 
         self.factory.xfer = ThirdSave()
         self.calljson('/diacamma.accounting/thirdSave', {'pkname': 'legal_entity', 'legal_entity': 7, 'new_account': '401'}, False)
@@ -583,7 +583,7 @@ class ThirdTest(LucteriosTest):
         CustomField.objects.create(modelname='accounting.Third', name='categorie', kind=4, args="{'list':['---','petit','moyen','gros']}")
         CustomField.objects.create(modelname='accounting.Third', name='value', kind=1, args="{'min':0,'max':100}")
         search_field_list = Third.get_search_fields()
-        self.assertEqual(8 + 2 + 2, len(search_field_list), search_field_list)
+        self.assertEqual(3 + 8 + 2 + 2 + 6, len(search_field_list), search_field_list)
 
         fill_thirds_fr()
         self.factory.xfer = ThirdSearch()

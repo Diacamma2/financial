@@ -1847,7 +1847,7 @@ class BillTest(InvoiceTest):
 
         search_field_list = Bill.get_search_fields()
         # bill + contact +  custom contact + custom third + third + detail + article + art custom + category + provider + storage detail + payoff
-        self.assertEqual(6 + 8 + 1 + 2 + 2 + 4 + 9 + 2 + 2 + 2 + 1 + 6,
+        self.assertEqual(6 + 3 + 8 + 1 + 2 + 2 + 4 + 9 + 2 + 2 + 2 + 1 + 6,
                          len(search_field_list), search_field_list)
 
     def test_autoreduce1(self):

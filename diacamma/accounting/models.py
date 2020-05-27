@@ -53,7 +53,8 @@ from lucterios.framework.printgenerators import ActionGenerator
 from lucterios.framework import signal_and_lock
 from lucterios.CORE.models import Parameter, LucteriosUser, LucteriosGroup
 from lucterios.CORE.parameters import Params
-from lucterios.contacts.models import AbstractContact, CustomField, CustomizeObject, LegalEntity
+from lucterios.contacts.models import AbstractContact, CustomField, CustomizeObject, LegalEntity,\
+    Individual
 from lucterios.documents.models import FolderContainer, DocumentContainer
 
 from diacamma.accounting.tools import get_amount_sum, current_system_account, currency_round, correct_accounting_code, get_currency_symbole, format_with_devise, get_amount_from_format_devise
@@ -138,13 +139,18 @@ class Third(LucteriosModel, CustomizeObject):
         return fields_desc
 
     @classmethod
-    def get_search_fields(cls):
+    def get_search_fields(cls, with_addon=True):
         result = []
+        result.append(cls.convert_field_for_search('contact', ('name', LegalEntity._meta.get_field('name'), 'legalentity__name', Q())))
+        result.append(cls.convert_field_for_search('contact', ('firstname', Individual._meta.get_field('firstname'), 'individual__firstname', Q())))
+        result.append(cls.convert_field_for_search('contact', ('lastname', Individual._meta.get_field('lastname'), 'individual__lastname', Q())))
         for field_name in AbstractContact.get_search_fields():
             result.append(cls.convert_field_for_search('contact', field_name))
         for cf_name, cf_model in CustomField.get_fields(cls):
             result.append((cf_name, cf_model.get_field(), 'thirdcustomfield__value', Q(thirdcustomfield__field__id=cf_model.id)))
         result.extend(["status", "accountthird_set.code"])
+        if with_addon:
+            Signal.call_signal("third_search", result)
         return result
 
     def get_total(self, current_date=None, strict=True):

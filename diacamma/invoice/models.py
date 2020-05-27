@@ -514,7 +514,7 @@ class Bill(Supporting):
     @classmethod
     def get_search_fields(cls):
         search_fields = ["bill_type", "fiscal_year", "num", "date", "comment", "status"]
-        for fieldname in Third.get_search_fields():
+        for fieldname in Third.get_search_fields(with_addon=False):
             search_fields.append(cls.convert_field_for_search("third", fieldname))
         for fieldname in Detail.get_search_fields():
             search_fields.append(cls.convert_field_for_search("detail_set", fieldname))
@@ -1607,6 +1607,14 @@ def invoice_convertdata():
         'invoice_detail': 'vta_rate',
         'invoice_storagedetail': 'price',
     })
+
+
+@Signal.decorate('third_search')
+def invoice_third_search(search_result):
+    for field_name in ["bill_type", "fiscal_year", "num", "date", "comment", "status"]:
+        bill_search = Supporting.convert_field_for_search('bill', (field_name, Bill._meta.get_field(field_name), field_name, Q()))
+        search_result.append(Third.convert_field_for_search('supporting_set', bill_search, add_verbose=False))
+    return True
 
 
 @Signal.decorate('auditlog_register')
