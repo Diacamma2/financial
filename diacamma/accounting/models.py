@@ -140,18 +140,18 @@ class Third(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_search_fields(cls, with_addon=True):
-        result = []
-        result.append(cls.convert_field_for_search('contact', ('name', LegalEntity._meta.get_field('name'), 'legalentity__name', Q())))
-        result.append(cls.convert_field_for_search('contact', ('firstname', Individual._meta.get_field('firstname'), 'individual__firstname', Q())))
-        result.append(cls.convert_field_for_search('contact', ('lastname', Individual._meta.get_field('lastname'), 'individual__lastname', Q())))
-        for field_name in AbstractContact.get_search_fields():
-            result.append(cls.convert_field_for_search('contact', field_name))
+        fieldnames = []
+        fieldnames.append(cls.convert_field_for_search('contact', ('name', LegalEntity._meta.get_field('name'), 'legalentity__name', Q())))
+        fieldnames.append(cls.convert_field_for_search('contact', ('firstname', Individual._meta.get_field('firstname'), 'individual__firstname', Q())))
+        fieldnames.append(cls.convert_field_for_search('contact', ('lastname', Individual._meta.get_field('lastname'), 'individual__lastname', Q())))
+        for field_name in AbstractContact.get_search_fields(with_addon=False):
+            fieldnames.append(cls.convert_field_for_search('contact', field_name))
         for cf_name, cf_model in CustomField.get_fields(cls):
-            result.append((cf_name, cf_model.get_field(), 'thirdcustomfield__value', Q(thirdcustomfield__field__id=cf_model.id)))
-        result.extend(["status", "accountthird_set.code"])
+            fieldnames.append((cf_name, cf_model.get_field(), 'thirdcustomfield__value', Q(thirdcustomfield__field__id=cf_model.id)))
+        fieldnames.extend(["status", "accountthird_set.code"])
         if with_addon:
-            Signal.call_signal("third_search", result)
-        return result
+            Signal.call_signal("addon_search", cls, fieldnames)
+        return fieldnames
 
     def get_total(self, current_date=None, strict=True):
         current_filter = Q(third=self)

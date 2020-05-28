@@ -31,6 +31,7 @@ from datetime import timedelta
 from django.db import models
 from django.db.models.aggregates import Max, Sum, Count
 from django.db.models.functions import Concat
+from django.db.models.expressions import Case, When
 from django.db.models import Q, Value, F
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -49,13 +50,12 @@ from lucterios.framework.tools import same_day_months_after, get_date_formating,
 from lucterios.framework.auditlog import auditlog
 from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup
 from lucterios.CORE.parameters import Params
-from lucterios.contacts.models import CustomField, CustomizeObject
+from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact
 
 from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAccounting, Journal, EntryLineAccount, ChartsAccount, AccountThird
 from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code,\
     format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip
-from django.db.models.expressions import Case, When
 
 
 class Vat(LucteriosModel):
@@ -1609,12 +1609,22 @@ def invoice_convertdata():
     })
 
 
-@Signal.decorate('third_search')
-def invoice_third_search(search_result):
-    for field_name in ["bill_type", "fiscal_year", "num", "date", "comment", "status"]:
+def invoice_addon_for_third():
+    for field_name in ["bill_type", "num", "date", "comment", "status"]:
         bill_search = Supporting.convert_field_for_search('bill', (field_name, Bill._meta.get_field(field_name), field_name, Q()))
-        search_result.append(Third.convert_field_for_search('supporting_set', bill_search, add_verbose=False))
-    return True
+        yield Third.convert_field_for_search('supporting_set', bill_search, add_verbose=False)
+
+
+@Signal.decorate('addon_search')
+def invoice_addon_search(model, search_result):
+    res = False
+    if model is Third:
+        search_result.extend(invoice_addon_for_third())
+        res = True
+    if issubclass(model, AbstractContact):
+        for subfield in invoice_addon_for_third():
+            search_result.append(model.convert_field_for_search('third_set', subfield, add_verbose=False))
+    return res
 
 
 @Signal.decorate('auditlog_register')
