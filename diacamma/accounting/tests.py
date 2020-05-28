@@ -583,7 +583,7 @@ class ThirdTest(LucteriosTest):
         CustomField.objects.create(modelname='accounting.Third', name='categorie', kind=4, args="{'list':['---','petit','moyen','gros']}")
         CustomField.objects.create(modelname='accounting.Third', name='value', kind=1, args="{'min':0,'max':100}")
         search_field_list = Third.get_search_fields()
-        self.assertEqual(3 + 8 + 2 + 2 + 6, len(search_field_list), search_field_list)
+        self.assertEqual(3 + 8 + 2 + 2 + 5, len(search_field_list), search_field_list)
 
         fill_thirds_fr()
         self.factory.xfer = ThirdSearch()
