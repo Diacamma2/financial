@@ -258,6 +258,7 @@ class FiscalYearReportLastYear(XferContainerAcknowledge):
         if self.confirme(_('Do you want to import last year result?')):
             signal_and_lock.Signal.call_signal("reportlastyear", self)
             current_year.run_report_lastyear(self.getparam("import_result", True))
+            signal_and_lock.Signal.call_signal("reportlastyear_after", self)
 
 
 @ActionsManage.affect_list(_('Begin'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == 0, intop=True)

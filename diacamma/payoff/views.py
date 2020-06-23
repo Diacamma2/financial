@@ -91,6 +91,9 @@ class PayoffAddModify(XferAddEditor):
             return XferAddEditor.run_save(self, request, *args, **kwargs)
 
     def fillresponse(self):
+        delete_msg = self.item.can_delete()
+        if delete_msg != '':
+            raise LucteriosException(IMPORTANT, delete_msg)
         if self.item.id is not None:
             self.items = Payoff.objects.filter(entry=self.item.entry)
             amount = 0

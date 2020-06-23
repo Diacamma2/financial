@@ -396,8 +396,7 @@ class Payoff(LucteriosModel):
         if self.entry is not None:
             payoff_entry = self.entry
             if payoff_entry.close:
-                raise LucteriosException(
-                    IMPORTANT, _("an entry associated to this payoff is closed!"))
+                raise LucteriosException(IMPORTANT, _("an entry associated to this payoff is closed!"))
             self.entry = None
             self.save(do_generate=False)
             payoff_entry.delete()
@@ -454,6 +453,11 @@ class Payoff(LucteriosModel):
             raise LucteriosException(IMPORTANT, _("account is not defined!"))
         return bank_account, info
 
+    def can_delete(self):
+        if (self.entry is not None) and self.entry.close:
+            return _("an entry associated to this payoff is closed!")
+        return ''
+
     def generate_accounting(self, designation=None):
         new_entry = self._create_entry(designation)
         amount_to_bank, is_revenu = self._fill_entrylines(new_entry)
@@ -491,6 +495,7 @@ class Payoff(LucteriosModel):
     @classmethod
     def _create_payoff(cls, amount, mode, payer, reference, bank_account, date, bank_fee, repartition, supporting_list, amount_sum):
         amount_rest = float(amount)
+        new_paypoff = None
         paypoff_list = []
         for supporting in supporting_list:
             new_paypoff = Payoff(supporting=supporting, date=date, payer=payer, mode=mode, reference=reference, bank_fee=bank_fee)
@@ -508,7 +513,7 @@ class Payoff(LucteriosModel):
                 paypoff_list.append(new_paypoff)
             else:
                 new_paypoff.amount = 0
-        if abs(amount_rest) > 0.001:
+        if (abs(amount_rest) > 0.001) and (new_paypoff is not None):
             new_paypoff.amount += amount_rest
             new_paypoff.save(do_generate=False)
             if new_paypoff not in paypoff_list:
@@ -540,12 +545,43 @@ class Payoff(LucteriosModel):
         return entry
 
     @classmethod
+    def _get_subsupporting_from_entry(cls, supporting_list, entry):
+        new_supporting_list = []
+        for supporting in supporting_list:
+            masks_by_amount = supporting.get_third_masks_by_amount(100.0)
+            if len(masks_by_amount) == 1:
+                third_account = supporting.third.get_account(entry.year, masks_by_amount[0][0])
+                entryline_filter = Q(account=third_account)
+                entryline_filter &= Q(third=supporting.third)
+                is_revenu = 1 if not supporting.is_revenu else -1
+                is_liability = 1 if third_account.type_of_account == 0 else -1
+                if is_revenu * is_liability > 0:
+                    entryline_filter &= Q(amount__gt=0)
+                else:
+                    entryline_filter &= Q(amount__lt=0)
+                if entry.entrylineaccount_set.filter(entryline_filter).count() > 0:
+                    new_supporting_list.append(supporting)
+        return new_supporting_list
+
+    @classmethod
     def multi_save(cls, supportings, amount, mode, payer, reference, bank_account, date, bank_fee, repartition, entry=None):
         supporting_list, amount_sum = cls._get_supportings_amountsum(supportings, amount)
-        paypoff_list = cls._create_payoff(amount, mode, payer, reference, bank_account, date, bank_fee, repartition, supporting_list, amount_sum)
-        cls._create_entry_from_multi(paypoff_list, entry)
-        for supporting in supporting_list:
-            supporting.generate_accountlink()
+        if (entry is not None) and entry.close:
+            new_supporting_list = cls._get_subsupporting_from_entry(supporting_list, entry)
+            paypoff_list = cls._create_payoff(amount, mode, payer, reference, bank_account, date, bank_fee, repartition, new_supporting_list, amount_sum)
+            if len(paypoff_list) > 0:
+                for payoff in paypoff_list:
+                    payoff.entry = entry
+                    payoff.save(do_generate=False)
+                return True
+            else:
+                return False
+        else:
+            paypoff_list = cls._create_payoff(amount, mode, payer, reference, bank_account, date, bank_fee, repartition, supporting_list, amount_sum)
+            cls._create_entry_from_multi(paypoff_list, entry)
+            for supporting in supporting_list:
+                supporting.generate_accountlink()
+            return True
 
     def delete(self, using=None):
         self.delete_accounting()
@@ -820,14 +856,14 @@ class PaymentMethod(LucteriosModel):
 
     def __get_show_pay_paypal(self, absolute_uri, lang, supporting):
         items = self.get_items()
+        abs_url = absolute_uri.split('/')
+        root_url = '/'.join(abs_url[:-2])
         if (items[1] == 'o') or (items[1] == 'True'):
             import urllib.parse
-            abs_url = absolute_uri.split('/')
-            root_url = '/'.join(abs_url[:-2])
             formTxt = "{[center]}"
             formTxt += "{[a href='%s/%s?payid=%d&url=%s' target='_blank']}" % (root_url, 'diacamma.payoff/checkPaymentPaypal',
                                                                                supporting.id, urllib.parse.quote(root_url + '/diacamma.payoff/checkPaymentPaypal'))
-            formTxt += "{[img src='https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}"
+            formTxt += "{[img src='%s/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}" % root_url
             formTxt += "{[/a]}"
             formTxt += "{[/center]}"
         else:
@@ -835,7 +871,7 @@ class PaymentMethod(LucteriosModel):
             paypal_dict = self.get_paypal_dict(absolute_uri, lang, supporting)
             formTxt = "{[center]}"
             formTxt += "{[a href='%s?%s' target='_blank']}" % (paypal_url, paypal_dict)
-            formTxt += "{[img src='https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}"
+            formTxt += "{[img src='%s/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}" % root_url
             formTxt += "{[/a]}"
             formTxt += "{[/center]}"
         return formTxt
