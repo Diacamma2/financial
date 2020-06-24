@@ -26,8 +26,6 @@ from __future__ import unicode_literals
 from shutil import rmtree
 from datetime import date
 
-from django.utils import formats
-
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
 
@@ -1075,7 +1073,7 @@ class EntryTest(LucteriosTest):
         self.assert_json_equal('LABELFORM', 'result', "4 éléments ont été importés")
         self.assert_json_equal('LABELFORM', 'import_error', ["Écriture comptable non équilibré{[br/]}total crédit=333,00\xa0€ - total débit=0,00\xa0€",
                                                              'Code comptable "515" inconnu !',
-                                                             "L'écriture 'Bad code' n'a qu'une seule ligne.", 
+                                                             "L'écriture 'Bad code' n'a qu'une seule ligne.",
                                                              "L'écriture 'alone' n'a qu'une seule ligne.",
                                                              "Comptabilité analytique 'bad' inconnue !",
                                                              "Comptabilité analytique 'close' inconnue !",
