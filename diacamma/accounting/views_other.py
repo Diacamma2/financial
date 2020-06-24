@@ -43,11 +43,11 @@ class CostAccountingList(XferListEditor):
         comp_year = self.get_components('year')
         comp_year.select_list.append((-1, _('- without fiscal year -')))
         comp_year.set_value(select_year)
-        comp_year.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        comp_year.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         comp_status = self.get_components('status')
         comp_status.select_list.insert(0, (-1, None))
         comp_status.set_value(status_filter)
-        comp_status.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        comp_status.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def fillresponse(self):
         XferListEditor.fillresponse(self)
@@ -89,7 +89,7 @@ class CostAccountingReportByDate(XferContainerAcknowledge):
             end_filter.description = _('end')
             dlg.add_component(end_filter)
             dlg.add_component(lbl)
-            dlg.add_action(self.get_action(TITLE_OK, 'images/ok.png'))
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'))
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
             list_cost = []

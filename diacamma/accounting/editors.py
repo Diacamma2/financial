@@ -193,7 +193,7 @@ class ChartsAccountEditor(LucteriosEditor):
         else:
             code_ed = xfer.get_components('code')
             code_ed.mask = current_system_account().get_general_mask()
-            code_ed.set_action(xfer.request, xfer.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            code_ed.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         descript, typeaccount = current_system_account().new_charts_account(self.item.code)
         error_msg = ''
         if typeaccount < 0:
@@ -285,7 +285,7 @@ class EntryAccountEditor(LucteriosEditor):
                 link_grid_lines.add_action(xfer.request, ActionsManage.get_action_url('accounting.EntryAccount', 'OpenFromLine', xfer), unique=SELECT_SINGLE, close=CLOSE_YES, params={'field_id': 'entryaccount_link', 'journal': ''})
                 xfer.add_component(link_grid_lines)
         if self.added:
-            xfer.add_action(xfer.get_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
+            xfer.add_action(xfer.return_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
 
     def _entryline_editor(self, xfer, serial_vals, debit_rest, credit_rest):
         last_row = xfer.get_max_row() + 5
@@ -383,7 +383,7 @@ class EntryLineAccountEditor(LucteriosEditor):
         edt.set_location(column, row + 1)
         edt.set_value(num_cpt_txt)
         edt.set_size(20, 25)
-        edt.set_action(xfer.request, xfer.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        edt.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         xfer.add_component(edt)
         sel_val = []
         current_account = None
@@ -394,7 +394,7 @@ class EntryLineAccountEditor(LucteriosEditor):
         sel.set_location(column + 1, row + 1, 1)
         sel.set_select(sel_val)
         sel.set_size(20, 150)
-        sel.set_action(xfer.request, xfer.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        sel.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         if current_account is not None:
             sel.set_value(current_account.id)
             self.item.account = current_account
@@ -489,7 +489,7 @@ class ModelLineEntryEditor(EntryLineAccountEditor):
         xfer.params['model'] = xfer.getparam('modelentry', 0)
         code = xfer.get_components('code')
         code.mask = current_system_account().get_general_mask()
-        code.set_action(xfer.request, xfer.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        code.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         if match(current_system_account().get_third_mask(), self.item.code) is not None:
             edit_third_for_line(xfer, 1, xfer.get_max_row() + 1, self.item.code, None, False)
         self.edit_creditdebit_for_line(xfer, 1, xfer.get_max_row() + 1)

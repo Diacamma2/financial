@@ -170,7 +170,7 @@ class BillEditor(SupportingEditor):
         comp_comment.with_hypertext = True
         comp_comment.set_size(100, 375)
         com_type = xfer.get_components('bill_type')
-        com_type.set_action(xfer.request, xfer.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        com_type.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def show(self, xfer):
         try:
@@ -242,12 +242,12 @@ class DetailFilter(object):
         sel_third.set_needed(False)
         sel_third.set_select_query(Third.objects.filter(provider__isnull=False).distinct())
         sel_third.set_value(filter_thirdid)
-        sel_third.set_action(xfer.request, xfer.get_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+        sel_third.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
         sel_third.description = _('provider')
         sel_ref = xfer.get_components("reference")
         sel_ref.set_value(filter_ref)
         sel_ref.set_needed(False)
-        sel_ref.set_action(xfer.request, xfer.get_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+        sel_ref.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
         if (filter_thirdid != 0) or (filter_ref != ''):
             sel_art.set_needed(True)
 
@@ -256,7 +256,7 @@ class DetailFilter(object):
         init_row = sel_art.row
         xfer.move(sel_art.tab, 0, 10)
         if hasattr(sel_art, 'set_action'):
-            sel_art.set_action(xfer.request, xfer.get_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+            sel_art.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
 
         btn = XferCompButton('show_art')
         btn.set_is_mini(True)
@@ -274,7 +274,7 @@ class DetailFilter(object):
             edt.set_value(filter_cat)
             edt.set_location(sel_art.col, init_row, 2)
             edt.description = _('categories')
-            edt.set_action(xfer.request, xfer.get_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+            edt.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
             xfer.add_component(edt)
             if ((len(filter_cat) > 0) or not Params.getvalue("invoice-reduce-allow-article-empty")) and hasattr(sel_art, 'set_needed'):
                 sel_art.set_needed(True)
@@ -285,7 +285,7 @@ class DetailFilter(object):
             edt.set_value(ref_filter)
             edt.set_location(sel_art.col, init_row + 1, 2)
             edt.description = _('ref./designation')
-            edt.set_action(xfer.request, xfer.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+            edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
             xfer.add_component(edt)
             has_filter = True
         if len(Provider.objects.all()) > 0:
@@ -351,14 +351,14 @@ class StorageSheetEditor(LucteriosEditor):
             xfer.item.status = 0
             xfer.params['status'] = 0
         sel_type = xfer.get_components("sheet_type")
-        sel_type.set_action(xfer.request, xfer.get_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_type.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         if int(self.item.sheet_type) != 0:
             xfer.remove_component("provider")
             xfer.remove_component("bill_reference")
             xfer.remove_component("bill_date")
         else:
             sel_provider = xfer.get_components("provider")
-            sel_provider.set_action(xfer.request, xfer.get_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            sel_provider.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
             if (self.item.provider_id is None) or (self.item.provider_id == 0):
                 xfer.get_components("bill_reference").value = ""
                 xfer.get_components("bill_date").value = None

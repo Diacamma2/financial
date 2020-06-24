@@ -42,12 +42,14 @@ from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManag
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework import signal_and_lock
-from lucterios.framework.xfersearch import get_criteria_list
+from lucterios.framework.xfersearch import get_criteria_list, get_search_query_from_criteria
+from lucterios.framework.xferprinting import XferContainerPrint
+from lucterios.framework.model_fields import get_value_if_choices
 
 from lucterios.CORE.xferprint import XferPrintAction, XferPrintListing, XferPrintLabel
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
-from lucterios.CORE.models import PrintModel
+from lucterios.CORE.models import PrintModel, SavedCriteria
 from lucterios.CORE.views import ObjectMerge
 
 from lucterios.contacts.views_contacts import AbstractContactFindDouble
@@ -59,8 +61,8 @@ from diacamma.payoff.models import Payoff, DepositSlip
 from diacamma.accounting.models import FiscalYear, Third, EntryLineAccount, EntryAccount
 from diacamma.accounting.views import get_main_third
 from diacamma.accounting.views_entries import EntryAccountOpenFromLine
-from diacamma.accounting.tools import current_system_account, format_with_devise
-from lucterios.framework.xferprinting import XferContainerPrint
+from diacamma.accounting.tools import current_system_account, format_with_devise,\
+    get_amount_from_format_devise
 
 MenuManage.add_sub("invoice", None, "diacamma.invoice/images/invoice.png", _("Invoice"), _("Manage of billing"), 45)
 
@@ -73,7 +75,7 @@ def _add_bill_filter(xfer, row, with_third=False):
         comp.set_value(third_filter)
         comp.is_default = True
         comp.description = _('Filtrer by third')
-        comp.set_action(xfer.request, xfer.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        comp.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         comp.set_location(0, row)
         xfer.add_component(comp)
         row += 1
@@ -92,7 +94,7 @@ def _add_bill_filter(xfer, row, with_third=False):
     edt.description = _('Filter by status')
     edt.set_value(status_filter)
     edt.set_location(0, row)
-    edt.set_action(xfer.request, xfer.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+    edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     xfer.add_component(edt)
 
     type_filter = xfer.getparam('type_filter', -1)
@@ -104,7 +106,7 @@ def _add_bill_filter(xfer, row, with_third=False):
     edt.description = _('Filter by type')
     edt.set_value(type_filter)
     edt.set_location(0, row + 1)
-    edt.set_action(xfer.request, xfer.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+    edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     xfer.add_component(edt)
 
     if status_filter >= 0:
@@ -195,7 +197,7 @@ class BillShow(XferShowEditor):
                 posx = 1
                 posy = auditlogbtn.row
             btn = XferCompButton('parentbill')
-            btn.set_action(self.request, self.get_action(_('origin'), "origin.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'bill': self.item.parentbill_id})
+            btn.set_action(self.request, self.return_action(_('origin'), "origin.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'bill': self.item.parentbill_id})
             btn.set_is_mini(True)
             btn.set_location(posx, posy)
             self.add_component(btn)
@@ -245,7 +247,7 @@ class BillTransition(XferTransition):
             if dlg.get_components("bank_fee") is not None:
                 check_payoff.java_script += "parent.get('bank_fee').setEnabled(type);\n"
             dlg.get_components("date").name = "date_payoff"
-            dlg.get_components("mode").set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            dlg.get_components("mode").set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         if (self.item.bill_type != 2) and can_send_email(dlg) and self.item.can_send_email():
             row = dlg.get_max_row()
             check_payoff = XferCompCheck('sendemail')
@@ -299,7 +301,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
             sel.set_location(2, row + 6)
             sel.description = selectors[1]
             dlg.add_component(sel)
-        dlg.add_action(self.get_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
+        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
         dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
 
     def fill_confirm(self, transition, trans):
@@ -357,6 +359,77 @@ class BillDel(XferDelete):
     model = Bill
     field_id = 'bill'
     caption = _("Delete bill")
+
+
+@ActionsManage.affect_grid(_('batch'), "images/upload.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < 1)
+@MenuManage.describ('payoff.add_payoff')
+class BillBatch(XferContainerAcknowledge):
+    caption = _("Batch bill")
+    icon = "bill.png"
+    model = Bill
+    field_id = 'bill'
+
+    def _fill_dlg_batch(self):
+        dlg = self.create_custom(Detail)
+        img = XferCompImage('img')
+        img.set_value(self.icon_path())
+        img.set_location(0, 0, 1, 6)
+        dlg.add_component(img)
+        dlg.item.set_context(dlg)
+        DetailAddModify.affect_designation(dlg)
+        dlg.fill_from_model(1, 1, False)
+        dlg.move(0, 0, 10)
+        dlg.model = Bill
+        dlg._initialize(self.request)
+        lbl = XferCompLabelForm('titlebill')
+        lbl.set_value_as_title(_('bill'))
+        lbl.set_location(1, 0, 2)
+        dlg.add_component(lbl)
+        sel = XferCompSelect('thirds')
+        sel.description = _("thirds")
+        sel.set_location(1, 1, 2)
+        sel.set_needed(True)
+        sel.set_select_query(SavedCriteria.objects.filter(modelname=Third.get_long_name()))
+        dlg.add_component(sel)
+        dlg.fill_from_model(1, 2, False, desc_fields=[("bill_type", "date"), "comment"])
+        dlg.remove_component('third')
+        lbl = XferCompLabelForm('sep_bill')
+        lbl.set_value("{[hr/]}{[hr/]}")
+        lbl.set_location(1, 8, 2)
+        dlg.add_component(lbl)
+        lbl = XferCompLabelForm('titleart')
+        lbl.set_value_as_title(_('article'))
+        lbl.set_location(1, 9, 2)
+        dlg.add_component(lbl)
+        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"SAVE": "YES"})
+        dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+
+    def fillresponse(self):
+        if self.getparam("SAVE") != "YES":
+            self._fill_dlg_batch()
+        else:
+            thirds_criteria = SavedCriteria.objects.get(id=self.getparam('thirds', 0))
+            filter_result, _criteria_desc = get_search_query_from_criteria(thirds_criteria.criteria, Third)
+            thirds_list = Third.objects.filter(filter_result)
+            bill_comp = XferContainerAcknowledge()
+            bill_comp.model = Bill
+            bill_comp._initialize(self.request)
+            bill_comp.item.id = 0
+            detail_comp = XferContainerAcknowledge()
+            detail_comp.model = Detail
+            detail_comp._initialize(self.request)
+            detail_comp.item.id = 0
+            billtype = get_value_if_choices(bill_comp.item.bill_type, bill_comp.item.get_field_by_name('bill_type'))
+            if self.confirme(_('Do you want create this invoice "%(type)s" of %(amount)s for %(nbthird)s cutomers ?') % {'type': billtype,
+                                                                                                                         'amount': get_amount_from_format_devise(detail_comp.item.total, 7),
+                                                                                                                         'nbthird': len(thirds_list)}):
+                for third in thirds_list:
+                    new_bill = Bill(third=third, bill_type=bill_comp.item.bill_type, date=bill_comp.item.date, comment=bill_comp.item.comment)
+                    new_bill.save()
+                    new_detail = detail_comp.item
+                    new_detail.id = None
+                    new_detail.bill = new_bill
+                    new_detail.save()
 
 
 def can_printing(xfer, gridname=''):
@@ -419,12 +492,15 @@ class DetailAddModify(XferAddEditor):
     caption_add = _("Add detail")
     caption_modify = _("Modify detail")
 
-    def fillresponse(self):
+    def affect_designation(self):
         if self.getparam('CHANGE_ART') is not None:
             if self.item.article is not None:
                 self.item.designation = self.item.article.get_designation()
                 self.item.price = self.item.article.price
                 self.item.unit = self.item.article.unit
+
+    def fillresponse(self):
+        self.affect_designation()
         XferAddEditor.fillresponse(self)
 
 
@@ -472,7 +548,7 @@ class ArticleList(XferListEditor):
         edt.set_value(show_filter)
         edt.set_location(0, 3, 2)
         edt.description = _('Show articles')
-        edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(edt)
 
         edt = XferCompEdit("ref_filter")
@@ -480,7 +556,7 @@ class ArticleList(XferListEditor):
         edt.set_location(0, 4)
         edt.is_default = True
         edt.description = _('ref./designation')
-        edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(edt)
 
         self.fill_from_model(0, 5, False, ['stockable'])
@@ -488,7 +564,7 @@ class ArticleList(XferListEditor):
         sel_stock.select_list.insert(0, (-1, '---'))
         sel_stock.select_list.append((3, _('with stock')))
         sel_stock.set_value(self.show_stockable)
-        sel_stock.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
 
         cat_list = Category.objects.all()
         if len(cat_list) > 0:
@@ -497,14 +573,14 @@ class ArticleList(XferListEditor):
             edt.set_value(self.categories_filter)
             edt.set_location(1, 4, 1, 2)
             edt.description = _('categories')
-            edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
             self.add_component(edt)
 
         sel_stock = XferCompSelect('storagearea')
         sel_stock.set_needed(False)
         sel_stock.set_select_query(StorageArea.objects.all())
         sel_stock.set_value(show_storagearea)
-        sel_stock.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         sel_stock.set_location(0, 6)
         sel_stock.description = StorageArea._meta.verbose_name
         if len(sel_stock.select_list) > 1:
@@ -675,12 +751,12 @@ class BillStatistic(XferContainerCustom):
         self.fill_from_model(1, 1, False, ['fiscal_year'])
         fiscal_year = self.get_components('fiscal_year')
         fiscal_year.set_needed(True)
-        fiscal_year.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        fiscal_year.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         ck = XferCompCheck('without_reduct')
         ck.set_value(self.getparam('without_reduct', False))
         ck.set_location(1, 2, 2)
         ck.description = _('Without reduction')
-        ck.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        ck.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(ck)
 
     def fill_customers(self):
@@ -843,7 +919,7 @@ class BillAccountChecking(XferContainerCustom):
         self.fill_from_model(1, 1, False, ['fiscal_year'])
         fiscal_year = self.get_components('fiscal_year')
         fiscal_year.set_needed(True)
-        fiscal_year.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        fiscal_year.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def fill_bill(self):
         lbl = XferCompLabelForm('lbl_bill')

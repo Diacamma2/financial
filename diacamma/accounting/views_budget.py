@@ -256,7 +256,7 @@ class BudgetImport(XferContainerAcknowledge):
             lbl.set_value_as_header(_('All budget lines will be delete and income statement of select item will be import as new budget.'))
             lbl.set_location(1, 2, 2)
             dlg.add_component(lbl)
-            dlg.add_action(self.get_action(TITLE_OK, "images/ok.png"), close=CLOSE_YES, params={'CONFIRME': 'YES'})
+            dlg.add_action(self.return_action(TITLE_OK, "images/ok.png"), close=CLOSE_YES, params={'CONFIRME': 'YES'})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
             currentyear = self.getparam('currentyear', 0)

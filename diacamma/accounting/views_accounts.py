@@ -67,7 +67,7 @@ class ChartsAccountList(XferListEditor):
         self.item.year = FiscalYear.get_current(select_year)
         self.fill_from_model(0, 1, False, ['year', 'type_of_account'])
         comp_year = self.get_components('year')
-        comp_year.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        comp_year.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         btn = XferCompButton('confyear')
         btn.set_location(comp_year.col + 1, comp_year.row)
         btn.set_action(self.request, ActionsManage.get_action_url(FiscalYear.get_long_name(), 'configuration', self), close=CLOSE_NO)
@@ -205,7 +205,7 @@ class ChartsAccountInitial(XferContainerAcknowledge):
                 sel.set_select(select_list)
                 sel.set_location(1, 1)
                 dlg.add_component(sel)
-                dlg.add_action(self.get_action(TITLE_OK, "images/ok.png"), close=CLOSE_YES)
+                dlg.add_action(self.return_action(TITLE_OK, "images/ok.png"), close=CLOSE_YES)
                 dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
             else:
                 ChartsAccount.import_initial(FiscalYear.get_current(self.getparam('year')), account_item)
@@ -306,7 +306,7 @@ class FiscalYearClose(XferContainerAcknowledge):
             lab.set_location(0, 1, 4)
             dlg.add_component(lab)
             signal_and_lock.Signal.call_signal("finalize_year", dlg)
-            dlg.add_action(self.get_action(TITLE_OK, 'images/ok.png'), modal=FORMTYPE_MODAL, close=CLOSE_YES, params={'CONFIRME': 'YES'})
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), modal=FORMTYPE_MODAL, close=CLOSE_YES, params={'CONFIRME': 'YES'})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
             signal_and_lock.Signal.call_signal("finalize_year", self)

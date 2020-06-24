@@ -50,7 +50,7 @@ class PayoffConf(XferListEditor):
         check.set_location(0, 2)
         check.set_value(show_only_enabled_bank)
         check.description = _('show only enabled bank account')
-        check.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        check.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(check)
 
         self.new_tab(_('Payment method'))

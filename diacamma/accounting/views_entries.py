@@ -91,7 +91,7 @@ class EntryAccountList(XferListEditor):
         self.item.year = FiscalYear.get_current(select_year)
         self.item.journal = Journal.objects.filter(is_default=True).first()
         self.fill_from_model(0, 1, False, ['year', 'journal'])
-        self.get_components('year').set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        self.get_components('year').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.get_components('year').colspan = 2
         self.filter = Q(entry__year=self.item.year)
 
@@ -102,7 +102,7 @@ class EntryAccountList(XferListEditor):
         if select_journal == -1:
             select_journal = self.item.journal_id if self.item.journal_id is not None else 0
         journal.set_value(select_journal)
-        journal.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        journal.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         journal.colspan = 2
         if select_journal != 0:
             self.filter &= Q(entry__journal__id=select_journal)
@@ -115,7 +115,7 @@ class EntryAccountList(XferListEditor):
         sel.set_location(0, 3, 2)
         sel.description = _("Filter")
         sel.set_size(20, 200)
-        sel.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        sel.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(sel)
         if self.select_filter == 1:
             self.filter &= Q(entry__close=False)
@@ -269,8 +269,8 @@ class EntryAccountImport(ObjectImport):
             self.item.set_context(self)
             self.fill_from_model(1, 0, readonly, [('year', 'journal')])
             if not readonly:
-                self.get_components('year').set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-                self.get_components('journal').set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+                self.get_components('year').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+                self.get_components('journal').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
 
     def fillresponse(self, quotechar="'", delimiter=";", encoding="utf-8", dateformat="%d/%m/%Y", step=0):
         self.select_year = self.getparam('year')
@@ -398,7 +398,7 @@ class EntryAccountCostAccounting(XferContainerAcknowledge):
                 sel.set_value(self.item.costaccounting_id)
             sel.set_location(1, 2)
             dlg.add_component(sel)
-            dlg.add_action(self.get_action(_('Ok'), 'images/ok.png'), params={"SAVE": "YES"})
+            dlg.add_action(self.return_action(_('Ok'), 'images/ok.png'), params={"SAVE": "YES"})
             dlg.add_action(WrapAction(_('Cancel'), 'images/cancel.png'))
         else:
             if cost_accounting_id == 0:
@@ -477,7 +477,7 @@ class EntryAccountEdit(XferAddEditor):
         self.actions = []
         if self.no_change:
             if self.added:
-                self.add_action(self.get_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
+                self.add_action(self.return_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
                 self.add_action(EntryAccountClose.get_action(_("Closed"), "images/up.png"), close=CLOSE_YES, params={"REOPEN": "YES"})
             if (self.item.link is None) and self.item.has_third and not self.item.has_cash:
                 self.add_action(EntryAccountCreateLinked.get_action(_('Payment'), "images/right.png"), close=CLOSE_YES)
@@ -487,7 +487,7 @@ class EntryAccountEdit(XferAddEditor):
             if (self.debit_rest < 0.0001) and (self.credit_rest < 0.0001) and (self.nb_lines > 0):
                 self.add_action(EntryAccountValidate.get_action(TITLE_OK, 'images/ok.png'))
             elif self.added:
-                self.add_action(self.get_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
+                self.add_action(self.return_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
             if self.item.id is None:
                 self.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
             else:
@@ -608,7 +608,7 @@ class EntryAccountModelSelector(XferContainerAcknowledge):
             fact.set_location(1, 1)
             fact.description = _('factor')
             dlg.add_component(fact)
-            dlg.add_action(self.get_action(TITLE_OK, 'images/ok.png'), params={"SAVE": "YES"})
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"SAVE": "YES"})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
             factor = self.getparam('factor', 1.0)

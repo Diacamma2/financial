@@ -154,7 +154,7 @@ class SupportingThird(XferListEditor):
         contact_filter = self.getparam('filter', '')
         comp = XferCompEdit('filter')
         comp.set_value(contact_filter)
-        comp.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        comp.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         comp.set_location(0, 2, 2)
         comp.is_default = True
         comp.description = _('Filtrer by contact')
@@ -323,7 +323,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
             sel.set_location(1, 6)
             sel.description = selectors[1]
             dlg.add_component(sel)
-            dlg.add_action(self.get_action(TITLE_OK, 'images/ok.png'), params={"OK": "YES"})
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"OK": "YES"})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
             if (self.getparam("PRINT_PERSITENT", False) is True):

@@ -84,7 +84,7 @@ class ThirdList(XferListEditor):
         thirdtype = self.getparam('thirdtype', 0)
         comp = XferCompEdit('filter')
         comp.set_value(contact_filter)
-        comp.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        comp.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         comp.set_location(0, 2, 2)
         comp.description = _('Filtrer by contact')
         comp.is_default = True
@@ -95,7 +95,7 @@ class ThirdList(XferListEditor):
         edt.set_value(thirdtype)
         edt.set_location(0, 3, 2)
         edt.description = _('Third type')
-        edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(edt)
 
         edt = XferCompSelect("show_filter")
@@ -104,7 +104,7 @@ class ThirdList(XferListEditor):
         edt.set_value(show_filter)
         edt.description = _('Accounts displayed')
         edt.set_location(0, 4, 2)
-        edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(edt)
         if show_filter != 0:
             self.fieldnames = Third.get_other_fields()
@@ -183,7 +183,7 @@ class ThirdDisable(XferContainerAcknowledge):
             limite_date.set_location(1, 2, 1)
             limite_date.description = _('limit date')
             dlg.add_component(limite_date)
-            dlg.add_action(self.get_action(TITLE_OK, 'images/ok.png'), params={"SAVE": "YES"})
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"SAVE": "YES"})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
             third_ids = [val_third['third'] for val_third in EntryLineAccount.objects.filter(entry__date_value__gt=limit_date, third__gt=0).values('third')]
@@ -441,7 +441,7 @@ def thirdaddon_accounting(item, xfer):
                             (2, _('All entries for all fiscal year')), (3, _('Only entries without link'))])
             edt.set_value(lines_filter)
             edt.set_location(1, 1)
-            edt.set_action(xfer.request, xfer.get_action(),
+            edt.set_action(xfer.request, xfer.return_action(),
                            modal=FORMTYPE_REFRESH, close=CLOSE_NO)
             xfer.add_component(edt)
             entrulines = EntryLineAccount.objects.filter(entry_lines_filter).distinct()

@@ -68,11 +68,11 @@ class StorageSheetList(XferListEditor):
         sel_status = self.get_components('status')
         sel_status.select_list.insert(0, (-1, '---'))
         sel_status.set_value(status_filter)
-        sel_status.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_status.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         sel_type = self.get_components('sheet_type')
         sel_type.select_list.insert(0, (-1, '---'))
         sel_type.set_value(type_filter)
-        sel_type.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_type.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.filter = Q()
         if status_filter != -1:
             self.filter &= Q(status=status_filter)
@@ -133,7 +133,7 @@ class StorageSheetTransition(XferTransition):
         sel.set_location(1, 2)
         sel.description = _('target area')
         dlg.add_component(sel)
-        dlg.add_action(self.get_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
+        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
         dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
 
     def fill_confirm(self, transition, trans):
@@ -248,7 +248,7 @@ class StorageSituation(XferListEditor):
         sel_stock.set_needed(False)
         sel_stock.set_select_query(StorageArea.objects.all())
         sel_stock.set_value(show_storagearea)
-        sel_stock.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         sel_stock.set_location(0, 4)
         sel_stock.description = StorageArea._meta.verbose_name
         self.add_component(sel_stock)
@@ -258,14 +258,14 @@ class StorageSituation(XferListEditor):
         edt.set_location(0, 5)
         edt.is_default = True
         edt.description = _('ref./designation')
-        edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(edt)
 
         ckc = XferCompCheck("hide_empty")
         ckc.set_value(self.hide_empty)
         ckc.set_location(0, 6)
         ckc.description = _('hide articles without quantity')
-        ckc.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        ckc.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(ckc)
 
         cat_list = Category.objects.all()
@@ -275,7 +275,7 @@ class StorageSituation(XferListEditor):
             edt.set_value(self.categories_filter)
             edt.set_location(1, 4, 0, 2)
             edt.description = _('categories')
-            edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
             self.add_component(edt)
         self.filter = Q(storagesheet__status=1)
         if ref_filter != '':
@@ -367,21 +367,21 @@ class StorageHistoric(XferListEditor):
         date_init.set_value(date_begin)
         date_init.set_location(0, 3)
         date_init.description = _('begin date')
-        date_init.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        date_init.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(date_init)
         date_finish = XferCompDate("end_date")
         date_finish.set_needed(False)
         date_finish.set_value(date_end)
         date_finish.set_location(1, 3)
         date_finish.description = _('end date')
-        date_finish.set_action(self.request, self.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        date_finish.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(date_finish)
 
         sel_stock = XferCompSelect('storagearea')
         sel_stock.set_needed(False)
         sel_stock.set_select_query(StorageArea.objects.all())
         sel_stock.set_value(show_storagearea)
-        sel_stock.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         sel_stock.set_location(0, 4)
         sel_stock.description = StorageArea._meta.verbose_name
         self.add_component(sel_stock)
@@ -391,7 +391,7 @@ class StorageHistoric(XferListEditor):
         edt.set_location(0, 5)
         edt.is_default = True
         edt.description = _('ref./designation')
-        edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(edt)
 
         cat_list = Category.objects.all()
@@ -401,7 +401,7 @@ class StorageHistoric(XferListEditor):
             edt.set_value(self.categories_filter)
             edt.set_location(1, 4, 0, 2)
             edt.description = _('categories')
-            edt.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
             self.add_component(edt)
         self.filter = Q(storagesheet__status=1)
         if show_storagearea != 0:

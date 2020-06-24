@@ -200,7 +200,7 @@ class PayoffEditor(LucteriosEditor):
             levy = mode.select_list[5]
             mode.select_list.insert(3, levy)
             del mode.select_list[6]
-            xfer.get_components("mode").set_action(xfer.request, xfer.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            xfer.get_components("mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         if int(self.item.mode) == 0:
             xfer.remove_component("bank_account")
         else:
@@ -247,7 +247,7 @@ class PaymentMethodEditor(LucteriosEditor):
 
     def edit(self, xfer):
         if xfer.item.id is None:
-            xfer.get_components("paytype").set_action(xfer.request, xfer.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            xfer.get_components("paytype").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         else:
             xfer.change_to_readonly('paytype')
         items = self.item.get_items()
