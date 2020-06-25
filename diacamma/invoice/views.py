@@ -361,7 +361,7 @@ class BillDel(XferDelete):
     caption = _("Delete bill")
 
 
-@ActionsManage.affect_grid(_('batch'), "images/upload.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < 1)
+@ActionsManage.affect_grid(_('Batch'), "images/upload.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < 1)
 @MenuManage.describ('payoff.add_payoff')
 class BillBatch(XferContainerAcknowledge):
     caption = _("Batch bill")

@@ -21,6 +21,17 @@ Par défaut, vous obtenez la désignation et le prix par défaut de l'article s�
 Si l'article a été défini comme *stockable*, vous devrez en plus préciser depuis quel lieu de stockage il sera sortie.
 Il n'est bien sur pas possible de vendre plus d'article stockable que l'on possède dans le stock.  
 
+Création en lot
+---------------
+
+Depuis le menu *Facturier/Facture*, vous pouvez créer des factures en lot via le bouton "En lot".
+
+Pour cela, vous devez définir un "critère sauvegarder" de recherche de tiers (à réaliser via le menu "Comptabilité > Tiers" - bouton "Recherche").  
+Précisez également le type de document (devis, facture, avoir ou reçu) à réaliser ainsi que l'article à inclure (un seul possible).
+
+Valider la création: la génération des justificatifs, liés aux tiers définis dans la recherche, sera alors réalisée.   
+Ces justificatifs seront à l'état "en création": vous pouvez donc les controler avant de les valider et les envoyer.
+
 Changement d'état
 -----------------
 
