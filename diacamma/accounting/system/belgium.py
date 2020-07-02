@@ -21,7 +21,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 import re
 
-from django.utils import six
 
 from diacamma.accounting.system.default import DefaultSystemAccounting
 

@@ -25,7 +25,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from shutil import rmtree
 from _io import StringIO
-from django.utils import six
 
 from lucterios.framework.filetools import get_user_dir
 from lucterios.framework.test import LucteriosTest
@@ -707,8 +706,8 @@ class StorageTest(InvoiceTest):
         self.assert_count_equal('CSV', 6)
         self.assert_count_equal('#CSV/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal(self.json_actions[0], (six.text_type('Retour'), 'images/left.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '0'}))
-        self.assert_action_equal(self.json_actions[1], (six.text_type('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '2'}))
+        self.assert_action_equal(self.json_actions[0], (str('Retour'), 'images/left.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '0'}))
+        self.assert_action_equal(self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '2'}))
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 2, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
@@ -719,7 +718,7 @@ class StorageTest(InvoiceTest):
         self.assert_count_equal('CSV', 6)
         self.assert_count_equal('#CSV/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal(self.json_actions[1], (six.text_type('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '3'}))
+        self.assert_action_equal(self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '3'}))
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 3, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',

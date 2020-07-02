@@ -25,7 +25,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
 from django.db.models.aggregates import Sum
 from django.db.models import Q
 
@@ -208,7 +207,7 @@ class StorageDetailImport(ObjectImport):
             self.tab = 0
             sheet = StorageSheet.objects.get(id=self.getparam("storagesheet", 0))
             lbl = XferCompLabelForm('sheet')
-            lbl.set_value(six.text_type(sheet))
+            lbl.set_value(str(sheet))
             lbl.set_location(1, 0, 2)
             lbl.description = _('storage sheet')
             self.add_component(lbl)
@@ -292,7 +291,7 @@ class StorageSituation(XferListEditor):
         grid.add_header('qty', _('Quantity'))
         grid.add_header('amount', _('Amount'), format_with_devise(7))
         grid.add_header('mean', _('Mean price'), format_with_devise(7))
-        six.print_(self.items)
+        print(self.items)
         item_id = 0
         total_val = 0.0
         for item in self.get_items_from_filter():
@@ -304,9 +303,9 @@ class StorageSituation(XferListEditor):
                 qty = float(item['data_sum'])
                 amount = float(art.get_amount_from_area(qty, area_id))
                 total_val += amount
-                grid.set_value(item_id, "article", six.text_type(art))
-                grid.set_value(item_id, "designation", six.text_type(art.designation))
-                grid.set_value(item_id, 'storagesheet__storagearea', six.text_type(StorageArea.objects.get(id=area_id)))
+                grid.set_value(item_id, "article", str(art))
+                grid.set_value(item_id, "designation", str(art.designation))
+                grid.set_value(item_id, 'storagesheet__storagearea', str(StorageArea.objects.get(id=area_id)))
                 grid.set_value(item_id, 'qty', format_to_string(qty, format_txt, None))
                 grid.set_value(item_id, 'amount', amount)
                 if abs(qty) > 0.0001:

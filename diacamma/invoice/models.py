@@ -32,12 +32,13 @@ from django.db import models
 from django.db.models.aggregates import Max, Sum, Count
 from django.db.models.functions import Concat
 from django.db.models.expressions import Case, When
+from django.db.models.fields import FloatField, IntegerField
 from django.db.models import Q, Value, F
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import ugettext_lazy as _
 from django.utils.dateformat import DateFormat
-from django.utils import six, timezone
+from django.utils import timezone
 from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field
@@ -66,7 +67,7 @@ class Vat(LucteriosModel):
     account = models.CharField(_('vat account'), max_length=50, default='4455')
 
     def __str__(self):
-        return six.text_type(self.name)
+        return str(self.name)
 
     @classmethod
     def get_default_fields(cls):
@@ -82,7 +83,7 @@ class Category(LucteriosModel):
     designation = models.TextField(_('designation'))
 
     def __str__(self):
-        return six.text_type(self.name)
+        return str(self.name)
 
     @classmethod
     def get_default_fields(cls):
@@ -107,7 +108,7 @@ class StorageArea(LucteriosModel):
     designation = models.TextField(_('designation'))
 
     def __str__(self):
-        return six.text_type(self.name)
+        return str(self.name)
 
     @classmethod
     def get_default_fields(cls):
@@ -137,7 +138,7 @@ class ArticleCustomField(LucteriosModel):
     def get_data(self):
         data = None
         if self.field.kind == 0:
-            data = six.text_type(self.value)
+            data = str(self.value)
         if self.value == '':
             self.value = '0'
         if self.field.kind == 1:
@@ -216,7 +217,7 @@ class Article(LucteriosModel, CustomizeObject):
         self.show_storagearea = 0
 
     def __str__(self):
-        return six.text_type(self.reference)
+        return str(self.reference)
 
     def get_text_value(self):
         text_value = self.designation.split('{[br/]}')[0]
@@ -373,7 +374,7 @@ class Article(LucteriosModel, CustomizeObject):
             for val in self.storagedetail_set.filter(detail_filter).values('storagesheet__storagearea').annotate(data_sum=Sum('quantity')):
                 if abs(val['data_sum']) > 0.001:
                     if not val['storagesheet__storagearea'] in stock.keys():
-                        stock[val['storagesheet__storagearea']] = [six.text_type(StorageArea.objects.get(id=val['storagesheet__storagearea'])), 0.0]
+                        stock[val['storagesheet__storagearea']] = [str(StorageArea.objects.get(id=val['storagesheet__storagearea'])), 0.0]
                     stock[val['storagesheet__storagearea']][1] += float(val['data_sum'])
             total_amount = 0.0
             total_qty = 0.0
@@ -635,11 +636,11 @@ class Bill(Supporting):
             info = Supporting.get_info_state(self, current_system_account().get_customer_mask())
         details = self.detail_set.all()
         if len(details) == 0:
-            info.append(six.text_type(_("no detail")))
+            info.append(str(_("no detail")))
         else:
             for detail in details:
                 if (detail.article_id is not None) and not detail.article.has_sufficiently(detail.storagearea_id, detail.quantity):
-                    info.append(_("Article %s is not sufficiently stocked") % six.text_type(detail.article))
+                    info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
             for detail in details:
                 if detail.article is not None:
                     if detail.article.accountposting is None:
@@ -655,7 +656,7 @@ class Bill(Supporting):
                     except LucteriosException:
                         break
                 if detail_account is None:
-                    info.append(six.text_type(_("article has code account unknown!")))
+                    info.append(str(_("article has code account unknown!")))
                     break
         if self.bill_type != 0:
             try:
@@ -666,7 +667,7 @@ class Bill(Supporting):
 
     def can_delete(self):
         if self.status > 0:
-            return _('"%s" cannot be deleted!') % six.text_type(self)
+            return _('"%s" cannot be deleted!') % str(self)
         return ''
 
     def generate_storage(self):
@@ -681,7 +682,7 @@ class Bill(Supporting):
                 old_area = detail.storagearea_id
                 if last_sheet is not None:
                     last_sheet.valid()
-                last_sheet = StorageSheet.objects.create(sheet_type=sheet_type, storagearea_id=old_area, date=self.date, comment=six.text_type(self), status=0)
+                last_sheet = StorageSheet.objects.create(sheet_type=sheet_type, storagearea_id=old_area, date=self.date, comment=str(self), status=0)
             if last_sheet is not None:
                 StorageDetail.objects.create(storagesheet=last_sheet, article=detail.article, quantity=abs(detail.quantity))
         if last_sheet is not None:
@@ -854,7 +855,7 @@ class Bill(Supporting):
                     ratio = (100 * costumers[cust_id] / total_cust)
                 except ZeroDivisionError:
                     ratio = None
-                cust_list.append((six.text_type(Third.objects.get(id=cust_id)), costumers[cust_id], ratio))
+                cust_list.append((str(Third.objects.get(id=cust_id)), costumers[cust_id], ratio))
             cust_list.sort(key=lambda cust_item: (-1 * cust_item[1], cust_item[0]))
             cust_list.append(("{[b]}%s{[/b]}" % _('total'), {'format': "{[b]}{0}{[/b]}", 'value': total_cust}, {'format': "{[b]}{0}{[/b]}", 'value': 100}))
         return cust_list
@@ -886,7 +887,7 @@ class Bill(Supporting):
                 if art_id is None:
                     art_text = "---"
                 else:
-                    art_text = six.text_type(Article.objects.get(id=art_id))
+                    art_text = str(Article.objects.get(id=art_id))
                 if abs(articles[art_id][1]) > 0.0001:
                     try:
                         ratio = (100 * articles[art_id][0] / total_art)
@@ -990,7 +991,7 @@ class Bill(Supporting):
 
     def get_document_filename(self):
         billtype = get_value_if_choices(self.bill_type, self.get_field_by_name('bill_type'))
-        return remove_accent("%s_%s_%s" % (billtype, self.num_txt, six.text_type(self.third)))
+        return remove_accent("%s_%s_%s" % (billtype, self.num_txt, str(self.third)))
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         for detail in self.detail_set.all():
@@ -1065,7 +1066,7 @@ class Detail(LucteriosModel):
         return items
 
     def __str__(self):
-        return "[%s] %s:%s" % (six.text_type(self.article), six.text_type(self.designation), self.price_txt)
+        return "[%s] %s:%s" % (str(self.article), str(self.designation), self.price_txt)
 
     def get_auditlog_object(self):
         return self.bill.get_final_child()
@@ -1262,7 +1263,7 @@ class StorageSheet(LucteriosModel):
 
     def can_delete(self):
         if self.status > 0:
-            return _('"%s" cannot be deleted!') % six.text_type(self)
+            return _('"%s" cannot be deleted!') % str(self)
         return ''
 
     def get_total(self):
@@ -1275,9 +1276,9 @@ class StorageSheet(LucteriosModel):
         info = []
         for detail in self.storagedetail_set.all():
             if detail.article.stockable == 0:
-                info.append(_("Article %s is not stockable") % six.text_type(detail.article))
+                info.append(_("Article %s is not stockable") % str(detail.article))
             elif (self.sheet_type != 0) and not detail.article.has_sufficiently(self.storagearea_id, detail.quantity):
-                info.append(_("Article %s is not sufficiently stocked") % six.text_type(detail.article))
+                info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
         return info
 
     @transition(field=status, source=0, target=1, conditions=[lambda item:item.get_info_state() == []])
@@ -1425,8 +1426,9 @@ class AutomaticReduce(LucteriosModel):
     def _get_nb_sold(self, reduce_query):
         nb_sold = 0.0
         if self.occurency != 0:
-            detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=2, then=-1), default=1))
-            qty_val = detail_reduce.aggregate(data_sum=Sum(F('quantity') * F('direction')))
+            detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=2, then=-1),
+                                                                                        default=1, output_field=IntegerField()))
+            qty_val = detail_reduce.aggregate(data_sum=Sum(F('quantity') * F('direction'), output_field=FloatField()))
             if qty_val['data_sum'] is not None:
                 nb_sold = float(qty_val['data_sum'])
         else:
@@ -1436,12 +1438,13 @@ class AutomaticReduce(LucteriosModel):
 
     def _reduce_for_mode2(self, reduce_query, detail, nb_sold):
         amount_sold = 0.0
-        detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=2, then=-1), default=1))
-        amount_val = detail_reduce.aggregate(data_sum=Sum(F('quantity') * F('price') * F('direction')))
+        detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=2, then=-1),
+                                                                                    default=1, output_field=IntegerField()))
+        amount_val = detail_reduce.aggregate(data_sum=Sum(F('quantity') * F('price') * F('direction'), output_field=FloatField()))
         if amount_val['data_sum'] is not None:
             amount_sold = float(amount_val['data_sum'])
         reduce_sold = 0.0
-        reduce_val = detail_reduce.aggregate(data_sum=Sum(F('reduce') * F('direction')))
+        reduce_val = detail_reduce.aggregate(data_sum=Sum(F('reduce') * F('direction'), output_field=FloatField()))
         if reduce_val['data_sum'] is not None:
             reduce_sold = float(reduce_val['data_sum'])
         if detail.bill.bill_type != 2:
@@ -1551,7 +1554,7 @@ def correct_quotation_asset_account():
             if corrected:
                 nb_asset_correct += 1
     if (nb_quotation_correct > 0) or (nb_asset_correct > 0):
-        six.print_(" * account correction assert = %d / quotation = %s" % (nb_asset_correct, nb_quotation_correct))
+        print(" * account correction assert = %d / quotation = %s" % (nb_asset_correct, nb_quotation_correct))
 
 
 @Signal.decorate('check_report')
@@ -1567,7 +1570,7 @@ def convert_asset_and_revenue():
         bill.save()
         nb_correct += 1
     if nb_correct > 0:
-        six.print_(" * asset & revenue correction = %d" % nb_correct)
+        print(" * asset & revenue correction = %d" % nb_correct)
         correct_quotation_asset_account()
 
 

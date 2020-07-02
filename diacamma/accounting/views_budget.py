@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
 from django.db.models import Q
 
 from lucterios.framework.xferadvance import TITLE_MODIFY, TITLE_ADD, TITLE_DELETE, TITLE_PRINT, TITLE_OK, TITLE_CANCEL,\
@@ -65,14 +64,14 @@ class BudgetList(XferListEditor):
                 if last_code != current_budget.code:
                     if last_code != '':
                         chart = ChartsAccount.get_chart_account(last_code)
-                        grid.set_value('C' + last_code, 'budget', six.text_type(chart))
+                        grid.set_value('C' + last_code, 'budget', str(chart))
                         grid.set_value('C' + last_code, 'montant', value)
                         value = 0
                     last_code = current_budget.code
                 value += current_budget.credit_debit_way() * current_budget.amount
             if last_code != '':
                 chart = ChartsAccount.get_chart_account(last_code)
-                grid.set_value('C' + last_code, 'budget', six.text_type(chart))
+                grid.set_value('C' + last_code, 'budget', str(chart))
                 grid.set_value('C' + last_code, 'montant', value)
             grid.nb_lines = len(grid.records)
             grid.order_list = None
@@ -220,7 +219,7 @@ class BudgetImport(XferContainerAcknowledge):
     def add_sel(self, costaccounting):
         res = []
         if costaccounting is not None:
-            res.append((costaccounting.id, six.text_type(costaccounting)))
+            res.append((costaccounting.id, str(costaccounting)))
             res.extend(self.add_sel(costaccounting.last_costaccounting))
         return res
 

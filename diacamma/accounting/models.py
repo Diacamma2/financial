@@ -38,7 +38,6 @@ from django.db.models.aggregates import Sum, Max, Count
 from django.template import engines
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
 from django.db.models.signals import pre_save
 from django_fsm import FSMIntegerField, transition
 
@@ -70,7 +69,7 @@ class ThirdCustomField(LucteriosModel):
     def get_data(self):
         data = None
         if self.field.kind == 0:
-            data = six.text_type(self.value)
+            data = str(self.value)
         if self.value == '':
             self.value = '0'
         if self.field.kind == 1:
@@ -102,7 +101,7 @@ class Third(LucteriosModel, CustomizeObject):
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total', format_string=lambda: format_with_devise(5))
 
     def __str__(self):
-        return six.text_type(self.contact.get_final_child())
+        return str(self.contact.get_final_child())
 
     @classmethod
     def get_field_by_name(cls, fieldname):
@@ -433,7 +432,7 @@ class FiscalYear(LucteriosModel):
         first_account = None
         current_account = None
         for account in self.chartsaccount_set.all().filter(code__startswith=num_cpt_txt).order_by('code'):
-            account_list.append((account.id, six.text_type(account)))
+            account_list.append((account.id, str(account)))
             if first_account is None:
                 first_account = account
             if account.id == num_cpt:
@@ -454,13 +453,13 @@ class FiscalYear(LucteriosModel):
         return {'year': self, 'entries_by_journal': entries_by_journal}
 
     def get_xml_export(self):
-        file_name = "fiscalyear_export_%s.xml" % six.text_type(self.id)
+        file_name = "fiscalyear_export_%s.xml" % str(self.id)
         xmlfiles = current_system_account().get_export_xmlfiles()
         if xmlfiles is None:
             raise LucteriosException(IMPORTANT, _('No export for this accounting system!'))
         xml_file, xsd_file = xmlfiles
         template = engines['django'].from_string(read_file(xml_file).decode('utf-8'))
-        fiscal_year_xml = six.text_type(template.render(self.get_context()))
+        fiscal_year_xml = str(template.render(self.get_context()))
         res_val = xml_validator(fiscal_year_xml, xsd_file)
         if res_val is not None:
             raise LucteriosException(GRAVE, res_val)
@@ -471,7 +470,7 @@ class FiscalYear(LucteriosModel):
         if self.begin.year != self.end.year:
             return "%d/%d" % (self.begin.year, self.end.year)
         else:
-            return six.text_type(self.begin.year)
+            return str(self.begin.year)
 
     def __str__(self):
         status = get_value_if_choices(self.status, self._meta.get_field('status'))
@@ -1262,9 +1261,9 @@ class EntryLineAccount(LucteriosModel):
 
     def get_entry_account(self):
         if self.third is None:
-            return six.text_type(self.account)
+            return str(self.account)
         else:
-            return "[%s %s]" % (self.account.code, six.text_type(self.third))
+            return "[%s %s]" % (self.account.code, str(self.third))
 
     def get_designation_ref(self):
         val = self.entry.designation
@@ -1636,7 +1635,7 @@ class Budget(LucteriosModel):
 
     def get_budget(self):
         chart = ChartsAccount.get_chart_account(self.code)
-        return six.text_type(chart)
+        return str(chart)
 
     def credit_debit_way(self):
         chart_account = current_system_account().new_charts_account(self.code)
@@ -1684,7 +1683,7 @@ class Budget(LucteriosModel):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if (self.cost_accounting is not None) and (self.cost_accounting.year_id is not None):
             self.year = self.cost_accounting.year
-        if six.text_type(self.id)[0] == 'C':
+        if str(self.id)[0] == 'C':
             value = self.amount
             year = self.year_id
             chart_code = self.code
@@ -1697,7 +1696,7 @@ class Budget(LucteriosModel):
             return LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def delete(self, using=None):
-        if six.text_type(self.id)[0] == 'C':
+        if str(self.id)[0] == 'C':
             for budget_line in Budget.objects.filter(Q(year_id=self.year_id) & Q(code=self.code)):
                 if budget_line.cost_accounting_id is None:
                     budget_line.delete()
@@ -1725,7 +1724,7 @@ def check_accountingcost():
         entryline.save()
         entryline_cmp += 1
     if entryline_cmp > 0:
-        six.print_(' * convert costaccounting: nb=%d' % entryline_cmp)
+        print(' * convert costaccounting: nb=%d' % entryline_cmp)
 
 
 def check_accountlink():
@@ -1745,7 +1744,7 @@ def check_accountlink():
                 AccountLink.create_link(set(entrylines), check_year=False)
                 new_link += 1
             except LucteriosException as lct_ext:
-                six.print_('!!! check_accountlink Error:', lct_ext, ' - lines:', entrylines)
+                print('!!! check_accountlink Error:', lct_ext, ' - lines:', entrylines)
         old_link += 1
         account_link.delete()
     if old_link > 0:
@@ -1759,13 +1758,13 @@ def check_accountlink():
             addon_linked = payoff_model.check_accountlink_from_supporting()
         else:
             addon_linked = 0
-        six.print_(' * convert AccountLink: old= %d / new= %d + %d' % (old_link, new_link, addon_linked))
+        print(' * convert AccountLink: old= %d / new= %d + %d' % (old_link, new_link, addon_linked))
 
 
 def pre_save_datadb(sender, **kwargs):
     if (sender == EntryAccount) and ('instance' in kwargs):
         if kwargs['instance'].costaccounting_id == 0:
-            six.print_('* Convert EntryAccount #%d' % kwargs['instance'].id)
+            print('* Convert EntryAccount #%d' % kwargs['instance'].id)
             kwargs['instance'].costaccounting_id = None
 
 
@@ -1782,7 +1781,7 @@ def get_meta_currency_iso():
                     if iso_ident != symbole:
                         symbole = "%s / %s" % (iso_ident, symbole)
                     currency_list.append((iso_ident, "%s (%s)" % (title, symbole)))
-        return '("","",%s,"",True)' % six.text_type(currency_list)
+        return '("","",%s,"",True)' % str(currency_list)
     else:
         return None
 

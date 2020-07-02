@@ -25,7 +25,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 
 from django.db.models.aggregates import Sum
-from django.utils import six
 
 from diacamma.accounting.models import EntryLineAccount, ChartsAccount, Budget, Third
 from diacamma.accounting.tools import correct_accounting_code
@@ -60,7 +59,7 @@ def get_totalaccount_for_query(query, sign_value=None, with_third=False):
             if ('third' in data_line.keys()) and (data_line['third'] is not None):
                 account_code = "%s#%s" % (account_code, data_line['third'])
                 third = Third.objects.get(id=data_line['third'])
-                account_title = "[%s %s]" % (account.code, six.text_type(third))
+                account_title = "[%s %s]" % (account.code, str(third))
             else:
                 account_title = account.get_name()
             amount = None

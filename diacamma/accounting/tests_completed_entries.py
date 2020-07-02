@@ -28,7 +28,7 @@ from os.path import exists
 from base64 import b64decode
 from datetime import date
 
-from django.utils import six, formats
+from django.utils import formats
 from django.db.models import Q
 
 from lucterios.framework.test import LucteriosTest
@@ -195,7 +195,7 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryAccountListing',
                       {'PRINT_MODE': '4', 'MODEL': 7, 'year': '1', 'journal': '0', 'filter': '0'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 35, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:20], '"Liste d\'écritures -')
@@ -207,7 +207,7 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryAccountListing',
                       {'PRINT_MODE': '4', 'MODEL': 7, 'year': '1', 'journal': '0', 'filter': '1'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 18, str(content_csv))
 
@@ -215,7 +215,7 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryAccountListing',
                       {'PRINT_MODE': '4', 'MODEL': 7, 'year': '1', 'journal': '0', 'filter': '2'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 27, str(content_csv))
 
@@ -223,7 +223,7 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryAccountListing',
                       {'PRINT_MODE': '4', 'MODEL': 7, 'year': '1', 'journal': '0', 'filter': '3'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 22, str(content_csv))
 
@@ -232,7 +232,7 @@ class CompletedEntryTest(LucteriosTest):
                       {'PRINT_MODE': '4', 'MODEL': 7, 'year': '1', 'journal': '0', 'filter': '4'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
         csv_value = b64decode(
-            six.text_type(self.response_json['print']['content'])).decode("utf-8")
+            str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 23, str(content_csv))
 
@@ -241,7 +241,7 @@ class CompletedEntryTest(LucteriosTest):
                       {'PRINT_MODE': '4', 'MODEL': 7, 'year': '1', 'journal': '4', 'filter': '0'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
         csv_value = b64decode(
-            six.text_type(self.response_json['print']['content'])).decode("utf-8")
+            str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 16, str(content_csv))
 
@@ -258,7 +258,7 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryAccountListing',
                       {'PRINT_MODE': '4', 'MODEL': 7, 'year': '1', 'journal': '-1', 'filter': '0', 'CRITERIA': 'entry.year||8||1//account.code||6||7'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 13, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:20], '"Liste d\'écritures -')

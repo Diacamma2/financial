@@ -22,7 +22,6 @@ from shutil import rmtree
 from importlib import import_module
 from base64 import b64decode
 
-from django.utils import six
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -339,7 +338,7 @@ class ChartsAccountTest(LucteriosTest):
                       {'year': '1', 'type_of_account': '-1', 'PRINT_MODE': '4', 'MODEL': 6}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'chartsAccountListing')
         csv_value = b64decode(
-            six.text_type(self.response_json['print']['content'])).decode("utf-8")
+            str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 27, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:27], '"Liste des comptes du plan ')
@@ -353,7 +352,7 @@ class ChartsAccountTest(LucteriosTest):
                       {'year': '1', 'type_of_account': '4', 'PRINT_MODE': '4', 'MODEL': 6}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'chartsAccountListing')
         csv_value = b64decode(
-            six.text_type(self.response_json['print']['content'])).decode("utf-8")
+            str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 15, str(content_csv))
 

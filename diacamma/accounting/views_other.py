@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
 from django.db.models import Q
 
 from lucterios.framework.xferadvance import XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, TITLE_DELETE, TITLE_EDIT, TITLE_CANCEL, TITLE_OK,\
@@ -94,7 +93,7 @@ class CostAccountingReportByDate(XferContainerAcknowledge):
         else:
             list_cost = []
             for cost_item in CostAccounting.objects.filter(Q(entrylineaccount__entry__date_value__gte=begin_date) & Q(entrylineaccount__entry__date_value__lte=end_date)).distinct():
-                list_cost.append(six.text_type(cost_item.id))
+                list_cost.append(str(cost_item.id))
             list_cost = set(list_cost)
             if len(list_cost) == 0:
                 raise LucteriosException(IMPORTANT, _("No cost accounting finds for this range !"))

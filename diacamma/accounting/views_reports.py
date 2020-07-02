@@ -29,7 +29,7 @@ from datetime import date, datetime
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.db.models.aggregates import Sum
-from django.utils import six, formats
+from django.utils import formats
 
 from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, WrapAction, convert_date, ActionsManage, SELECT_MULTI
 from lucterios.framework.xfergraphic import XferContainerCustom
@@ -270,7 +270,7 @@ class FiscalYearBalanceSheet(FiscalYearReport):
             lbl.set_location(1, 12)
             self.add_component(lbl)
             lbl = XferCompLabelForm('last_year')
-            lbl.set_value(six.text_type(self.item.last_fiscalyear))
+            lbl.set_value(str(self.item.last_fiscalyear))
             lbl.set_location(2, 12, 4)
             self.add_component(lbl)
             add_fiscalyear_result(self, 0, 13, 6, self.item.last_fiscalyear, 'last_result')
@@ -322,7 +322,7 @@ class FiscalYearIncomeStatement(FiscalYearReport):
             lbl.set_location(1, 12)
             self.add_component(lbl)
             lbl = XferCompLabelForm('last_year')
-            lbl.set_value(six.text_type(self.item.last_fiscalyear))
+            lbl.set_value(str(self.item.last_fiscalyear))
             lbl.set_location(2, 12, 4)
             self.add_component(lbl)
             add_fiscalyear_result(self, 0, 13, 6, self.item.last_fiscalyear, "last_result")
@@ -451,10 +451,10 @@ class FiscalYearLedger(FiscalYearReport):
                 self._add_total_account()
                 self.last_account = line.account
                 self.last_third = None
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % six.text_type(self.last_account))
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % str(self.last_account))
                 self.line_idx += 1
             if self.last_third != line.third:
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(8) + "{[b]}%s{[/b]}" % six.text_type(line.entry_account))
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(8) + "{[b]}%s{[/b]}" % str(line.entry_account))
                 self.line_idx += 1
             self.last_third = line.third
             for header in self.grid.headers:
@@ -522,7 +522,7 @@ class FiscalYearTrialBalance(FiscalYearReport):
                 if account_code not in balance_values.keys():
                     if ('third' in data_line.keys()) and (data_line['third'] is not None):
                         third = Third.objects.get(id=data_line['third'])
-                        account_title = "[%s %s]" % (account.code, six.text_type(third))
+                        account_title = "[%s %s]" % (account.code, str(third))
                     else:
                         account_title = account.get_name()
                     balance_values[account_code] = [account_title, 0, 0]
@@ -644,7 +644,7 @@ class CostAccountingReport(FiscalYearReport):
         self.addNameCol = False
         for self.item in self.items:
             self.filter = Q(costaccounting=self.item)
-            self.new_tab(six.text_type(self.item))
+            self.new_tab(str(self.item))
             self.define_gridheader()
             self.fill_filterheader()
             self.calcul_table()
@@ -679,7 +679,7 @@ class CostAccountingReport(FiscalYearReport):
         self.add_component(img)
         if len(self.items) == 1:
             lbl = XferCompLabelForm('name')
-            lbl.set_value(six.text_type(self.items[0]))
+            lbl.set_value(str(self.items[0]))
             lbl.set_location(1, 2, 4)
             lbl.description = self.model._meta.verbose_name
             self.add_component(lbl)

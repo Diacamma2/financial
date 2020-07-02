@@ -26,7 +26,7 @@ from os.path import basename
 from datetime import date
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six, formats
+from django.utils import formats
 from django.db.models import Q
 
 from lucterios.framework.xferadvance import XferListEditor, TITLE_ADD, TITLE_MODIFY, TITLE_EDIT, TITLE_DELETE, TITLE_LISTING, TITLE_OK, TITLE_CANCEL
@@ -235,7 +235,7 @@ class ChartsAccountListing(XferPrintListing):
         if self.getparam('CRITERIA') is None:
             info_list = []
             select_year = self.getparam('year')
-            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('fiscal year'), six.text_type(FiscalYear.get_current(select_year))))
+            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('fiscal year'), str(FiscalYear.get_current(select_year))))
             select_type = self.getparam('type_of_account', 0)
             if select_type >= 0:
                 dep_field = self.item.get_field_by_name("type_of_account")
@@ -286,12 +286,12 @@ class FiscalYearClose(XferContainerAcknowledge):
         current_year = FiscalYear.objects.get(id=year)
         if self.getparam("CONFIRME") is None:
             nb_entry_noclose = current_year.check_to_close()
-            text_confirm = six.text_type(_('close-fiscal-year-confirme'))
+            text_confirm = str(_('close-fiscal-year-confirme'))
             if nb_entry_noclose > 0:
                 if nb_entry_noclose == 1:
-                    text_confirm += six.text_type(_('warning, entry no validated'))
+                    text_confirm += str(_('warning, entry no validated'))
                 else:
-                    text_confirm += six.text_type(_('warning, %d entries no validated') % nb_entry_noclose)
+                    text_confirm += str(_('warning, %d entries no validated') % nb_entry_noclose)
             dlg = self.create_custom(self.model)
             img = XferCompImage('img')
             img.set_value(self.icon_path())

@@ -26,7 +26,7 @@ from __future__ import unicode_literals
 from datetime import date
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import formats, six
+from django.utils import formats
 from django.db.models.functions import Concat
 from django.db.models import Q, Value
 from django.db.models.aggregates import Sum, Count
@@ -141,7 +141,7 @@ class BillList(XferListEditor):
             else:
                 sort_bill_third = "+"
             self.params['GRID_ORDER%bill_third'] = sort_bill_third
-            items = sorted(items, key=lambda t: six.text_type(t.third).lower(), reverse=sort_bill_third.startswith('-'))
+            items = sorted(items, key=lambda t: str(t.third).lower(), reverse=sort_bill_third.startswith('-'))
             res = QuerySet(model=Bill)
             res._result_cache = items
             return res
@@ -262,7 +262,7 @@ class BillTransition(XferTransition):
             check_payoff.description = _("Send email with PDF")
             dlg.add_component(check_payoff)
             edt = XferCompEdit('subject')
-            edt.set_value(six.text_type(self.item))
+            edt.set_value(str(self.item))
             edt.set_location(2, row + 2)
             edt.description = _('subject')
             dlg.add_component(edt)
@@ -470,7 +470,7 @@ class BillPrint(SupportingPrint):
             current_bill = self.items[0]
             return current_bill.get_document_filename()
         else:
-            return six.text_type(self.caption)
+            return str(self.caption)
 
     def items_callback(self):
         has_item = False

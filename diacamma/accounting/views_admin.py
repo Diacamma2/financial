@@ -42,7 +42,6 @@ from diacamma.accounting.models import FiscalYear, Journal, AccountThird, Charts
 from diacamma.accounting.system import accounting_system_list, accounting_system_name
 from diacamma.accounting.tools import clear_system_account, correct_accounting_code,\
     current_system_account
-from django.utils import six
 from lucterios.contacts.models import CustomField
 from diacamma.accounting.views_accounts import ChartsAccountInitial,\
     ChartsAccountImportFiscalYear
@@ -108,7 +107,7 @@ def add_year_info(xfer, is_mini=False):
                 xfer.add_component(btn1)
     except LucteriosException as lerr:
         lbl = XferCompLabelForm('nb_account')
-        lbl.set_value(six.text_type(lerr))
+        lbl.set_value(str(lerr))
         lbl.set_location(0, row, 4)
         xfer.add_component(lbl)
 

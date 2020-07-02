@@ -28,7 +28,6 @@ from datetime import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
 from django.db.models import Q
 
 from lucterios.framework.signal_and_lock import Signal
@@ -69,7 +68,7 @@ class ThirdEditor(LucteriosEditor):
         if field_id == 'legalentity':
             field_id = 'legal_entity'
         btn.set_action(xfer.request, ActionsManage.get_action_url(modal_name, 'Show', xfer), close=CLOSE_NO,
-                       params={field_id: six.text_type(xfer.item.id)})
+                       params={field_id: str(xfer.item.id)})
         xfer.add_component(btn)
         xfer.item = old_item
         Signal.call_signal("third_addon", self.item, xfer)
@@ -88,7 +87,7 @@ class AccountThirdEditor(LucteriosEditor):
             for acc_third in xfer.item.third.accountthird_set.all():
                 existed_codes.append(acc_third.code)
             for item in chart_accouts.exclude(code__in=existed_codes).order_by('code'):
-                sel_code.select_list.append((item.code, six.text_type(item)))
+                sel_code.select_list.append((item.code, str(item)))
             sel_code.set_value(self.item.code)
             xfer.add_component(sel_code)
         except LucteriosException:
@@ -131,9 +130,9 @@ class FiscalYearEditor(LucteriosEditor):
             xfer.add_component(sel)
 
     def before_save(self, xfer):
-        if isinstance(self.item.end, six.text_type):
+        if isinstance(self.item.end, str):
             self.item.end = datetime.strptime(self.item.end, "%Y-%m-%d").date()
-        if isinstance(self.item.begin, six.text_type):
+        if isinstance(self.item.begin, str):
             self.item.begin = datetime.strptime(
                 self.item.begin, "%Y-%m-%d").date()
         if self.item.end < self.item.begin:
@@ -347,7 +346,7 @@ class EntryAccountEditor(LucteriosEditor):
 def edit_third_for_line(xfer, column, row, account_code, current_third, vertical=True):
     sel_thirds = []
     for third in Third.objects.filter(accountthird__code=account_code).distinct():
-        sel_thirds.append((third.id, six.text_type(third)))
+        sel_thirds.append((third.id, str(third)))
     sel_thirds = sorted(sel_thirds, key=lambda third_item: third_item[1])
     if len(sel_thirds) > 0:
         sel_thirds.insert(0, (0, '---'))
@@ -513,7 +512,7 @@ class BudgetEditor(EntryLineAccountEditor):
         sel_code = XferCompSelect("code")
         sel_code.set_location(old_account.col, old_account.row, old_account.colspan + 1, old_account.rowspan)
         for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=code_mask).order_by('code'):
-            sel_code.select_list.append((item.code, six.text_type(item)))
+            sel_code.select_list.append((item.code, str(item)))
         sel_code.set_value(self.item.code)
         xfer.add_component(sel_code)
 

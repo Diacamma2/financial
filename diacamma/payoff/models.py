@@ -34,7 +34,6 @@ from django.db.models.aggregates import Sum, Max
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import ugettext_lazy as _
 from django.utils.module_loading import import_module
-from django.utils import six
 from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field
@@ -65,7 +64,7 @@ class Supporting(LucteriosModel):
 
     @property
     def reference(self):
-        return six.text_type(self)
+        return str(self)
 
     @classmethod
     def get_payoff_fields(cls):
@@ -130,14 +129,14 @@ class Supporting(LucteriosModel):
             third_mask = self.get_third_mask()
         if self.status == 0:
             if self.third is None:
-                info.append(six.text_type(_("no third selected")))
+                info.append(str(_("no third selected")))
             else:
                 accounts = self.third.accountthird_set.filter(code__regex=third_mask)
                 try:
                     if (len(accounts) == 0) or (ChartsAccount.get_account(accounts[0].code, FiscalYear.get_current()) is None):
-                        info.append(six.text_type(_("third has not correct account")))
+                        info.append(str(_("third has not correct account")))
                 except LucteriosException as err:
-                    info.append(six.text_type(err))
+                    info.append(str(err))
         return info
 
     def check_date(self, date):
@@ -145,7 +144,7 @@ class Supporting(LucteriosModel):
         fiscal_year = FiscalYear.get_current()
         if (fiscal_year.begin.isoformat() > date) or (fiscal_year.end.isoformat() < date):
             info.append(
-                six.text_type(_("date not include in current fiscal year")))
+                str(_("date not include in current fiscal year")))
         return info
 
     def get_third_account(self, third_mask, fiscalyear, third=None):
@@ -257,10 +256,10 @@ class Supporting(LucteriosModel):
         raise Exception('no implemented!')
 
     def get_payment_name(self):
-        return six.text_type(self).strip()
+        return str(self).strip()
 
     def get_docname(self):
-        return six.text_type(self)
+        return str(self)
 
     def get_current_date(self):
         raise Exception('no implemented!')
@@ -525,7 +524,7 @@ class Payoff(LucteriosModel):
         if entry is None:
             designation_items = []
             for paypoff_item in paypoff_list:
-                designation_items.append(six.text_type(paypoff_item.supporting.get_final_child().reference))
+                designation_items.append(str(paypoff_item.supporting.get_final_child().reference))
             designation = _("payoff for %s") % ",".join(designation_items)
             if len(designation) > 190:
                 designation = _("payoff for %d multi-pay") % len(designation_items)
@@ -633,7 +632,7 @@ class DepositSlip(LucteriosModel):
 
     def can_delete(self):
         if self.status != 0:
-            return _('Remove of %s impossible!') % six.text_type(self)
+            return _('Remove of %s impossible!') % str(self)
         return ''
 
     transitionname__close_deposit = _("To Close")
@@ -681,7 +680,7 @@ class DepositSlip(LucteriosModel):
             payoff['id'] = values['entry_id']
             bills = []
             for supporting in Supporting.objects.filter(payoff__entry=values['entry_id']).distinct():
-                bills.append(six.text_type(supporting.get_final_child()))
+                bills.append(str(supporting.get_final_child()))
             payoff['bill'] = '{[br/]}'.join(bills)
             payoff['payer'] = values['payer']
             payoff['amount'] = values['amount']
@@ -794,7 +793,7 @@ class PaymentMethod(LucteriosModel):
         for fieldid, fieldtitle, fieldtype in self.get_extra_fields():
             res += "{[b]}%s{[/b]}{[br/]}" % fieldtitle
             if fieldtype == 2:
-                res += six.text_type(get_bool_textual((items[fieldid - 1] == 'o') or (items[fieldid - 1] == 'True')))
+                res += str(get_bool_textual((items[fieldid - 1] == 'o') or (items[fieldid - 1] == 'True')))
             else:
                 res += items[fieldid - 1]
             res += "{[br/]}"
@@ -843,9 +842,9 @@ class PaymentMethod(LucteriosModel):
         paypal_dict['cancel_return'] = '/'.join(abs_url[:-2])
         paypal_dict['notify_url'] = paypal_dict['return'] + '/diacamma.payoff/validationPaymentPaypal'
         paypal_dict['item_name'] = remove_accent(supporting.get_payment_name())
-        paypal_dict['custom'] = six.text_type(supporting.id)
-        paypal_dict['tax'] = six.text_type(supporting.get_tax())
-        paypal_dict['amount'] = six.text_type(supporting.get_payable_without_tax())
+        paypal_dict['custom'] = str(supporting.id)
+        paypal_dict['tax'] = str(supporting.get_tax())
+        paypal_dict['amount'] = str(supporting.get_payable_without_tax())
         paypal_dict['cmd'] = '_xclick'
         paypal_dict['no_note'] = '1'
         paypal_dict['no_shipping'] = '1'
@@ -928,7 +927,7 @@ def check_payoff_accounting():
                 designation_items = []
                 for paypoff_item in payoff_list:
                     third_amounts.append((paypoff_item.supporting.third, float(paypoff_item.amount)))
-                    designation_items.append(six.text_type(paypoff_item.supporting.get_final_child().reference))
+                    designation_items.append(str(paypoff_item.supporting.get_final_child().reference))
                 designation = _("payoff for %s") % ",".join(designation_items)
                 if len(designation) > 190:
                     designation = _("payoff for %d multi-pay") % len(designation_items)
@@ -961,7 +960,7 @@ def check_accountlink_from_supporting():
         link_created = supporting.generate_accountlink()
         nb_link_created += link_created
         if link_created > 0:
-            six.print_(' + Add entry link from %s' % supporting)
+            print(' + Add entry link from %s' % supporting)
     return nb_link_created
 
 

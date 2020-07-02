@@ -29,7 +29,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models import Q, Value
-from django.utils import six, formats
+from django.utils import formats
 
 from lucterios.framework import signal_and_lock
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferShowEditor, XferDelete,\
@@ -71,7 +71,7 @@ class ThirdList(XferListEditor):
             else:
                 sort_thirdbis = "-"
             self.params['GRID_ORDER%third+'] = sort_thirdbis
-        items = sorted(items, key=lambda t: six.text_type(t).lower(), reverse=sort_thirdbis.startswith('-'))
+        items = sorted(items, key=lambda t: str(t).lower(), reverse=sort_thirdbis.startswith('-'))
         if self.getparam('show_filter', 0) == 2:
             items = [item for item in items if abs(item.get_total()) > 0.0001]
         res = QuerySet(model=Third)
@@ -265,7 +265,7 @@ class ThirdListing(XferPrintListing):
     caption = _("Listing third")
 
     def filter_callback(self, items):
-        items = sorted(items, key=lambda t: six.text_type(t))
+        items = sorted(items, key=lambda t: str(t))
         if (self.getparam('CRITERIA') is None) and (self.getparam('show_filter', 0) == 2):
             items = [item for item in items if abs(item.get_total()) > 0.0001]
         res = QuerySet(model=Third)
@@ -348,7 +348,7 @@ def summary_accounting(xfer):
         try:
             year = FiscalYear.get_current()
             lbl = XferCompLabelForm("accounting_year")
-            lbl.set_value_center(six.text_type(year))
+            lbl.set_value_center(str(year))
             lbl.set_location(0, row + 1, 4)
             xfer.add_component(lbl)
             add_fiscalyear_result(xfer, 0, row + 2, 4, year, "accounting_result")
@@ -356,7 +356,7 @@ def summary_accounting(xfer):
                 add_year_info(xfer, True)
         except LucteriosException as lerr:
             lbl = XferCompLabelForm("accounting_error")
-            lbl.set_value_center(six.text_type(lerr))
+            lbl.set_value_center(str(lerr))
             lbl.set_location(0, row + 1, 4)
             xfer.add_component(lbl)
             btn = XferCompButton("accounting_conf")
@@ -414,7 +414,7 @@ def show_contact_accounting(contact, xfer):
             btn = XferCompButton('show_third')
             btn.set_location(0, 50, 2)
             btn.set_action(xfer.request, ActionsManage.get_action_url('accounting.Third', 'Show', xfer),
-                           modal=FORMTYPE_MODAL, close=CLOSE_NO, params={"third": six.text_type(main_third.id)})
+                           modal=FORMTYPE_MODAL, close=CLOSE_NO, params={"third": str(main_third.id)})
             xfer.add_component(btn)
             xfer.item = contact
 

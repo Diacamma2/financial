@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from datetime import date
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import formats, six
+from django.utils import formats
 from django.db.models import Q, F
 from django.db.models.expressions import Case, When, ExpressionWrapper
 from django.db.models.fields import DecimalField
@@ -232,10 +232,10 @@ class EntryAccountListing(XferPrintListing):
         if self.getparam('CRITERIA') is None:
             info_list = []
             select_year = self.getparam('year')
-            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('fiscal year'), six.text_type(FiscalYear.get_current(select_year))))
+            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('fiscal year'), str(FiscalYear.get_current(select_year))))
             select_journal = self.getparam('journal', 4)
             if select_journal > 0:
-                info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('journal'), six.text_type(Journal.objects.get(id=select_journal))))
+                info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('journal'), str(Journal.objects.get(id=select_journal))))
             select_filter = self.getparam('filter', 1)
             select_filter_list = {0: _('All'), 1: _('In progress'), 2: _('Valid'), 3: _('Lettered'), 4: _('Not lettered')}
             info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_("Filter"), select_filter_list[select_filter]))

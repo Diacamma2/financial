@@ -28,7 +28,6 @@ from datetime import date
 from base64 import b64decode
 from os.path import isfile, join
 
-from django.utils import six
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -988,7 +987,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillStatisticPrint()
         self.calljson('/diacamma.invoice/billStatisticPrint', {'PRINT_MODE': '4'}, False)
         self.assert_observer('core.print', 'diacamma.invoice', 'billStatisticPrint')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 69, str(content_csv))
         self.assertEqual(content_csv[1].strip(), '"Impression des statistiques"')

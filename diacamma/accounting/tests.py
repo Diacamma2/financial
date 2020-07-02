@@ -26,7 +26,6 @@ from __future__ import unicode_literals
 from shutil import rmtree
 from datetime import date, timedelta
 from base64 import b64decode
-from django.utils import six
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -474,7 +473,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdListing',
                       {'PRINT_MODE': '4', 'MODEL': 5}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'thirdListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 17, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:18], '"Liste de tiers - ')
@@ -490,7 +489,7 @@ class ThirdTest(LucteriosTest):
         self.factory.xfer = ThirdListing()
         self.calljson('/diacamma.accounting/thirdListing', {'PRINT_MODE': '4', 'MODEL': 5, 'filter': 'joe'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'thirdListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 11, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:18], '"Liste de tiers - ')
@@ -500,7 +499,7 @@ class ThirdTest(LucteriosTest):
         self.factory.xfer = ThirdListing()
         self.calljson('/diacamma.accounting/thirdListing', {'PRINT_MODE': '4', 'MODEL': 5, 'show_filter': '2'}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'thirdListing')
-        csv_value = b64decode(six.text_type(self.response_json['print']['content'])).decode("utf-8")
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 13, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:18], '"Liste de tiers - ')

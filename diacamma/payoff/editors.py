@@ -25,7 +25,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
-from django.utils import six
 
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, \
@@ -49,7 +48,7 @@ class SupportingEditor(LucteriosEditor):
         if (self.item.third_id is not None) and (self.item.third.contact.email != ''):
             xfer.remove_component('third')
             new_third = XferCompLinkLabel('third')
-            new_third.set_value(six.text_type(self.item.third))
+            new_third.set_value(str(self.item.third))
             new_third.tab = third.tab
             new_third.col = third.col
             new_third.row = third.row
@@ -87,7 +86,7 @@ class SupportingEditor(LucteriosEditor):
         if (self.item.third_id is not None) and (self.item.third.contact.email != ''):
             xfer.remove_component('third')
             new_third = XferCompLinkLabel('third')
-            new_third.set_value(six.text_type(self.item.third))
+            new_third.set_value(str(self.item.third))
             new_third.tab = third.tab
             new_third.col = third.col
             new_third.row = third.row
@@ -122,7 +121,7 @@ class BankAccountEditor(LucteriosEditor):
         sel_code.description = old_account.description
         sel_code.set_location(old_account.col, old_account.row, old_account.colspan + 1, old_account.rowspan)
         for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_cash_mask()).order_by('code'):
-            sel_code.select_list.append((item.code, six.text_type(item)))
+            sel_code.select_list.append((item.code, str(item)))
         sel_code.set_value(self.item.account_code)
         xfer.add_component(sel_code)
 
@@ -159,7 +158,7 @@ class PayoffEditor(LucteriosEditor):
             current_payoff = self.item.id
         for supporting in supporting_list:
             up_supporting = supporting.get_final_child()
-            title.append(six.text_type(up_supporting))
+            title.append(str(up_supporting))
             if xfer.getparam('amount') is None:
                 amount_sum += up_supporting.get_total_rest_topay()
             amount_min += up_supporting.get_min_payoff(current_payoff)

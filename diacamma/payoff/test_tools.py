@@ -30,7 +30,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 from base64 import b64encode
 
-from django.utils import six
 from django.conf import settings
 
 from lucterios.framework.test import LucteriosTest
@@ -98,7 +97,7 @@ class PaymentTest(LucteriosTest):
         self.assertEqual(paypal_params['notify_url'], 'http://testserver/diacamma.payoff/validationPaymentPaypal', paypal_params)
         self.assertEqual(paypal_params['business'], 'monney@truc.org', paypal_params)
         self.assertEqual(paypal_params['item_name'], title, paypal_params)
-        self.assertEqual(paypal_params['custom'], six.text_type(itemid), paypal_params)
+        self.assertEqual(paypal_params['custom'], str(itemid), paypal_params)
         self.assertEqual(paypal_params['amount'], amount, paypal_params)
         self.assertEqual(paypal_params['tax'], tax, paypal_params)
 

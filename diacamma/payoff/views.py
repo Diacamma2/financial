@@ -32,7 +32,7 @@ from django.db.models.functions import Concat
 from django.db.models.query import QuerySet
 from django.db.models import Q, Value
 from django.conf import settings
-from django.utils import six, timezone
+from django.utils import timezone
 from django.apps.registry import apps
 
 from lucterios.framework.xferbasic import XferContainerAbstract
@@ -99,7 +99,7 @@ class PayoffAddModify(XferAddEditor):
             amount = 0
             supportings = []
             for item in self.items:
-                supportings.append(six.text_type(item.supporting.id))
+                supportings.append(str(item.supporting.id))
                 amount += item.amount
             self.params['supportings'] = ";".join(supportings)
             self.params['amount'] = amount
@@ -141,7 +141,7 @@ class SupportingThird(XferListEditor):
             else:
                 sort_thirdbis = "-"
             self.params['GRID_ORDER%third+'] = sort_thirdbis
-        items = sorted(items, key=lambda t: six.text_type(t).lower(), reverse=sort_thirdbis.startswith('-'))
+        items = sorted(items, key=lambda t: str(t).lower(), reverse=sort_thirdbis.startswith('-'))
         if self.getparam('show_filter', 0) == 2:
             items = [item for item in items if abs(item.get_total()) > 0.0001]
         res = QuerySet(model=Third)
@@ -240,7 +240,7 @@ class PayableEmail(XferContainerAcknowledge):
         from lucterios.mailing.models import Message
         model_obj = self.item.__class__
         email_msg = Message.objects.create(subject=subject, body=message, email_to_send="%s:0:%s" % (model_obj.get_long_name(), model))
-        email_msg.add_recipient(model_obj.get_long_name(), 'id||8||%s' % ';'.join([six.text_type(item.id) for item in self.items]))
+        email_msg.add_recipient(model_obj.get_long_name(), 'id||8||%s' % ';'.join([str(item.id) for item in self.items]))
         email_msg.save()
         email_msg.valid()
         email_msg.set_context(self)
@@ -249,8 +249,8 @@ class PayableEmail(XferContainerAcknowledge):
     def fillresponse(self, item_name='', subject='', message='', model=0, modelname=""):
         def replace_tag(contact, text):
             text = text.replace('#name', contact.get_final_child().get_presentation() if contact is not None else '???')
-            text = text.replace('#doc', six.text_type(self.item.get_docname()))
-            text = text.replace('#reference', six.text_type(self.item.reference))
+            text = text.replace('#doc', str(self.item.get_docname()))
+            text = text.replace('#reference', str(self.item.reference))
             return text
 
         if item_name != '':
@@ -410,14 +410,14 @@ class CheckPaymentPaypal(XferContainerAbstract):
             return HttpResponseRedirect("%s?%s" % (paypal_url, paypal_dict))
         except Exception:
             logging.getLogger('diacamma.payoff').exception("CheckPaymentPaypal")
-            from django.shortcuts import render_to_response
+            from django.shortcuts import render
             dictionary = {}
-            dictionary['title'] = six.text_type(settings.APPLIS_NAME)
+            dictionary['title'] = str(settings.APPLIS_NAME)
             dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
             dictionary['applogo'] = settings.APPLIS_LOGO
             dictionary['content1'] = _("It is not possible to pay-off this item with PayPal !")
             dictionary['content2'] = _("This item is deleted, payed or disabled.")
-            return render_to_response('info.html', context=dictionary)
+            return render(request, 'info.html', context=dictionary)
 
 
 @MenuManage.describ('')
@@ -439,7 +439,7 @@ class ValidationPaymentPaypal(XferContainerAbstract):
         try:
             for key, value in self.request.POST.items():
                 fields += "&%s=%s" % (key, quote_plus(value))
-            res = post(paypal_url, data=fields.encode(), headers={"Content-Type": "application/x-www-form-urlencoded", 'Content-Length': six.text_type(len(fields))})
+            res = post(paypal_url, data=fields.encode(), headers={"Content-Type": "application/x-www-form-urlencoded", 'Content-Length': str(len(fields))})
             return res.text
         except Exception:
             logging.getLogger('diacamma.payoff').warning(paypal_url)
@@ -498,5 +498,5 @@ class ValidationPaymentPaypal(XferContainerAbstract):
         except Exception as err:
             logging.getLogger('diacamma.payoff').exception("ValidationPaymentPaypal")
             self.item.contains += "{[newline]}"
-            self.item.contains += six.text_type(err)
+            self.item.contains += str(err)
         self.item.save()

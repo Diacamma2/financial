@@ -26,7 +26,6 @@ from __future__ import unicode_literals
 from functools import reduce
 import re
 
-from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.aggregates import Sum
 from django.db.models import Q
@@ -99,7 +98,7 @@ class DefaultSystemAccounting(object):
         lbl.set_location(1, 0)
         custom.add_component(lbl)
         text = _("{[i]}You have a %(type)s of %(value)s.{[br/]}You must to define the account to affect.{[br/]}{[/i]}") % {'type': type_profit, 'value': get_amount_from_format_devise(abs(val_profit), 7)}
-        text += _("{[br/]}After validation, you begin '%s'.{[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your retained earnings must be completed.{[/i]}") % six.text_type(year)
+        text += _("{[br/]}After validation, you begin '%s'.{[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your retained earnings must be completed.{[/i]}") % str(year)
         lbl = XferCompLabelForm("info")
         lbl.set_value(text)
         lbl.set_location(0, 1, 2)
@@ -107,7 +106,7 @@ class DefaultSystemAccounting(object):
         sel_cmpt = []
         query = Q(code__startswith=self.NEGATIF_ACCOUNT) | Q(code__startswith=self.POSITIF_ACCOUNT)
         for account in year.chartsaccount_set.filter(type_of_account=2).exclude(query).order_by('code'):
-            sel_cmpt.append((account.id, six.text_type(account)))
+            sel_cmpt.append((account.id, str(account)))
         sel = XferCompSelect("profit_account")
         sel.set_select(sel_cmpt)
         sel.set_location(1, 2)
@@ -158,7 +157,7 @@ class DefaultSystemAccounting(object):
             custom.add_action(WrapAction(TITLE_CANCEL, "images/cancel.png"))
             return False
         else:
-            text = _("Do you want to begin '%s'? {[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your retained earnings must be completed.{[/i]}") % six.text_type(year)
+            text = _("Do you want to begin '%s'? {[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your retained earnings must be completed.{[/i]}") % str(year)
             return xfer.confirme(text)
 
     def _add_total_income_entrylines(self, year, new_entry):

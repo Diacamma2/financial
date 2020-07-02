@@ -29,7 +29,6 @@ from os import unlink
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
-from django.utils import six
 
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheckList, XferCompGrid, XferCompButton, XferCompEdit,\
@@ -55,7 +54,7 @@ class VatEditor(LucteriosEditor):
         sel_code.description = old_account.description
         sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
         for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_third_mask()).order_by('code'):
-            sel_code.select_list.append((item.code, six.text_type(item)))
+            sel_code.select_list.append((item.code, str(item)))
         sel_code.set_value(self.item.account)
         xfer.add_component(sel_code)
 
@@ -70,7 +69,7 @@ class AccountPostingEditor(LucteriosEditor):
         sel_code.description = old_account.description
         sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
         for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_revenue_mask()).order_by('code'):
-            sel_code.select_list.append((item.code, six.text_type(item)))
+            sel_code.select_list.append((item.code, str(item)))
         sel_code.set_value(self.item.sell_account)
         xfer.add_component(sel_code)
         comp = xfer.get_components("cost_accounting")
