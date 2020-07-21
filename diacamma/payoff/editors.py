@@ -114,16 +114,26 @@ class SupportingEditor(LucteriosEditor):
 
 class BankAccountEditor(LucteriosEditor):
 
-    def edit(self, xfer):
-        old_account = xfer.get_components("account_code")
-        xfer.remove_component("account_code")
-        sel_code = XferCompSelect("account_code")
+    def _change_account(self, xfer, name, accound_list):
+        old_account = xfer.get_components(name)
+        xfer.remove_component(name)
+        sel_code = XferCompSelect(name)
         sel_code.description = old_account.description
-        sel_code.set_location(old_account.col, old_account.row, old_account.colspan + 1, old_account.rowspan)
-        for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_cash_mask()).order_by('code'):
-            sel_code.select_list.append((item.code, str(item)))
-        sel_code.set_value(self.item.account_code)
+        sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
+        sel_code.set_value(getattr(self.item, name))
+        sel_code.set_select(accound_list)
         xfer.add_component(sel_code)
+        return sel_code
+
+    def edit(self, xfer):
+        accound_list = [(item.code, str(item)) for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_cash_mask()).order_by('code')]
+        self._change_account(xfer, "account_code", accound_list[:])
+        accound_list.insert(0, ('', None))
+        sel_comp = self._change_account(xfer, "temporary_account_code", accound_list)
+        sel_comp.java_script = """
+var temporary_account_code=current.getValue();
+parent.get('temporary_journal').setEnabled(temporary_account_code!=='');
+"""
 
 
 class PayoffEditor(LucteriosEditor):

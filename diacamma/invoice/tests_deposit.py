@@ -31,14 +31,14 @@ from lucterios.framework.filetools import get_user_dir
 from lucterios.mailing.tests import configSMTP, TestReceiver
 from lucterios.contacts.views_contacts import ResponsabilityModify
 
-from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr
+from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, create_account
 from diacamma.accounting.views_entries import EntryAccountList
-from diacamma.invoice.test_tools import default_articles, InvoiceTest
-from diacamma.payoff.views_deposit import DepositSlipList, DepositSlipAddModify,\
-    DepositSlipShow, DepositDetailAddModify, DepositDetailSave, DepositSlipTransition
+from diacamma.payoff.views_deposit import DepositSlipList, DepositSlipAddModify, DepositSlipShow, DepositDetailAddModify, DepositDetailSave, DepositSlipTransition
 from diacamma.payoff.views import PayoffAddModify, PayableShow, PayableEmail
-from diacamma.payoff.test_tools import default_bankaccount_fr,\
-    default_paymentmethod, PaymentTest
+from diacamma.payoff.views_conf import BankAccountAddModify
+from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod, PaymentTest
+
+from diacamma.invoice.test_tools import default_articles, InvoiceTest
 from diacamma.invoice.views import BillShow
 from diacamma.invoice.models import Bill
 
@@ -258,6 +258,7 @@ class DepositTest(InvoiceTest):
         self.factory.xfer = DepositSlipShow()
         self.calljson('/diacamma.payoff/depositSlipShow', {'depositslip': 1}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'depositSlipShow')
+        self.assert_json_equal('LABELFORM', 'total', 125.00)
         self.assertEqual(len(self.json_actions), 3)
 
         self.factory.xfer = EntryAccountList()
@@ -265,19 +266,25 @@ class DepositTest(InvoiceTest):
                       {'year': '1', 'journal': '0', 'filter': '0'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('entryline', 12)
-        self.assert_json_equal('', 'entryline/@8/entry.num', None)
-        self.assert_json_equal('', 'entryline/@8/entry_account', '[411 Dalton Jack]')
-        self.assert_json_equal('', 'entryline/@8/credit', 75.00)
-        self.assert_json_equal('', 'entryline/@9/entry.num', None)
-        self.assert_json_equal('', 'entryline/@9/entry_account', '[512] 512')
-        self.assert_json_equal('', 'entryline/@9/debit', -75.00)
 
-        self.assert_json_equal('', 'entryline/@10/entry.num', None)
-        self.assert_json_equal('', 'entryline/@10/entry_account', '[411 Minimum]')
-        self.assert_json_equal('', 'entryline/@10/credit', 50.00)
-        self.assert_json_equal('', 'entryline/@11/entry.num', None)
-        self.assert_json_equal('', 'entryline/@11/entry_account', '[512] 512')
-        self.assert_json_equal('', 'entryline/@11/debit', -50.00)
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': 4, 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 4)
+        self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/credit', 75.00)
+        self.assert_json_equal('', 'entryline/@1/entry.num', None)
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[512] 512')
+        self.assert_json_equal('', 'entryline/@1/debit', -75.00)
+
+        self.assert_json_equal('', 'entryline/@2/entry.num', None)
+        self.assert_json_equal('', 'entryline/@2/entry_account', '[411 Minimum]')
+        self.assert_json_equal('', 'entryline/@2/credit', 50.00)
+        self.assert_json_equal('', 'entryline/@3/entry.num', None)
+        self.assert_json_equal('', 'entryline/@3/entry_account', '[512] 512')
+        self.assert_json_equal('', 'entryline/@3/debit', -50.00)
 
         self.factory.xfer = DepositSlipTransition()
         self.calljson('/diacamma.payoff/depositSlipTransition', {'depositslip': 1, 'CONFIRME': 'YES', 'TRANSITION': 'validate_deposit'}, False)
@@ -286,6 +293,7 @@ class DepositTest(InvoiceTest):
         self.factory.xfer = DepositSlipShow()
         self.calljson('/diacamma.payoff/depositSlipShow', {'depositslip': 1}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'depositSlipShow')
+        self.assert_json_equal('LABELFORM', 'total', 125.00)
         self.assertEqual(len(self.json_actions), 2)
 
         self.factory.xfer = EntryAccountList()
@@ -293,8 +301,104 @@ class DepositTest(InvoiceTest):
                       {'year': '1', 'journal': '0', 'filter': '0'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('entryline', 12)
-        self.assert_json_equal('', 'entryline/@8/entry.num', '2')
-        self.assert_json_equal('', 'entryline/@10/entry.num', '1')
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': 4, 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 4)
+        self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@2/entry.num', None)
+
+    def test_deposit_with_valid_tempaccount(self):
+        create_account(['5112'], 0)
+        self.factory.xfer = BankAccountAddModify()
+        self.calljson('/diacamma.payoff/bankAccountAddModify',
+                      {'bankaccount': 1, 'designation': 'My bank', 'reference': '0123 456789 654 12', 'account_code': '512', 'bank_journal': 4, 'temporary_account_code': '5112', 'temporary_journal': 5, 'is_disabled': 0, 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'bankAccountAddModify')
+        self.create_payoff(1, "75.0", "Mr Smith", 1, "ABC123")
+        self.create_payoff(2, "50.0", "Mme Smith", 1, "XYZ987")
+        self.create_deposit()
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '0', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 12)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': 4, 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 0)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': 5, 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 4)
+        self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/credit', 75.00)
+        self.assert_json_equal('', 'entryline/@1/entry.num', None)
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[5112] 5112')
+        self.assert_json_equal('', 'entryline/@1/debit', -75.00)
+        self.assert_json_equal('', 'entryline/@2/entry.num', None)
+        self.assert_json_equal('', 'entryline/@2/entry_account', '[411 Minimum]')
+        self.assert_json_equal('', 'entryline/@2/credit', 50.00)
+        self.assert_json_equal('', 'entryline/@3/entry.num', None)
+        self.assert_json_equal('', 'entryline/@3/entry_account', '[5112] 5112')
+        self.assert_json_equal('', 'entryline/@3/debit', -50.00)
+
+        self.factory.xfer = DepositDetailAddModify()
+        self.calljson('/diacamma.payoff/depositDetailAddModify', {'depositslip': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'depositDetailAddModify')
+        self.assert_count_equal('entry', 2)
+        id1 = self.get_json_path("entry/@0/id")
+        id2 = self.get_json_path("entry/@1/id")
+        self.factory.xfer = DepositDetailSave()
+        self.calljson('/diacamma.payoff/depositDetailSave', {'depositslip': 1, 'entry': '%s;%s' % (id1, id2)}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'depositDetailSave')
+
+        self.factory.xfer = DepositSlipTransition()
+        self.calljson('/diacamma.payoff/depositSlipTransition', {'depositslip': 1, 'CONFIRME': 'YES', 'TRANSITION': 'close_deposit'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'depositSlipTransition')
+
+        self.factory.xfer = DepositSlipTransition()
+        self.calljson('/diacamma.payoff/depositSlipTransition', {'depositslip': 1, 'CONFIRME': 'YES', 'TRANSITION': 'validate_deposit'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'depositSlipTransition')
+
+        self.factory.xfer = DepositSlipShow()
+        self.calljson('/diacamma.payoff/depositSlipShow', {'depositslip': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'depositSlipShow')
+        self.assert_json_equal('LABELFORM', 'total', 125.00)
+        self.assertEqual(len(self.json_actions), 2)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '0', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 14)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': 5, 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 4)
+        self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@2/entry.num', None)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': 4, 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 2)
+        self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[5112] 5112')
+        self.assert_json_equal('', 'entryline/@0/credit', 125.00)
+        self.assert_json_equal('', 'entryline/@1/entry.num', None)
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[512] 512')
+        self.assert_json_equal('', 'entryline/@1/debit', -125.00)
 
 
 class MethodTest(InvoiceTest, PaymentTest):

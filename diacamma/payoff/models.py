@@ -310,17 +310,21 @@ class Supporting(LucteriosModel):
 class BankAccount(LucteriosModel):
     designation = models.TextField(_('designation'), null=False)
     reference = models.CharField(_('reference'), max_length=200, null=False)
-    account_code = models.CharField(_('account code'), max_length=50, null=False)
+    account_code = models.CharField(_('bank account'), max_length=50, null=False)
     order_key = models.IntegerField(verbose_name=_('order key'), null=True, default=None)
     is_disabled = models.BooleanField(verbose_name=_('is disabled'), default=False)
 
+    bank_journal = models.ForeignKey(Journal, verbose_name=_('bank journal'), null=False, default=4, on_delete=models.PROTECT, related_name='bank_journal')
+    temporary_account_code = models.CharField(_('temporary account'), max_length=50, null=False, default='')
+    temporary_journal = models.ForeignKey(Journal, verbose_name=_('temporary journal'), null=False, default=4, on_delete=models.PROTECT, related_name='temporary_journal')
+
     @classmethod
     def get_default_fields(cls):
-        return ["order_key", "designation", "reference", "account_code"]
+        return ["order_key", "designation", "reference", "account_code", "temporary_account_code"]
 
     @classmethod
     def get_edit_fields(cls):
-        return ["designation", "reference", "account_code", "is_disabled"]
+        return ["designation", "reference", ("account_code", "bank_journal"), ("temporary_account_code", "temporary_journal"), "is_disabled"]
 
     def __str__(self):
         return self.designation
@@ -346,8 +350,8 @@ class BankAccount(LucteriosModel):
         return LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     class Meta(object):
-        verbose_name = _('bank account')
-        verbose_name_plural = _('bank accounts')
+        verbose_name = _('bank code')
+        verbose_name_plural = _('bank codes')
         ordering = ['order_key']
 
 
@@ -444,11 +448,19 @@ class Payoff(LucteriosModel):
             info = "%s : %s" % (get_value_if_choices(self.mode, self._meta.get_field('mode')), self.reference)
         if self.bank_account is None:
             bank_code = Params.getvalue("payoff-cash-account")
+            bank_journal = None
+        elif self.bank_account.temporary_account_code != '':
+            bank_code = self.bank_account.temporary_account_code
+            bank_journal = self.bank_account.temporary_journal
         else:
             bank_code = self.bank_account.account_code
+            bank_journal = self.bank_account.bank_journal
         bank_account = ChartsAccount.get_account(bank_code, new_entry.year)
         if bank_account is None:
             raise LucteriosException(IMPORTANT, _("account is not defined!"))
+        if (bank_journal is not None) and (new_entry.journal_id != bank_journal.id) and not new_entry.close:
+            new_entry.journal = bank_journal
+            new_entry.save()
         return bank_account, info
 
     def can_delete(self):
@@ -644,8 +656,15 @@ class DepositSlip(LucteriosModel):
 
     @transition(field=status, source=1, target=2)
     def validate_deposit(self):
-        for detail in self.depositdetail_set.all():
-            detail.payoff.entry.closed()
+        if self.bank_account.temporary_account_code != '':
+            fiscal_year = FiscalYear.get_current()
+            new_entry = EntryAccount.objects.create(year=fiscal_year, date_value=self.date, designation="", journal=self.bank_account.bank_journal)
+            bank_account = ChartsAccount.get_account(self.bank_account.account_code, fiscal_year)
+            temporary_bank_account = ChartsAccount.get_account(self.bank_account.temporary_account_code, fiscal_year)
+            if (bank_account is None) or (temporary_bank_account is None):
+                raise LucteriosException(IMPORTANT, _("account is not defined!"))
+            EntryLineAccount.objects.create(account=bank_account, amount=self.get_total(), entry=new_entry)
+            EntryLineAccount.objects.create(account=temporary_bank_account, amount=-1 * self.get_total(), entry=new_entry)
 
     def add_payoff(self, entries):
         if self.status == 0:

@@ -39,7 +39,7 @@ class PayoffConf(XferListEditor):
     caption = _("Payoff configuration")
 
     def fillresponse_header(self):
-        self.new_tab(_('Bank account'))
+        self.new_tab(_('Bank code'))
         show_only_enabled_bank = self.getparam('show_only_enabled_bank', True)
         if show_only_enabled_bank is True:
             self.filter = Q(is_disabled=False)
@@ -66,8 +66,8 @@ class BankAccountAddModify(XferAddEditor):
     icon = "bank.png"
     model = BankAccount
     field_id = 'bankaccount'
-    caption_add = _("Add bank account")
-    caption_modify = _("Modify bank account")
+    caption_add = _("Add bank code")
+    caption_modify = _("Modify bank code")
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
@@ -76,7 +76,7 @@ class BankAccountDelete(XferDelete):
     icon = "bank.png"
     model = BankAccount
     field_id = 'bankaccount'
-    caption = _("Delete bank account")
+    caption = _("Delete bank code")
 
 
 @ActionsManage.affect_grid(_('Up'), "images/up.png", unique=SELECT_SINGLE)
@@ -85,7 +85,7 @@ class BankAccountUp(XferContainerAcknowledge):
     icon = "up.png"
     model = BankAccount
     field_id = 'bankaccount'
-    caption = _("Up bank account")
+    caption = _("Up bank code")
 
     def fillresponse(self):
         self.item.up_order()
