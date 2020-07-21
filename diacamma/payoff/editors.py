@@ -258,6 +258,9 @@ class PaymentMethodEditor(LucteriosEditor):
                 edt = XferCompMemo('item_%d' % fieldid)
             elif fieldtype == 2:
                 edt = XferCompCheck('item_%d' % fieldid)
+            elif isinstance(fieldtype, str):
+                edt = XferCompEdit('item_%d' % fieldid)
+                edt.mask = fieldtype
             edt.set_value(items[fieldid - 1])
             edt.set_location(1, row)
             edt.description = fieldtitle

@@ -406,7 +406,7 @@ class CheckPaymentPaypal(XferContainerAbstract):
             payment_meth = payment_meth_list[0]
             support = Supporting.objects.get(id=payid).get_final_child()
             paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
-            paypal_dict = payment_meth.get_paypal_dict(root_url, self.language, support)
+            paypal_dict = payment_meth.paymentType.get_paypal_dict(root_url, self.language, support)
             return HttpResponseRedirect("%s?%s" % (paypal_url, paypal_dict))
         except Exception:
             logging.getLogger('diacamma.payoff').exception("CheckPaymentPaypal")

@@ -26,7 +26,6 @@ from __future__ import unicode_literals
 from shutil import rmtree
 
 from lucterios.framework.test import LucteriosTest
-from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.filetools import get_user_dir
 
 from lucterios.contacts.tests_contacts import change_ourdetail
@@ -143,6 +142,15 @@ class PayoffTest(LucteriosTest):
         self.assert_json_equal('CHECK', 'item_2', '0')
 
         self.factory.xfer = PaymentMethodAddModify()
+        self.calljson('/diacamma.payoff/paymentMethodAddModify', {'paytype': 3}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'paymentMethodAddModify')
+        self.assert_count_equal('', 5)
+        self.assert_attrib_equal('item_1', 'description', 'adresse web')
+        self.assert_json_equal('EDIT', 'item_1', '')
+        self.assert_attrib_equal('item_2', 'description', 'information')
+        self.assert_json_equal('MEMO', 'item_2', '')
+
+        self.factory.xfer = PaymentMethodAddModify()
         self.calljson('/diacamma.payoff/paymentMethodAddModify',
                       {'paytype': 0, 'bank_account': 1, 'item_1': '123456798', 'item_2': 'AADDVVCC', 'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
@@ -157,13 +165,18 @@ class PayoffTest(LucteriosTest):
                       {'paytype': 2, 'bank_account': 1, 'item_1': 'monney@truc.org', 'item_2': 'o', 'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
 
+        self.factory.xfer = PaymentMethodAddModify()
+        self.calljson('/diacamma.payoff/paymentMethodAddModify',
+                      {'paytype': 3, 'bank_account': 1, 'item_1': 'http://payement.online.com', 'item_2': 'Précisez le N° de devis ou de facture', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
+
         self.factory.xfer = PayoffConf()
         self.calljson('/diacamma.payoff/payoffConf', {}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffConf')
-        self.assert_count_equal('paymentmethod', 3)
+        self.assert_count_equal('paymentmethod', 4)
         self.assert_json_equal('', '#paymentmethod/headers/@0/@0', 'paytype')
         self.assert_json_equal('', '#paymentmethod/headers/@0/@1', 'type')
-        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '2': 'PayPal'})
+        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '2': 'PayPal', '3': 'en ligne'})
         self.assert_json_equal('', '#paymentmethod/headers/@0/@4', "%s")
 
         self.assert_json_equal('', 'paymentmethod/@0/paytype', 0)
@@ -177,3 +190,7 @@ class PayoffTest(LucteriosTest):
         self.assert_json_equal('', 'paymentmethod/@2/paytype', 2)
         self.assert_json_equal('', 'paymentmethod/@2/bank_account', "My bank")
         self.assert_json_equal('', 'paymentmethod/@2/info', '{[b]}compte Paypal{[/b]}{[br/]}monney@truc.org{[br/]}{[b]}avec contrôle{[/b]}{[br/]}Oui{[br/]}')
+
+        self.assert_json_equal('', 'paymentmethod/@3/paytype', 3)
+        self.assert_json_equal('', 'paymentmethod/@3/bank_account', "My bank")
+        self.assert_json_equal('', 'paymentmethod/@3/info', '{[b]}adresse web{[/b]}{[br/]}http://payement.online.com{[br/]}{[b]}information{[/b]}{[br/]}Précisez le N° de devis ou de facture{[br/]}')

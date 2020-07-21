@@ -27,7 +27,6 @@ from datetime import date
 from _io import BytesIO
 from logging import getLogger
 
-from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.db.models.aggregates import Sum, Max
@@ -38,7 +37,7 @@ from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field
 from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField
-from lucterios.framework.tools import get_date_formating, get_bool_textual
+from lucterios.framework.tools import get_date_formating
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.printgenerators import ReportingGenerator
 from lucterios.framework.signal_and_lock import Signal
@@ -50,9 +49,9 @@ from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import LegalEntity, Individual
 from lucterios.documents.models import DocumentContainer
 
-from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, \
-    ChartsAccount, EntryLineAccount, AccountLink
+from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink
 from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise
+from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType
 
 
 class Supporting(LucteriosModel):
@@ -741,13 +740,24 @@ class DepositDetail(LucteriosModel):
 
 
 class PaymentMethod(LucteriosModel):
+
     paytype = models.IntegerField(verbose_name=_('type'),
-                                  choices=((0, _('transfer')), (1, _('cheque')), (2, _('PayPal'))), null=False, default=0, db_index=True)
+                                  choices=[(pay_id, PAYMENTTYPE_LIST[pay_id].name) for pay_id in range(len(PAYMENTTYPE_LIST))], null=False, default=0, db_index=True)
     bank_account = models.ForeignKey(BankAccount,
                                      verbose_name=_('bank account'), null=False, default=None, db_index=True, on_delete=models.PROTECT)
     extra_data = models.TextField(_('data'), null=False)
 
     info = LucteriosVirtualField(verbose_name=_('parameters'), compute_from='get_info')
+
+    @property
+    def paymentType(self):
+        if not hasattr(self, "_paymentType"):
+            self.paytype = int(self.paytype)
+            if (self.paytype >= 0) and (len(PAYMENTTYPE_LIST) > self.paytype):
+                self._paymentType = PAYMENTTYPE_LIST[self.paytype](self.extra_data)
+            else:
+                self._paymentType = PaymentType(self.extra_data)
+        return self._paymentType
 
     @classmethod
     def get_default_fields(cls):
@@ -758,133 +768,20 @@ class PaymentMethod(LucteriosModel):
         return ['paytype', 'bank_account']
 
     def get_extra_fields(self):
-        self.paytype = int(self.paytype)
-        if self.paytype == 0:
-            return [(1, _('IBAN'), 0), (2, _('BIC'), 0)]
-        elif self.paytype == 1:
-            return [(1, _('payable to'), 0), (2, _('address'), 1)]
-        elif self.paytype == 2:
-            # return [(1, _('Paypal account'), 0)]
-            return [(1, _('Paypal account'), 0), (2, _('With control'), 2)]
-        else:
-            return []
+        return self.paymentType.get_extra_fields()
 
     def set_items(self, items):
-        size = len(self.get_extra_fields())
-        while len(items) < size:
-            items.append("")
-        self.extra_data = "\n".join(items)
+        self.paymentType.set_items(items)
+        self.extra_data = self.paymentType.extra_data
 
     def get_items(self):
-        self.paytype = int(self.paytype)
-        if (self.id is None) and (self.paytype == 1) and (self.extra_data == ''):
-            current_legal = LegalEntity.objects.get(id=1)
-            items = [current_legal.name, "%s{[newline]}%s %s" % (current_legal.address, current_legal.postal_code, current_legal.city)]
-        else:
-            items = self.extra_data.split("\n")
-        size = len(self.get_extra_fields())
-        while len(items) < size:
-            items.append("")
-        return items
+        return self.paymentType.get_items()
 
     def get_info(self):
-        res = ""
-        items = self.get_items()
-        for fieldid, fieldtitle, fieldtype in self.get_extra_fields():
-            res += "{[b]}%s{[/b]}{[br/]}" % fieldtitle
-            if fieldtype == 2:
-                res += str(get_bool_textual((items[fieldid - 1] == 'o') or (items[fieldid - 1] == 'True')))
-            else:
-                res += items[fieldid - 1]
-            res += "{[br/]}"
-        return res
-
-    def __get_show_pay_transfer(self):
-        items = self.get_items()
-        formTxt = "{[center]}"
-        formTxt += "{[table width='100%']}{[tr]}"
-        formTxt += "    {[td]}{[u]}{[i]}%s{[/i]}{[/u]}{[/td]}" % _('IBAN')
-        formTxt += "    {[td]}%s{[/td]}" % items[0]
-        formTxt += "{[/tr]}{[tr]}"
-        formTxt += "    {[td]}{[u]}{[i]}%s{[/i]}{[/u]}{[/td]}" % _('BIC')
-        formTxt += "    {[td]}%s{[/td]}" % items[1]
-        formTxt += "{[/tr]}{[/table]}"
-        formTxt += "{[/center]}"
-        return formTxt
-
-    def __get_show_pay_cheque(self):
-        items = self.get_items()
-        formTxt = "{[center]}"
-        formTxt += "{[table width='100%%']}"
-        formTxt += "    {[tr]}"
-        formTxt += "        {[td]}{[u]}{[i]}%s{[/i]}{[/u]}{[/td]}" % _('payable to')
-        formTxt += "        {[td]}%s{[/td]}" % items[0]
-        formTxt += "    {[/tr]}"
-        formTxt += "    {[tr]}"
-        formTxt += "        {[td]}{[u]}{[i]}%s{[/i]}{[/u]}{[/td]}" % _('address')
-        formTxt += "        {[td]}%s{[/td]}" % items[1]
-        formTxt += "    {[/tr]}"
-        formTxt += "{[/table]}"
-        formTxt += "{[/center]}"
-        return formTxt
-
-    def get_paypal_dict(self, absolute_uri, lang, supporting):
-        from urllib.parse import quote_plus
-        if abs(supporting.get_payable_without_tax()) < 0.0001:
-            raise LucteriosException(IMPORTANT, _("This item can't be validated!"))
-        abs_url = absolute_uri.split('/')
-        items = self.get_items()
-        paypal_dict = {}
-        paypal_dict['business'] = items[0]
-        paypal_dict['currency_code'] = Params.getvalue("accounting-devise-iso")
-        paypal_dict['lc'] = lang
-        paypal_dict['return'] = '/'.join(abs_url[:-2])
-        paypal_dict['cancel_return'] = '/'.join(abs_url[:-2])
-        paypal_dict['notify_url'] = paypal_dict['return'] + '/diacamma.payoff/validationPaymentPaypal'
-        paypal_dict['item_name'] = remove_accent(supporting.get_payment_name())
-        paypal_dict['custom'] = str(supporting.id)
-        paypal_dict['tax'] = str(supporting.get_tax())
-        paypal_dict['amount'] = str(supporting.get_payable_without_tax())
-        paypal_dict['cmd'] = '_xclick'
-        paypal_dict['no_note'] = '1'
-        paypal_dict['no_shipping'] = '1'
-        args = ""
-        for key, val in paypal_dict.items():
-            args += "&%s=%s" % (key, quote_plus(val))
-        return args[1:]
-
-    def __get_show_pay_paypal(self, absolute_uri, lang, supporting):
-        items = self.get_items()
-        abs_url = absolute_uri.split('/')
-        root_url = '/'.join(abs_url[:-2])
-        if (items[1] == 'o') or (items[1] == 'True'):
-            import urllib.parse
-            formTxt = "{[center]}"
-            formTxt += "{[a href='%s/%s?payid=%d&url=%s' target='_blank']}" % (root_url, 'diacamma.payoff/checkPaymentPaypal',
-                                                                               supporting.id, urllib.parse.quote(root_url + '/diacamma.payoff/checkPaymentPaypal'))
-            formTxt += "{[img src='%s/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}" % root_url
-            formTxt += "{[/a]}"
-            formTxt += "{[/center]}"
-        else:
-            paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
-            paypal_dict = self.get_paypal_dict(absolute_uri, lang, supporting)
-            formTxt = "{[center]}"
-            formTxt += "{[a href='%s?%s' target='_blank']}" % (paypal_url, paypal_dict)
-            formTxt += "{[img src='%s/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}" % root_url
-            formTxt += "{[/a]}"
-            formTxt += "{[/center]}"
-        return formTxt
+        return self.paymentType.get_info()
 
     def show_pay(self, absolute_uri, lang, supporting):
-        if self.paytype == 0:
-            formTxt = self.__get_show_pay_transfer()
-        elif self.paytype == 1:
-            formTxt = self.__get_show_pay_cheque()
-        elif self.paytype == 2:
-            formTxt = self.__get_show_pay_paypal(absolute_uri, lang, supporting)
-        else:
-            formTxt = "???"
-        return formTxt
+        return self.paymentType.show_pay(absolute_uri, lang, supporting)
 
     class Meta(object):
         verbose_name = _('payment method')

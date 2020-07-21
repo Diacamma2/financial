@@ -1663,7 +1663,7 @@ class BillTest(InvoiceTest):
             self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
             self.assert_count_equal('', 6)
             self.assert_json_equal('EDIT', 'subject', 'Facture A-1')
-            self.assert_json_equal('MEMO', 'message', 'Jack Dalton{[br/]}{[br/]}Veuillez trouver joint à ce courriel facture A-1 - 1 avril 2015.{[br/]}{[br/]}Sincères salutations.')
+            self.assert_json_equal('MEMO', 'message', 'Jack Dalton{[br/]}{[br/]}Veuillez trouver joint à ce courriel facture A-1 - 1 avril 2015.{[br/]}{[br/]}Sincères salutations')
 
             self.factory.xfer = PayableEmail()
             self.calljson('/diacamma.payoff/payableEmail',
@@ -1753,17 +1753,17 @@ class BillTest(InvoiceTest):
             self.assert_count_equal('', 7)
             self.assert_json_equal('LABELFORM', "nb_item", '4')
             self.assert_json_equal('EDIT', 'subject', '#reference')
-            self.assert_json_equal('MEMO', 'message', '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations.')
+            self.assert_json_equal('MEMO', 'message', '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations')
 
             self.factory.xfer = PayableEmail()
             self.calljson('/diacamma.payoff/payableEmail',
                           {'bill': "1;2;3;4", 'OK': 'YES', 'item_name': 'bill', 'subject': '#reference',
-                           'message': '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations.', 'model': 8}, False)
+                           'message': '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations', 'model': 8}, False)
             self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
 
             email_msg = Message.objects.get(id=1)
             self.assertEqual(email_msg.subject, '#reference')
-            self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations.')
+            self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations')
             self.assertEqual(email_msg.status, 2)
             self.assertEqual(email_msg.recipients, "invoice.Bill id||8||1;2;3;4\n")
             self.assertEqual(email_msg.email_to_send, "invoice.Bill:1:8\ninvoice.Bill:2:8\ninvoice.Bill:3:8\ninvoice.Bill:4:8")
