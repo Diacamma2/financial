@@ -150,7 +150,7 @@ class BudgetAddModify(XferAddEditor):
         save.model = self.model
         save.field_id = self.field_id
         save.caption = self.caption
-        return save.get(request, *args, **kwargs)
+        return save.request_handling(request, *args, **kwargs)
 
     def _load_unique_record(self, itemid):
         if itemid[0] == 'C':

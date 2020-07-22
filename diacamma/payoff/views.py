@@ -86,7 +86,7 @@ class PayoffAddModify(XferAddEditor):
             multisave.caption = self.caption
             multisave.closeaction = self.closeaction
             multisave.fillresponse = self.fillresponse_multisave
-            return multisave.get(request, *args, **kwargs)
+            return multisave.request_handling(request, *args, **kwargs)
         else:
             return XferAddEditor.run_save(self, request, *args, **kwargs)
 
@@ -397,7 +397,7 @@ class CheckPaymentPaypal(XferContainerAbstract):
     caption = _("Payment")
     icon = "payments.png"
 
-    def get_post(self, request, *args, **kwargs):
+    def request_handling(self, request, *args, **kwargs):
         self._initialize(request, *args, **kwargs)
         root_url = self.getparam("url", self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()))
         try:
