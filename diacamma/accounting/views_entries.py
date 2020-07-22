@@ -467,8 +467,8 @@ class EntryAccountEdit(XferAddEditor):
     caption_add = _("Add entry of account")
     caption_modify = _("Modify accounting entry")
 
-    def __init__(self, **kwargs):
-        XferAddEditor.__init__(self, **kwargs)
+    def _initialize(self, request, *_, **kwargs):
+        XferAddEditor._initialize(self, request, *_, **kwargs)
         self.with_auditlog_btn = True
 
     def fillresponse(self):

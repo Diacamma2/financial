@@ -476,6 +476,8 @@ class Bill(Supporting):
     title_vta_details = LucteriosVirtualField(verbose_name='', compute_from='get_title_vta_details')
     vta_details = LucteriosVirtualField(verbose_name='', compute_from='get_vta_details', format_string=lambda: format_with_devise(5))
 
+    origin = LucteriosVirtualField(verbose_name=_('origin'), compute_from='get_origin')
+
     def __str__(self):
         billtype = get_value_if_choices(self.bill_type, self.get_field_by_name('bill_type'))
         if self.num is None:
@@ -531,7 +533,7 @@ class Bill(Supporting):
     def get_print_fields(cls):
         print_fields = [(_("bill type"), "type_bill"), "num_txt", "date", "third", "detail_set"]
         print_fields.extend(Supporting.get_print_fields())
-        print_fields.extend(["comment", "status", 'total_excltax', 'vta_sum', 'total_incltax'])
+        print_fields.extend(["comment", "status", 'total_excltax', 'vta_sum', 'total_incltax', 'origin'])
         print_fields.append('OUR_DETAIL')
         print_fields.append('DEFAULT_DOCUMENTS')
         return print_fields
@@ -599,6 +601,12 @@ class Bill(Supporting):
         else:
             return "%s-%d" % (self.fiscal_year.letter, self.num)
 
+    def get_origin(self):
+        if self.parentbill is not None:
+            return _('origin : %s') % self.parentbill
+        else:
+            return ""
+
     def get_vta_detail_list(self):
         vtas = {}
         for detail in self.detail_set.all():
@@ -620,9 +628,6 @@ class Bill(Supporting):
 
     def payoff_is_revenu(self):
         return (self.bill_type != 0) and (self.bill_type != 2)
-
-    def default_date(self):
-        return self.date
 
     def entry_links(self):
         if self.entry_id is not None:

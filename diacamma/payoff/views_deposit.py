@@ -81,15 +81,6 @@ class DepositSlipShow(XferShowEditor):
     field_id = 'depositslip'
     caption = _("Show deposit slip")
 
-    def fillresponse(self):
-        if self.getparam('PRINTING', False) and (self.item.status == 0):
-            lbl = XferCompLabelForm('printing_info')
-            lbl.set_color('red')
-            lbl.set_value_as_title(_('*** NO VALIDATED ***'))
-            lbl.set_location(2, 0)
-            self.add_component(lbl)
-        XferShowEditor.fillresponse(self)
-
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
 @MenuManage.describ('payoff.delete_depositslip')
@@ -114,8 +105,14 @@ class DepositSlipPrint(XferPrintAction):
     icon = "bank.png"
     model = DepositSlip
     field_id = 'depositslip'
-    caption = _("Print deposit slip")
+    caption = _("Deposit slip")
     action_class = DepositSlipShow
+
+    def get_report_generator(self):
+        report_generator = XferPrintAction.get_report_generator(self)
+        if self.item.status == 0:
+            report_generator.watermark = _('*** NO VALIDATED ***')
+        return report_generator
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.status == 0)
