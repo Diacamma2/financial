@@ -736,6 +736,8 @@ class BillStatistic(XferContainerCustom):
     model = Bill
     field_id = 'bill'
     caption = _("Statistic")
+    readonly = True
+    methods_allowed = ('GET', )
 
     def fill_header(self):
         img = XferCompImage('img')

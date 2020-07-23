@@ -55,6 +55,8 @@ class FiscalYearReport(XferContainerCustom):
     add_filtering = False
     force_date_filter = False
     saving_pdfreport = False
+    readonly = True
+    methods_allowed = ('GET', )
 
     def __init__(self, **kwargs):
         XferContainerCustom.__init__(self, **kwargs)

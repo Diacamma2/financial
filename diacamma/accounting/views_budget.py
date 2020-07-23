@@ -202,6 +202,8 @@ class CostAccountingBudget(XferContainerAcknowledge):
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Budget")
+    readonly = True
+    methods_allowed = ('GET', )
 
     def fillresponse(self):
         read_only = (self.item.status == 1) or self.item.is_protected
@@ -294,6 +296,8 @@ class FiscalYearBudget(XferContainerAcknowledge):
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Budget")
+    readonly = True
+    methods_allowed = ('GET', )
 
     def fillresponse(self, year):
         fiscal_year = FiscalYear.get_current(year)
