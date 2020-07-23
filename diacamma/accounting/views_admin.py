@@ -170,6 +170,8 @@ class FiscalYearExport(XferContainerCustom):
     model = FiscalYear
     field_id = 'fiscalyear'
     caption = _("Export")
+    readonly = True
+    methods_allowed = ('GET', )
 
     def fillresponse(self):
         if self.item.id is None:

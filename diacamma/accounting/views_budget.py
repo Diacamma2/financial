@@ -171,7 +171,7 @@ class BudgetAddModify(XferAddEditor):
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_SINGLE, condition=condition_changebudget)
-@MenuManage.describ('accounting.change_budget')
+@MenuManage.describ('accounting.delete_budget')
 class BudgetDel(XferDelete):
     icon = "account.png"
     model = Budget
@@ -290,7 +290,7 @@ class BudgetImport(XferContainerAcknowledge):
 
 
 @ActionsManage.affect_list(_("Budget"), "account.png")
-@MenuManage.describ('accounting.add_fiscalyear')
+@MenuManage.describ('accounting.change_budget')
 class FiscalYearBudget(XferContainerAcknowledge):
     icon = "account.png"
     model = ChartsAccount

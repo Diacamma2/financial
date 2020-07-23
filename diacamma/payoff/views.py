@@ -221,7 +221,7 @@ class SupportingPrint(XferPrintReporting):
 
 
 @ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", condition=can_send_email)
-@MenuManage.describ('invoice.change_bill')
+@MenuManage.describ('')
 class PayableEmail(XferContainerAcknowledge):
     caption = _("Send by email")
     icon = "payments.png"
@@ -341,6 +341,8 @@ class PayableShow(XferContainerCustom):
     icon = "payments.png"
     model = Supporting
     field_id = 'supporting'
+    readonly = True
+    methods_allowed = ('GET', )
 
     def fillresponse(self, item_name=''):
         if item_name != '':
@@ -396,6 +398,8 @@ def get_html_payment(absolute_uri, lang, supporting):
 class CheckPaymentPaypal(XferContainerAbstract):
     caption = _("Payment")
     icon = "payments.png"
+    readonly = True
+    methods_allowed = ('GET', )
 
     def request_handling(self, request, *args, **kwargs):
         self._initialize(request, *args, **kwargs)
@@ -426,6 +430,7 @@ class ValidationPaymentPaypal(XferContainerAbstract):
     caption = 'ValidationPaymentPaypal'
     model = BankTransaction
     field_id = 'banktransaction'
+    methods_allowed = ('GET', 'POST', 'PUT')
 
     def __init__(self, **kwargs):
         XferContainerAbstract.__init__(self, **kwargs)

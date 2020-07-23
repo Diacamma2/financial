@@ -338,7 +338,7 @@ class BillMultiPay(XferContainerAcknowledge):
 
 
 @ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == 1) and (xfer.item.bill_type == 0))
-@MenuManage.describ('invoice.change_bill')
+@MenuManage.describ('invoice.add_bill')
 class BillFromQuotation(XferContainerAcknowledge):
     caption = _("Convert to bill")
     icon = "bill.png"
@@ -444,7 +444,7 @@ def can_printing(xfer, gridname=''):
 
 @ActionsManage.affect_grid(_("Send"), "lucterios.mailing/images/email.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': can_printing(xfer) and can_send_email(xfer))
 @ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (1, 3) and can_send_email(xfer))
-@MenuManage.describ('invoice.change_bill')
+@MenuManage.describ('invoice.add_bill')
 class BillPayableEmail(XferContainerAcknowledge):
     caption = _("Send by email")
     icon = "bill.png"
@@ -880,6 +880,8 @@ class BillOpenEntryAccount(XferContainerAcknowledge):
     model = Bill
     field_id = 'bill'
     caption = ""
+    readonly = True
+    methods_allowed = ('GET', )
 
     def fillresponse(self, payoff=None, showbill=False):
         if showbill and (payoff is not None):
@@ -906,6 +908,8 @@ class BillAccountChecking(XferContainerCustom):
     model = Bill
     field_id = 'bill'
     caption = _("Account checking")
+    readonly = True
+    methods_allowed = ('GET', )
 
     def fill_header(self):
         img = XferCompImage('img')
@@ -1021,7 +1025,7 @@ class BillAccountCheckingPrint(XferPrintAction):
     with_text_export = True
 
 
-@MenuManage.describ('invoice.change_bill')
+@MenuManage.describ('invoice.add_bill')
 class BillCheckAutoreduce(XferContainerAcknowledge):
     caption = _("Check auto-reduce")
     icon = "bill.png"

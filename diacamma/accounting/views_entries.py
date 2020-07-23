@@ -441,7 +441,7 @@ class EntryAccountOpenFromLine(XferContainerAcknowledge):
             self.redirect_action(EntryAccountEdit.get_action())
 
 
-@MenuManage.describ('accounting.add_entryaccount')
+@MenuManage.describ('accounting.change_entryaccount')
 class EntryAccountShow(XferShowEditor):
     icon = "entry.png"
     model = EntryAccount
@@ -498,6 +498,7 @@ class EntryAccountEdit(XferAddEditor):
 class EntryAccountUnlock(XferContainerAcknowledge):
     model = EntryAccount
     field_id = 'entryaccount'
+    methods_allowed = ('GET', 'POST', 'PUT')
 
     def fillresponse(self):
         self.item.delete_if_ghost_entry()

@@ -200,6 +200,8 @@ class ThirdAdd(ContactSelection):
     caption = _("Add third")
     select_class = ThirdSave
     model = Third
+    readonly = False
+    methods_allowed = ('POST', 'PUT')
 
     def fillresponse(self):
         third_filter = self.getparam('filter', '')

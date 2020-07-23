@@ -629,20 +629,20 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assertEqual(len(self.json_actions), 3)
 
     def test_check_payment_paypal(self):
-        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 1}, True, 302)
-        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 2}, True, 302)
-        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 4}, True, 302)
-        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 5}, True, 200)
+        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 1}, 'get', 302)
+        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 2}, 'get', 302)
+        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 4}, 'get', 302)
+        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 5}, 'get', 200)
         self.assertTrue(self.response.content.decode().strip().startswith("<!DOCTYPE html>"), self.response.content)
-        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 100}, True, 200)
+        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 100}, 'get', 200)
         self.assertTrue(self.response.content.decode().strip().startswith("<!DOCTYPE html>"), self.response.content)
 
         cotation = Bill.objects.get(id=1)
         cotation.status = 3
         cotation.save()
-        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 1}, True, 200)
+        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 1}, 'get', 200)
         self.assertTrue(self.response.content.decode().strip().startswith("<!DOCTYPE html>"), self.response.content)
 
         self.check_payment_paypal(4, "recu A-1 - 1 avril 2015")
-        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 4}, True, 200)
+        self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 4}, 'get', 200)
         self.assertTrue(self.response.content.decode().strip().startswith("<!DOCTYPE html>"), self.response.content)
