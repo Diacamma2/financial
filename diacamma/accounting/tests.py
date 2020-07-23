@@ -677,7 +677,7 @@ class AdminTest(LucteriosTest):
         self.assert_observer('core.custom', 'CORE', 'statusMenu')
         self.assert_json_equal('LABELFORM', 'accountingtitle', "Gestion comptable")
         self.assert_json_equal('LABELFORM', 'accounting_error', "Pas d'exercice défini !")
-        self.assert_action_equal('#accounting_conf/action',
+        self.assert_action_equal('GET', '#accounting_conf/action',
                                  ("conf.", None, 'diacamma.accounting', 'configuration', 0, 1, 1))
 
     def test_default_configuration(self):

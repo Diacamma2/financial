@@ -476,7 +476,7 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
         self.assert_count_equal('', 8)
         self.assertEqual(len(self.json_actions), 4)
-        self.assert_action_equal(self.json_actions[0], ('Commencer', 'images/ok.png', 'diacamma.accounting', 'fiscalYearBegin', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[0], ('Commencer', 'images/ok.png', 'diacamma.accounting', 'fiscalYearBegin', 0, 1, 1))
 
         self.factory.xfer = FiscalYearBegin()
         self.calljson('/diacamma.accounting/fiscalYearBegin',
@@ -496,7 +496,7 @@ class FiscalYearWorkflowTest(PaymentTest):
                       {'year': '1', 'type_of_account': '-1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
         self.assertEqual(len(self.json_actions), 4)
-        self.assert_action_equal(self.json_actions[0], ('Clôture', 'images/ok.png', 'diacamma.accounting', 'fiscalYearClose', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[0], ('Clôture', 'images/ok.png', 'diacamma.accounting', 'fiscalYearClose', 0, 1, 1))
 
     def test_begin_lastyearnovalid(self):
         self.assertEqual(FiscalYear.objects.get(id=1).status, 0)
@@ -598,7 +598,7 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
         self.assert_count_equal('chartsaccount', 0)
         self.assert_count_equal('#chartsaccount/actions', 6)
-        self.assert_action_equal('#chartsaccount/actions/@3',
+        self.assert_action_equal('POST', '#chartsaccount/actions/@3',
                                  ('Import', 'images/right.png', 'diacamma.accounting', 'chartsAccountImportFiscalYear', 0, 1, 1))
 
         self.factory.xfer = ChartsAccountImportFiscalYear()

@@ -432,7 +432,7 @@ class BillTest(InvoiceTest):
                                                            'withpayoff': True, 'mode': 1, 'amount': '107.45', 'date_payoff': '2015-04-07', 'mode': 1, 'reference': 'abc123', 'bank_account': 1, 'payer': "Ma'a Dalton", 'bank_fee': '1.08',
                                                            'sendemail': True, 'subject': 'my bill', 'message': 'this is a bill.', 'model': 8}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
-        self.assert_action_equal(self.response_json['action'], ("", None, "diacamma.payoff", "payableEmail", 1, 1, 1))
+        self.assert_action_equal('POST', self.response_json['action'], ("", None, "diacamma.payoff", "payableEmail", 1, 1, 1))
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList',
@@ -568,8 +568,8 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'title', "avoir")
         self.assert_json_equal('LABELFORM', 'date', date.today().isoformat(), True)
-        self.assert_action_equal(self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
-                                                                            "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
+        self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
+                                                                                   "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify',
                       {'bill': 2, 'date': '2015-04-01', 'SAVE': 'YES'}, False)
@@ -658,8 +658,8 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'date', date.today().isoformat(), True)
-        self.assert_action_equal(self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
-                                                                            "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
+        self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
+                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
 
     def test_compta_asset(self):
         default_articles()
@@ -1736,7 +1736,7 @@ class BillTest(InvoiceTest):
             self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
             self.assert_count_equal('bill', 4)
             self.assert_count_equal('#bill/actions', 6)
-            self.assert_action_equal(self.get_json_path('#bill/actions/@5'), ("Envoyer", "lucterios.mailing/images/email.png", "diacamma.invoice", "billPayableEmail", 0, 1, 2))
+            self.assert_action_equal('POST', self.get_json_path('#bill/actions/@5'), ("Envoyer", "lucterios.mailing/images/email.png", "diacamma.invoice", "billPayableEmail", 0, 1, 2))
 
             self.factory.xfer = BillPayableEmail()
             self.calljson('/diacamma.invoice/billPayableEmail', {'status_filter': 1, 'bill': '1;2;3;4'}, False)

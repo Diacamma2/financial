@@ -337,7 +337,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@3/categories', ["cat 3"])
         self.assert_json_equal('', 'article/@4/categories', ["cat 1", "cat 2", "cat 3"])
         self.assert_count_equal('#article/actions', 4)
-        self.assert_action_equal('#article/actions/@3', ('Fusion', 'images/clone.png', 'CORE', 'objectMerge', 0, 1, 2,
+        self.assert_action_equal('POST', '#article/actions/@3', ('Fusion', 'images/clone.png', 'CORE', 'objectMerge', 0, 1, 2,
                                                          {'modelname': 'invoice.Article', 'field_id': 'article'}))
 
         self.factory.xfer = ObjectMerge()
@@ -351,7 +351,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ObjectMerge()
         self.calljson('/CORE/objectMerge', {'modelname': 'invoice.Article', 'field_id': 'article', 'article': '1;3;5', 'CONFIRME': 'YES', 'mrg_object': '3'}, False)
         self.assert_observer('core.acknowledge', 'CORE', 'objectMerge')
-        self.assert_action_equal(self.response_json['action'], ('Editer', 'images/show.png', 'diacamma.invoice', 'articleShow', 1, 1, 1, {'article': '3'}))
+        self.assert_action_equal('GET', self.response_json['action'], ('Editer', 'images/show.png', 'diacamma.invoice', 'articleShow', 1, 1, 1, {'article': '3'}))
 
         self.factory.xfer = ArticleSearch()
         self.calljson('/diacamma.invoice/articleSearch', {}, False)
@@ -452,8 +452,8 @@ class ConfigTest(LucteriosTest):
         self.assert_count_equal('CSV', 6)
         self.assert_count_equal('#CSV/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal(self.json_actions[0], (str('Retour'), 'images/left.png', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '0'}))
-        self.assert_action_equal(self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '2'}))
+        self.assert_action_equal('POST', self.json_actions[0], (str('Retour'), 'images/left.png', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '0'}))
+        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '2'}))
         self.assertEqual(len(self.json_context), 8)
 
         self.factory.xfer = ArticleImport()
@@ -468,7 +468,7 @@ class ConfigTest(LucteriosTest):
         self.assert_count_equal('CSV', 6)
         self.assert_count_equal('#CSV/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal(self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '3'}))
+        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '3'}))
 
         self.factory.xfer = ArticleImport()
         self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
