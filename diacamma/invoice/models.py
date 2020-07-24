@@ -551,6 +551,12 @@ class Bill(Supporting):
     def get_current_date(self):
         return self.date
 
+    def get_third_masks_by_amount(self, amount):
+        if self.bill_type == 0:
+            return []
+        else:
+            return Supporting.get_third_masks_by_amount(self, amount)
+
     def get_min_payoff(self, ignore_payoff=-1):
         min_payoff = min(0, self.get_total_rest_topay(ignore_payoff) * 1.5)
         if abs(min_payoff) < 0.00001:

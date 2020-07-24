@@ -333,8 +333,11 @@ class BillMultiPay(XferContainerAcknowledge):
     model = Bill
     field_id = 'bill'
 
-    def fillresponse(self, bill):
-        self.redirect_action(PayoffAddModify.get_action("", ""), params={"supportings": bill})
+    def fillresponse(self):
+        bill_ids = [bill_item.id for bill_item in self.items if bill_item.bill_type != 0]
+        if len(bill_ids) > 0:
+            bill_ids.sort()
+            self.redirect_action(PayoffAddModify.get_action("", ""), params={"supportings": ";".join([str(bill_id) for bill_id in bill_ids])})
 
 
 @ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == 1) and (xfer.item.bill_type == 0))

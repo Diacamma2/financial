@@ -556,6 +556,7 @@ class Payoff(LucteriosModel):
 
     @classmethod
     def _get_subsupporting_from_entry(cls, supporting_list, entry):
+        old_is_revenu = None
         new_supporting_list = []
         for supporting in supporting_list:
             masks_by_amount = supporting.get_third_masks_by_amount(100.0)
@@ -564,6 +565,10 @@ class Payoff(LucteriosModel):
                 entryline_filter = Q(account=third_account)
                 entryline_filter &= Q(third=supporting.third)
                 is_revenu = 1 if not supporting.is_revenu else -1
+                if old_is_revenu is None:
+                    old_is_revenu = is_revenu
+                elif old_is_revenu != is_revenu:
+                    raise LucteriosException(IMPORTANT, _('bill type different !'))
                 is_liability = 1 if third_account.type_of_account == 0 else -1
                 if is_revenu * is_liability > 0:
                     entryline_filter &= Q(amount__gt=0)
@@ -658,7 +663,7 @@ class DepositSlip(LucteriosModel):
     def validate_deposit(self):
         if self.bank_account.temporary_account_code != '':
             fiscal_year = FiscalYear.get_current()
-            new_entry = EntryAccount.objects.create(year=fiscal_year, date_value=self.date, designation="", journal=self.bank_account.bank_journal)
+            new_entry = EntryAccount.objects.create(year=fiscal_year, date_value=self.date, designation=_("Deposit slip '%s' validate") % self.reference, journal=self.bank_account.bank_journal)
             bank_account = ChartsAccount.get_account(self.bank_account.account_code, fiscal_year)
             temporary_bank_account = ChartsAccount.get_account(self.bank_account.temporary_account_code, fiscal_year)
             if (bank_account is None) or (temporary_bank_account is None):

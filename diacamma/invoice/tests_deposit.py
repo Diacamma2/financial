@@ -394,6 +394,7 @@ class DepositTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('entryline', 2)
         self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@0/designation_ref', "Bordereau de chèques N°123456")
         self.assert_json_equal('', 'entryline/@0/entry_account', '[5112] 5112')
         self.assert_json_equal('', 'entryline/@0/credit', 125.00)
         self.assert_json_equal('', 'entryline/@1/entry.num', None)

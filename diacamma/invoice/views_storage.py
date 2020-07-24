@@ -320,9 +320,7 @@ class StorageSituation(XferListEditor):
         lbl.set_location(0, self.get_max_row() + 1, 2)
         lbl.description = _('total amount')
         self.add_component(lbl)
-
         self.add_action(StorageSituationPrint.get_action(TITLE_PRINT, "images/print.png"), close=CLOSE_NO)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
 
 
 @MenuManage.describ('invoice.change_storagesheet')
@@ -415,7 +413,6 @@ class StorageHistoric(XferListEditor):
     def fillresponse_body(self):
         XferListEditor.fillresponse_body(self)
         self.add_action(StorageHistoricPrint.get_action(TITLE_PRINT, "images/print.png"), close=CLOSE_NO)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
 
 
 @MenuManage.describ('invoice.change_storagesheet')
