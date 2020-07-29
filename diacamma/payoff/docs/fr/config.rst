@@ -6,12 +6,19 @@ Configuration
 Ce menu vous permet de configurer les comptes courants et les moyens de paiement en usage dans votre structure.
 
  
-Compte bancaire
----------------
+Code bancaire
+-------------
 
 Dans cet écran, vous avez la possibilité d'enregistrer les références des différents comptes courants ouverts au nom de votre structure.
-A l'aide du bouton "+ Ajouter", vous pouvez en créer un nouveau et spécifier : la désignation, le RIB (référence) et le code comptable associé. Celui-ci doit être un compte de trésorerie déjà ouvert dans le plan comptable de l'exercice.
+A l'aide du bouton "+ Ajouter", vous pouvez en créer un nouveau et spécifier : la désignation, le RIB (référence), le code bancaire associé, le journal de mouvement désiré et optionnellement un compte d'attente.
+Les compte doivent être déjà ouvert dans le plan comptable de l'exercice comme compte de trésorerie.
 
+Dans le cas où vous préciseriez un compte d'attente, les mouvemets comptables générés seront un peu différent.  
+Cette option est à utiliser dans les règlements par chèque bancaire (ou assimilé comme des "bons" ou "tickets" subventionnés proposés par certaines collectivités locales).    
+
+En effet, au moment de la saisi de votre règlement, l'écriture sera alors créé sur le compte d'attente.  
+Vous serez alors invité d'utiliser l'outil de gestion de bordereaux de chèques et lors de la validation finale de celui-ci, 
+une écriture générale réalisera le mouvement financier entre ce compte d'attente et le compte bancaire proprement dit. 
 
 Moyen de paiement
 -----------------
@@ -23,6 +30,7 @@ Actuellement, 3 moyens de paiement sont possibles sous *Diacamma* :
  - Le virement bancaire
  - Le chèque
  - Le paiement PayPal
+ - Le règlement en ligne, via une adresse internet.
 
 Pour chacun d'entre eux, vous devez préciser les paramètres correspondants.
 
@@ -36,7 +44,8 @@ Il est conseillé de cocher le champ *avec contrôle*. Ainsi, le lien de paiemen
 Paramètres
 ----------
 
-2 Paramètres actuellement :
+4 Paramètres actuellement :
 
  - compte de caisse : code comptable à mouvementer pour les règlements en espèces
  - compte de frais bancaires : code comptable devant être utilisé pour comptabiliser les frais bancaires liés aux règlements. Une ligne d'écriture est alors ajoutée directement à l'écriture comptable correspondante si le champ "compte de frais bancaires" est renseigné, ce qui permet de saisir le montant des frais.
+ - sujet et message par défaut proposés à l'envoie des justificatifs d'un paiement.
