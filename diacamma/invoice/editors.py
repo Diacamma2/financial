@@ -219,12 +219,31 @@ class DetailFilter(object):
             xfer.filltab_from_model(comp_art.col, comp_art.row, False, ['article'])
             xfer.remove_component("article_fake")
             sel_art = xfer.get_components("article")
+            no_article_empty = not Params.getvalue("invoice-reduce-allow-article-empty")
+            if not no_article_empty:
+                filter_cat = xfer.getparam('cat_filter', ())
+                no_article_empty = (len(filter_cat) > 0)
+            if no_article_empty:
+                sel_art.set_needed(True)
+                sel_art._check_case()
             if (sel_art.value == 0) or (sel_art.value is None):
                 self.item.article_id = None
                 self.item.article = None
             else:
                 self.item.article_id = int(sel_art.value)
                 self.item.article = Article.objects.get(id=self.item.article_id)
+            if xfer.getparam('CHANGE_ART') is not None:
+                if self.item.article is not None:
+                    self.item.designation = self.item.article.get_designation()
+                    self.item.price = self.item.article.price
+                    self.item.unit = self.item.article.unit
+                else:
+                    self.item.designation = ""
+                    self.item.price = 0
+                    self.item.unit = ""
+                xfer.get_components("designation").value = self.item.designation
+                xfer.get_components("price").value = self.item.price
+                xfer.get_components("unit").value = self.item.unit
         return sel_art
 
     def _add_provider_filter(self, xfer, sel_art, init_row):
@@ -275,8 +294,6 @@ class DetailFilter(object):
             edt.description = _('categories')
             edt.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
             xfer.add_component(edt)
-            if ((len(filter_cat) > 0) or not Params.getvalue("invoice-reduce-allow-article-empty")) and hasattr(sel_art, 'set_needed'):
-                sel_art.set_needed(True)
             has_filter = True
         if not has_select or (len(cat_list) > 0):
             ref_filter = xfer.getparam('ref_filter', '')

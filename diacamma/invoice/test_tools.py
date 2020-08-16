@@ -35,6 +35,16 @@ from diacamma.invoice.models import Article, Vat, Category, Provider,\
 from diacamma.invoice.views import BillTransition, DetailAddModify, BillAddModify
 
 
+def get_letters(number):
+    letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    res = ''
+    while number >= 26:
+        div, mod = divmod(number, 26)
+        res = letters[mod] + res
+        number = int(div) - 1
+    return letters[number] + res
+
+
 def default_accountPosting():
     AccountPosting.objects.create(name="code1", sell_account="701")
     AccountPosting.objects.create(name="code2", sell_account="707")
@@ -42,7 +52,7 @@ def default_accountPosting():
     AccountPosting.objects.create(name="code4", sell_account="708")
 
 
-def default_articles(with_provider=False, with_storage=False):
+def default_articles(with_provider=False, with_storage=False, lotof=False):
     default_costaccounting()
     default_accountPosting()
 
@@ -79,6 +89,13 @@ def default_articles(with_provider=False, with_storage=False):
         Provider.objects.create(third_id=2, reference="d456", article=art3)
         Provider.objects.create(third_id=2, reference="e567", article=art4)
         Provider.objects.create(third_id=2, reference="f678", article=art5)
+    if lotof:
+        for art_idx in range(150):
+            new_art = Article.objects.create(reference='REF#%03d' % (art_idx + 1, ), designation="Article %s-%04d" % (get_letters(art_idx // 10 + 1) * 3, art_idx**2),
+                                             price="%.2f" % (10 * (art_idx % 15) + (art_idx // 15)), unit=get_letters(art_idx % 3), isdisabled=False,
+                                             accountposting_id=1, vat=None, stockable=0, qtyDecimal=0)
+            new_art.categories.set(cat_list.filter(id__in=(art_idx % 3,)))
+            new_art.save()
 
 
 def default_categories():

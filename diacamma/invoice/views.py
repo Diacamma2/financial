@@ -379,7 +379,6 @@ class BillBatch(XferContainerAcknowledge):
         img.set_location(0, 0, 1, 6)
         dlg.add_component(img)
         dlg.item.set_context(dlg)
-        DetailAddModify.affect_designation(dlg)
         dlg.fill_from_model(1, 1, False)
         dlg.move(0, 0, 10)
         dlg.model = Bill
@@ -494,17 +493,6 @@ class DetailAddModify(XferAddEditor):
     field_id = 'detail'
     caption_add = _("Add detail")
     caption_modify = _("Modify detail")
-
-    def affect_designation(self):
-        if self.getparam('CHANGE_ART') is not None:
-            if self.item.article is not None:
-                self.item.designation = self.item.article.get_designation()
-                self.item.price = self.item.article.price
-                self.item.unit = self.item.article.unit
-
-    def fillresponse(self):
-        self.affect_designation()
-        XferAddEditor.fillresponse(self)
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)

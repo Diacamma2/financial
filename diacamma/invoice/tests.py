@@ -272,8 +272,65 @@ class BillTest(InvoiceTest):
         self.factory.xfer = DetailAddModify()
         self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'cat_filter': '2;3'}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
-        self.assert_count_equal('', 12)
+        self.assert_count_equal('', 13)
         self.assert_select_equal('article', 1)  # nb=1
+
+    def test_add_bill_with_manyarticles(self):
+        default_categories()
+        default_articles(True, False, True)
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 0)
+
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify',
+                      {'bill_type': 1, 'date': '2014-04-01', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
+        self.assert_count_equal('', 13)
+        self.assert_json_equal('LABELFORM', 'article_fake', None)
+        self.assert_json_equal('LABELFORM', 'warning_filter', "Modifier le filtrage pour afficher une liste d'articles utilisables.")
+        self.assert_json_equal('MEMO', 'designation', '')
+        self.assert_json_equal('FLOAT', 'price', 0)
+        self.assert_json_equal('FLOAT', 'quantity', 1)
+        self.assert_json_equal('EDIT', 'unit', '')
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'cat_filter': '2', 'CHANGE_ART': 'YES'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
+        self.assert_count_equal('', 13)
+        self.assert_select_equal('article', 52)
+        self.assert_json_equal('SELECT', 'article', 2)
+        self.assert_json_equal('MEMO', 'designation', 'Article 02')
+        self.assert_json_equal('FLOAT', 'price', 56.78)
+        self.assert_json_equal('FLOAT', 'quantity', 1)
+        self.assert_json_equal('EDIT', 'unit', 'l')
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'article': 3, 'cat_filter': '2', 'CHANGE_ART': 'YES'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
+        self.assert_count_equal('', 13)
+        self.assert_select_equal('article', 52)
+        self.assert_json_equal('SELECT', 'article', 3)
+        self.assert_json_equal('MEMO', 'designation', 'Article 03')
+        self.assert_json_equal('FLOAT', 'price', 324.97)
+        self.assert_json_equal('FLOAT', 'quantity', 1)
+        self.assert_json_equal('EDIT', 'unit', '')
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'article': 3, 'cat_filter': '2', 'ref_filter': 'CCC', 'CHANGE_ART': 'YES'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
+        self.assert_count_equal('', 13)
+        self.assert_select_equal('article', 3)
+        self.assert_json_equal('SELECT', 'article', 17)
+        self.assert_json_equal('MEMO', 'designation', 'Article CCC-0121')
+        self.assert_json_equal('FLOAT', 'price', 110.0)
+        self.assert_json_equal('FLOAT', 'quantity', 1)
+        self.assert_json_equal('EDIT', 'unit', 'C')
 
     def test_add_bill_not_allow_empty_code(self):
         default_categories()
@@ -293,7 +350,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = DetailAddModify()
         self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
-        self.assert_count_equal('', 12)
+        self.assert_count_equal('', 13)
         self.assert_select_equal('article', 4)  # nb=4
 
     def test_add_bill_bad(self):
@@ -659,7 +716,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'date', date.today().isoformat(), True)
         self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
-                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
+                                                                                   "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
 
     def test_compta_asset(self):
         default_articles()
