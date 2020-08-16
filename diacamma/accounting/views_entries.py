@@ -38,7 +38,8 @@ from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
 from lucterios.framework.xferadvance import action_list_sorted
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
-from lucterios.framework.xfercomponents import XferCompSelect, XferCompLabelForm, XferCompImage, XferCompFloat, XferCompGrid
+from lucterios.framework.xfercomponents import XferCompSelect, XferCompLabelForm, XferCompImage, XferCompFloat, XferCompGrid,\
+    XferCompEdit
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.xferprint import XferPrintListing
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
@@ -113,7 +114,7 @@ class EntryAccountList(XferListEditor):
         sel.set_select({0: _('All'), 1: _('In progress'), 2: _('Valid'), 3: _('Lettered'), 4: _('Not lettered')})
         sel.set_value(self.select_filter)
         sel.set_location(0, 3, 2)
-        sel.description = _("Filter")
+        sel.description = _("filter")
         sel.set_size(20, 200)
         sel.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(sel)
@@ -122,10 +123,23 @@ class EntryAccountList(XferListEditor):
         elif self.select_filter == 2:
             self.filter &= Q(entry__close=True)
 
+    def _filter_by_code(self):
+        self.filtercode = self.getparam('filtercode', "").strip()
+        edt = XferCompEdit('filtercode')
+        edt.set_value(self.filtercode)
+        edt.is_default = True
+        edt.description = _("accounting code starting with")
+        edt.set_location(0, 4, 2)
+        edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        self.add_component(edt)
+        if self.filtercode != "":
+            self.filter &= Q(entry__entrylineaccount__account__code__startswith=self.filtercode)
+
     def fillresponse_header(self):
         self._filter_by_year()
         self._filter_by_journal()
         self._filter_by_nature()
+        self._filter_by_code()
 
     def fillresponse_body(self):
         lineorder = self.getparam('GRID_ORDER%entryline', ())

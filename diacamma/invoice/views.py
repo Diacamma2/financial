@@ -1109,7 +1109,11 @@ def thirdaddon_invoice(item, xfer):
             FiscalYear.get_current()
             xfer.new_tab(_('Invoice'))
             current_filter, status_filter = _add_bill_filter(xfer, 1)
-            current_filter &= Q(third=item)
+            contacts = [item.contact.id]
+            if getattr(xfer, 'with_individual', False) and isinstance(item.contact.get_final_child(), LegalEntity):
+                for contact in Individual.objects.filter(responsability__legal_entity=item.contact).distinct():
+                    contacts.append(contact.id)
+            current_filter &= Q(third__contact_id__in=contacts)
             bills = Bill.objects.filter(current_filter).distinct()
             bill_grid = XferCompGrid('bill')
             bill_grid.set_model(bills, Bill.get_default_fields(status_filter), xfer)
@@ -1157,4 +1161,5 @@ def show_contact_invoice(contact, xfer):
                 lab.set_location(0, 5, 2)
                 xfer.add_component(lab)
                 xfer.params['third'] = third.id
+                xfer.with_individual = True
                 thirdaddon_invoice(third, xfer)

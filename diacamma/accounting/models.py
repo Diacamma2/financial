@@ -1208,6 +1208,7 @@ class EntryLineAccount(LucteriosModel):
     debit = LucteriosVirtualField(verbose_name=_('debit'), compute_from='get_debit', format_string=lambda: format_with_devise(6))
     credit = LucteriosVirtualField(verbose_name=_('credit'), compute_from='get_credit', format_string=lambda: format_with_devise(6))
     designation_ref = LucteriosVirtualField(verbose_name=_('name'), compute_from='get_designation_ref')
+    link_costaccounting = LucteriosVirtualField(verbose_name=_('link/cost accounting'), compute_from='get_link_costaccounting')
 
     def get_auditlog_object(self):
         return self.entry.get_final_child()
@@ -1270,6 +1271,12 @@ class EntryLineAccount(LucteriosModel):
         if (self.reference is not None) and (self.reference != ''):
             val = "%s{[br/]}%s" % (val, self.reference)
         return val
+
+    def get_link_costaccounting(self):
+        if self.link is not None:
+            return str(self.link)
+        if self.costaccounting is not None:
+            return str(self.costaccounting)
 
     def get_debit(self, with_correction=True):
         try:

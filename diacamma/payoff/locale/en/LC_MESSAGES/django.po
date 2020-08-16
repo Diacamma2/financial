@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-07-24 11:14+0000\n"
+"POT-Creation-Date: 2020-08-16 10:12+0000\n"
 "PO-Revision-Date: 2020-07-24 13:14+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -29,15 +29,15 @@ msgstr "payoff null!"
 msgid "No-valid selection!"
 msgstr "No-valid selection!"
 
-#: editors.py:185
+#: editors.py:186
 msgid "by ratio"
 msgstr "by ratio"
 
-#: editors.py:185
+#: editors.py:186
 msgid "by date"
 msgstr "by date"
 
-#: editors.py:187
+#: editors.py:188
 msgid "repartition mode"
 msgstr "repartition mode"
 

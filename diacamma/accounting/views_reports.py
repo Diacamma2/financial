@@ -90,7 +90,7 @@ class FiscalYearReport(XferContainerCustom):
             edt = XferCompEdit('filtercode')
             edt.set_value(filtercode)
             edt.is_default = True
-            edt.description = _("Accounting code starting with")
+            edt.description = _("accounting code starting with")
             edt.set_location(1, 3, 3)
             edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             self.add_component(edt)
@@ -398,7 +398,7 @@ class FiscalYearLedger(FiscalYearReport):
         edt = XferCompCheck('only_nolink')
         edt.set_value(self.only_nonull)
         edt.set_location(1, row)
-        edt.description = _("Only entry without link")
+        edt.description = _("only entry without link")
         edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(edt)
         if self.only_nonull:
@@ -420,7 +420,7 @@ class FiscalYearLedger(FiscalYearReport):
         self.grid.add_header('entry.date_entry', _('date entry'))
         self.grid.add_header('entry.date_value', _('date value'))
         self.grid.add_header('entry.designation', _('name'))
-        self.grid.add_header('link', _('link'))
+        self.grid.add_header('link_costaccounting', _('link/cost accounting'))
         self.grid.add_header('debit', _('debit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
         self.grid.add_header('credit', _('credit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
 
@@ -487,7 +487,7 @@ class FiscalYearTrialBalance(FiscalYearReport):
         edt = XferCompCheck('only_nonull')
         edt.set_value(self.only_nonull)
         edt.set_location(1, row)
-        edt.description = _("Only no null")
+        edt.description = _("only no null")
         edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(edt)
 
@@ -495,7 +495,7 @@ class FiscalYearTrialBalance(FiscalYearReport):
         edt = XferCompCheck('with_third')
         edt.set_value(self.with_third)
         edt.set_location(2, row, 2)
-        edt.description = _("Detail by third")
+        edt.description = _("detail by third")
         edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(edt)
 
