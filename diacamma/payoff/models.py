@@ -314,9 +314,9 @@ class BankAccount(LucteriosModel):
     order_key = models.IntegerField(verbose_name=_('order key'), null=True, default=None)
     is_disabled = models.BooleanField(verbose_name=_('is disabled'), default=False)
 
-    bank_journal = models.ForeignKey(Journal, verbose_name=_('bank journal'), null=False, default=4, on_delete=models.PROTECT, related_name='bank_journal')
+    bank_journal = models.ForeignKey(Journal, verbose_name=_('bank journal'), null=False, default=Journal.DEFAULT_PAYMENT, on_delete=models.PROTECT, related_name='bank_journal')
     temporary_account_code = models.CharField(_('temporary account'), max_length=50, null=False, default='')
-    temporary_journal = models.ForeignKey(Journal, verbose_name=_('temporary journal'), null=False, default=4, on_delete=models.PROTECT, related_name='temporary_journal')
+    temporary_journal = models.ForeignKey(Journal, verbose_name=_('temporary journal'), null=False, default=Journal.DEFAULT_PAYMENT, on_delete=models.PROTECT, related_name='temporary_journal')
 
     @classmethod
     def get_default_fields(cls):
@@ -417,7 +417,7 @@ class Payoff(LucteriosModel):
             fiscal_year = FiscalYear.get_current()
         if designation is None:
             designation = _("payoff for %s") % supporting.reference
-        return EntryAccount.objects.create(year=fiscal_year, date_value=self.date, designation=designation, journal=Journal.objects.get(id=4))
+        return EntryAccount.objects.create(year=fiscal_year, date_value=self.date, designation=designation, journal=Journal.objects.get(id=Journal.DEFAULT_PAYMENT))
 
     def _fill_entrylines(self, entry):
         supporting = self.supporting.get_final_child()
@@ -839,7 +839,7 @@ class BankTransaction(LucteriosModel):
 
 
 def check_payoff_accounting():
-    for entry in EntryAccount.objects.filter(close=False, journal_id=4):
+    for entry in EntryAccount.objects.filter(close=False, journal_id=Journal.DEFAULT_PAYMENT):
         _no_change, debit_rest, credit_rest = entry.serial_control(entry.get_serial())
         payoff_list = entry.payoff_set.all()
         if abs(debit_rest - credit_rest) > 0.0001:

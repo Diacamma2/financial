@@ -52,8 +52,7 @@ from lucterios.framework.printgenerators import ActionGenerator
 from lucterios.framework import signal_and_lock
 from lucterios.CORE.models import Parameter, LucteriosUser, LucteriosGroup
 from lucterios.CORE.parameters import Params
-from lucterios.contacts.models import AbstractContact, CustomField, CustomizeObject, LegalEntity,\
-    Individual
+from lucterios.contacts.models import AbstractContact, CustomField, CustomizeObject, LegalEntity, Individual
 from lucterios.documents.models import FolderContainer, DocumentContainer
 
 from diacamma.accounting.tools import get_amount_sum, current_system_account, currency_round, correct_accounting_code, get_currency_symbole, format_with_devise, get_amount_from_format_devise
@@ -650,11 +649,27 @@ class CostAccounting(LucteriosModel):
 
 
 class ChartsAccount(LucteriosModel):
+
+    TYPE_ASSET = 0
+    TYPE_LIABILITY = 1
+    TYPE_EQUITY = 2
+    TYPE_REVENUE = 3
+    TYPE_EXPENSE = 4
+    TYPE_CONTRAACCOUNTS = 5
+
+    LIST_TYPES = (
+        (TYPE_ASSET, _('Asset')),
+        (TYPE_LIABILITY, _('Liability')),
+        (TYPE_EQUITY, _('Equity')),
+        (TYPE_REVENUE, _('Revenue')),
+        (TYPE_EXPENSE, _('Expense')),
+        (TYPE_CONTRAACCOUNTS, _('Contra-accounts'))
+    )
+
     code = models.CharField(_('code'), max_length=50, db_index=True)
     name = models.CharField(_('name'), max_length=200)
     year = models.ForeignKey('FiscalYear', verbose_name=_('fiscal year'), null=False, on_delete=models.CASCADE, db_index=True)
-    type_of_account = models.IntegerField(verbose_name=_('type of account'),
-                                          choices=((0, _('Asset')), (1, _('Liability')), (2, _('Equity')), (3, _('Revenue')), (4, _('Expense')), (5, _('Contra-accounts'))), null=True, db_index=True)
+    type_of_account = models.IntegerField(verbose_name=_('type of account'), choices=LIST_TYPES, null=True, db_index=True)
 
     last_year_total = LucteriosVirtualField(verbose_name=_('total of last year'), compute_from='get_last_year_total', format_string=lambda: format_with_devise(2))
     current_total = LucteriosVirtualField(verbose_name=_('total current'), compute_from='get_current_total', format_string=lambda: format_with_devise(2))
@@ -786,6 +801,14 @@ class ChartsAccount(LucteriosModel):
 
 
 class Journal(LucteriosModel):
+
+    DEFAULT_LASTYEAR = 1
+    DEFAULT_BUYING = 2
+    DEFAULT_SELLING = 3
+    DEFAULT_PAYMENT = 4
+    DEFAULT_OTHER = 5
+    LIST_DEFAULTS = [DEFAULT_LASTYEAR, DEFAULT_BUYING, DEFAULT_SELLING, DEFAULT_PAYMENT, DEFAULT_OTHER]
+
     name = models.CharField(_('name'), max_length=50, unique=True)
     is_default = models.BooleanField(verbose_name=_('default'), default=False, null=False)
 
@@ -793,7 +816,7 @@ class Journal(LucteriosModel):
         return self.name
 
     def can_delete(self):
-        if self.id in [1, 2, 3, 4, 5]:
+        if self.id in Journal.LIST_DEFAULTS:
             return _('journal reserved!')
         else:
             return ''
