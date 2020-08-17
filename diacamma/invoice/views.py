@@ -61,8 +61,7 @@ from diacamma.payoff.models import Payoff, DepositSlip
 from diacamma.accounting.models import FiscalYear, Third, EntryLineAccount, EntryAccount
 from diacamma.accounting.views import get_main_third
 from diacamma.accounting.views_entries import EntryAccountOpenFromLine
-from diacamma.accounting.tools import current_system_account, format_with_devise,\
-    get_amount_from_format_devise
+from diacamma.accounting.tools import current_system_account, format_with_devise, get_amount_from_format_devise
 
 MenuManage.add_sub("invoice", None, "diacamma.invoice/images/invoice.png", _("Invoice"), _("Manage of billing"), 45)
 
@@ -112,7 +111,7 @@ def _add_bill_filter(xfer, row, with_third=False):
     if status_filter >= 0:
         current_filter &= Q(status=status_filter)
     elif status_filter == -1:
-        current_filter &= Q(status=0) | Q(status=1)
+        current_filter &= Q(status=Bill.STATUS_BUILDING) | Q(status=Bill.STATUS_VALID)
     if type_filter >= 0:
         current_filter &= Q(bill_type=type_filter)
     return current_filter, status_filter
@@ -223,7 +222,7 @@ class BillTransition(XferTransition):
         lbl.set_value_as_infocenter(_("Do you want validate '%s'?") % self.item)
         lbl.set_location(1, 1, 2)
         dlg.add_component(lbl)
-        if (self.item.bill_type != 0) and (abs(self.item.get_total_rest_topay()) > 0.0001):
+        if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and (abs(self.item.get_total_rest_topay()) > 0.0001):
             check_payoff = XferCompCheck('withpayoff')
             check_payoff.set_value(withpayoff)
             check_payoff.set_location(1, 2)
@@ -248,7 +247,7 @@ class BillTransition(XferTransition):
                 check_payoff.java_script += "parent.get('bank_fee').setEnabled(type);\n"
             dlg.get_components("date").name = "date_payoff"
             dlg.get_components("mode").set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-        if (self.item.bill_type != 2) and can_send_email(dlg) and self.item.can_send_email():
+        if (self.item.bill_type != Bill.BILLTYPE_ASSET) and can_send_email(dlg) and self.item.can_send_email():
             row = dlg.get_max_row()
             check_payoff = XferCompCheck('sendemail')
             check_payoff.set_value(sendemail)
@@ -279,7 +278,7 @@ class BillTransition(XferTransition):
             memo.set_size(130, 450)
             memo.set_location(2, row + 3)
             dlg.add_component(memo)
-            if self.item.bill_type != 0:
+            if self.item.bill_type != Bill.BILLTYPE_QUOTATION:
                 check_payoff.java_script += "parent.get('PRINT_PERSITENT').setEnabled(type);\n"
                 presitent_report = XferCompCheck('PRINT_PERSITENT')
                 presitent_report.set_value(True)
@@ -315,7 +314,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
         elif self.getparam("CONFIRME") is None:
             self.fill_dlg_payoff(withpayoff, sendemail)
         else:
-            if (self.item.bill_type != 0) and withpayoff:
+            if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and withpayoff:
                 self.item.affect_num()
                 self.item.save()
                 Payoff.multi_save((self.item.id,), self.getparam('amount', 0.0), self.getparam('mode', 0), self.getparam('payer'),
@@ -334,7 +333,7 @@ class BillMultiPay(XferContainerAcknowledge):
     field_id = 'bill'
 
     def fillresponse(self):
-        bill_ids = [bill_item.id for bill_item in self.items if bill_item.bill_type != 0]
+        bill_ids = [bill_item.id for bill_item in self.items if bill_item.bill_type != Bill.BILLTYPE_QUOTATION]
         if len(bill_ids) > 0:
             bill_ids.sort()
             self.redirect_action(PayoffAddModify.get_action("", ""), params={"supportings": ";".join([str(bill_id) for bill_id in bill_ids])})
@@ -349,13 +348,13 @@ class BillFromQuotation(XferContainerAcknowledge):
     field_id = 'bill'
 
     def fillresponse(self):
-        if (self.item.bill_type == 0) and (self.item.status == 1) and self.confirme(_("Do you want convert '%s' to bill?") % self.item):
+        if (self.item.bill_type == Bill.BILLTYPE_QUOTATION) and (self.item.status == Bill.STATUS_VALID) and self.confirme(_("Do you want convert '%s' to bill?") % self.item):
             new_bill = self.item.convert_to_bill()
             if new_bill is not None:
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < 1)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < Bill.STATUS_VALID)
 @MenuManage.describ('invoice.delete_bill')
 class BillDel(XferDelete):
     icon = "bill.png"
@@ -364,7 +363,7 @@ class BillDel(XferDelete):
     caption = _("Delete bill")
 
 
-@ActionsManage.affect_grid(_('Batch'), "images/upload.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < 1)
+@ActionsManage.affect_grid(_('Batch'), "images/upload.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < Bill.STATUS_VALID)
 @MenuManage.describ('payoff.add_payoff')
 class BillBatch(XferContainerAcknowledge):
     caption = _("Batch bill")
@@ -441,11 +440,11 @@ def can_printing(xfer, gridname=''):
                 return True
         return False
     else:
-        return xfer.getparam('status_filter', -1) in (1, 3)
+        return xfer.getparam('status_filter', -1) in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)
 
 
 @ActionsManage.affect_grid(_("Send"), "lucterios.mailing/images/email.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': can_printing(xfer) and can_send_email(xfer))
-@ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (1, 3) and can_send_email(xfer))
+@ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE) and can_send_email(xfer))
 @MenuManage.describ('invoice.add_bill')
 class BillPayableEmail(XferContainerAcknowledge):
     caption = _("Send by email")
@@ -459,7 +458,7 @@ class BillPayableEmail(XferContainerAcknowledge):
 
 
 @ActionsManage.affect_grid(_("Print"), "images/print.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=can_printing)
-@ActionsManage.affect_show(_("Print"), "images/print.png", close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (1, 3))
+@ActionsManage.affect_show(_("Print"), "images/print.png", close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))
 @MenuManage.describ('invoice.change_bill')
 class BillPrint(SupportingPrint):
     icon = "bill.png"
@@ -477,7 +476,7 @@ class BillPrint(SupportingPrint):
     def items_callback(self):
         has_item = False
         for item in self.items:
-            if item.status > 0:
+            if item.status in (Bill.STATUS_ARCHIVE, Bill.STATUS_VALID):
                 has_item = True
                 yield item
         if not has_item:
@@ -511,6 +510,8 @@ class ArticleList(XferListEditor):
     field_id = 'article'
     caption = _("Articles")
 
+    STOCKABLE_WITH_STOCK = 3
+
     def __init__(self, **kwargs):
         XferListEditor.__init__(self, **kwargs)
         self.categories_filter = ()
@@ -520,7 +521,7 @@ class ArticleList(XferListEditor):
         if len(self.categories_filter) > 0:
             for cat_item in Category.objects.filter(id__in=self.categories_filter):
                 items = items.filter(categories__in=[cat_item])
-        if self.show_stockable == 3:
+        if self.show_stockable == self.STOCKABLE_WITH_STOCK:
             new_items = QuerySet(model=Article)
             new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num() > 0]
             return new_items
@@ -553,7 +554,7 @@ class ArticleList(XferListEditor):
         self.fill_from_model(0, 5, False, ['stockable'])
         sel_stock = self.get_components('stockable')
         sel_stock.select_list.insert(0, (-1, '---'))
-        sel_stock.select_list.append((3, _('with stock')))
+        sel_stock.select_list.append((self.STOCKABLE_WITH_STOCK, _('with stock')))
         sel_stock.set_value(self.show_stockable)
         sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
 
@@ -583,10 +584,10 @@ class ArticleList(XferListEditor):
         if show_filter == 0:
             self.filter &= Q(isdisabled=False)
         if self.show_stockable != -1:
-            if self.show_stockable != 3:
+            if self.show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
                 self.filter &= Q(stockable=self.show_stockable)
             else:
-                self.filter &= ~Q(stockable=0)
+                self.filter &= ~Q(stockable=Article.STOCKABLE_NO)
         if show_storagearea != 0:
             self.filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
         self.add_action(ArticleSearch.get_action(_("Search"), "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
@@ -618,7 +619,10 @@ class ArticlePrint(XferPrintListing):
         if show_filter == 0:
             new_filter &= Q(isdisabled=False)
         if show_stockable != -1:
-            new_filter &= Q(stockable=show_stockable)
+            if show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
+                self.filter &= Q(stockable=show_stockable)
+            else:
+                self.filter &= ~Q(stockable=Article.STOCKABLE_NO)
         if show_storagearea != 0:
             new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
         return new_filter
@@ -650,7 +654,10 @@ class ArticleLabel(XferPrintLabel):
         if show_filter == 0:
             new_filter &= Q(isdisabled=False)
         if show_stockable != -1:
-            new_filter &= Q(stockable=show_stockable)
+            if show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
+                self.filter &= Q(stockable=show_stockable)
+            else:
+                self.filter &= ~Q(stockable=Article.STOCKABLE_NO)
         if show_storagearea != 0:
             new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
         return new_filter
@@ -929,11 +936,12 @@ class BillAccountChecking(XferContainerCustom):
         grid.add_header("status", _('status'), htype=get_format_from_field(Bill.get_field_by_name('status')))
         grid.add_header("amount", _('total'), htype=format_with_devise(7))
         grid.add_header("account", _("account amount"), htype=format_with_devise(7))
-        for bill in Bill.objects.filter(fiscal_year=self.item.fiscal_year, status__in=(1, 2, 3), bill_type__in=(1, 2, 3)):
+        for bill in Bill.objects.filter(fiscal_year=self.item.fiscal_year, status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE, Bill.STATUS_ARCHIVE),
+                                        bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)):
             account_amount = None
             if bill.entry is not None:
                 account_amount = bill.entry.entrylineaccount_set.filter(account__code__regex=current_system_account().get_customer_mask()).aggregate(Sum('amount'))['amount__sum']
-                if (bill.bill_type == 2):
+                if (bill.bill_type == Bill.BILLTYPE_ASSET):
                     account_amount = -1 * account_amount
             if ((account_amount is None) and (abs(bill.total) > 1e-4)) or ((account_amount is not None) and (abs(account_amount - bill.total) > 1e-4)):
                 grid.set_value(bill.id, "bill", bill)
@@ -1025,7 +1033,7 @@ class BillCheckAutoreduce(XferContainerAcknowledge):
 
     def fillresponse(self):
         if self.confirme(_('Do you want check auto-reduce ?')):
-            filter_auto = Q(bill__third=self.item) & Q(bill__bill_type__in=(0, 1, 3)) & Q(bill__status=0)
+            filter_auto = Q(bill__third=self.item) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT)) & Q(bill__status=Bill.STATUS_BUILDING)
             for detail in Detail.objects.filter(filter_auto).distinct():
                 detail.reduce = 0
                 detail.save(check_autoreduce=False)
@@ -1081,14 +1089,14 @@ def summary_invoice(xfer):
             lab.set_value_as_infocenter(_("Invoice"))
             lab.set_location(0, row, 4)
             xfer.add_component(lab)
-            nb_build = len(Bill.objects.filter(status=0, bill_type__in=(1, 2, 3)))
-            nb_valid = len(Bill.objects.filter(status=1, bill_type__in=(1, 2, 3)))
+            nb_build = len(Bill.objects.filter(status=Bill.STATUS_BUILDING, bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)))
+            nb_valid = len(Bill.objects.filter(status=Bill.STATUS_VALID, bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)))
             lab = XferCompLabelForm('invoiceinfo1')
             lab.set_value_as_header(_("There are %(build)d bills, assets or receipts in building and %(valid)d validated") % {'build': nb_build, 'valid': nb_valid})
             lab.set_location(0, row + 1, 4)
             xfer.add_component(lab)
-            nb_build = len(Bill.objects.filter(status=0, bill_type=0))
-            nb_valid = len(Bill.objects.filter(status=1, bill_type=0))
+            nb_build = len(Bill.objects.filter(status=Bill.STATUS_BUILDING, bill_type=Bill.BILLTYPE_QUOTATION))
+            nb_valid = len(Bill.objects.filter(status=Bill.STATUS_VALID, bill_type=Bill.BILLTYPE_QUOTATION))
             lab = XferCompLabelForm('invoiceinfo2')
             lab.set_value_as_header(_("There are %(build)d quotations in building and %(valid)d validated") % {'build': nb_build, 'valid': nb_valid})
             lab.set_location(0, row + 2, 4)
@@ -1124,9 +1132,9 @@ def thirdaddon_invoice(item, xfer):
                 reduce_sum = 0.0
                 total_sum = 0.0
                 for bill in bills:
-                    if ((bill.bill_type == 0) and (bill.status == 3)) or (bill.status == 2):
+                    if ((bill.bill_type == Bill.BILLTYPE_QUOTATION) and (bill.status == Bill.STATUS_CANCEL)) or (bill.status == Bill.STATUS_ARCHIVE):
                         continue
-                    direction = -1 if bill.bill_type == 2 else 1
+                    direction = -1 if bill.bill_type == Bill.BILLTYPE_ASSET else 1
                     total_sum += direction * bill.get_total()
                     for detail in bill.detail_set.all():
                         reduce_sum += direction * detail.get_reduce()
@@ -1154,8 +1162,8 @@ def show_contact_invoice(contact, xfer):
             accounts = third.accountthird_set.filter(Q(code__regex=current_system_account().get_customer_mask()))
             if len(accounts) > 0:
                 xfer.new_tab(_("Financial"))
-                nb_build = len(Bill.objects.filter(third=third, status=0))
-                nb_valid = len(Bill.objects.filter(third=third, status=1))
+                nb_build = len(Bill.objects.filter(third=third, status=Bill.STATUS_BUILDING))
+                nb_valid = len(Bill.objects.filter(third=third, status=Bill.STATUS_VALID))
                 lab = XferCompLabelForm('invoiceinfo')
                 lab.set_value_as_header(_("There are %(build)d bills in building and %(valid)d validated") % {'build': nb_build, 'valid': nb_valid})
                 lab.set_location(0, 5, 2)

@@ -26,21 +26,25 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.aggregates import Sum
+from django.db.models.query import QuerySet
 from django.db.models import Q
 
-from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES, FORMTYPE_REFRESH, CLOSE_NO, SELECT_NONE, WrapAction,\
-    format_to_string
-from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_CLOSE,\
-    TITLE_OK, TITLE_CANCEL, TITLE_CREATE
+from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES, \
+    FORMTYPE_REFRESH, CLOSE_NO, SELECT_NONE, WrapAction, format_to_string
+from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, \
+    TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE,\
+    action_list_sorted, TITLE_CLOSE
 
 from lucterios.CORE.xferprint import XferPrintAction
 from lucterios.CORE.views import ObjectImport
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompGrid, XferCompSelect, XferCompCheckList, GRID_ORDER, XferCompDate,\
-    XferCompEdit, XferCompImage, XferCompCheck
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompGrid, XferCompSelect, XferCompCheckList, \
+    GRID_ORDER, XferCompDate, XferCompEdit, XferCompImage, XferCompCheck
 from lucterios.framework.xferbasic import NULL_VALUE
+from lucterios.framework.xfergraphic import XferContainerAcknowledge
 
 from diacamma.accounting.tools import format_with_devise
-from diacamma.invoice.models import StorageSheet, StorageDetail, Article, Category, StorageArea
+from diacamma.invoice.models import StorageSheet, StorageDetail, Article, Category, StorageArea, InventoryDetail, InventorySheet
+from diacamma.invoice.editors import add_filters
 
 
 MenuManage.add_sub("storage", "invoice", "diacamma.invoice/images/storage.png", _("Storage"), _("Manage of storage"), 10)
@@ -79,7 +83,7 @@ class StorageSheetList(XferListEditor):
             self.filter &= Q(sheet_type=type_filter)
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", condition=lambda xfer, gridname='': xfer.getparam('status', -1) != 1)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES, condition=lambda xfer: xfer.item.status == 0)
 @MenuManage.describ('invoice.add_storagesheet')
 class StorageSheetAddModify(XferAddEditor):
@@ -99,7 +103,7 @@ class StorageSheetShow(XferShowEditor):
     field_id = 'storagesheet'
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', -1) != 1)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
 @MenuManage.describ('invoice.delete_storagesheet')
 class StorageSheetDel(XferDelete):
     icon = "storagesheet.png"
@@ -139,7 +143,7 @@ class StorageSheetTransition(XferTransition):
         if (transition == 'valid') and (self.item.sheet_type == 2):
             target_area = self.getparam('target_area', 0)
             if (target_area != 0) and (self.getparam("CONFIRME") is not None):
-                self.item.sheet_type = 1
+                self.item.sheet_type = StorageSheet.TYPE_EXIT
                 self.item.save()
                 other_storage = self.item.create_oposit(target_area)
                 self._confirmed(transition)
@@ -152,7 +156,7 @@ class StorageSheetTransition(XferTransition):
 
 @MenuManage.describ('invoice.change_storagesheet')
 @ActionsManage.affect_show(TITLE_PRINT, "images/print.png", condition=lambda xfer: int(xfer.item.status) == 1)
-@ActionsManage.affect_grid(TITLE_PRINT, "images/print.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', -1) == 1)
+@ActionsManage.affect_grid(TITLE_PRINT, "images/print.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', -1) == StorageSheet.STATUS_VALID)
 class StorageSheetPrint(XferPrintAction):
     caption = _("Print storage sheet")
     icon = "report.png"
@@ -163,7 +167,7 @@ class StorageSheetPrint(XferPrintAction):
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (xfer.item.status == 0))
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0))
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == StorageSheet.STATUS_BUILDING))
 @MenuManage.describ('invoice.add_storagesheet')
 class StorageDetailAddModify(XferAddEditor):
     icon = "storagesheet.png"
@@ -173,7 +177,7 @@ class StorageDetailAddModify(XferAddEditor):
     caption_modify = _("Modify storage detail")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0))
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == StorageSheet.STATUS_BUILDING))
 @MenuManage.describ('invoice.delete_storagesheet')
 class StorageDetailDel(XferDelete):
     icon = "storagesheet.png"
@@ -183,7 +187,7 @@ class StorageDetailDel(XferDelete):
 
 
 @MenuManage.describ('contacts.add_vat')
-@ActionsManage.affect_grid(_('Import'), "images/up.png", unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0) and (int(xfer.item.sheet_type) == 0))
+@ActionsManage.affect_grid(_('Import'), "images/up.png", unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0) and (int(xfer.item.sheet_type) == StorageSheet.STATUS_BUILDING))
 class StorageDetailImport(ObjectImport):
     caption = _("Storage detail import")
     icon = "storagesheet.png"
@@ -283,7 +287,9 @@ class StorageSituation(XferListEditor):
             self.filter &= Q(storagesheet__storagearea=show_storagearea)
 
     def fillresponse_body(self):
+        row_id = self.get_max_row()
         grid = XferCompGrid(self.field_id)
+        grid.no_pager = True
         grid.order_list = self.order_list
         grid.add_header("article", Article._meta.verbose_name, None, 1)
         grid.add_header("designation", _('designation'))
@@ -291,10 +297,10 @@ class StorageSituation(XferListEditor):
         grid.add_header('qty', _('Quantity'))
         grid.add_header('amount', _('Amount'), format_with_devise(7))
         grid.add_header('mean', _('Mean price'), format_with_devise(7))
-        print(self.items)
         item_id = 0
         total_val = 0.0
-        for item in self.get_items_from_filter():
+        items = self.get_items_from_filter()
+        for item in items:
             if (item['data_sum'] > 0) or not self.hide_empty:
                 item_id += 1
                 area_id = item['storagesheet__storagearea']
@@ -310,14 +316,26 @@ class StorageSituation(XferListEditor):
                 grid.set_value(item_id, 'amount', amount)
                 if abs(qty) > 0.0001:
                     grid.set_value(item_id, 'mean', amount / qty)
-        grid.set_location(0, self.get_max_row() + 1, 2)
+        grid.set_location(0, row_id + 3, 2)
         grid.set_size(200, 500)
         self.add_component(grid)
+
+        lbl = XferCompLabelForm("sep")
+        lbl.set_value("{[hr/]}")
+        lbl.set_location(0, row_id + 1, 2)
+        self.add_component(lbl)
+
+        lbl = XferCompLabelForm("nb")
+        lbl.set_value(len(items))
+        lbl.set_format('N0')
+        lbl.set_location(0, row_id + 2)
+        lbl.description = _('count of storage')
+        self.add_component(lbl)
 
         lbl = XferCompLabelForm("total")
         lbl.set_value(total_val)
         lbl.set_format(format_with_devise(5))
-        lbl.set_location(0, self.get_max_row() + 1, 2)
+        lbl.set_location(1, row_id + 2)
         lbl.description = _('total amount')
         self.add_component(lbl)
         self.add_action(StorageSituationPrint.get_action(TITLE_PRINT, "images/print.png"), close=CLOSE_NO)
@@ -423,3 +441,171 @@ class StorageHistoricPrint(XferPrintAction):
     field_id = 'storagedetail'
     action_class = StorageHistoric
     with_text_export = True
+
+
+def right_to_inventory(request):
+    if InventorySheetShow.get_action().check_permission(request):
+        return len(StorageArea.objects.all()) > 0
+    else:
+        return False
+
+
+@MenuManage.describ(right_to_inventory, FORMTYPE_NOMODAL, 'storage', _('Management of inventory sheet list'))
+class InventorySheetList(XferListEditor):
+    icon = "inventorysheet.png"
+    model = InventorySheet
+    field_id = 'inventorysheet'
+    caption = _("Inventory sheet")
+
+    def fillresponse_header(self):
+        status_filter = self.getparam('status', 0)
+        self.fill_from_model(0, 1, False, ['status'])
+        sel_status = self.get_components('status')
+        sel_status.select_list.insert(0, (-1, '---'))
+        sel_status.set_value(status_filter)
+        sel_status.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        self.filter = Q()
+        if status_filter != -1:
+            self.filter &= Q(status=status_filter)
+
+
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
+@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES, condition=lambda xfer: xfer.item.status == 0)
+@MenuManage.describ('invoice.add_inventorysheet')
+class InventorySheetAddModify(XferAddEditor):
+    icon = "inventorysheet.png"
+    model = InventorySheet
+    field_id = 'inventorysheet'
+    caption_add = _("Add storage sheet")
+    caption_modify = _("Modify storage sheet")
+
+
+@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", unique=SELECT_SINGLE)
+@MenuManage.describ('invoice.change_inventorysheet')
+class InventorySheetShow(XferListEditor):
+    caption = _("Show inventory sheet")
+    icon = "inventorysheet.png"
+    model = InventorySheet
+    field_id = 'inventorysheet'
+
+    def show_sheetinfo(self):
+        self.get_components('img').rowspan = 3
+        self.get_components('title').colspan = 2
+        self.old_item = self.item
+        self.fill_from_model(1, 2, True, InventorySheet.get_show_fields())
+        self.filter = Q(inventorysheet=self.item)
+        self.model = InventoryDetail
+        self.item = InventoryDetail()
+        self.field_id = 'inventorydetail'
+        lbl = XferCompLabelForm('sep_filter')
+        lbl.set_value("{[hr/]}")
+        lbl.set_location(0, 9, 3)
+        self.add_component(lbl)
+
+    def fillresponse_header(self):
+        self.show_sheetinfo()
+        add_filters(self, 1, 10, True)
+        self.filter_entermode = self.getparam('enter_mode', 0)
+        if self.old_item.status == InventorySheet.STATUS_BUILDING:
+            select = XferCompSelect('enter_mode')
+            select.set_select([(0, _('All')), (1, _('Only the non-entered')), (2, _('Only the entered')), (3, _('Only with quantity'))])
+            select.set_value(self.filter_entermode)
+            select.set_location(1, self.get_max_row() + 1, 2)
+            select.description = _('Filter by elements')
+            select.set_action(self.request, self.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            self.add_component(select)
+        else:
+            self.filter_entermode = 0
+
+        filter_thirdid = self.getparam('third', 0)
+        filter_ref = self.getparam('reference', '')
+        filter_lib = self.getparam('ref_filter', '')
+        if filter_thirdid != 0:
+            self.filter &= Q(article__provider__third_id=filter_thirdid)
+        if filter_ref != '':
+            self.filter &= Q(article__provider__reference__icontains=filter_ref)
+        if filter_lib != '':
+            self.filter &= Q(article__reference__icontains=filter_lib) | Q(article__designation__icontains=filter_lib)
+        if self.filter_entermode in (1, 2):
+            self.filter &= Q(quantity__isnull=(self.filter_entermode == 1))
+
+    def get_items_from_filter(self):
+        items = XferListEditor.get_items_from_filter(self)
+        filter_cat = self.getparam('cat_filter', ())
+        if len(filter_cat) > 0:
+            for cat_item in Category.objects.filter(id__in=filter_cat).distinct():
+                items = items.filter(article__categories__in=[cat_item]).distinct()
+        if (self.filter_entermode == 3):
+            res = QuerySet(model=InventoryDetail)
+            res._result_cache = [item for item in items if item.real_quantity > 1e-3]
+            return res
+        else:
+            return items
+
+    def fillresponse_body(self):
+        XferListEditor.fillresponse_body(self)
+        self.model = InventorySheet
+        self.item = self.old_item
+        inventorydetail_grid = self.get_components('inventorydetail')
+        inventorydetail_grid.colspan = 3
+        if int(self.item.status) == InventorySheet.STATUS_VALID:
+            inventorydetail_grid.delete_header('real_quantity_txt')
+
+    def fillresponse(self):
+        XferListEditor.fillresponse(self)
+        self.actions = []
+        for act, opt in ActionsManage.get_actions(ActionsManage.ACTION_IDENT_SHOW, self, key=action_list_sorted):
+            self.add_action(act, **opt)
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+
+
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
+@MenuManage.describ('invoice.delete_inventorysheet')
+class InventorySheetDel(XferDelete):
+    icon = "inventorysheet.png"
+    model = InventorySheet
+    field_id = 'inventorysheet'
+    caption = _("Delete inventory sheet")
+
+
+@ActionsManage.affect_transition("status")
+@MenuManage.describ('invoice.add_inventorysheet')
+class InventorySheetTransition(XferTransition):
+    icon = "inventorysheet.png"
+    model = InventorySheet
+    field_id = 'inventorysheet'
+
+
+@MenuManage.describ('invoice.change_inventorysheet')
+@ActionsManage.affect_show(TITLE_PRINT, "images/print.png")
+@ActionsManage.affect_grid(TITLE_PRINT, "images/print.png", unique=SELECT_SINGLE)
+class InventorySheetPrint(XferPrintAction):
+    caption = _("Print inventory sheet")
+    icon = "report.png"
+    model = InventorySheet
+    field_id = 'bill'
+    action_class = InventorySheetShow
+    with_text_export = True
+
+
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING))
+@MenuManage.describ('invoice.add_inventorysheet')
+class InventoryDetailModify(XferAddEditor):
+    icon = "inventorysheet.png"
+    model = InventoryDetail
+    field_id = 'inventorydetail'
+    caption_add = _("Add inventory detail")
+    caption_modify = _("Modify inventory detail")
+
+
+@ActionsManage.affect_grid(_('Copy'), "images/clone.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING))
+@MenuManage.describ('invoice.add_inventorysheet')
+class InventoryDetailCopy(XferContainerAcknowledge):
+    icon = "inventorysheet.png"
+    model = InventoryDetail
+    field_id = 'inventorydetail'
+    caption = _("Copy quantity of inventory detail")
+
+    def fillresponse(self):
+        for item in self.items:
+            item.copy_value()

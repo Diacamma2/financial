@@ -41,7 +41,8 @@ from lucterios.CORE.parameters import Params
 from diacamma.accounting.tools import current_system_account, format_with_devise
 from diacamma.accounting.models import CostAccounting, FiscalYear, Third
 from diacamma.payoff.editors import SupportingEditor
-from diacamma.invoice.models import Provider, Category, CustomField, Article
+from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail,\
+    Bill, Vat, StorageSheet
 
 
 class VatEditor(LucteriosEditor):
@@ -128,7 +129,7 @@ class ArticleEditor(LucteriosEditor):
             img.type = 'jpg'
             img.set_location(new_col, obj_ref.row, 1, 6)
             xfer.add_component(img)
-        if self.item.stockable != 0:
+        if self.item.stockable != Article.STOCKABLE_NO:
             xfer.new_tab(_("Storage"))
             grid = XferCompGrid('storage')
             grid.add_header('area', _('Area'))
@@ -161,8 +162,8 @@ class BillEditor(SupportingEditor):
 
     def edit(self, xfer):
         if xfer.item.id is None:
-            xfer.item.status = 0
-            xfer.params['status'] = 0
+            xfer.item.status = Bill.STATUS_BUILDING
+            xfer.params['status'] = Bill.STATUS_BUILDING
         xfer.move(0, 0, 2)
         xfer.fill_from_model(1, 0, True, ["third"])
         comp_comment = xfer.get_components('comment')
@@ -185,25 +186,76 @@ class BillEditor(SupportingEditor):
             self.item.bill_type, self.item.get_field_by_name('bill_type')))
         xfer.add_component(lbl)
         details = xfer.get_components('detail')
-        if Params.getvalue("invoice-vat-mode") != 0:
-            if Params.getvalue("invoice-vat-mode") == 1:
+        if Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT:
+            if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICENOVAT:
                 details.headers[2].descript = _('price excl. taxes')
                 details.headers[7].descript = _('total excl. taxes')
-            elif Params.getvalue("invoice-vat-mode") == 2:
+            elif Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
                 details.headers[2].descript = _('price incl. taxes')
                 details.headers[7].descript = _('total incl. taxes')
             xfer.get_components('total_excltax').description = _('total excl. taxes')
             xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, [((_('VTA sum'), 'vta_sum'), (_('total incl. taxes'), 'total_incltax'))])
-        if self.item.status == 0:
+        if self.item.status == Bill.STATUS_BUILDING:
             SupportingEditor.show_third(self, xfer, 'invoice.add_bill')
             xfer.get_components('date').colspan += 1
             xfer.get_components('detail').colspan += 1
         else:
             SupportingEditor.show_third_ex(self, xfer)
             details.actions = []
-            if self.item.bill_type != 0:
+            if self.item.bill_type != Bill.BILLTYPE_QUOTATION:
                 SupportingEditor.show(self, xfer)
         return
+
+
+def add_provider_filter(xfer, init_col, init_row):
+    old_item = xfer.item
+    old_model = xfer.model
+    xfer.model = Provider
+    xfer.item = Provider()
+    xfer.filltab_from_model(init_col, init_row, False, ['third'])
+    xfer.filltab_from_model(init_col + 1, init_row, False, ['reference'])
+    xfer.item = old_item
+    xfer.model = old_model
+    filter_thirdid = xfer.getparam('third', 0)
+    filter_ref = xfer.getparam('reference', '')
+    sel_third = xfer.get_components("third")
+    sel_third.set_needed(False)
+    sel_third.set_select_query(Third.objects.filter(provider__isnull=False).distinct())
+    sel_third.set_value(filter_thirdid)
+    sel_third.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+    sel_third.description = _('provider')
+    sel_ref = xfer.get_components("reference")
+    sel_ref.set_value(filter_ref)
+    sel_ref.set_needed(False)
+    sel_ref.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+
+
+def add_filters(xfer, init_col, init_row, has_select):
+    has_filter = False
+    cat_list = Category.objects.all()
+    if len(cat_list) > 0:
+        filter_cat = xfer.getparam('cat_filter', ())
+        edt = XferCompCheckList("cat_filter")
+        edt.set_select_query(cat_list)
+        edt.set_value(filter_cat)
+        edt.set_location(init_col, init_row, 2)
+        edt.description = _('categories')
+        edt.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+        xfer.add_component(edt)
+        has_filter = True
+    if not has_select or (len(cat_list) > 0):
+        ref_filter = xfer.getparam('ref_filter', '')
+        edt = XferCompEdit("ref_filter")
+        edt.set_value(ref_filter)
+        edt.set_location(init_col, init_row + 1, 2)
+        edt.description = _('ref./designation')
+        edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+        xfer.add_component(edt)
+        has_filter = True
+    if len(Provider.objects.all()) > 0:
+        add_provider_filter(xfer, init_col, init_row + 2)
+        has_filter = True
+    return has_filter
 
 
 class DetailFilter(object):
@@ -222,7 +274,9 @@ class DetailFilter(object):
             no_article_empty = not Params.getvalue("invoice-reduce-allow-article-empty")
             if not no_article_empty:
                 filter_cat = xfer.getparam('cat_filter', ())
-                no_article_empty = (len(filter_cat) > 0)
+                filter_thirdid = xfer.getparam('third', 0)
+                filter_ref = xfer.getparam('reference', '')
+                no_article_empty = (len(filter_cat) > 0) or (filter_thirdid != 0) or (filter_ref != '')
             if no_article_empty:
                 sel_art.set_needed(True)
                 sel_art._check_case()
@@ -246,29 +300,6 @@ class DetailFilter(object):
                 xfer.get_components("unit").value = self.item.unit
         return sel_art
 
-    def _add_provider_filter(self, xfer, sel_art, init_row):
-        old_model = xfer.model
-        xfer.model = Provider
-        xfer.item = Provider()
-        xfer.filltab_from_model(sel_art.col, init_row, False, ['third'])
-        xfer.filltab_from_model(sel_art.col + 1, init_row, False, ['reference'])
-        xfer.item = self.item
-        xfer.model = old_model
-        filter_thirdid = xfer.getparam('third', 0)
-        filter_ref = xfer.getparam('reference', '')
-        sel_third = xfer.get_components("third")
-        sel_third.set_needed(False)
-        sel_third.set_select_query(Third.objects.filter(provider__isnull=False).distinct())
-        sel_third.set_value(filter_thirdid)
-        sel_third.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-        sel_third.description = _('provider')
-        sel_ref = xfer.get_components("reference")
-        sel_ref.set_value(filter_ref)
-        sel_ref.set_needed(False)
-        sel_ref.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-        if (filter_thirdid != 0) or (filter_ref != ''):
-            sel_art.set_needed(True)
-
     def edit_filter(self, xfer, sel_art):
         has_select = (xfer.get_components("article") is not None)
         init_row = sel_art.row
@@ -283,30 +314,7 @@ class DetailFilter(object):
                        modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'article': self.item.article_id})
         xfer.add_component(btn)
 
-        has_filter = False
-        cat_list = Category.objects.all()
-        if len(cat_list) > 0:
-            filter_cat = xfer.getparam('cat_filter', ())
-            edt = XferCompCheckList("cat_filter")
-            edt.set_select_query(cat_list)
-            edt.set_value(filter_cat)
-            edt.set_location(sel_art.col, init_row, 2)
-            edt.description = _('categories')
-            edt.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-            xfer.add_component(edt)
-            has_filter = True
-        if not has_select or (len(cat_list) > 0):
-            ref_filter = xfer.getparam('ref_filter', '')
-            edt = XferCompEdit("ref_filter")
-            edt.set_value(ref_filter)
-            edt.set_location(sel_art.col, init_row + 1, 2)
-            edt.description = _('ref./designation')
-            edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-            xfer.add_component(edt)
-            has_filter = True
-        if len(Provider.objects.all()) > 0:
-            self._add_provider_filter(xfer, sel_art, init_row + 2)
-            has_filter = True
+        has_filter = add_filters(xfer, sel_art.col, init_row, has_select)
 
         if has_filter:
             if not has_select:
@@ -324,10 +332,10 @@ class DetailFilter(object):
 class DetailEditor(LucteriosEditor, DetailFilter):
 
     def before_save(self, xfer):
-        self.item.vta_rate = 0
-        if (Params.getvalue("invoice-vat-mode") != 0) and (self.item.article is not None) and (self.item.article.vat is not None):
+        self.item.vta_rate = Vat.MODE_NOVAT
+        if (Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT) and (self.item.article is not None) and (self.item.article.vat is not None):
             self.item.vta_rate = float(self.item.article.vat.rate / 100)
-        if Params.getvalue("invoice-vat-mode") == 2:
+        if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
             self.item.vta_rate = -1 * self.item.vta_rate
         return
 
@@ -364,11 +372,11 @@ class StorageSheetEditor(LucteriosEditor):
 
     def edit(self, xfer):
         if xfer.item.id is None:
-            xfer.item.status = 0
-            xfer.params['status'] = 0
+            xfer.item.status = StorageSheet.STATUS_BUILDING
+            xfer.params['status'] = StorageSheet.STATUS_BUILDING
         sel_type = xfer.get_components("sheet_type")
         sel_type.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        if int(self.item.sheet_type) != 0:
+        if int(self.item.sheet_type) != StorageSheet.TYPE_RECEIPT:
             xfer.remove_component("provider")
             xfer.remove_component("bill_reference")
             xfer.remove_component("bill_date")
@@ -388,14 +396,14 @@ class StorageSheetEditor(LucteriosEditor):
                     bill_date.value = date.today()
 
     def show(self, xfer):
-        if int(self.item.sheet_type) != 0:
+        if int(self.item.sheet_type) != StorageSheet.TYPE_RECEIPT:
             xfer.remove_component("provider")
             xfer.remove_component("bill_reference")
             xfer.remove_component("bill_date")
             xfer.remove_component("total")
             storagedetail = xfer.get_components("storagedetail")
             storagedetail.delete_header("price")
-        if int(self.item.status) == 0:
+        if int(self.item.status) == StorageSheet.STATUS_BUILDING:
             lbl = XferCompLabelForm('info')
             lbl.set_color('red')
             lbl.set_location(1, xfer.get_max_row() + 1, 4)
@@ -407,7 +415,7 @@ class StorageDetailEditor(LucteriosEditor, DetailFilter):
 
     def edit(self, xfer):
         sel_art = self.refresh_article(xfer)
-        if int(self.item.storagesheet.sheet_type) != 0:
+        if int(self.item.storagesheet.sheet_type) != StorageSheet.TYPE_RECEIPT:
             xfer.remove_component("price")
             max_qty = 0
             if self.item.article_id is not None:
@@ -426,3 +434,21 @@ class StorageDetailEditor(LucteriosEditor, DetailFilter):
         else:
             xfer.get_components('quantity').prec = 3
         DetailFilter.edit_filter(self, xfer, sel_art)
+
+
+class InventoryDetailEditor(LucteriosEditor):
+
+    def edit(self, xfer):
+        xfer.move(0, 0, 5)
+        xfer.model = Article
+        xfer.item = self.item.article
+        xfer.fill_from_model(1, 1, True, ['reference', 'designation'])
+        xfer.model = InventoryDetail
+        xfer.item = self.item
+
+        xfer.change_to_readonly("real_quantity")
+        xfer.get_components("real_quantity").value = self.item.real_quantity_txt
+        xfer.get_components('quantity').prec = self.item.article.qtyDecimal
+        xfer.get_components('quantity').needed = True
+        if xfer.get_components('quantity').value is None:
+            xfer.get_components('quantity').value = self.item.real_quantity

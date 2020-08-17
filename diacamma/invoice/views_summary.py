@@ -59,7 +59,7 @@ class CurrentBill(XferListEditor):
             contacts.append(contact.id)
         for contact in LegalEntity.objects.filter(responsability__individual__user=self.request.user).distinct():
             contacts.append(contact.id)
-        self.filter = Q(third__contact_id__in=contacts) & Q(status__gt=0)
+        self.filter = Q(third__contact_id__in=contacts) & ~Q(status=Bill.STATUS_BUILDING)
 
     def fillresponse(self):
         XferListEditor.fillresponse(self)

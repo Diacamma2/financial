@@ -24,9 +24,9 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
 from re import match
-import logging
 from os.path import exists, join, dirname
 from datetime import timedelta
+from logging import getLogger
 
 from django.db import models
 from django.db.models.aggregates import Max, Sum, Count
@@ -60,6 +60,10 @@ from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransact
 
 
 class Vat(LucteriosModel):
+    MODE_NOVAT = 0
+    MODE_PRICENOVAT = 1
+    MODE_PRICEWITHVAT = 2
+
     name = models.CharField(_('name'), max_length=20)
     rate = models.DecimalField(_('rate'), max_digits=6, decimal_places=2,
                                default=10.0, validators=[MinValueValidator(0.0), MaxValueValidator(99.9)])
@@ -192,6 +196,11 @@ class AccountPosting(LucteriosModel):
 
 
 class Article(LucteriosModel, CustomizeObject):
+    STOCKABLE_NO = 0
+    STOCKABLE_YES = 1
+    STOCKABLE_YES_WITHOUTSELL = 2
+    LIST_STOCKABLES = ((STOCKABLE_NO, _('no stockable')), (STOCKABLE_YES, _('stockable')), (STOCKABLE_YES_WITHOUTSELL, _('stockable & no marketable')))
+
     CustomFieldClass = ArticleCustomField
     FieldName = 'article'
 
@@ -203,8 +212,7 @@ class Article(LucteriosModel, CustomizeObject):
     isdisabled = models.BooleanField(verbose_name=_('is disabled'), default=False, db_index=True)
     sell_account = models.CharField(_('sell account'), max_length=50)
     vat = models.ForeignKey(Vat, verbose_name=_('vat'), null=True, default=None, on_delete=models.PROTECT)
-    stockable = models.IntegerField(verbose_name=_('stockable'),
-                                    choices=((0, _('no stockable')), (1, _('stockable')), (2, _('stockable & no marketable'))), null=False, default=0, db_index=True)
+    stockable = models.IntegerField(verbose_name=_('stockable'), choices=LIST_STOCKABLES, null=False, default=STOCKABLE_NO, db_index=True)
     categories = models.ManyToManyField(Category, verbose_name=_('categories'), blank=True)
     qtyDecimal = models.IntegerField(verbose_name=_('quantity decimal'), default=0, validators=[MinValueValidator(0), MaxValueValidator(3)])
     accountposting = models.ForeignKey(AccountPosting, verbose_name=_('account posting code'), null=True, default=None, on_delete=models.PROTECT)
@@ -324,10 +332,10 @@ class Article(LucteriosModel, CustomizeObject):
                         cls.import_logs.append(_("Provider '%s' unknown !") % rowdata['provider.third.contact'].strip())
             return new_item
         except ValidationError:
-            logging.getLogger('lucterios.framwork').exception("import_data")
+            getLogger('diacamma.invoice').exception("import_data")
             raise LucteriosException(GRAVE, "Data error in this line:<br/> %s" % "<br/>".join(get_obj_contains(new_item)))
         except Exception:
-            logging.getLogger('diacamma.invoice').exception("import_data")
+            getLogger('diacamma.invoice').exception("import_data")
             raise
 
     @property
@@ -369,7 +377,7 @@ class Article(LucteriosModel, CustomizeObject):
         detail_filter = Q(storagesheet__status=1)
         if self.show_storagearea != 0:
             detail_filter &= Q(storagesheet__storagearea=self.show_storagearea)
-        if self.stockable != 0:
+        if self.stockable != self.STOCKABLE_NO:
             stock = {}
             for val in self.storagedetail_set.filter(detail_filter).values('storagesheet__storagearea').annotate(data_sum=Sum('quantity')):
                 if abs(val['data_sum']) > 0.001:
@@ -387,7 +395,7 @@ class Article(LucteriosModel, CustomizeObject):
         return stock_list
 
     def has_sufficiently(self, storagearea_id, quantity):
-        if self.stockable != 0:
+        if self.stockable != self.STOCKABLE_NO:
             for val in self.get_stockage_values():
                 if val[0] == storagearea_id:
                     if (float(quantity) - val[2]) < 0.001:
@@ -395,9 +403,9 @@ class Article(LucteriosModel, CustomizeObject):
             return False
         return True
 
-    def get_stockage_total_num(self):
+    def get_stockage_total_num(self, storagearea=0):
         for val in self.get_stockage_values():
-            if val[0] == 0:
+            if val[0] == storagearea:
                 return float(val[2])
         return None
 
@@ -454,15 +462,25 @@ class Provider(LucteriosModel):
 
 
 class Bill(Supporting):
+    BILLTYPE_QUOTATION = 0
+    BILLTYPE_BILL = 1
+    BILLTYPE_ASSET = 2
+    BILLTYPE_RECEIPT = 3
+    LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')))
+
+    STATUS_BUILDING = 0
+    STATUS_VALID = 1
+    STATUS_CANCEL = 2
+    STATUS_ARCHIVE = 3
+    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')), (STATUS_CANCEL, _('cancel')), (STATUS_ARCHIVE, _('archive')))
+
     fiscal_year = models.ForeignKey(
         FiscalYear, verbose_name=_('fiscal year'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
-    bill_type = models.IntegerField(verbose_name=_('bill type'),
-                                    choices=((0, _('quotation')), (1, _('bill')), (2, _('asset')), (3, _('receipt'))), null=False, default=0, db_index=True)
+    bill_type = models.IntegerField(verbose_name=_('bill type'), choices=LIST_BILLTYPES, null=False, default=BILLTYPE_QUOTATION, db_index=True)
     num = models.IntegerField(verbose_name=_('numeros'), null=True)
     date = models.DateField(verbose_name=_('date'), null=False)
     comment = models.TextField(_('comment'), null=False, default="")
-    status = FSMIntegerField(verbose_name=_('status'),
-                             choices=((0, _('building')), (1, _('valid')), (2, _('cancel')), (3, _('archive'))), null=False, default=0, db_index=True)
+    status = FSMIntegerField(verbose_name=_('status'), choices=LIST_STATUS, null=False, default=STATUS_BUILDING, db_index=True)
     entry = models.ForeignKey(EntryAccount, verbose_name=_('entry'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
     cost_accounting = models.ForeignKey(CostAccounting, verbose_name=_('cost accounting'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
     parentbill = models.ForeignKey("invoice.Bill", verbose_name=_('parent'), null=True, default=None, on_delete=models.SET_NULL)
@@ -543,7 +561,7 @@ class Bill(Supporting):
         return get_value_if_choices(self.bill_type, self.get_field_by_name("bill_type")).upper()
 
     def get_total_ex(self):
-        if Params.getvalue("invoice-vat-mode") == 2:
+        if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
             return self.get_total_incltax()
         else:
             return self.get_total_excltax()
@@ -643,7 +661,7 @@ class Bill(Supporting):
 
     def get_info_state(self):
         info = []
-        if self.status == 0:
+        if self.status == self.STATUS_BUILDING:
             info = Supporting.get_info_state(self, current_system_account().get_customer_mask())
         details = self.detail_set.all()
         if len(details) == 0:
@@ -669,7 +687,7 @@ class Bill(Supporting):
                 if detail_account is None:
                     info.append(str(_("article has code account unknown!")))
                     break
-        if self.bill_type != 0:
+        if self.bill_type != self.BILLTYPE_QUOTATION:
             try:
                 info.extend(self.check_date(self.date.isoformat()))
             except LucteriosException:
@@ -677,15 +695,15 @@ class Bill(Supporting):
         return info
 
     def can_delete(self):
-        if self.status > 0:
+        if self.status != self.STATUS_BUILDING:
             return _('"%s" cannot be deleted!') % str(self)
         return ''
 
     def generate_storage(self):
-        if self.bill_type == 2:
-            sheet_type = 0
+        if self.bill_type == self.BILLTYPE_ASSET:
+            sheet_type = StorageSheet.TYPE_RECEIPT
         else:
-            sheet_type = 1
+            sheet_type = StorageSheet.TYPE_EXIT
         old_area = 0
         last_sheet = None
         for detail in self.detail_set.filter(storagearea__isnull=False).order_by('storagearea'):
@@ -745,7 +763,7 @@ class Bill(Supporting):
                 EntryLineAccount.objects.create(account=vat_account, amount=is_bill * vatamount, entry=self.entry)
 
     def generate_entry(self):
-        if self.bill_type == 2:
+        if self.bill_type == self.BILLTYPE_ASSET:
             is_bill = -1
         else:
             is_bill = 1
@@ -761,7 +779,7 @@ class Bill(Supporting):
             detail_item = detail_list[detail_key]
             if abs(detail_item[1]) > 0.0001:
                 EntryLineAccount.objects.create(account=detail_item[0], amount=is_bill * detail_item[1], entry=self.entry, costaccounting_id=detail_item[2])
-        if Params.getvalue("invoice-vat-mode") != 0:
+        if Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT:
             self._compute_vat(is_bill)
         no_change, debit_rest, credit_rest = self.entry.serial_control(self.entry.get_serial())
         if not no_change and (len(self.entry.entrylineaccount_set.all()) == 0):
@@ -774,8 +792,6 @@ class Bill(Supporting):
     def _error_transaction(self, transation):
         return "%s: status=%d info_state = %s" % (transation, self.status, "\n".join(self.get_info_state()))
 
-    transitionname__valid = _("Validate")
-
     def affect_num(self):
         if self.num is None:
             self.fiscal_year = FiscalYear.get_current()
@@ -786,11 +802,13 @@ class Bill(Supporting):
             else:
                 self.num = val['num__max'] + 1
 
-    @transition(field=status, source=0, target=1, conditions=[lambda item:item.get_info_state() == []])
+    transitionname__valid = _("Validate")
+
+    @transition(field=status, source=STATUS_BUILDING, target=STATUS_VALID, conditions=[lambda item:item.get_info_state() == []])
     def valid(self):
         self.affect_num()
-        self.status = 1
-        if self.bill_type != 0:
+        self.status = self.STATUS_VALID
+        if self.bill_type != self.BILLTYPE_QUOTATION:
             self.generate_entry()
             self.generate_storage()
         self.generate_pdfreport()
@@ -798,30 +816,30 @@ class Bill(Supporting):
         Signal.call_signal("change_bill", 'valid', self, None)
 
     def generate_pdfreport(self):
-        if (self.status not in (0, 2)) and (self.bill_type != 0):
+        if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and (self.bill_type != self.BILLTYPE_QUOTATION):
             return Supporting.generate_pdfreport(self)
         return None
 
     transitionname__archive = _("Archive")
 
-    @transition(field=status, source=1, target=3)
+    @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE)
     def archive(self):
-        self.status = 3
+        self.status = self.STATUS_ARCHIVE
         self.save()
         Signal.call_signal("change_bill", 'archive', self, None)
 
     transitionname__cancel = _("Cancel")
 
-    @transition(field=status, source=1, target=2, conditions=[lambda item:item.bill_type != 2])
+    @transition(field=status, source=STATUS_VALID, target=STATUS_CANCEL, conditions=[lambda item:item.bill_type != Bill.BILLTYPE_ASSET])
     def cancel(self):
         new_asset = None
-        if (self.bill_type in (1, 3)):
-            new_asset = Bill.objects.create(bill_type=2, date=timezone.now(), third=self.third, status=0, parentbill=self)
+        if (self.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT)):
+            new_asset = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET, date=timezone.now(), third=self.third, status=Bill.STATUS_BUILDING, parentbill=self)
             for detail in self.detail_set.all():
                 detail.id = None
                 detail.bill = new_asset
                 detail.save()
-            self.status = 2
+            self.status = Bill.STATUS_CANCEL
             self.save()
             Signal.call_signal("change_bill", 'cancel', self, new_asset)
         if new_asset is not None:
@@ -830,10 +848,10 @@ class Bill(Supporting):
             return None
 
     def convert_to_bill(self):
-        if (self.status == 1) and (self.bill_type == 0):
-            self.status = 3
+        if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
+            self.status = Bill.STATUS_ARCHIVE
             self.save()
-            new_bill = Bill.objects.create(bill_type=1, date=timezone.now(), third=self.third, status=0, comment=self.comment, parentbill=self)
+            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_BILL, date=timezone.now(), third=self.third, status=Bill.STATUS_BUILDING, comment=self.comment, parentbill=self)
             for detail in self.detail_set.all():
                 detail.id = None
                 detail.bill = new_bill
@@ -849,13 +867,13 @@ class Bill(Supporting):
             total_cust = 0
             costumers = {}
             for bill in Bill.objects.filter(Q(fiscal_year=self.fiscal_year) & Q(
-                    bill_type__in=(1, 2, 3)) & Q(status__in=(1, 2, 3))):
+                    bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE, Bill.STATUS_CANCEL))):
                 if bill.third_id not in costumers.keys():
                     costumers[bill.third_id] = 0
                 total_excltax = bill.get_total_excltax()
                 if without_reduct:
                     total_excltax += bill.get_reduce_excltax()
-                if bill.bill_type == 2:
+                if bill.bill_type == Bill.BILLTYPE_ASSET:
                     costumers[bill.third_id] -= total_excltax
                     total_cust -= total_excltax
                 else:
@@ -877,9 +895,9 @@ class Bill(Supporting):
             total_art = 0
             articles = {}
             if for_quotation:
-                bill_filter = Q(bill__bill_type=0) & Q(bill__status=1)
+                bill_filter = Q(bill__bill_type=Bill.BILLTYPE_QUOTATION) & Q(bill__status=Bill.STATUS_VALID)
             else:
-                bill_filter = Q(bill__bill_type__in=(1, 2, 3)) & Q(bill__status__in=(1, 2, 3))
+                bill_filter = Q(bill__bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(bill__status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE, Bill.STATUS_CANCEL))
             for det in Detail.objects.filter(Q(bill__fiscal_year=self.fiscal_year) & bill_filter):
                 if det.article_id not in articles.keys():
                     articles[det.article_id] = [0, 0]
@@ -922,7 +940,7 @@ class Bill(Supporting):
                 begin_date = begin_date - timedelta(days=begin_date.day - 1)
                 end_date = same_day_months_after(begin_date, months=1) - timedelta(days=1)
                 amount_sum = 0.0
-                for bill in Bill.objects.filter(Q(date__gte=begin_date) & Q(date__lte=end_date) & Q(bill_type__in=(1, 2, 3)) & Q(status__in=(1, 2, 3))):
+                for bill in Bill.objects.filter(Q(date__gte=begin_date) & Q(date__lte=end_date) & Q(bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE, Bill.STATUS_CANCEL))):
                     total_excltax = bill.get_total_excltax()
                     if without_reduct:
                         total_excltax += bill.get_reduce_excltax()
@@ -971,10 +989,10 @@ class Bill(Supporting):
         return payoff_list
 
     def support_validated(self, validate_date):
-        if (self.bill_type == 2) or (self.status != 1):
+        if (self.bill_type == Bill.BILLTYPE_ASSET) or (self.status != Bill.STATUS_VALID):
             raise LucteriosException(
                 IMPORTANT, _("This item can't be validated!"))
-        if (self.bill_type == 0):
+        if (self.bill_type == Bill.BILLTYPE_QUOTATION):
             new_bill = self.convert_to_bill()
             new_bill.date = validate_date
             new_bill.save()
@@ -992,13 +1010,13 @@ class Bill(Supporting):
             return None
 
     def get_payable_without_tax(self):
-        if (self.bill_type == 2) or (self.status != 1):
+        if (self.bill_type == Bill.BILLTYPE_ASSET) or (self.status != Bill.STATUS_VALID):
             return 0
         else:
             return self.get_total_rest_topay() - self.get_tax()
 
     def payoff_have_payment(self):
-        return (self.bill_type != 2) and (self.status == 1) and (self.get_total_rest_topay() > 0.001)
+        return (self.bill_type != Bill.BILLTYPE_ASSET) and (self.status == Bill.STATUS_VALID) and (self.get_total_rest_topay() > 0.001)
 
     def get_document_filename(self):
         billtype = get_value_if_choices(self.bill_type, self.get_field_by_name('bill_type'))
@@ -1063,7 +1081,7 @@ class Detail(LucteriosModel):
     @property
     def article_query(self):
         artfilter = Q(isdisabled=False)
-        artfilter &= ~Q(stockable=2)
+        artfilter &= ~Q(stockable=Article.STOCKABLE_YES_WITHOUTSELL)
         if self.filter_thirdid != 0:
             artfilter &= Q(provider__third_id=self.filter_thirdid)
         if self.filter_ref != '':
@@ -1120,16 +1138,16 @@ class Detail(LucteriosModel):
         return newdetail
 
     def get_price(self):
-        if (Params.getvalue("invoice-vat-mode") == 2) and (self.vta_rate > 0.001):
+        if (Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT) and (self.vta_rate > 0.001):
             return currency_round(self.price * self.vta_rate)
-        if (Params.getvalue("invoice-vat-mode") == 1) and (self.vta_rate < -0.001):
+        if (Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICENOVAT) and (self.vta_rate < -0.001):
             return currency_round(self.price * -1 * self.vta_rate / (1 - self.vta_rate))
         return float(self.price)
 
     def get_reduce(self):
-        if (Params.getvalue("invoice-vat-mode") == 2) and (self.vta_rate > 0.001):
+        if (Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT) and (self.vta_rate > 0.001):
             return currency_round(self.reduce * self.vta_rate)
-        if (Params.getvalue("invoice-vat-mode") == 1) and (self.vta_rate < -0.001):
+        if (Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICENOVAT) and (self.vta_rate < -0.001):
             return currency_round(self.reduce * -1 * self.vta_rate / (1 - self.vta_rate))
         return float(self.reduce)
 
@@ -1159,9 +1177,9 @@ class Detail(LucteriosModel):
             return None
 
     def get_total_ex(self):
-        if Params.getvalue("invoice-vat-mode") == 2:
+        if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
             return self.get_total_incltax()
-        elif Params.getvalue("invoice-vat-mode") == 1:
+        elif Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICENOVAT:
             return self.get_total_excltax()
         else:
             return self.get_total()
@@ -1218,7 +1236,7 @@ class Detail(LucteriosModel):
         return val
 
     def define_autoreduce(self):
-        if (self.bill.third_id is not None) and (self.bill.status in (0, 1)) and (float(self.reduce) < 0.0001):
+        if (self.bill.third_id is not None) and (self.bill.status in (Bill.STATUS_BUILDING, Bill.STATUS_VALID)) and (float(self.reduce) < 0.0001):
             for red_item in AutomaticReduce.objects.all():
                 self.reduce = max(float(self.reduce), red_item.calcul_reduce(self))
             return float(self.reduce) > 0.0001
@@ -1236,13 +1254,20 @@ class Detail(LucteriosModel):
 
 
 class StorageSheet(LucteriosModel):
-    sheet_type = models.IntegerField(verbose_name=_('sheet type'),
-                                     choices=((0, _('stock receipt')), (1, _('stock exit')), (2, _('stock transfer'))), null=False, default=0, db_index=True)
+    STATUS_BUILDING = 0
+    STATUS_VALID = 1
+    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')))
+
+    TYPE_RECEIPT = 0
+    TYPE_EXIT = 1
+    TYPE_TRANSFER = 2
+    LIST_TYPES = ((TYPE_RECEIPT, _('stock receipt')), (TYPE_EXIT, _('stock exit')), (TYPE_TRANSFER, _('stock transfer')))
+
+    sheet_type = models.IntegerField(verbose_name=_('sheet type'), choices=LIST_TYPES, null=False, default=TYPE_RECEIPT, db_index=True)
     date = models.DateField(verbose_name=_('date'), null=False)
     storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=False, db_index=True, on_delete=models.PROTECT)
     comment = models.TextField(_('comment'))
-    status = FSMIntegerField(verbose_name=_('status'),
-                             choices=((0, _('building')), (1, _('valid'))), null=False, default=0, db_index=True)
+    status = FSMIntegerField(verbose_name=_('status'), choices=LIST_STATUS, null=False, default=STATUS_BUILDING, db_index=True)
 
     provider = models.ForeignKey(Third, verbose_name=_('provider'), null=True, default=None, on_delete=models.PROTECT)
     bill_reference = models.CharField(_('bill reference'), blank=True, max_length=50)
@@ -1273,7 +1298,7 @@ class StorageSheet(LucteriosModel):
         return Third.objects.filter(thirdfilter).distinct()
 
     def can_delete(self):
-        if self.status > 0:
+        if self.status != self.STATUS_BUILDING:
             return _('"%s" cannot be deleted!') % str(self)
         return ''
 
@@ -1286,25 +1311,27 @@ class StorageSheet(LucteriosModel):
     def get_info_state(self):
         info = []
         for detail in self.storagedetail_set.all():
-            if detail.article.stockable == 0:
+            if detail.article.stockable == Article.STOCKABLE_NO:
                 info.append(_("Article %s is not stockable") % str(detail.article))
-            elif (self.sheet_type != 0) and not detail.article.has_sufficiently(self.storagearea_id, detail.quantity):
+            elif (self.sheet_type != self.TYPE_RECEIPT) and not detail.article.has_sufficiently(self.storagearea_id, detail.quantity):
                 info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
         return info
 
-    @transition(field=status, source=0, target=1, conditions=[lambda item:item.get_info_state() == []])
+    transitionname__valid = _("Validate")
+
+    @transition(field=status, source=STATUS_BUILDING, target=STATUS_VALID, conditions=[lambda item:item.get_info_state() == []])
     def valid(self):
-        if self.sheet_type == 1:
+        if self.sheet_type == self.TYPE_EXIT:
             for detail in self.storagedetail_set.all():
                 detail.quantity = -1 * abs(detail.quantity)
                 detail.save()
 
     def create_oposit(self, target_area):
         other = StorageSheet()
-        other.status = 0
+        other.status = self.STATUS_BUILDING
         other.date = self.date
         other.comment = self.comment
-        other.sheet_type = 0
+        other.sheet_type = self.TYPE_RECEIPT
         other.storagearea_id = target_area
         other.save()
         for detail in self.storagedetail_set.all():
@@ -1375,7 +1402,7 @@ class StorageDetail(LucteriosModel):
     @property
     def article_query(self):
         artfilter = Q(isdisabled=False)
-        artfilter &= Q(stockable__in=(1, 2))
+        artfilter &= Q(stockable__in=(Article.STOCKABLE_YES, Article.STOCKABLE_YES_WITHOUTSELL))
         if self.filter_thirdid != 0:
             artfilter &= Q(provider__third_id=self.filter_thirdid)
         if self.filter_ref != '':
@@ -1389,7 +1416,7 @@ class StorageDetail(LucteriosModel):
         return items
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        if (self.storagesheet.status == 0) and (int(self.storagesheet.sheet_type) == 2):
+        if (self.storagesheet.status == StorageSheet.STATUS_BUILDING) and (int(self.storagesheet.sheet_type) == StorageSheet.TYPE_TRANSFER):
             art = self.article
             art.show_storagearea = self.storagesheet.storagearea_id
             stock_val = art.get_stockage_values()
@@ -1406,9 +1433,14 @@ class StorageDetail(LucteriosModel):
 
 
 class AutomaticReduce(LucteriosModel):
+    MODE_BYVALUE = 0
+    MODE_BYPERCENT = 1
+    MODE_BYPERCENTSOLD = 2
+    LIST_MODES = ((MODE_BYVALUE, _('by value')), (MODE_BYPERCENT, _('by percentage')), (MODE_BYPERCENTSOLD, _('by overall percentage sold')))
+
     name = models.CharField(_('name'), max_length=250, blank=False)
     category = models.ForeignKey(Category, verbose_name=_('category'), null=False, on_delete=models.PROTECT)
-    mode = models.IntegerField(verbose_name=_('mode'), choices=((0, _('by value')), (1, _('by percentage')), (2, _('by overall percentage sold'))), null=False, default=0)
+    mode = models.IntegerField(verbose_name=_('mode'), choices=LIST_MODES, null=False, default=MODE_BYVALUE)
     amount = models.DecimalField(verbose_name=_('amount'), max_digits=10, decimal_places=3, default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)])
     occurency = models.IntegerField(verbose_name=_('occurency'), default=0, validators=[MinValueValidator(0), MaxValueValidator(1000)])
     filtercriteria = models.ForeignKey(SavedCriteria, verbose_name=_('filter criteria'), null=True, on_delete=models.PROTECT)
@@ -1437,7 +1469,7 @@ class AutomaticReduce(LucteriosModel):
     def _get_nb_sold(self, reduce_query):
         nb_sold = 0.0
         if self.occurency != 0:
-            detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=2, then=-1),
+            detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=Bill.BILLTYPE_ASSET, then=-1),
                                                                                         default=1, output_field=IntegerField()))
             qty_val = detail_reduce.aggregate(data_sum=Sum(F('quantity') * F('direction'), output_field=FloatField()))
             if qty_val['data_sum'] is not None:
@@ -1449,7 +1481,7 @@ class AutomaticReduce(LucteriosModel):
 
     def _reduce_for_mode2(self, reduce_query, detail, nb_sold):
         amount_sold = 0.0
-        detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=2, then=-1),
+        detail_reduce = Detail.objects.filter(reduce_query).annotate(direction=Case(When(bill__bill_type=Bill.BILLTYPE_ASSET, then=-1),
                                                                                     default=1, output_field=IntegerField()))
         amount_val = detail_reduce.aggregate(data_sum=Sum(F('quantity') * F('price') * F('direction'), output_field=FloatField()))
         if amount_val['data_sum'] is not None:
@@ -1458,7 +1490,7 @@ class AutomaticReduce(LucteriosModel):
         reduce_val = detail_reduce.aggregate(data_sum=Sum(F('reduce') * F('direction'), output_field=FloatField()))
         if reduce_val['data_sum'] is not None:
             reduce_sold = float(reduce_val['data_sum'])
-        if detail.bill.bill_type != 2:
+        if detail.bill.bill_type != Bill.BILLTYPE_ASSET:
             amount_sold += float(detail.quantity) * float(detail.price)
             return amount_sold * float(self.amount) / 100.0 - reduce_sold
         else:
@@ -1478,22 +1510,22 @@ class AutomaticReduce(LucteriosModel):
 
     def calcul_reduce(self, detail):
         val_reduce = 0.0
-        if (detail.bill.third_id is not None) and (detail.bill.status in (0, 1)) and (detail.article_id is not None) and \
+        if (detail.bill.third_id is not None) and (detail.bill.status in (Bill.STATUS_BUILDING, Bill.STATUS_VALID)) and (detail.article_id is not None) and \
                 self.category.article_set.filter(id=detail.article_id).exists() and self.check_filtercriteria(detail.bill.third_id):
             current_year = FiscalYear.get_current()
             reduce_query = Q(bill__third=detail.bill.third) & Q(article__categories=self.category)
-            reduce_query &= (Q(bill__bill_type__in=(1, 2, 3)) & Q(bill__status__in=(0, 1, 3))) | (Q(bill__bill_type=0) & Q(bill__status__in=(0, 1)))
+            reduce_query &= (Q(bill__bill_type__in=(Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET)) & Q(bill__status__in=(Bill.STATUS_BUILDING, Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))) | (Q(bill__bill_type=Bill.BILLTYPE_QUOTATION) & Q(bill__status__in=(Bill.STATUS_BUILDING, Bill.STATUS_VALID)))
             reduce_query &= Q(bill__date__gte=current_year.begin) & Q(bill__date__lte=current_year.end)
             if detail.id is not None:
                 reduce_query &= ~ Q(id=detail.id)
             nb_sold = self._get_nb_sold(reduce_query)
-            if detail.bill.bill_type != 2:
+            if detail.bill.bill_type != Bill.BILLTYPE_ASSET:
                 nb_sold += float(detail.quantity)
             if self.occurency <= nb_sold:
                 qty_reduce = min(float(detail.quantity), nb_sold - self.occurency + 1)
-                if self.mode == 0:
+                if self.mode == self.MODE_BYVALUE:
                     val_reduce = qty_reduce * float(self.amount)
-                elif self.mode == 1:
+                elif self.mode == self.MODE_BYPERCENT:
                     val_reduce = qty_reduce * float(detail.price) * float(self.amount) / 100.0
                 else:
                     val_reduce = self._reduce_for_mode2(reduce_query, detail, nb_sold)
@@ -1502,7 +1534,7 @@ class AutomaticReduce(LucteriosModel):
     def get_amount_txt(self):
         if self.amount is None:
             return None
-        if self.mode == 0:
+        if self.mode == self.MODE_BYVALUE:
             return format_to_string(float(self.amount), format_with_devise(7), None)
         else:
             return "%.2f%%" % float(self.amount)
@@ -1510,6 +1542,147 @@ class AutomaticReduce(LucteriosModel):
     class Meta(object):
         verbose_name = _('automatic reduce')
         verbose_name_plural = _('automatic reduces')
+        default_permissions = []
+
+
+class InventorySheet(LucteriosModel):
+    STATUS_BUILDING = 0
+    STATUS_VALID = 1
+    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')))
+
+    date = models.DateField(verbose_name=_('date'), null=False)
+    storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=False, db_index=True, on_delete=models.PROTECT)
+    comment = models.TextField(_('comment'))
+    status = FSMIntegerField(verbose_name=_('status'), choices=LIST_STATUS, null=False, default=STATUS_BUILDING, db_index=True)
+    stockreceipt = models.ForeignKey(StorageSheet, verbose_name=_('stock receipt'), null=True, db_index=True, on_delete=models.SET_NULL, related_name='receipt_storagesheet')
+    stockexit = models.ForeignKey(StorageSheet, verbose_name=_('stock exit'), null=True, db_index=True, on_delete=models.SET_NULL, related_name='exit_storagesheet')
+
+    def __str__(self):
+        sheetstatus = get_value_if_choices(self.status, self.get_field_by_name('status'))
+        return "%s [%s]" % (get_date_formating(self.date), sheetstatus)
+
+    @classmethod
+    def get_default_fields(cls):
+        return ["date", "storagearea", "status", "comment"]
+
+    @classmethod
+    def get_edit_fields(cls):
+        return [("date", "storagearea"), ("comment", )]
+
+    @classmethod
+    def get_show_fields(cls):
+        return [("date", "status"), ("storagearea", ), ("comment", )]
+
+    def can_delete(self):
+        if self.status > 0:
+            return _('"%s" cannot be deleted!') % str(self)
+        return ''
+
+    def can_valid(self):
+        if self.status == self.STATUS_BUILDING:
+            for detail in self.inventorydetail_set.all():
+                if detail.quantity is None:
+                    return False
+            return self.inventorydetail_set.all().count() > 0
+        else:
+            return False
+
+    transitionname__valid = _("Validate")
+
+    @transition(field=status, source=STATUS_BUILDING, target=STATUS_VALID, conditions=[lambda item:item.can_valid()])
+    def valid(self):
+        stockreceipt = StorageSheet.objects.create(status=StorageSheet.STATUS_BUILDING, date=self.date, comment=_('Receipt from inventory'),
+                                                   sheet_type=StorageSheet.TYPE_RECEIPT, storagearea=self.storagearea)
+        stockexit = StorageSheet.objects.create(status=StorageSheet.STATUS_BUILDING, date=self.date, comment=_('Exit from inventory'),
+                                                sheet_type=StorageSheet.TYPE_EXIT, storagearea=self.storagearea)
+        for detail in self.inventorydetail_set.all():
+            diff_quantity = float(detail.quantity) - float(detail.get_real_quantity())
+            if (diff_quantity) < -1e-3:
+                StorageDetail.objects.create(storagesheet=stockexit, article=detail.article, price=0, quantity=abs(diff_quantity))
+            elif (diff_quantity) > 1e-3:
+                StorageDetail.objects.create(storagesheet=stockreceipt, article=detail.article, price=0, quantity=abs(diff_quantity))
+        if stockreceipt.storagedetail_set.all().count() > 0:
+            stockreceipt.valid()
+            self.stockreceipt = stockreceipt
+        else:
+            stockreceipt.delete()
+        if stockexit.storagedetail_set.all().count() > 0:
+            stockexit.valid()
+            self.stockexit = stockexit
+        else:
+            stockexit.delete()
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        res = LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
+        if int(self.status) == self.STATUS_BUILDING:
+            for article in Article.objects.filter(Q(isdisabled=False) & Q(stockable__in=(1, 2))).order_by('reference').distinct():
+                InventoryDetail.objects.get_or_create(article=article, inventorysheet=self, quantity=None)
+        return res
+
+    class Meta(object):
+        verbose_name = _('inventory sheet')
+        verbose_name_plural = _('inventory sheets')
+        ordering = ['-date', 'status']
+
+
+class InventoryDetail(LucteriosModel):
+    inventorysheet = models.ForeignKey(InventorySheet, verbose_name=_('inventory sheet'), null=False, db_index=True, on_delete=models.CASCADE)
+    article = models.ForeignKey(Article, verbose_name=_('article'), null=False, db_index=True, on_delete=models.PROTECT)
+    quantity = models.DecimalField(verbose_name=_('counted quantity'), null=True, max_digits=12, decimal_places=3, default=None,
+                                   validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)])
+    quantity_txt = LucteriosVirtualField(verbose_name=_('counted quantity'), compute_from="get_quantity_txt")
+
+    real_quantity = LucteriosVirtualField(verbose_name=_('current quantity'), compute_from="get_real_quantity")
+    real_quantity_txt = LucteriosVirtualField(verbose_name=_('current quantity'), compute_from="get_real_quantity_txt")
+
+    def __str__(self):
+        return "%s %d" % (self.article, self.quantity)
+
+    def get_auditlog_object(self):
+        return self.inventorysheet.get_final_child()
+
+    @classmethod
+    def get_default_fields(cls):
+        return ["article", "article.designation", "real_quantity_txt", "quantity_txt"]
+
+    @classmethod
+    def get_edit_fields(cls):
+        return ["real_quantity", "quantity"]
+
+    def get_quantity_txt(self):
+        if self.quantity is None:
+            return None
+        if self.article_id is not None:
+            format_txt = "N%d" % self.article.qtyDecimal
+        else:
+            format_txt = "N3"
+        return format_to_string(float(self.quantity), format_txt, None)
+
+    def get_real_quantity(self):
+        if self.article_id is None:
+            return 0
+        try:
+            real_quantity = self.article.get_stockage_total_num(self.inventorysheet.storagearea_id)
+            if real_quantity is None:
+                return 0
+            return real_quantity
+        except Exception:
+            getLogger('diacamma.invoice').exception("get_real_quantity")
+            raise
+
+    def get_real_quantity_txt(self):
+        if self.article_id is None:
+            return None
+        format_txt = "N%d" % self.article.qtyDecimal
+        return format_to_string(float(self.get_real_quantity()), format_txt, None)
+
+    def copy_value(self):
+        self.quantity = self.get_real_quantity()
+        self.save()
+
+    class Meta(object):
+        verbose_name = _('inventory detail')
+        verbose_name_plural = _('inventory details')
         default_permissions = []
 
 
@@ -1539,8 +1712,8 @@ def convert_articles():
 def correct_quotation_asset_account():
     nb_quotation_correct = 0
     nb_asset_correct = 0
-    for bill in Bill.objects.filter(Q(bill_type__in=(0, 2)) and Q(entry__close=False)):
-        if bill.bill_type == 0:
+    for bill in Bill.objects.filter(Q(bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ASSET)) and Q(entry__close=False)):
+        if bill.bill_type == Bill.BILLTYPE_QUOTATION:
             corrected = False
             if bill.entry_id is not None:
                 entry = bill.entry
@@ -1553,7 +1726,7 @@ def correct_quotation_asset_account():
                 corrected = True
             if corrected:
                 nb_quotation_correct += 1
-        elif bill.bill_type == 2:
+        elif bill.bill_type == Bill.BILLTYPE_ASSET:
             corrected = False
             if not bill.entry.is_asset:
                 bill.entry.reverse_entry()
@@ -1570,13 +1743,13 @@ def correct_quotation_asset_account():
 
 @Signal.decorate('check_report')
 def check_report_invoice(year):
-    for bill in Bill.objects.filter(fiscal_year=year, bill_type__in=(1, 2, 3), status__in=(1, 3)):
+    for bill in Bill.objects.filter(fiscal_year=year, bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT), status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)):
         bill.get_saved_pdfreport()
 
 
 def convert_asset_and_revenue():
     nb_correct = 0
-    for bill in Bill.objects.filter(Q(bill_type__in=(0, 2)) & Q(is_revenu=True)):
+    for bill in Bill.objects.filter(Q(bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ASSET)) & Q(is_revenu=True)):
         bill.is_revenu = bill.payoff_is_revenu()
         bill.save()
         nb_correct += 1
