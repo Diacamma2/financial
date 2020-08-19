@@ -295,9 +295,10 @@ class DetailFilter(object):
                     self.item.designation = ""
                     self.item.price = 0
                     self.item.unit = ""
-                xfer.get_components("designation").value = self.item.designation
-                xfer.get_components("price").value = self.item.price
-                xfer.get_components("unit").value = self.item.unit
+                if xfer.get_components("designation") is not None:
+                    xfer.get_components("designation").value = self.item.designation
+                    xfer.get_components("price").value = self.item.price
+                    xfer.get_components("unit").value = self.item.unit
         return sel_art
 
     def edit_filter(self, xfer, sel_art):
