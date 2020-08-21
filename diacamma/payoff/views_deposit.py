@@ -20,6 +20,7 @@ from lucterios.CORE.xferprint import XferPrintAction
 from diacamma.payoff.models import DepositSlip, DepositDetail, BankTransaction, PaymentMethod
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.tools import format_with_devise
+from diacamma.payoff.payment_type import PaymentTypePayPal
 
 
 @MenuManage.describ('payoff.change_depositslip', FORMTYPE_NOMODAL, 'financial', _('Manage deposit of cheque'))
@@ -110,7 +111,7 @@ class DepositSlipPrint(XferPrintAction):
 
     def get_report_generator(self):
         report_generator = XferPrintAction.get_report_generator(self)
-        if self.item.status == 0:
+        if self.item.status == DepositSlip.STATUS_BUILDING:
             report_generator.watermark = _('*** NO VALIDATED ***')
         return report_generator
 
@@ -210,7 +211,7 @@ class DepositDetailDel(XferDelete):
 
 def right_banktransaction(request):
     if BankTransactionShow.get_action().check_permission(request):
-        return len(PaymentMethod.objects.exclude(paytype__in=(0, 1))) > 0
+        return len(PaymentMethod.objects.filter(paytype__in=(PaymentTypePayPal.num, ))) > 0
     else:
         return False
 

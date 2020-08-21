@@ -37,14 +37,11 @@ from django.apps.registry import apps
 
 from lucterios.framework.xferbasic import XferContainerAbstract
 from lucterios.framework.xferadvance import XferAddEditor, XferListEditor, \
-    XferSave, TITLE_ADD, TITLE_MODIFY, TITLE_DELETE, TITLE_OK, TITLE_CANCEL,\
-    TITLE_CLOSE
+    XferSave, TITLE_ADD, TITLE_MODIFY, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, TITLE_CLOSE
 from lucterios.framework.xferadvance import XferDelete
 from lucterios.framework.tools import ActionsManage, MenuManage, \
-    FORMTYPE_REFRESH, CLOSE_NO, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, \
-    WrapAction, SELECT_MULTI
-from lucterios.framework.xfergraphic import XferContainerAcknowledge, \
-    XferContainerCustom
+    FORMTYPE_REFRESH, CLOSE_NO, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, WrapAction, SELECT_MULTI
+from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
 from lucterios.framework.xfercomponents import XferCompLabelForm, \
     XferCompEdit, XferCompImage, XferCompMemo, XferCompSelect, XferCompCheck
 from lucterios.framework.error import LucteriosException, MINOR, IMPORTANT
@@ -52,10 +49,11 @@ from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.CORE.models import PrintModel
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.xferprint import XferPrintReporting
-
-from diacamma.payoff.models import Payoff, Supporting, PaymentMethod, BankTransaction
-from diacamma.accounting.models import Third
 from lucterios.framework.xferprinting import XferContainerPrint
+
+from diacamma.payoff.models import Payoff, Supporting, PaymentMethod, BankTransaction, BankAccount
+from diacamma.accounting.models import Third
+from diacamma.payoff.payment_type import PaymentTypePayPal
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': abs(xfer.item.get_total_rest_topay()) > 0.001)
@@ -69,15 +67,15 @@ class PayoffAddModify(XferAddEditor):
     caption_modify = _("Modify payoff")
 
     def fillresponse_multisave(self, supportings=(), amount=0.0,
-                               mode=0, payer='', reference='',
-                               bank_account=0, date=None, fee_bank=0.0, repartition=0):
+                               mode=Payoff.MODE_CASH, payer='', reference='',
+                               bank_account=BankAccount.NO_BANK, date=None, fee_bank=0.0, repartition=Payoff.REPARTITION_BYRATIO):
         if self.item.id is not None:
             self.item.delete()
         Payoff.multi_save(supportings, amount, mode, payer, reference, bank_account, date, fee_bank, repartition)
 
     def run_save(self, request, *args, **kwargs):
         supportings = self.getparam('supportings', ())
-        if len(supportings) > 0:
+        if len(supportings) > 1:
             multisave = XferContainerAcknowledge()
             multisave.is_view_right = self.is_view_right
             multisave.locked = self.locked
@@ -94,6 +92,8 @@ class PayoffAddModify(XferAddEditor):
         delete_msg = self.item.can_delete()
         if delete_msg != '':
             raise LucteriosException(IMPORTANT, delete_msg)
+        if (self.item.mode == Payoff.MODE_INTERNAL) and (self.getparam('supportings', None) is None):
+            raise LucteriosException(IMPORTANT, _('Internal payoff not editable !'))
         if self.item.id is not None:
             self.items = Payoff.objects.filter(entry=self.item.entry)
             amount = 0
@@ -406,7 +406,7 @@ class CheckPaymentPaypal(XferContainerAbstract):
         root_url = self.getparam("url", self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()))
         try:
             payid = self.getparam("payid", 0)
-            payment_meth_list = PaymentMethod.objects.filter(paytype=2)
+            payment_meth_list = PaymentMethod.objects.filter(paytype=PaymentTypePayPal.num)
             payment_meth = payment_meth_list[0]
             support = Supporting.objects.get(id=payid).get_final_child()
             paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
@@ -475,7 +475,7 @@ class ValidationPaymentPaypal(XferContainerAbstract):
             conf_res = self.confirm_paypal()
             if conf_res == 'VERIFIED':
                 bank_account = None
-                for payment_meth in PaymentMethod.objects.filter(paytype=2):
+                for payment_meth in PaymentMethod.objects.filter(paytype=PaymentTypePayPal.num):
                     if payment_meth.get_items()[0] == self.getparam('receiver_email', ''):
                         bank_account = payment_meth.bank_account
                 if bank_account is None:
@@ -486,12 +486,12 @@ class ValidationPaymentPaypal(XferContainerAbstract):
                 new_payoff.date = self.item.date
                 new_payoff.amount = self.item.amount
                 new_payoff.payer = self.item.payer
-                new_payoff.mode = 2
+                new_payoff.mode = Payoff.MODE_TRANSFER
                 new_payoff.bank_account = bank_account
                 new_payoff.reference = "PayPal " + self.getparam('txn_id', '')
                 new_payoff.bank_fee = self.getparam('mc_fee', 0.0)
                 new_payoff.save()
-                self.item.status = 1
+                self.item.status = BankTransaction.STATUS_SUCCESS
                 self.success = True
             if conf_res == 'INVALID':
                 self.item.contains += "{[newline]}--- INVALID ---{[newline]}"

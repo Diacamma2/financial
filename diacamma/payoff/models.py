@@ -51,7 +51,7 @@ from lucterios.documents.models import DocumentContainer
 
 from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink
 from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise
-from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType
+from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType, PaymentTypeTransfer
 
 
 class Supporting(LucteriosModel):
@@ -126,7 +126,7 @@ class Supporting(LucteriosModel):
         info = []
         if third_mask is None:
             third_mask = self.get_third_mask()
-        if self.status == 0:
+        if getattr(self, 'status', -1) == 0:
             if self.third is None:
                 info.append(str(_("no third selected")))
             else:
@@ -142,8 +142,7 @@ class Supporting(LucteriosModel):
         info = []
         fiscal_year = FiscalYear.get_current()
         if (fiscal_year.begin.isoformat() > date) or (fiscal_year.end.isoformat() < date):
-            info.append(
-                str(_("date not include in current fiscal year")))
+            info.append(str(_("date not include in current fiscal year")))
         return info
 
     def get_third_account(self, third_mask, fiscalyear, third=None):
@@ -151,13 +150,10 @@ class Supporting(LucteriosModel):
             third = self.third
         accounts = third.accountthird_set.filter(code__regex=third_mask)
         if len(accounts) == 0:
-            raise LucteriosException(
-                IMPORTANT, _("third has not correct account"))
-        third_account = ChartsAccount.get_account(
-            accounts[0].code, fiscalyear)
+            raise LucteriosException(IMPORTANT, _("third has not correct account"))
+        third_account = ChartsAccount.get_account(accounts[0].code, fiscalyear)
         if third_account is None:
-            raise LucteriosException(
-                IMPORTANT, _("third has not correct account"))
+            raise LucteriosException(IMPORTANT, _("third has not correct account"))
         return third_account
 
     def get_total_rest_topay(self, ignore_payoff=-1):
@@ -185,7 +181,6 @@ class Supporting(LucteriosModel):
             for indiv in Individual.objects.filter(responsability__legal_entity=self.third.contact).distinct():
                 if indiv.email != '':
                     cclist.append(indiv.email)
-
         if len(cclist) == 0:
             cclist = None
         return cclist
@@ -274,6 +269,11 @@ class Supporting(LucteriosModel):
                         added = True
             return added
 
+        for entry in self.entry_links():
+            for entryline in entry.entrylineaccount_set.all():
+                if entryline.link is not None:
+                    entryline.link.delete()
+
         nb_link_created = 0
         if (abs(self.get_total_rest_topay()) < 0.0001) and (self.entry_links() is not None) and (len(self.entry_links()) > 0):
             entryline_by_third = {}
@@ -300,6 +300,15 @@ class Supporting(LucteriosModel):
                     pass
         return nb_link_created
 
+    def get_linked_supportings(self):
+        return []
+
+    def accounting_of_linked_supportings(self, source_payoff, target_payoff):
+        return
+
+    def delete_linked_supporting(self, payoff):
+        return
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.is_revenu = self.get_final_child().payoff_is_revenu()
         if not force_insert:
@@ -308,6 +317,8 @@ class Supporting(LucteriosModel):
 
 
 class BankAccount(LucteriosModel):
+    NO_BANK = 0
+
     designation = models.TextField(_('designation'), null=False)
     reference = models.CharField(_('reference'), max_length=200, null=False)
     account_code = models.CharField(_('bank account'), max_length=50, null=False)
@@ -356,21 +367,32 @@ class BankAccount(LucteriosModel):
 
 
 class Payoff(LucteriosModel):
-    supporting = models.ForeignKey(
-        Supporting, verbose_name=_('supporting'), null=False, db_index=True, on_delete=models.CASCADE)
+    MODE_CASH = 0
+    MODE_CHEQUE = 1
+    MODE_TRANSFER = 2
+    MODE_CREDITCARD = 3
+    MODE_OTHER = 4
+    MODE_LEVY = 5
+    MODE_INTERNAL = 6
+    LIST_MODES = ((MODE_CASH, _('cash')), (MODE_CHEQUE, _('cheque')), (MODE_TRANSFER, _('transfer')),
+                  (MODE_CREDITCARD, _('crédit card')), (MODE_OTHER, _('other')), (MODE_LEVY, _('levy')), (MODE_INTERNAL, _('internal')))
+
+    REPARTITION_BYRATIO = 0
+    REPARTITION_BYDATE = 1
+    LIST_REPARTITIONS = [(REPARTITION_BYRATIO, _('by ratio')), (REPARTITION_BYDATE, _('by date'))]
+
+    supporting = models.ForeignKey(Supporting, verbose_name=_('supporting'), null=False, db_index=True, on_delete=models.CASCADE)
     date = models.DateField(verbose_name=_('date'), null=False)
-    amount = LucteriosDecimalField(verbose_name=_('amount'), max_digits=10, decimal_places=3, default=0.0, validators=[
-        MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5))
-    mode = models.IntegerField(verbose_name=_('mode'),
-                               choices=((0, _('cash')), (1, _('cheque')), (2, _('transfer')), (3, _('crédit card')), (4, _('other')), (5, _('levy'))), null=False, default=0, db_index=True)
+    amount = LucteriosDecimalField(verbose_name=_('amount'), max_digits=10, decimal_places=3, default=0.0,
+                                   validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5))
+    mode = models.IntegerField(verbose_name=_('mode'), choices=LIST_MODES, null=False, default=MODE_CASH, db_index=True)
     payer = models.CharField(_('payer'), max_length=150, null=True, default='')
-    reference = models.CharField(
-        _('reference'), max_length=100, null=True, default='')
-    entry = models.ForeignKey(
-        EntryAccount, verbose_name=_('entry'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
+    reference = models.CharField(_('reference'), max_length=100, null=True, default='')
+    entry = models.ForeignKey(EntryAccount, verbose_name=_('entry'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
     bank_account = models.ForeignKey(BankAccount, verbose_name=_('bank account'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
-    bank_fee = models.DecimalField(verbose_name=_('bank fee'), max_digits=10, decimal_places=3, default=0.0, validators=[
-        MinValueValidator(0.0), MaxValueValidator(9999999.999)])
+    bank_fee = models.DecimalField(verbose_name=_('bank fee'), max_digits=10, decimal_places=3, default=0.0,
+                                   validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)])
+    linked_payoff = models.ForeignKey("payoff.Payoff", verbose_name=_('linked payoff'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
 
     value = LucteriosVirtualField(verbose_name=_('amount'), compute_from='amount', format_string=lambda: format_with_devise(5))
 
@@ -395,7 +417,7 @@ class Payoff(LucteriosModel):
         return BankAccount.objects.filter(is_disabled=False)
 
     def delete_accounting(self):
-        if self.entry is not None:
+        if (self.entry is not None) and (self.mode != self.MODE_INTERNAL):
             payoff_entry = self.entry
             if payoff_entry.close:
                 raise LucteriosException(IMPORTANT, _("an entry associated to this payoff is closed!"))
@@ -428,7 +450,7 @@ class Payoff(LucteriosModel):
         amount_to_bank = 0
         for sub_mask, sub_amount in supporting.get_third_masks_by_amount(float(self.amount)):
             third_account = supporting.third.get_account(entry.year, sub_mask)
-            if third_account.type_of_account == 0:
+            if third_account.type_of_account == ChartsAccount.TYPE_ASSET:
                 is_liability = 1
             else:
                 is_liability = -1
@@ -464,23 +486,32 @@ class Payoff(LucteriosModel):
         return bank_account, info
 
     def can_delete(self):
-        if (self.entry is not None) and self.entry.close:
+        if (self.entry is not None) and self.entry.close and (self.mode != self.MODE_INTERNAL):
             return _("an entry associated to this payoff is closed!")
         return ''
 
     def generate_accounting(self, designation=None):
-        new_entry = self._create_entry(designation)
-        amount_to_bank, is_revenu = self._fill_entrylines(new_entry)
-        bank_account, info = self._get_bankinfo(new_entry)
-        EntryLineAccount.objects.create(account=bank_account, amount=-1 * is_revenu * amount_to_bank, entry=new_entry, reference=info)
-        return new_entry
+        if (self.mode != self.MODE_INTERNAL):
+            new_entry = self._create_entry(designation)
+            amount_to_bank, is_revenu = self._fill_entrylines(new_entry)
+            bank_account, info = self._get_bankinfo(new_entry)
+            EntryLineAccount.objects.create(account=bank_account, amount=-1 * is_revenu * amount_to_bank, entry=new_entry, reference=info)
+            return new_entry
+        else:
+            return self.entry
 
     def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None, do_generate=True, do_linking=True):
+             update_fields=None, do_generate=True, do_linking=True, do_internal=True):
+        self.mode = int(self.mode)
         if not force_insert and do_generate:
             self.delete_accounting()
             self.entry = self.generate_accounting()
         res = LucteriosModel.save(self, force_insert, force_update, using, update_fields)
+        if do_internal and (self.mode == self.MODE_INTERNAL) and (self.linked_payoff is not None):
+            if (self.linked_payoff.linked_payoff is None):
+                self.linked_payoff.linked_payoff = self
+                self.linked_payoff.save(do_internal=False)
+            self.supporting.get_final_child().accounting_of_linked_supportings(self, self.linked_payoff)
         if not force_insert and do_linking:
             self.generate_accountlink()
         return res
@@ -510,9 +541,9 @@ class Payoff(LucteriosModel):
         for supporting in supporting_list:
             new_paypoff = Payoff(supporting=supporting, date=date, payer=payer, mode=mode, reference=reference, bank_fee=bank_fee)
             bank_fee = 0
-            if (bank_account != 0) and (mode != 0):
+            if (bank_account != BankAccount.NO_BANK) and (mode != cls.MODE_CASH):
                 new_paypoff.bank_account = BankAccount.objects.get(id=bank_account)
-            if repartition == 0:
+            if repartition == cls.REPARTITION_BYRATIO:
                 new_paypoff.amount = currency_round(supporting.get_total_rest_topay() * amount / amount_sum)
             else:
                 total_rest_topay = supporting.get_total_rest_topay()
@@ -522,7 +553,7 @@ class Payoff(LucteriosModel):
                 new_paypoff.save(do_generate=False)
                 paypoff_list.append(new_paypoff)
             else:
-                new_paypoff.amount = 0
+                new_paypoff.amount = 0.0
         if (abs(amount_rest) > 0.001) and (new_paypoff is not None):
             new_paypoff.amount += amount_rest
             new_paypoff.save(do_generate=False)
@@ -599,8 +630,11 @@ class Payoff(LucteriosModel):
             return True
 
     def delete(self, using=None):
+        if self.mode == self.MODE_INTERNAL:
+            self.supporting.get_final_child().delete_linked_supporting(self)
         self.delete_accounting()
         LucteriosModel.delete(self, using)
+        self.generate_accountlink()
 
     def get_auditlog_object(self):
         return self.supporting.get_final_child()
@@ -611,13 +645,15 @@ class Payoff(LucteriosModel):
 
 
 class DepositSlip(LucteriosModel):
-    status = FSMIntegerField(verbose_name=_('status'), choices=(
-        (0, _('building')), (1, _('closed')), (2, _('valid'))), null=False, default=0, db_index=True)
-    bank_account = models.ForeignKey(BankAccount, verbose_name=_(
-        'bank account'), null=False, db_index=True, on_delete=models.PROTECT)
+    STATUS_BUILDING = 0
+    STATUS_CLOSED = 1
+    STATUS_VALID = 2
+    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_CLOSED, _('closed')), (STATUS_VALID, _('valid')))
+
+    status = FSMIntegerField(verbose_name=_('status'), choices=LIST_STATUS, null=False, default=STATUS_BUILDING, db_index=True)
+    bank_account = models.ForeignKey(BankAccount, verbose_name=_('bank account'), null=False, db_index=True, on_delete=models.PROTECT)
     date = models.DateField(verbose_name=_('date'), null=False)
-    reference = models.CharField(
-        _('reference'), max_length=100, null=False, default='')
+    reference = models.CharField(_('reference'), max_length=100, null=False, default='')
 
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total', format_string=lambda: format_with_devise(5))
     nb = LucteriosVirtualField(verbose_name=_('number'), compute_from='get_nb', format_string="N0")
@@ -653,13 +689,13 @@ class DepositSlip(LucteriosModel):
 
     transitionname__close_deposit = _("To Close")
 
-    @transition(field=status, source=0, target=1, conditions=[lambda item:len(item.depositdetail_set.all()) > 0])
+    @transition(field=status, source=STATUS_BUILDING, target=STATUS_CLOSED, conditions=[lambda item:len(item.depositdetail_set.all()) > 0])
     def close_deposit(self):
         pass
 
     transitionname__validate_deposit = _("Validate")
 
-    @transition(field=status, source=1, target=2)
+    @transition(field=status, source=STATUS_CLOSED, target=STATUS_VALID)
     def validate_deposit(self):
         if self.bank_account.temporary_account_code != '':
             fiscal_year = FiscalYear.get_current()
@@ -672,7 +708,7 @@ class DepositSlip(LucteriosModel):
             EntryLineAccount.objects.create(account=temporary_bank_account, amount=-1 * self.get_total(), entry=new_entry)
 
     def add_payoff(self, entries):
-        if self.status == 0:
+        if self.status == self.STATUS_BUILDING:
             for entry in entries:
                 payoff_list = Payoff.objects.filter(entry_id=entry)
                 if len(payoff_list) > 0:
@@ -719,10 +755,8 @@ class DepositSlip(LucteriosModel):
 
 
 class DepositDetail(LucteriosModel):
-    deposit = models.ForeignKey(
-        DepositSlip, verbose_name=_('deposit'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
-    payoff = models.ForeignKey(
-        Payoff, verbose_name=_('payoff'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
+    deposit = models.ForeignKey(DepositSlip, verbose_name=_('deposit'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
+    payoff = models.ForeignKey(Payoff, verbose_name=_('payoff'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
 
     amount = LucteriosVirtualField(verbose_name=_('amount'), compute_from='get_amount', format_string=lambda: format_with_devise(5))
 
@@ -765,10 +799,9 @@ class DepositDetail(LucteriosModel):
 
 class PaymentMethod(LucteriosModel):
 
-    paytype = models.IntegerField(verbose_name=_('type'),
-                                  choices=[(pay_id, PAYMENTTYPE_LIST[pay_id].name) for pay_id in range(len(PAYMENTTYPE_LIST))], null=False, default=0, db_index=True)
-    bank_account = models.ForeignKey(BankAccount,
-                                     verbose_name=_('bank account'), null=False, default=None, db_index=True, on_delete=models.PROTECT)
+    paytype = models.IntegerField(verbose_name=_('type'), choices=[(payitem.num, payitem.name) for payitem in PAYMENTTYPE_LIST],
+                                  null=False, default=PaymentTypeTransfer.num, db_index=True)
+    bank_account = models.ForeignKey(BankAccount, verbose_name=_('bank account'), null=False, default=None, db_index=True, on_delete=models.PROTECT)
     extra_data = models.TextField(_('data'), null=False)
 
     info = LucteriosVirtualField(verbose_name=_('parameters'), compute_from='get_info')
@@ -777,10 +810,10 @@ class PaymentMethod(LucteriosModel):
     def paymentType(self):
         if not hasattr(self, "_paymentType"):
             self.paytype = int(self.paytype)
-            if (self.paytype >= 0) and (len(PAYMENTTYPE_LIST) > self.paytype):
-                self._paymentType = PAYMENTTYPE_LIST[self.paytype](self.extra_data)
-            else:
-                self._paymentType = PaymentType(self.extra_data)
+            self._paymentType = PaymentType(self.extra_data)
+            for payitem in PAYMENTTYPE_LIST:
+                if self.paytype == payitem.num:
+                    self._paymentType = payitem(self.extra_data)
         return self._paymentType
 
     @classmethod
@@ -815,12 +848,15 @@ class PaymentMethod(LucteriosModel):
 
 
 class BankTransaction(LucteriosModel):
+    STATUS_FAILURE = 0
+    STATUS_SUCCESS = 1
+    LIST_STATUS = ((STATUS_FAILURE, _('failure')), (STATUS_SUCCESS, _('success')))
+
     date = models.DateTimeField(verbose_name=_('date'), null=False)
-    status = models.IntegerField(verbose_name=_('status'), choices=(
-        (0, _('failure')), (1, _('success'))), null=False, default=0, db_index=True)
+    status = models.IntegerField(verbose_name=_('status'), choices=LIST_STATUS, null=False, default=STATUS_FAILURE, db_index=True)
     payer = models.CharField(_('payer'), max_length=200, null=False)
-    amount = models.DecimalField(verbose_name=_('amount'), max_digits=10, decimal_places=3, default=0.0, validators=[
-        MinValueValidator(0.0), MaxValueValidator(9999999.999)], null=True)
+    amount = models.DecimalField(verbose_name=_('amount'), max_digits=10, decimal_places=3, default=0.0,
+                                 validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], null=True)
     contains = models.TextField(_('contains'), null=True)
 
     @classmethod
@@ -901,9 +937,7 @@ def payoff_checkparam():
 def payoff_convertdata():
     check_payoff_accounting()
     check_bank_account()
-    correct_db_field({
-        'payoff_payoff': 'amount',
-    })
+    correct_db_field({'payoff_payoff': 'amount', })
 
 
 @Signal.decorate('auditlog_register')

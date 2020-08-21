@@ -33,8 +33,14 @@ from lucterios.contacts.models import LegalEntity
 
 
 class PaymentType(object):
+    FIELDTYPE_EDIT = 0
+    FIELDTYPE_MEMO = 1
+    FIELDTYPE_CHECK = 2
+    FIELDTYPE_EMAIL = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    FIELDTYPE_URL = r"^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$"
 
     name = ''
+    num = -1
 
     def __init__(self, extra_data):
         self.extra_data = extra_data
@@ -58,7 +64,7 @@ class PaymentType(object):
         items = self.get_items()
         for fieldid, fieldtitle, fieldtype in self.get_extra_fields():
             res += "{[b]}%s{[/b]}{[br/]}" % fieldtitle
-            if fieldtype == 2:
+            if fieldtype == PaymentType.FIELDTYPE_CHECK:
                 res += str(get_bool_textual((items[fieldid - 1] == 'o') or (items[fieldid - 1] == 'True')))
             else:
                 res += items[fieldid - 1]
@@ -71,15 +77,33 @@ class PaymentType(object):
             items.append("")
         self.extra_data = "\n".join(items)
 
+    def get_components(self):
+        from lucterios.framework.xfercomponents import XferCompEdit, XferCompMemo, XferCompCheck
+        items = self.get_items()
+        for fieldid, fieldtitle, fieldtype in self.get_extra_fields():
+            if fieldtype == PaymentType.FIELDTYPE_EDIT:
+                edt = XferCompEdit('item_%d' % fieldid)
+            elif fieldtype == PaymentType.FIELDTYPE_MEMO:
+                edt = XferCompMemo('item_%d' % fieldid)
+            elif fieldtype == PaymentType.FIELDTYPE_CHECK:
+                edt = XferCompCheck('item_%d' % fieldid)
+            elif isinstance(fieldtype, str):
+                edt = XferCompEdit('item_%d' % fieldid)
+                edt.mask = fieldtype
+            edt.set_value(items[fieldid - 1])
+            edt.description = fieldtitle
+            yield edt
+
     def show_pay(self, absolute_uri, lang, supporting):
         return ""
 
 
 class PaymentTypeTransfer(PaymentType):
     name = _('transfer')
+    num = 0
 
     def get_extra_fields(self):
-        return [(1, _('IBAN'), 0), (2, _('BIC'), 0)]
+        return [(1, _('IBAN'), PaymentType.FIELDTYPE_EDIT), (2, _('BIC'), PaymentType.FIELDTYPE_EDIT)]
 
     def show_pay(self, absolute_uri, lang, supporting):
         items = self.get_items()
@@ -97,9 +121,10 @@ class PaymentTypeTransfer(PaymentType):
 
 class PaymentTypeCheque(PaymentType):
     name = _('cheque')
+    num = 1
 
     def get_extra_fields(self):
-        return [(1, _('payable to'), 0), (2, _('address'), 1)]
+        return [(1, _('payable to'), PaymentType.FIELDTYPE_EDIT), (2, _('address'), PaymentType.FIELDTYPE_MEMO)]
 
     def get_default_items(self):
         if (self.extra_data == ''):
@@ -128,9 +153,10 @@ class PaymentTypeCheque(PaymentType):
 
 class PaymentTypePayPal(PaymentType):
     name = _('PayPal')
+    num = 2
 
     def get_extra_fields(self):
-        return [(1, _('Paypal account'), r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"), (2, _('With control'), 2)]
+        return [(1, _('Paypal account'), PaymentType.FIELDTYPE_EMAIL), (2, _('With control'), PaymentType.FIELDTYPE_CHECK)]
 
     def get_paypal_dict(self, absolute_uri, lang, supporting):
         from urllib.parse import quote_plus
@@ -182,9 +208,10 @@ class PaymentTypePayPal(PaymentType):
 
 class PaymentTypeOnline(PaymentType):
     name = _('online')
+    num = 3
 
     def get_extra_fields(self):
-        return [(1, _('web address'), r"^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$"), (2, _('info'), 1)]
+        return [(1, _('web address'), PaymentType.FIELDTYPE_URL), (2, _('info'), PaymentType.FIELDTYPE_MEMO)]
 
     def show_pay(self, absolute_uri, lang, supporting):
         items = self.get_items()

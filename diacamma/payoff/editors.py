@@ -27,14 +27,13 @@ from __future__ import unicode_literals
 from django.utils.translation import ugettext_lazy as _
 
 from lucterios.framework.editors import LucteriosEditor
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, \
-    XferCompEdit, XferCompMemo, XferCompSelect, XferCompCheck, XferCompLinkLabel
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, XferCompSelect, XferCompLinkLabel
 from lucterios.CORE.parameters import Params
 from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.contacts.models import LegalEntity
 
-from diacamma.payoff.models import Supporting
+from diacamma.payoff.models import Supporting, Payoff
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.tools import current_system_account
 
@@ -144,12 +143,19 @@ class PayoffEditor(LucteriosEditor):
         info = self.item.supporting.check_date(self.item.date)
         if len(info) > 0:
             raise LucteriosException(IMPORTANT, info[0])
+        if (int(self.item.mode) == Payoff.MODE_INTERNAL) and (xfer.getparam('linked_supporting', 0) != 0):
+            self.item.linked_payoff = Payoff.objects.create(supporting_id=xfer.getparam('linked_supporting', 0), date=self.item.date,
+                                                            amount=self.item.amount, mode=self.item.mode, reference=str(self.item.supporting.get_final_child()))
+            self.item.bank_account = None
+            self.item.reference = str(self.item.linked_payoff.supporting.get_final_child())
+            self.item.payer = ""
         return
 
     def edit(self, xfer):
         currency_decimal = Params.getvalue("accounting-devise-prec")
         fee_code = Params.getvalue("payoff-bankcharges-account")
         supportings = xfer.getparam('supportings', ())
+        self.item.mode = int(self.item.mode)
         if len(supportings) > 0:
             supporting_list = Supporting.objects.filter(id__in=supportings, is_revenu=True).distinct().order_by('id')
             if len(supporting_list) == 0:
@@ -179,11 +185,11 @@ class PayoffEditor(LucteriosEditor):
         lbl.set_value_center("{[br/]}".join(title))
         lbl.set_location(1, 0, 2)
         xfer.add_component(lbl)
-        if len(supportings) > 0:
+        if (len(supporting_list) > 1) and (self.item.mode not in (Payoff.MODE_INTERNAL, )):
             row = xfer.get_max_row() + 1
             sel = XferCompSelect('repartition')
-            sel.set_value(xfer.getparam('repartition', 0))
-            sel.set_select([(0, _('by ratio')), (1, _('by date'))])
+            sel.set_value(xfer.getparam('repartition', Payoff.REPARTITION_BYRATIO))
+            sel.set_select(Payoff.LIST_REPARTITIONS)
             sel.set_location(1, row)
             sel.description = _('repartition mode')
             xfer.add_component(sel)
@@ -204,14 +210,33 @@ class PayoffEditor(LucteriosEditor):
         if banks.select_list[0][0] == 0:
             del banks.select_list[0]
         if len(banks.select_list) == 0:
-            mode.select_list = [mode.select_list[0]]
+            mode.select_list = [mode.select_list[0], mode.select_list[-1]]
         else:
             # change order of payoff mode
             levy = mode.select_list[5]
             mode.select_list.insert(3, levy)
             del mode.select_list[6]
             xfer.get_components("mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-        if int(self.item.mode) == 0:
+        linked_supportings = supporting_list[0].get_final_child().get_linked_supportings() if len(supporting_list) == 1 else []
+        if len(linked_supportings) == 0:
+            mode.select_list = mode.select_list[:-1]
+        elif self.item.mode == Payoff.MODE_INTERNAL:
+            row = xfer.get_max_row() + 1
+            sel = XferCompSelect('linked_supporting')
+            sel.set_value(xfer.getparam('linked_supporting', 0))
+            sel.set_select([(item.id, str(item)) for item in linked_supportings])
+            sel.set_location(1, row)
+            sel.description = _('linked')
+            sel.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            xfer.add_component(sel)
+            xfer.remove_component("reference")
+            for linked_supporting in linked_supportings:
+                if linked_supporting.id == sel.value:
+                    amount.value = min(supporting_list[0].get_final_child().get_total_rest_topay(), linked_supporting.get_total_rest_topay())
+                    xfer.params['amount'] = float(amount.value)
+                    xfer.change_to_readonly("amount")
+                    break
+        if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
             xfer.remove_component("bank_account")
         else:
             banks = xfer.get_components("bank_account")
@@ -219,9 +244,9 @@ class PayoffEditor(LucteriosEditor):
                 del banks.select_list[0]
             if len(banks.select_list) == 0:
                 xfer.remove_component("bank_account")
-        if not supporting_list[0].is_revenu:
+        if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
             xfer.remove_component("payer")
-        if (fee_code == '') or (self.item.mode == 0):
+        if (fee_code == '') or (self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL)):
             xfer.remove_component("bank_fee")
         else:
             bank_fee = xfer.get_components("bank_fee")
@@ -260,19 +285,7 @@ class PaymentMethodEditor(LucteriosEditor):
             xfer.get_components("paytype").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         else:
             xfer.change_to_readonly('paytype')
-        items = self.item.get_items()
-        for fieldid, fieldtitle, fieldtype in self.item.get_extra_fields():
+        for edt in self.item.paymentType.get_components():
             row = xfer.get_max_row() + 1
-            if fieldtype == 0:
-                edt = XferCompEdit('item_%d' % fieldid)
-            elif fieldtype == 1:
-                edt = XferCompMemo('item_%d' % fieldid)
-            elif fieldtype == 2:
-                edt = XferCompCheck('item_%d' % fieldid)
-            elif isinstance(fieldtype, str):
-                edt = XferCompEdit('item_%d' % fieldid)
-                edt.mask = fieldtype
-            edt.set_value(items[fieldid - 1])
             edt.set_location(1, row)
-            edt.description = fieldtitle
             xfer.add_component(edt)

@@ -134,13 +134,11 @@ def paramchange_payoff(params):
                 bank.account_code = correct_accounting_code(bank.account_code)
                 bank.save()
     if ('payoff-cash-account' in params) or ('accounting-sizecode' in params):
-        Parameter.change_value(
-            'payoff-cash-account', correct_accounting_code(Params.getvalue('payoff-cash-account')))
+        Parameter.change_value('payoff-cash-account', correct_accounting_code(Params.getvalue('payoff-cash-account')))
     if ('payoff-bankcharges-account' in params) or ('accounting-sizecode' in params):
         pvalue = Params.getvalue('payoff-bankcharges-account')
         if pvalue != '':
-            Parameter.change_value(
-                'payoff-bankcharges-account', correct_accounting_code(pvalue))
+            Parameter.change_value('payoff-bankcharges-account', correct_accounting_code(pvalue))
     if 'accounting-system' in params:
         system_ident = accounting_system_ident(Params.getvalue("accounting-system"))
         if system_ident == "french":
