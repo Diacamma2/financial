@@ -232,7 +232,10 @@ class PayoffEditor(LucteriosEditor):
             xfer.remove_component("reference")
             for linked_supporting in linked_supportings:
                 if linked_supporting.id == sel.value:
-                    amount.value = min(supporting_list[0].get_final_child().get_total_rest_topay(), linked_supporting.get_total_rest_topay())
+                    current_total_rest_topay = supporting_list[0].get_final_child().get_total_rest_topay()
+                    linked_total_rest_topay = linked_supporting.get_total_rest_topay()
+                    amount.value = min(current_total_rest_topay if current_total_rest_topay > 1e-3 else supporting_list[0].get_final_child().get_max_payoff(),
+                                       linked_total_rest_topay if linked_total_rest_topay > 1e-3 else linked_supporting.get_max_payoff())
                     xfer.params['amount'] = float(amount.value)
                     xfer.change_to_readonly("amount")
                     break

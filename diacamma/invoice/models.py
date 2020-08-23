@@ -1027,20 +1027,19 @@ class Bill(Supporting):
         return [item for item in other_bill_inverses if item.get_total_rest_topay() > 0.001]
 
     def accounting_of_linked_supportings(self, source_payoff, target_payoff):
-        if (source_payoff.mode == Payoff.MODE_INTERNAL) and (target_payoff.mode == Payoff.MODE_INTERNAL) and \
-                (source_payoff.linked_payoff == target_payoff) and (source_payoff == target_payoff.linked_payoff):
-            source_bill = source_payoff.supporting.get_final_child()
-            target_bill = target_payoff.supporting.get_final_child()
-            if isinstance(source_bill, Bill) and isinstance(target_bill, Bill):
-                source_payoff.entry = target_bill.entry
-                target_payoff.entry = source_bill.entry
-                source_payoff.save(do_internal=False)
-                target_payoff.save(do_internal=False)
+        source_bill = source_payoff.supporting.get_final_child()
+        target_bill = target_payoff.supporting.get_final_child()
+        if isinstance(source_bill, Bill) and isinstance(target_bill, Bill):
+            source_payoff.entry = target_bill.entry
+            target_payoff.entry = source_bill.entry
+            source_payoff.save(do_internal=False)
+            target_payoff.save(do_internal=False)
 
     def delete_linked_supporting(self, payoff):
         return
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        self.bill_type = int(self.bill_type)
         for detail in self.detail_set.all():
             if detail.define_autoreduce():
                 detail.save()

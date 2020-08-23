@@ -269,10 +269,12 @@ class Supporting(LucteriosModel):
                         added = True
             return added
 
-        for entry in self.entry_links():
-            for entryline in entry.entrylineaccount_set.all():
-                if entryline.link is not None:
-                    entryline.link.delete()
+        entry_links = self.entry_links()
+        if entry_links is not None:
+            for entry in entry_links:
+                for entryline in entry.entrylineaccount_set.all():
+                    if entryline.link is not None:
+                        entryline.link.delete()
 
         nb_link_created = 0
         if (abs(self.get_total_rest_topay()) < 0.0001) and (self.entry_links() is not None) and (len(self.entry_links()) > 0):
@@ -287,8 +289,10 @@ class Supporting(LucteriosModel):
                 for payoff_item in all_payoff.entry.payoff_set.all():
                     supporting_payed = payoff_item.supporting.get_final_child()
                     added = False
-                    for supporting_payed_entry in supporting_payed.entry_links():
-                        added = added or _add_entryline_by_third(supporting_payed_entry)
+                    supporting_entry_links = supporting_payed.entry_links()
+                    if supporting_entry_links is not None:
+                        for supporting_payed_entry in supporting_entry_links:
+                            added = added or _add_entryline_by_third(supporting_payed_entry)
                     if added:
                         for payoff_item in supporting_payed.payoff_set.filter(supporting_payed.payoff_query):
                             _add_entryline_by_third(payoff_item.entry)
@@ -511,7 +515,8 @@ class Payoff(LucteriosModel):
             if (self.linked_payoff.linked_payoff is None):
                 self.linked_payoff.linked_payoff = self
                 self.linked_payoff.save(do_internal=False)
-            self.supporting.get_final_child().accounting_of_linked_supportings(self, self.linked_payoff)
+            if (self.linked_payoff.mode == Payoff.MODE_INTERNAL) and (self.linked_payoff.linked_payoff == self):
+                self.supporting.get_final_child().accounting_of_linked_supportings(self, self.linked_payoff)
         if not force_insert and do_linking:
             self.generate_accountlink()
         return res
