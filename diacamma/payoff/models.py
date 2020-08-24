@@ -258,6 +258,14 @@ class Supporting(LucteriosModel):
     def get_current_date(self):
         raise Exception('no implemented!')
 
+    def delete_accountlink(self):
+        entry_links = self.entry_links()
+        if entry_links is not None:
+            for entry in entry_links:
+                for entryline in entry.entrylineaccount_set.all():
+                    if entryline.link is not None:
+                        entryline.link.delete()
+
     def generate_accountlink(self):
         def _add_entryline_by_third(entry):
             added = False
@@ -268,13 +276,6 @@ class Supporting(LucteriosModel):
                         entryline_by_third[third_id].append(entryline_third)
                         added = True
             return added
-
-        entry_links = self.entry_links()
-        if entry_links is not None:
-            for entry in entry_links:
-                for entryline in entry.entrylineaccount_set.all():
-                    if entryline.link is not None:
-                        entryline.link.delete()
 
         nb_link_created = 0
         if (abs(self.get_total_rest_topay()) < 0.0001) and (self.entry_links() is not None) and (len(self.entry_links()) > 0):
@@ -421,13 +422,16 @@ class Payoff(LucteriosModel):
         return BankAccount.objects.filter(is_disabled=False)
 
     def delete_accounting(self):
-        if (self.entry is not None) and (self.mode != self.MODE_INTERNAL):
-            payoff_entry = self.entry
-            if payoff_entry.close:
-                raise LucteriosException(IMPORTANT, _("an entry associated to this payoff is closed!"))
-            self.entry = None
-            self.save(do_generate=False)
-            payoff_entry.delete()
+        if self.entry is not None:
+            if self.mode != self.MODE_INTERNAL:
+                payoff_entry = self.entry
+                if payoff_entry.close:
+                    raise LucteriosException(IMPORTANT, _("an entry associated to this payoff is closed!"))
+                self.entry = None
+                self.save(do_generate=False)
+                payoff_entry.delete()
+            else:
+                self.supporting.get_final_child().delete_accountlink()
 
     def generate_accountlink(self):
         supporting = self.supporting.get_final_child()
@@ -639,7 +643,6 @@ class Payoff(LucteriosModel):
             self.supporting.get_final_child().delete_linked_supporting(self)
         self.delete_accounting()
         LucteriosModel.delete(self, using)
-        self.generate_accountlink()
 
     def get_auditlog_object(self):
         return self.supporting.get_final_child()

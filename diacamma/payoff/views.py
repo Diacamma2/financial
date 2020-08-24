@@ -75,6 +75,7 @@ class PayoffAddModify(XferAddEditor):
 
     def run_save(self, request, *args, **kwargs):
         supportings = self.getparam('supportings', ())
+        kwargs['supporting'] = int(supportings[0]) if len(supportings) > 0 else 0
         if len(supportings) > 1:
             multisave = XferContainerAcknowledge()
             multisave.is_view_right = self.is_view_right

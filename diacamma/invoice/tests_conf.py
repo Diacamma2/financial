@@ -338,7 +338,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@4/categories', ["cat 1", "cat 2", "cat 3"])
         self.assert_count_equal('#article/actions', 4)
         self.assert_action_equal('POST', '#article/actions/@3', ('Fusion', 'images/clone.png', 'CORE', 'objectMerge', 0, 1, 2,
-                                                         {'modelname': 'invoice.Article', 'field_id': 'article'}))
+                                                                 {'modelname': 'invoice.Article', 'field_id': 'article'}))
 
         self.factory.xfer = ObjectMerge()
         self.calljson('/CORE/objectMerge', {'modelname': 'invoice.Article', 'field_id': 'article', 'article': '1;3;5'}, False)
