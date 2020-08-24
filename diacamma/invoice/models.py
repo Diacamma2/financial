@@ -1029,13 +1029,15 @@ class Bill(Supporting):
     def accounting_of_linked_supportings(self, source_payoff, target_payoff):
         source_bill = source_payoff.supporting.get_final_child()
         target_bill = target_payoff.supporting.get_final_child()
-        if isinstance(source_bill, Bill) and isinstance(target_bill, Bill):
+        if isinstance(source_bill, Bill) and isinstance(target_bill, Bill) and (source_payoff.entry is None):
             source_payoff.entry = target_bill.entry
             target_payoff.entry = source_bill.entry
             source_payoff.save(do_internal=False)
             target_payoff.save(do_internal=False)
 
     def delete_linked_supporting(self, payoff):
+        if payoff.entry.year.status == FiscalYear.STATUS_FINISHED:
+            raise LucteriosException(IMPORTANT, _('Payoff not deletable !'))
         return
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):

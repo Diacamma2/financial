@@ -92,11 +92,14 @@ class ThirdCustomField(LucteriosModel):
 
 
 class Third(LucteriosModel, CustomizeObject):
+    STATUS_ENABLE = 0
+    STATUS_DISABLE = 1
+    LIST_STATUS = ((STATUS_ENABLE, _('Enable')), (STATUS_DISABLE, _('Disable')))
     CustomFieldClass = ThirdCustomField
     FieldName = 'third'
 
     contact = models.ForeignKey('contacts.AbstractContact', verbose_name=_('contact'), null=False, on_delete=models.CASCADE)
-    status = FSMIntegerField(verbose_name=_('status'), choices=((0, _('Enable')), (1, _('Disable'))))
+    status = FSMIntegerField(verbose_name=_('status'), choices=LIST_STATUS)
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total', format_string=lambda: format_with_devise(5))
 
     def __str__(self):
@@ -174,13 +177,13 @@ class Third(LucteriosModel, CustomizeObject):
 
     transitionname__disabled = _('Disabled')
 
-    @transition(field=status, source=0, target=1)
+    @transition(field=status, source=STATUS_ENABLE, target=STATUS_DISABLE)
     def disabled(self):
         pass
 
     transitionname__enabled = _("Enabled")
 
-    @transition(field=status, source=1, target=0)
+    @transition(field=status, source=STATUS_DISABLE, target=STATUS_ENABLE)
     def enabled(self):
         pass
 
@@ -199,8 +202,7 @@ class Third(LucteriosModel, CustomizeObject):
 
 
 class AccountThird(LucteriosModel):
-    third = models.ForeignKey(
-        Third, verbose_name=_('third'), null=False, on_delete=models.CASCADE)
+    third = models.ForeignKey(Third, verbose_name=_('third'), null=False, on_delete=models.CASCADE)
     code = models.CharField(_('code'), max_length=50)
 
     total_txt = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total_txt', format_string=lambda: format_with_devise(2))
@@ -265,9 +267,14 @@ def get_total_result_text_format():
 
 
 class FiscalYear(LucteriosModel):
+    STATUS_BUILDING = 0
+    STATUS_RUNNING = 1
+    STATUS_FINISHED = 2
+    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_RUNNING, _('running')), (STATUS_FINISHED, _('finished')))
+
     begin = models.DateField(verbose_name=_('begin'))
     end = models.DateField(verbose_name=_('end'))
-    status = models.IntegerField(verbose_name=_('status'), choices=((0, _('building')), (1, _('running')), (2, _('finished'))), default=0)
+    status = models.IntegerField(verbose_name=_('status'), choices=LIST_STATUS, default=STATUS_BUILDING)
     is_actif = models.BooleanField(verbose_name=_('actif'), default=False, db_index=True)
     last_fiscalyear = models.ForeignKey('FiscalYear', verbose_name=_('last fiscal year'), related_name='next_fiscalyear', null=True, on_delete=models.SET_NULL)
 
@@ -289,9 +296,9 @@ class FiscalYear(LucteriosModel):
 
     def can_delete(self):
         fiscal_years = FiscalYear.objects.order_by('end')
-        if (len(fiscal_years) != 0) and (fiscal_years[len(fiscal_years) - 1].id != self.id):
+        if (len(fiscal_years) != 0) and (fiscal_years.last().id != self.id):
             return _('This fiscal year is not the last!')
-        elif self.status == 2:
+        elif self.status == FiscalYear.STATUS_FINISHED:
             return _('Fiscal year finished!')
         else:
             return ''
@@ -341,11 +348,11 @@ class FiscalYear(LucteriosModel):
 
     @property
     def total_revenue(self):
-        return self.get_total_income(3)
+        return self.get_total_income(ChartsAccount.TYPE_REVENUE)
 
     @property
     def total_expense(self):
-        return self.get_total_income(4)
+        return self.get_total_income(ChartsAccount.TYPE_EXPENSE)
 
     @property
     def total_cash(self):
@@ -368,14 +375,14 @@ class FiscalYear(LucteriosModel):
 
     @property
     def has_no_lastyear_entry(self):
-        val = get_amount_sum(EntryLineAccount.objects.filter(entry__journal__id=1, account__year=self).aggregate(Sum('amount')))
+        val = get_amount_sum(EntryLineAccount.objects.filter(entry__journal__id=Journal.DEFAULT_LASTYEAR, account__year=self).aggregate(Sum('amount')))
         return abs(val) < 0.0001
 
     def import_charts_accounts(self):
         if self.last_fiscalyear is None:
             raise LucteriosException(
                 IMPORTANT, _("This fiscal year has not a last fiscal year!"))
-        if self.status == 2:
+        if self.status == FiscalYear.STATUS_FINISHED:
             raise LucteriosException(IMPORTANT, _('Fiscal year finished!'))
         for last_charts_account in self.last_fiscalyear.chartsaccount_set.all():
             self.getorcreate_chartaccount(last_charts_account.code, last_charts_account.name)
@@ -398,7 +405,7 @@ class FiscalYear(LucteriosModel):
             return ChartsAccount.objects.create(year=self, code=code, name=name, type_of_account=typeaccount)
 
     def move_entry_noclose(self):
-        if self.status == 1:
+        if self.status == FiscalYear.STATUS_RUNNING:
             next_ficalyear = None
             for entry_noclose in EntryAccount.objects.filter(close=False, entrylineaccount__account__year=self).distinct():
                 if next_ficalyear is None:
@@ -501,7 +508,7 @@ class FiscalYear(LucteriosModel):
             raise LucteriosException(IMPORTANT, _("The sum of annexe account must be null!"))
 
     def check_to_close(self):
-        if self.status == 0:
+        if self.status == FiscalYear.STATUS_BUILDING:
             raise LucteriosException(IMPORTANT, _("This fiscal year is not 'in running'!"))
         EntryAccount.clear_ghost()
         self._check_annexe()
@@ -511,7 +518,7 @@ class FiscalYear(LucteriosModel):
         return nb_entry_noclose
 
     def get_reports(self, printclass, params={}):
-        if self.status == 2:
+        if self.status == FiscalYear.STATUS_FINISHED:
             metadata = '%s-%d' % (printclass.url_text, self.id)
             doc = DocumentContainer.objects.filter(metadata=metadata).first()
             if doc is None:
@@ -545,7 +552,7 @@ class FiscalYear(LucteriosModel):
         self._check_annexe()
         self.move_entry_noclose()
         current_system_account().finalize_year(self)
-        self.status = 2
+        self.status = FiscalYear.STATUS_FINISHED
         self.save()
         self.save_reports()
 
@@ -564,11 +571,15 @@ class FiscalYear(LucteriosModel):
 
 
 class CostAccounting(LucteriosModel):
+    STATUS_OPENED = 0
+    STATUS_CLOSED = 1
+    LIST_STATUS = ((STATUS_OPENED, _('opened')), (STATUS_CLOSED, _('closed')))
+
     name = models.CharField(_('name'), max_length=150, unique=True)
     description = models.CharField(_('description'), max_length=200)
-    status = models.IntegerField(verbose_name=_('status'), choices=((0, _('opened')), (1, _('closed'))), default=0)
-    last_costaccounting = models.ForeignKey('CostAccounting', verbose_name=_(
-        'last cost accounting'), related_name='next_costaccounting', null=True, on_delete=models.SET_NULL)
+    status = models.IntegerField(verbose_name=_('status'), choices=LIST_STATUS, default=STATUS_OPENED)
+    last_costaccounting = models.ForeignKey('CostAccounting', verbose_name=_('last cost accounting'),
+                                            related_name='next_costaccounting', null=True, on_delete=models.SET_NULL)
     is_default = models.BooleanField(verbose_name=_('default'), default=False)
     is_protected = models.BooleanField(verbose_name=_('default'), default=False)
     year = models.ForeignKey('FiscalYear', verbose_name=_('fiscal year'), null=True, default=None, on_delete=models.PROTECT, db_index=True)
@@ -581,7 +592,7 @@ class CostAccounting(LucteriosModel):
         return self.name
 
     def can_delete(self):
-        if self.status == 2:
+        if self.status == self.STATUS_CLOSED:
             return _('This cost accounting is closed!')
         if self.is_protected:
             return _("This cost accounting is protected by other modules!")
@@ -596,10 +607,10 @@ class CostAccounting(LucteriosModel):
         return ['name', 'description', 'year', 'last_costaccounting']
 
     def get_total_revenue(self):
-        return get_amount_sum(EntryLineAccount.objects.filter(account__type_of_account=3, costaccounting=self).aggregate(Sum('amount')))
+        return get_amount_sum(EntryLineAccount.objects.filter(account__type_of_account=ChartsAccount.TYPE_REVENUE, costaccounting=self).aggregate(Sum('amount')))
 
     def get_total_expense(self):
-        return get_amount_sum(EntryLineAccount.objects.filter(account__type_of_account=4, costaccounting=self).aggregate(Sum('amount')))
+        return get_amount_sum(EntryLineAccount.objects.filter(account__type_of_account=ChartsAccount.TYPE_EXPENSE, costaccounting=self).aggregate(Sum('amount')))
 
     def get_total_result(self):
         return self.get_total_revenue() - self.get_total_expense()
@@ -607,11 +618,11 @@ class CostAccounting(LucteriosModel):
     def close(self):
         self.check_before_close()
         self.is_default = False
-        self.status = 1
+        self.status = self.STATUS_CLOSED
         self.save()
 
     def change_has_default(self):
-        if self.status == 0:
+        if self.status == self.STATUS_OPENED:
             if self.is_default:
                 self.is_default = False
                 self.save()
@@ -899,8 +910,6 @@ class AccountLink(LucteriosModel):
             entryline = EntryLineAccount.objects.get(id=entryline.id)
             if regex_third.match(entryline.account.code) is None:
                 raise LucteriosException(IMPORTANT, _("An entry line is not third!"))
-            # if check_year and (entryline.entry.year.status == 2):
-            #    raise LucteriosException(IMPORTANT, _("Fiscal year finished!"))
             if year is None:
                 year = entryline.entry.year
             elif year != entryline.entry.year:
@@ -973,13 +982,13 @@ class EntryAccount(LucteriosModel):
     @property
     def year_query(self):
         if hasattr(self, 'no_year_close') and self.no_year_close:
-            return FiscalYear.objects.filter(status__in=(0, 1))
+            return FiscalYear.objects.filter(status__in=(FiscalYear.STATUS_BUILDING, FiscalYear.STATUS_RUNNING))
         else:
             return FiscalYear.objects.all()
 
     @property
     def journal_query(self):
-        if hasattr(self, 'no_year_close') and self.no_year_close and self.year.status == 1:
+        if hasattr(self, 'no_year_close') and self.no_year_close and self.year.status == FiscalYear.STATUS_RUNNING:
             return Journal.objects.exclude(id=1)
         else:
             return Journal.objects.all()
@@ -1740,16 +1749,16 @@ class Budget(LucteriosModel):
 
 
 def check_accountingcost():
-    for entry in EntryAccount.objects.filter(costaccounting_id__gt=0, year__status__lt=2):
+    for entry in EntryAccount.objects.filter(costaccounting_id__gt=0, year__status__in=(FiscalYear.STATUS_BUILDING, FiscalYear.STATUS_RUNNING)):
         try:
-            if (entry.costaccounting.status == 1) and not entry.close:
+            if (entry.costaccounting.status == CostAccounting.STATUS_CLOSED) and not entry.close:
                 entry.costaccounting = None
                 entry.save()
         except ObjectDoesNotExist:
             entry.costaccounting = None
             entry.save()
     entryline_cmp = 0
-    for entryline in EntryLineAccount.objects.filter(costaccounting_id__isnull=True, entry__costaccounting_id__isnull=False, account__type_of_account__in=(3, 4, 5)).distinct():
+    for entryline in EntryLineAccount.objects.filter(costaccounting_id__isnull=True, entry__costaccounting_id__isnull=False, account__type_of_account__in=(ChartsAccount.TYPE_REVENUE, ChartsAccount.TYPE_EXPENSE, ChartsAccount.TYPE_CONTRAACCOUNTS)).distinct():
         entryline.costaccounting_id = entryline.entry.costaccounting_id
         entryline.save()
         entryline_cmp += 1
@@ -1818,7 +1827,7 @@ def get_meta_currency_iso():
 
 @Signal.decorate('check_report')
 def check_report_accounting(year):
-    if year.status == 2:
+    if year.status == FiscalYear.STATUS_FINISHED:
         year.save_reports()
 
 

@@ -26,3 +26,18 @@ Historique
 Depuis le menu *Facturier/Stockage/Situation* vous pouvez consulter, le mouvement des articles en réception et en sortie, pour une période de temps données.
 
 Le bouton *imprimer* permet également le même type de rapport que précédement.
+
+Inventaire
+----------
+
+Depuis le menu *Facturier/Stockage/Bordereau d'inventaire* vous pouvez réaliser un inventaire de votre stock.
+
+Pour réaliser un inventaire, il faut commencer par créer un bordereau associé au lieu de stockage que l'on veut inventorier.  
+De là, le bordereau est alors automatiquement remplis avec l'ensemble des articles stockables référencés.  
+
+Vous ne pouvez valider votre bordereau d'inventaire qu'une fois la quantité de chaque articles resaisi.  
+*astuce* : Le bouton *Copie*, utilisable sur plusieurs ligne sélectionné, permet d'automatiquement assigné la quantité actuelle.
+
+Une fois votre bordereau correctement remplis, et une fois validé, 2 bordereaux de strockages peuvent être alors automatiquement généré afin de réaliser le réajustement (en plus ou en moins) de vos stocks.
+
+Le bouton *imprimer* permet d'éditer en PDF ou en CSV la list de l'inventaire.

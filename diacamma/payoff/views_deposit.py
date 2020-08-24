@@ -64,7 +64,7 @@ class DepositSlipList(XferListEditor):
 
 
 @ActionsManage.affect_grid(TITLE_CREATE, "images/new.png")
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", condition=lambda xfer: xfer.item.status == 0, close=CLOSE_YES)
+@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", condition=lambda xfer: xfer.item.status == DepositSlip.STATUS_BUILDING, close=CLOSE_YES)
 @MenuManage.describ('payoff.add_depositslip')
 class DepositSlipAddModify(XferAddEditor):
     icon = "bank.png"
@@ -116,7 +116,7 @@ class DepositSlipPrint(XferPrintAction):
         return report_generator
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.status == 0)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.status == DepositSlip.STATUS_BUILDING)
 @MenuManage.describ('payoff.add_depositslip')
 class DepositDetailAddModify(XferContainerCustom):
     icon = "bank.png"
@@ -200,7 +200,7 @@ class DepositDetailSave(XferContainerAcknowledge):
         self.item.add_payoff(entry)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.status == 0)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.status == DepositSlip.STATUS_BUILDING)
 @MenuManage.describ('payoff.add_depositslip')
 class DepositDetailDel(XferDelete):
     icon = "bank.png"

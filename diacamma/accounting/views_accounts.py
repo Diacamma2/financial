@@ -245,7 +245,7 @@ class ChartsAccountListing(XferPrintListing):
 
 
 @ActionsManage.affect_list(_('Last fiscal year'), 'images/edit.png',
-                           condition=lambda xfer: (xfer.item.year.status == 0) and (xfer.item.year.last_fiscalyear is not None) and xfer.item.year.has_no_lastyear_entry and (xfer.item.year.last_fiscalyear.status == 2))
+                           condition=lambda xfer: (xfer.item.year.status == FiscalYear.STATUS_BUILDING) and (xfer.item.year.last_fiscalyear is not None) and xfer.item.year.has_no_lastyear_entry and (xfer.item.year.last_fiscalyear.status == FiscalYear.STATUS_FINISHED))
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearReportLastYear(XferContainerAcknowledge):
     icon = "accountingYear.png"
@@ -261,7 +261,7 @@ class FiscalYearReportLastYear(XferContainerAcknowledge):
             signal_and_lock.Signal.call_signal("reportlastyear_after", self)
 
 
-@ActionsManage.affect_list(_('Begin'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == 0, intop=True)
+@ActionsManage.affect_list(_('Begin'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == FiscalYear.STATUS_BUILDING, intop=True)
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearBegin(XferContainerAcknowledge):
     icon = "accountingYear.png"
@@ -274,7 +274,7 @@ class FiscalYearBegin(XferContainerAcknowledge):
         current_year.editor.run_begin(self)
 
 
-@ActionsManage.affect_list(_('Closing'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == 1, intop=True)
+@ActionsManage.affect_list(_('Closing'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == FiscalYear.STATUS_RUNNING, intop=True)
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearClose(XferContainerAcknowledge):
     icon = "accountingYear.png"

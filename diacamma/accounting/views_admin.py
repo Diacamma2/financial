@@ -290,7 +290,7 @@ def paramchange_accounting(params):
             if account.code != correct_accounting_code(account.code):
                 account.code = correct_accounting_code(account.code)
                 account.save()
-        for charts_account in ChartsAccount.objects.filter(year__status__in=(0, 1)).distinct():
+        for charts_account in ChartsAccount.objects.filter(year__status__in=(FiscalYear.STATUS_BUILDING, FiscalYear.STATUS_RUNNING)).distinct():
             if charts_account.code != correct_accounting_code(charts_account.code):
                 charts_account.code = correct_accounting_code(charts_account.code)
                 charts_account.save()

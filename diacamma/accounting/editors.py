@@ -116,7 +116,7 @@ class FiscalYearEditor(LucteriosEditor):
                 xfer.params['last_fiscalyear'] = fiscal_years[len(fiscal_years) - 1].id
                 xfer.params['begin'] = self.item.begin.isoformat()
                 xfer.change_to_readonly('begin')
-        if self.item.status == 2:
+        if self.item.status == FiscalYear.STATUS_FINISHED:
             xfer.change_to_readonly('end')
         if self.item.id is None:
             init_select = [(0, _('Blank')), (1, _("Initial"))]
@@ -142,28 +142,28 @@ class FiscalYearEditor(LucteriosEditor):
         return
 
     def run_begin(self, xfer):
-        if self.item.status == 0:
+        if self.item.status == FiscalYear.STATUS_BUILDING:
             EntryAccount.clear_ghost()
             nb_entry_noclose = EntryLineAccount.objects.filter(entry__journal__id=1, entry__close=False, account__year=self.item).count()
             if nb_entry_noclose > 0:
                 raise LucteriosException(IMPORTANT, _("Some enties for last year report are not closed!"))
             signal_and_lock.Signal.call_signal("begin_year", xfer)
             if current_system_account().check_begin(self.item, xfer):
-                self.item.status = 1
+                self.item.status = FiscalYear.STATUS_RUNNING
                 self.item.save()
 
 
 class CostAccountingEditor(LucteriosEditor):
 
     def edit(self, xfer):
-        if self.item.status == 1:
+        if self.item.status == CostAccounting.STATUS_CLOSED:
             xfer.change_to_readonly('name')
             xfer.change_to_readonly('description')
             xfer.change_to_readonly('last_costaccounting')
             xfer.change_to_readonly('year')
         else:
             sel_year = xfer.get_components('year')
-            sel_year.set_select_query(FiscalYear.objects.filter(status__lt=2))
+            sel_year.set_select_query(FiscalYear.objects.exclude(status=FiscalYear.STATUS_FINISHED))
             if self.item.id is not None:
                 sel = xfer.get_components('last_costaccounting')
                 sel.set_select_query(CostAccounting.objects.all().exclude(id=self.item.id))

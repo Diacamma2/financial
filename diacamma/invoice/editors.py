@@ -287,7 +287,7 @@ class DetailFilter(object):
                 self.item.article_id = int(sel_art.value)
                 self.item.article = Article.objects.get(id=self.item.article_id)
             if xfer.getparam('CHANGE_ART') is not None:
-                if self.item.article is not None:
+                if self.item.article_id is not None:
                     self.item.designation = self.item.article.get_designation()
                     self.item.price = self.item.article.price
                     self.item.unit = self.item.article.unit

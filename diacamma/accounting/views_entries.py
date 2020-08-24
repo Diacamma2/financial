@@ -364,7 +364,7 @@ class EntryAccountLink(XferContainerAcknowledge):
         if self.items is None:
             raise Exception('no link')
         if len(self.items) == 1:
-            if self.items[0].entry.year.status == 2:
+            if self.items[0].entry.year.status == FiscalYear.STATUS_FINISHED:
                 raise LucteriosException(IMPORTANT, _("Fiscal year finished!"))
             if self.confirme(_('Do you want unlink this entry?')):
                 self.items[0].unlink()
@@ -421,7 +421,7 @@ class EntryAccountCostAccounting(XferContainerAcknowledge):
                 new_cost = CostAccounting.objects.get(id=cost_accounting_id)
             if (new_cost is None) or (new_cost.year is None) or (new_cost.year == current_year):
                 for item in self.items:
-                    if (item.costaccounting is None) or (item.costaccounting.status == 0):
+                    if (item.costaccounting is None) or (item.costaccounting.status == CostAccounting.STATUS_OPENED):
                         item.costaccounting = new_cost
                         item.save()
 

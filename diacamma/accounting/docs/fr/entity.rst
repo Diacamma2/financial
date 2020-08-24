@@ -28,6 +28,7 @@ A l'écran, vous pouvez aussi consulter les écritures saisies après les avoir 
  * Lettrée : seulement les écritures lettrées
  * Non lettrée : seulement les écritures non encore lettrées
 
+Vous pouvez également indiquer un code comptable pour filtre les écritures associées.
 
 Pour saisir une nouvelle écriture, cliquez sur le bouton "+ Ajouter".
 Sélectionnez le journal et saisissez la date de l'opération ainsi que le libellé de l'écriture (pièce et numéro...). Cliquez sur le bouton "Modifier".

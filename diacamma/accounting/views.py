@@ -148,7 +148,7 @@ class ThirdSave(XferContainerAcknowledge):
             self.item = last_thirds[0]
         else:
             self.item.contact = AbstractContact.objects.get(id=contact_id)
-            self.item.status = 0
+            self.item.status = Third.STATUS_ENABLE
             self.item.save()
         for item_account in new_account:
             old_account = self.item.accountthird_set.filter(code=correct_accounting_code(item_account))
@@ -189,7 +189,7 @@ class ThirdDisable(XferContainerAcknowledge):
             third_ids = [val_third['third'] for val_third in EntryLineAccount.objects.filter(entry__date_value__gt=limit_date, third__gt=0).values('third')]
             for third in Third.objects.filter(status=0):
                 if third.id not in third_ids:
-                    third.status = 1
+                    third.status = Third.STATUS_DISABLE
                     third.save()
 
 

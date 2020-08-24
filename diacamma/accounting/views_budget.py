@@ -206,7 +206,7 @@ class CostAccountingBudget(XferContainerAcknowledge):
     methods_allowed = ('GET', )
 
     def fillresponse(self):
-        read_only = (self.item.status == 1) or self.item.is_protected
+        read_only = (self.item.status == CostAccounting.STATUS_CLOSED) or self.item.is_protected
         self.redirect_action(BudgetList.get_action(), close=CLOSE_YES, params={'cost_accounting': self.item.id, 'readonly': read_only})
 
 
@@ -301,5 +301,5 @@ class FiscalYearBudget(XferContainerAcknowledge):
 
     def fillresponse(self, year):
         fiscal_year = FiscalYear.get_current(year)
-        read_only = (fiscal_year.status == 2)
+        read_only = (fiscal_year.status == FiscalYear.STATUS_FINISHED)
         self.redirect_action(BudgetList.get_action(), close=CLOSE_YES, params={'year': fiscal_year.id, 'readonly': read_only})

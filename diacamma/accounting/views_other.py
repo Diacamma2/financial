@@ -123,7 +123,7 @@ class CostAccountingClose(XferContainerAcknowledge):
     readonly = True
 
     def fillresponse(self):
-        if self.item.status == 0:
+        if self.item.status == CostAccounting.STATUS_OPENED:
             if self.item.is_protected:
                 raise LucteriosException(IMPORTANT, _("This cost accounting is protected by other modules!"))
             self.item.check_before_close()

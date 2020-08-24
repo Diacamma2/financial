@@ -167,7 +167,7 @@ class BillSearch(XferSavedCriteriaSearchEditor):
 
 
 @ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < 1)
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES, condition=lambda xfer: xfer.item.status == 0)
+@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES, condition=lambda xfer: xfer.item.status == Bill.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_bill')
 class BillAddModify(XferAddEditor):
     icon = "bill.png"
@@ -339,7 +339,7 @@ class BillMultiPay(XferContainerAcknowledge):
             self.redirect_action(PayoffAddModify.get_action("", ""), params={"supportings": ";".join([str(bill_id) for bill_id in bill_ids])})
 
 
-@ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == 1) and (xfer.item.bill_type == 0))
+@ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
 @MenuManage.describ('invoice.add_bill')
 class BillFromQuotation(XferContainerAcknowledge):
     caption = _("Convert to bill")
