@@ -30,6 +30,7 @@ from lucterios.framework.filetools import remove_accent
 from lucterios.CORE.parameters import Params
 
 from lucterios.contacts.models import LegalEntity
+from os.path import dirname
 
 
 class PaymentType(object):
@@ -93,6 +94,9 @@ class PaymentType(object):
             edt.set_value(items[fieldid - 1])
             edt.description = fieldtitle
             yield edt
+
+    def get_redirect_url(self, absolute_uri, lang, supporting):
+        return dirname(dirname(absolute_uri))
 
     def show_pay(self, absolute_uri, lang, supporting):
         return ""
@@ -158,7 +162,7 @@ class PaymentTypePayPal(PaymentType):
     def get_extra_fields(self):
         return [(1, _('Paypal account'), PaymentType.FIELDTYPE_EMAIL), (2, _('With control'), PaymentType.FIELDTYPE_CHECK)]
 
-    def get_paypal_dict(self, absolute_uri, lang, supporting):
+    def _get_paypal_dict(self, absolute_uri, lang, supporting):
         from urllib.parse import quote_plus
         if abs(supporting.get_payable_without_tax()) < 0.0001:
             raise LucteriosException(IMPORTANT, _("This item can't be validated!"))
@@ -183,6 +187,11 @@ class PaymentTypePayPal(PaymentType):
             args += "&%s=%s" % (key, quote_plus(val))
         return args[1:]
 
+    def get_redirect_url(self, absolute_uri, lang, supporting):
+        paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
+        paypal_dict = self._get_paypal_dict(absolute_uri, lang, supporting)
+        return "%s?%s" % (paypal_url, paypal_dict)
+
     def show_pay(self, absolute_uri, lang, supporting):
         items = self.get_items()
         abs_url = absolute_uri.split('/')
@@ -197,7 +206,7 @@ class PaymentTypePayPal(PaymentType):
             formTxt += "{[/center]}"
         else:
             paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
-            paypal_dict = self.get_paypal_dict(absolute_uri, lang, supporting)
+            paypal_dict = self._get_paypal_dict(absolute_uri, lang, supporting)
             formTxt = "{[center]}"
             formTxt += "{[a href='%s?%s' target='_blank']}" % (paypal_url, paypal_dict)
             formTxt += "{[img src='%s/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}" % root_url

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 '''
-diacamma.invoice views package
+diacamma.payoff views package
 
 @author: Laurent GAY
 @organization: sd-libre.fr
@@ -23,19 +23,13 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
-import logging
 
-from django.http.response import HttpResponseRedirect
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.functions import Concat
 from django.db.models.query import QuerySet
 from django.db.models import Q, Value
-from django.conf import settings
-from django.utils import timezone
 from django.apps.registry import apps
 
-from lucterios.framework.xferbasic import XferContainerAbstract
 from lucterios.framework.xferadvance import XferAddEditor, XferListEditor, \
     XferSave, TITLE_ADD, TITLE_MODIFY, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, TITLE_CLOSE
 from lucterios.framework.xferadvance import XferDelete
@@ -51,9 +45,8 @@ from lucterios.CORE.parameters import Params
 from lucterios.CORE.xferprint import XferPrintReporting
 from lucterios.framework.xferprinting import XferContainerPrint
 
-from diacamma.payoff.models import Payoff, Supporting, PaymentMethod, BankTransaction, BankAccount
+from diacamma.payoff.models import Payoff, Supporting, PaymentMethod, BankAccount
 from diacamma.accounting.models import Third
-from diacamma.payoff.payment_type import PaymentTypePayPal
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': abs(xfer.item.get_total_rest_topay()) > 0.001)
@@ -393,116 +386,3 @@ def get_html_payment(absolute_uri, lang, supporting):
         html_message += "<tr></tr>"
     html_message += "</table>"
     return html_message
-
-
-@MenuManage.describ('')
-class CheckPaymentPaypal(XferContainerAbstract):
-    caption = _("Payment")
-    icon = "payments.png"
-    readonly = True
-    methods_allowed = ('GET', )
-
-    def request_handling(self, request, *args, **kwargs):
-        self._initialize(request, *args, **kwargs)
-        root_url = self.getparam("url", self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()))
-        try:
-            payid = self.getparam("payid", 0)
-            payment_meth_list = PaymentMethod.objects.filter(paytype=PaymentTypePayPal.num)
-            payment_meth = payment_meth_list[0]
-            support = Supporting.objects.get(id=payid).get_final_child()
-            paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
-            paypal_dict = payment_meth.paymentType.get_paypal_dict(root_url, self.language, support)
-            return HttpResponseRedirect("%s?%s" % (paypal_url, paypal_dict))
-        except Exception:
-            logging.getLogger('diacamma.payoff').exception("CheckPaymentPaypal")
-            from django.shortcuts import render
-            dictionary = {}
-            dictionary['title'] = str(settings.APPLIS_NAME)
-            dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
-            dictionary['applogo'] = settings.APPLIS_LOGO
-            dictionary['content1'] = _("It is not possible to pay-off this item with PayPal !")
-            dictionary['content2'] = _("This item is deleted, payed or disabled.")
-            return render(request, 'info.html', context=dictionary)
-
-
-@MenuManage.describ('')
-class ValidationPaymentPaypal(XferContainerAbstract):
-    observer_name = 'PayPal'
-    caption = 'ValidationPaymentPaypal'
-    model = BankTransaction
-    field_id = 'banktransaction'
-    methods_allowed = ('GET', 'POST', 'PUT')
-
-    def __init__(self, **kwargs):
-        XferContainerAbstract.__init__(self, **kwargs)
-        self.success = False
-
-    def confirm_paypal(self):
-        from urllib.parse import quote_plus
-        from requests import post
-        paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
-        fields = 'cmd=_notify-validate'
-        try:
-            for key, value in self.request.POST.items():
-                fields += "&%s=%s" % (key, quote_plus(value))
-            res = post(paypal_url, data=fields.encode(), headers={"Content-Type": "application/x-www-form-urlencoded", 'Content-Length': str(len(fields))})
-            return res.text
-        except Exception:
-            logging.getLogger('diacamma.payoff').warning(paypal_url)
-            logging.getLogger('diacamma.payoff').warning(fields)
-            raise
-
-    def fillresponse(self):
-        import locale
-        try:
-            self.item.contains = ""
-            self.item.payer = self.getparam('first_name', '') + " " + self.getparam('last_name', '')
-            self.item.amount = self.getparam('mc_gross', 0.0)
-            saved = locale.setlocale(locale.LC_ALL)
-            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-            try:
-                payoff_date = datetime.strptime(self.getparam("payment_date", '').replace('PDT', 'GMT'), '%H:%M:%S %b %d, %Y %Z')
-                payoff_date += timedelta(hours=7)
-                self.item.date = timezone.make_aware(payoff_date)
-            except Exception:
-                logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.getparam("payment_date", ''))
-                self.item.date = timezone.now()
-            finally:
-                locale.setlocale(locale.LC_ALL, saved)
-            param_list = dict(self.request.POST)
-            if 'FORMAT' in param_list.keys():
-                del param_list['FORMAT']
-            self.item.contains += "{[newline]}".join(["%s = %s" % (itemkey, itemvalue[0]) for (itemkey, itemvalue) in param_list.items()])
-            conf_res = self.confirm_paypal()
-            if conf_res == 'VERIFIED':
-                bank_account = None
-                for payment_meth in PaymentMethod.objects.filter(paytype=PaymentTypePayPal.num):
-                    if payment_meth.get_items()[0] == self.getparam('receiver_email', ''):
-                        bank_account = payment_meth.bank_account
-                if bank_account is None:
-                    raise LucteriosException(IMPORTANT, "No paypal account!")
-                support = Supporting.objects.get(id=self.getparam('custom', 0))
-                new_payoff = Payoff()
-                new_payoff.supporting = support.get_final_child().support_validated(self.item.date)
-                new_payoff.date = self.item.date
-                new_payoff.amount = self.item.amount
-                new_payoff.payer = self.item.payer
-                new_payoff.mode = Payoff.MODE_TRANSFER
-                new_payoff.bank_account = bank_account
-                new_payoff.reference = "PayPal " + self.getparam('txn_id', '')
-                new_payoff.bank_fee = self.getparam('mc_fee', 0.0)
-                new_payoff.save()
-                self.item.status = BankTransaction.STATUS_SUCCESS
-                self.success = True
-            if conf_res == 'INVALID':
-                self.item.contains += "{[newline]}--- INVALID ---{[newline]}"
-            else:
-                self.item.contains += "{[newline]}"
-                if conf_res != 'VERIFIED':
-                    self.item.contains += "NO VALID:"
-                self.item.contains += conf_res.replace('\n', '{[newline]}')
-        except Exception as err:
-            logging.getLogger('diacamma.payoff').exception("ValidationPaymentPaypal")
-            self.item.contains += "{[newline]}"
-            self.item.contains += str(err)
-        self.item.save()

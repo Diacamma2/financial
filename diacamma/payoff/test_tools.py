@@ -158,7 +158,7 @@ class PaymentTest(LucteriosTest):
         self.assert_json_equal('LABELFORM', 'date', "2015-04-03T20:52", True)
         contains = self.json_data["contains"]
         if success:
-            self.assertEqual(len(contains), 1101 + len(title) + len("%.2f" % amount), contains)
+            self.assertEqual(len(contains), 1093 + len(title) + len("%.2f" % amount), contains)
         self.assertTrue("item_name = %s" % title in contains, contains)
         self.assertTrue("custom = %d" % itemid in contains, contains)
         self.assertTrue("business = monney@truc.org" in contains, contains)
