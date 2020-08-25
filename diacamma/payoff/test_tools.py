@@ -148,8 +148,8 @@ class PaymentTest(LucteriosTest):
         httpd = TestHTTPServer(('localhost', PaymentTest.server_port))
         httpd.start()
         try:
-            self.calljson('/diacamma.payoff/validationPaymentPaypal', paypal_validation_fields, True)
-            self.assert_observer('PayPal', 'diacamma.payoff', 'validationPaymentPaypal')
+            self.call_ex('/diacamma.payoff/validationPaymentPaypal', paypal_validation_fields, True)
+            self.assertEqual(self.response.content, b'', 'validationPaymentPaypal')
         finally:
             httpd.shutdown()
         self.factory.xfer = BankTransactionShow()

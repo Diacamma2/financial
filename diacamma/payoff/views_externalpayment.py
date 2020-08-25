@@ -29,14 +29,16 @@ import logging
 from django.utils import timezone
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-from django.http.response import HttpResponseRedirect
+from django.http.response import HttpResponseRedirect, HttpResponse
 
-from lucterios.framework.tools import MenuManage
+from lucterios.framework.tools import MenuManage, toHtml
 from lucterios.framework.xferbasic import XferContainerAbstract
 
 from diacamma.payoff.models import BankTransaction, PaymentMethod, Supporting, Payoff
-from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal
+from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal,\
+    PaymentTypeMoneticoPaiement
 from lucterios.framework.error import LucteriosException, IMPORTANT
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class ValidationPaymentGeneric(XferContainerAbstract):
@@ -47,6 +49,7 @@ class ValidationPaymentGeneric(XferContainerAbstract):
     def __init__(self, **kwargs):
         XferContainerAbstract.__init__(self, **kwargs)
         self.success = False
+        self.reponse_content = b''
 
     @property
     def payer(self):
@@ -68,6 +71,15 @@ class ValidationPaymentGeneric(XferContainerAbstract):
         return 0
 
     @property
+    def supporting(self):
+        if not hasattr(self, '_supporting'):
+            try:
+                self._supporting = Supporting.objects.get(id=self.customid).get_final_child()
+            except ObjectDoesNotExist:
+                self._supporting = None
+        return self._supporting
+
+    @property
     def reference(self):
         return ""
 
@@ -80,6 +92,8 @@ class ValidationPaymentGeneric(XferContainerAbstract):
         return PaymentMethod(paytype=PaymentType.num, extra_data="")
 
     def fillresponse(self):
+        if self.supporting is None:
+            return
         try:
             self.item.contains = ""
             self.item.payer = self.payer
@@ -89,9 +103,8 @@ class ValidationPaymentGeneric(XferContainerAbstract):
                 bank_account = self.payment_meth.bank_account
                 if bank_account is None:
                     raise LucteriosException(IMPORTANT, "No account!")
-                support = Supporting.objects.get(id=self.customid)
                 new_payoff = Payoff()
-                new_payoff.supporting = support.get_final_child().support_validated(self.item.date)
+                new_payoff.supporting = self.supporting.support_validated(self.item.date)
                 new_payoff.date = self.item.date
                 new_payoff.amount = self.item.amount
                 new_payoff.payer = self.item.payer
@@ -108,6 +121,23 @@ class ValidationPaymentGeneric(XferContainerAbstract):
             self.item.contains += str(err)
         self.item.save()
 
+    def get_response(self):
+        if self.supporting is None:
+            from django.shortcuts import render
+            dictionary = {}
+            dictionary['title'] = str(settings.APPLIS_NAME)
+            dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
+            dictionary['applogo'] = settings.APPLIS_LOGO.decode()
+            if self.getparam('ret', 'none') == 'OK':
+                dictionary['content1'] = _("Payoff terminate.")
+                dictionary['content2'] = _("Thanks you.")
+            else:
+                dictionary['content1'] = _("Payoff aborded.")
+                dictionary['content2'] = ''
+            return render(self.request, 'info.html', context=dictionary)
+        else:
+            return HttpResponse(self.reponse_content)
+
 
 class CheckPaymentGeneric(XferContainerAbstract):
     caption = _("Payment")
@@ -119,38 +149,35 @@ class CheckPaymentGeneric(XferContainerAbstract):
 
     @property
     def payid(self):
-        return 0
+        return self.getparam("payid", 0)
 
     @property
     def payment_meth(self):
         return None
 
     def request_handling(self, request, *args, **kwargs):
+        from django.shortcuts import render
+        dictionary = {}
+        dictionary['title'] = str(settings.APPLIS_NAME)
+        dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
+        dictionary['applogo'] = settings.APPLIS_LOGO.decode()
         self._initialize(request, *args, **kwargs)
-        root_url = self.getparam("url", self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()))
+        absolute_uri = self.getparam("url", self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()))
         try:
             support = Supporting.objects.get(id=self.payid).get_final_child()
-            return HttpResponseRedirect(self.payment_meth.paymentType.get_redirect_url(root_url, self.language, support))
+            dictionary['content1'] = toHtml(self.payment_meth.paymentType.get_form(absolute_uri, self.language, support))
+            dictionary['content2'] = ''
         except Exception:
             logging.getLogger('diacamma.payoff').exception("CheckPayment")
-            from django.shortcuts import render
-            dictionary = {}
-            dictionary['title'] = str(settings.APPLIS_NAME)
-            dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
-            dictionary['applogo'] = settings.APPLIS_LOGO
             dictionary['content1'] = _("It is not possible to pay-off this item with %s !") % self.payment_name
             dictionary['content2'] = _("This item is deleted, payed or disabled.")
-            return render(request, 'info.html', context=dictionary)
+        return render(request, 'info.html', context=dictionary)
 
 
 @MenuManage.describ('')
 class CheckPaymentPaypal(CheckPaymentGeneric):
 
     payment_name = "PayPal"
-
-    @property
-    def payid(self):
-        return self.getparam("payid", 0)
 
     @property
     def payment_meth(self):
@@ -188,7 +215,7 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
     def confirm(self):
         from urllib.parse import quote_plus
         from requests import post
-        paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
+        paypal_url = PaymentTypePayPal.get_url("")
         fields = 'cmd=_notify-validate'
         try:
             for key, value in self.request.POST.items():
@@ -230,3 +257,70 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
     @property
     def bank_fee(self):
         return self.getparam('mc_fee', 0.0)
+
+
+@MenuManage.describ('')
+class CheckPaymentMoneticoPaiement(CheckPaymentGeneric):
+
+    payment_name = "MoneticoPaiement"
+
+    @property
+    def payment_meth(self):
+        return PaymentMethod.objects.filter(paytype=PaymentTypeMoneticoPaiement.num).first()
+
+
+@MenuManage.describ('')
+class ValidationPaymentMoneticoPaiement(ValidationPaymentGeneric):
+    observer_name = 'MoneticoPaiement'
+    caption = 'ValidationPaymentMoneticoPaiement'
+
+    @property
+    def payer(self):
+        return str(self.supporting.third)
+
+    @property
+    def amount(self):
+        return float(self.getparam('montant', '0EUR')[:-3])
+
+    @property
+    def date(self):
+        return timezone.now()
+
+    def confirm(self):
+        try:
+            parameters = dict(self.request.POST)
+            for key, value in parameters.items():
+                if key != 'MAC':
+                    self.item.contains += "%s = %s{[newline]}" % (key, value)
+            if self.payment_meth.paymentType.is_valid_mac(parameters, parameters['MAC']):
+                code_retour = parameters['code-retour']
+                res = (code_retour != 'annulation')
+                if not res:
+                    self.item.contains += "{[newline]}--- NO VALID ---{[newline]}"
+            else:
+                self.item.contains += "{[newline]}--- INVALID ---{[newline]}"
+                res = False
+        except Exception:
+            logging.getLogger('diacamma.payoff').warning(parameters)
+            raise
+        if res:
+            self.reponse_content = b"version=2\ncdr=0\n"
+        else:
+            self.reponse_content = b"version=2\ncdr=1\n"
+        return res
+
+    @property
+    def payment_meth(self):
+        return PaymentMethod.objects.filter(paytype=PaymentTypeMoneticoPaiement.num).first()
+
+    @property
+    def customid(self):
+        return int(self.getparam('reference', 'REF0000000')[3:])
+
+    @property
+    def reference(self):
+        return "MoneticoPaiement " + self.getparam('numauto', '')
+
+    @property
+    def bank_fee(self):
+        return 0.0

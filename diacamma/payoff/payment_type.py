@@ -21,6 +21,11 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
+from os.path import dirname
+from json import dumps
+from base64 import b64encode
+from datetime import datetime
+
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
@@ -30,7 +35,6 @@ from lucterios.framework.filetools import remove_accent
 from lucterios.CORE.parameters import Params
 
 from lucterios.contacts.models import LegalEntity
-from os.path import dirname
 
 
 class PaymentType(object):
@@ -42,6 +46,7 @@ class PaymentType(object):
 
     name = ''
     num = -1
+    logo_bank = ''
 
     def __init__(self, extra_data):
         self.extra_data = extra_data
@@ -95,8 +100,42 @@ class PaymentType(object):
             edt.description = fieldtitle
             yield edt
 
-    def get_redirect_url(self, absolute_uri, lang, supporting):
+    @classmethod
+    def get_url(cls, absolute_uri):
         return dirname(dirname(absolute_uri))
+
+    def _get_parameters_dict(self, absolute_uri, lang, supporting):
+        return {}
+
+    def get_redirect_url(self, absolute_uri, lang, supporting):
+        from urllib.parse import quote_plus
+        args = ""
+        for key, val in self._get_parameters_dict(absolute_uri, lang, supporting).items():
+            args += "&%s=%s" % (key, quote_plus(val))
+        args = args[1:]
+        return "%s?%s" % (self.get_url(absolute_uri), args)
+
+    def get_html_link(self, root_url, link_url, supportingid=None):
+        if supportingid is not None:
+            import urllib.parse
+            link_url = '%s/%s?payid=%d&url=%s' % (root_url, link_url, supportingid, urllib.parse.quote(root_url + "/" + link_url))
+        formTxt = "{[center]}"
+        formTxt += "{[a href='%s' target='_blank']}" % link_url
+        formTxt += "{[img src='%s/static/diacamma.payoff/images/%s' title='%s' alt='%s' /]}" % (root_url, self.logo_bank, self.name, self.name)
+        formTxt += "{[/a]}"
+        formTxt += "{[/center]}"
+        return formTxt
+
+    def get_form(self, absolute_uri, lang, supporting):
+        root_url = '/'.join(absolute_uri.split('/')[:-2])
+        formTxt = '{[form method="post" id="payment" name="payment" action="%s"]}' % self.get_url(absolute_uri)
+        for key, value in self._get_parameters_dict(absolute_uri, lang, supporting).items():
+            formTxt += '{[input type="hidden" name="%s" value="%s"]}' % (key, value)
+        formTxt += '{[button type="submit"]}'
+        formTxt += "{[img src='%s/static/diacamma.payoff/images/%s' title='%s' alt='%s' /]}" % (root_url, self.logo_bank, self.name, self.name)
+        formTxt += '{[/button"]}'
+        formTxt += "{[/form]}"
+        return formTxt
 
     def show_pay(self, absolute_uri, lang, supporting):
         return ""
@@ -158,60 +197,44 @@ class PaymentTypeCheque(PaymentType):
 class PaymentTypePayPal(PaymentType):
     name = _('PayPal')
     num = 2
+    logo_bank = 'pp_cc_mark_74x46.jpg'
 
     def get_extra_fields(self):
         return [(1, _('Paypal account'), PaymentType.FIELDTYPE_EMAIL), (2, _('With control'), PaymentType.FIELDTYPE_CHECK)]
 
-    def _get_paypal_dict(self, absolute_uri, lang, supporting):
-        from urllib.parse import quote_plus
+    @classmethod
+    def get_url(cls, absolute_uri):
+        return getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
+
+    def _get_parameters_dict(self, absolute_uri, lang, supporting):
         if abs(supporting.get_payable_without_tax()) < 0.0001:
             raise LucteriosException(IMPORTANT, _("This item can't be validated!"))
         abs_url = absolute_uri.split('/')
         items = self.get_items()
-        paypal_dict = {}
-        paypal_dict['business'] = items[0]
-        paypal_dict['currency_code'] = Params.getvalue("accounting-devise-iso")
-        paypal_dict['lc'] = lang
-        paypal_dict['return'] = '/'.join(abs_url[:-2])
-        paypal_dict['cancel_return'] = '/'.join(abs_url[:-2])
-        paypal_dict['notify_url'] = paypal_dict['return'] + '/diacamma.payoff/validationPaymentPaypal'
-        paypal_dict['item_name'] = remove_accent(supporting.get_payment_name())
-        paypal_dict['custom'] = str(supporting.id)
-        paypal_dict['tax'] = str(supporting.get_tax())
-        paypal_dict['amount'] = str(supporting.get_payable_without_tax())
-        paypal_dict['cmd'] = '_xclick'
-        paypal_dict['no_note'] = '1'
-        paypal_dict['no_shipping'] = '1'
-        args = ""
-        for key, val in paypal_dict.items():
-            args += "&%s=%s" % (key, quote_plus(val))
-        return args[1:]
-
-    def get_redirect_url(self, absolute_uri, lang, supporting):
-        paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
-        paypal_dict = self._get_paypal_dict(absolute_uri, lang, supporting)
-        return "%s?%s" % (paypal_url, paypal_dict)
+        parameters_dict = {}
+        parameters_dict['business'] = items[0]
+        parameters_dict['currency_code'] = Params.getvalue("accounting-devise-iso")
+        parameters_dict['lc'] = lang
+        parameters_dict['return'] = '/'.join(abs_url[:-2])
+        parameters_dict['cancel_return'] = '/'.join(abs_url[:-2])
+        parameters_dict['notify_url'] = parameters_dict['return'] + '/diacamma.payoff/validationPaymentPaypal'
+        parameters_dict['item_name'] = remove_accent(supporting.get_payment_name())
+        parameters_dict['custom'] = str(supporting.id)
+        parameters_dict['tax'] = str(supporting.get_tax())
+        parameters_dict['amount'] = str(supporting.get_payable_without_tax())
+        parameters_dict['cmd'] = '_xclick'
+        parameters_dict['no_note'] = '1'
+        parameters_dict['no_shipping'] = '1'
+        return parameters_dict
 
     def show_pay(self, absolute_uri, lang, supporting):
         items = self.get_items()
         abs_url = absolute_uri.split('/')
         root_url = '/'.join(abs_url[:-2])
         if (items[1] == 'o') or (items[1] == 'True'):
-            import urllib.parse
-            formTxt = "{[center]}"
-            formTxt += "{[a href='%s/%s?payid=%d&url=%s' target='_blank']}" % (root_url, 'diacamma.payoff/checkPaymentPaypal',
-                                                                               supporting.id, urllib.parse.quote(root_url + '/diacamma.payoff/checkPaymentPaypal'))
-            formTxt += "{[img src='%s/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}" % root_url
-            formTxt += "{[/a]}"
-            formTxt += "{[/center]}"
+            formTxt = self.get_html_link(root_url, 'diacamma.payoff/checkPaymentPaypal', supporting.id)
         else:
-            paypal_url = getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
-            paypal_dict = self._get_paypal_dict(absolute_uri, lang, supporting)
-            formTxt = "{[center]}"
-            formTxt += "{[a href='%s?%s' target='_blank']}" % (paypal_url, paypal_dict)
-            formTxt += "{[img src='%s/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /]}" % root_url
-            formTxt += "{[/a]}"
-            formTxt += "{[/center]}"
+            formTxt = self.get_html_link(root_url, self.get_redirect_url(absolute_uri, lang, supporting))
         return formTxt
 
 
@@ -239,4 +262,85 @@ class PaymentTypeOnline(PaymentType):
         return formTxt
 
 
-PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline)
+class PaymentTypeMoneticoPaiement(PaymentType):
+    name = _('MoneticoPaiement')
+    num = 4
+    logo_bank = 'monetico_logo_75x47.png'
+
+    def compute_HMACSHA1(self, custumer_key, sData):
+        import hashlib
+        import hmac
+        import encodings.hex_codec
+        hexStrKey = custumer_key[0:38]
+        hexFinal = custumer_key[38:40] + "00"
+        first_letter = ord(hexFinal[0:1])
+        if first_letter > 70 and first_letter < 97:
+            hexStrKey += chr(first_letter - 23) + hexFinal[1:2]
+        elif hexFinal[1:2] == "M":
+            hexStrKey += hexFinal[0:1] + "0"
+        else:
+            hexStrKey += hexFinal[0:2]
+        current_codex = encodings.hex_codec.Codec()
+        usable_key = current_codex.decode(hexStrKey)[0]
+        HMAC = hmac.HMAC(usable_key, None, hashlib.sha1)
+        HMAC.update(sData.encode('iso8859-1'))
+        return HMAC.hexdigest()
+
+    def get_extra_fields(self):
+        return [(1, _('companie code'), PaymentType.FIELDTYPE_EDIT), (2, _('TPE'), PaymentType.FIELDTYPE_EDIT), (3, _('key'), PaymentType.FIELDTYPE_EDIT)]
+
+    def get_contexte_commande(self, supporting):
+        contexte = {}
+        contexte["billing"] = {
+            "firstName": "Ada",
+            "lastName": "Lovelace",
+            "mobilePhone": "+33-612345678",
+            "addressLine1": "101 Rue de Roisel",
+            "city": "Y",
+            "postalCode": "80190",
+            "country": "FR"
+        }
+        return contexte
+
+    def get_mac(self, parameters):
+        paramkeys = list(parameters.keys())
+        paramkeys.sort()
+        sChaineMAC = '*'.join(["%s=%s" % (key, parameters[key]) for key in paramkeys if key != 'MAC'])
+        return self.compute_HMACSHA1(self.get_items()[2], sChaineMAC)
+
+    def is_valid_mac(self, parameters, mac):
+        return self.get_mac(parameters) == mac.lower()
+
+    @classmethod
+    def get_url(cls, absolute_uri, sub_url='paiement.cgi'):
+        return getattr(settings, 'DIACAMMA_MONETICO_PAIEMENT_URL', 'https://p.monetico-services.com/') + sub_url
+
+    def _get_parameters_dict(self, absolute_uri, lang, supporting):
+        if abs(supporting.get_payable_without_tax()) < 0.0001:
+            raise LucteriosException(IMPORTANT, _("This item can't be validated!"))
+        root_url = '/'.join(absolute_uri.split('/')[:-2])
+        parameters_dict = {}
+        parameters_dict["version"] = "3.0"
+        parameters_dict["TPE"] = self.get_items()[1]
+        parameters_dict["contexte_commande"] = b64encode(dumps(self.get_contexte_commande(supporting)).encode('utf8')).decode()
+        parameters_dict["date"] = datetime.now().strftime("%d/%m/%Y:%H:%M:%S")
+        parameters_dict["montant"] = '%.2f%s' % (supporting.get_payable_without_tax(), Params.getvalue("accounting-devise-iso"))
+        parameters_dict["reference"] = 'REF%08d' % supporting.id
+        parameters_dict["url_retour_err"] = root_url + '/diacamma.payoff/validationPaymentMoneticoPaiement?ret=BAD'
+        parameters_dict["url_retour_ok"] = root_url + '/diacamma.payoff/validationPaymentMoneticoPaiement?ret=OK'
+        parameters_dict["lgue"] = lang
+        parameters_dict["societe"] = self.get_items()[0]
+        parameters_dict["texte-libre"] = supporting.get_payment_name()
+        sender_email = LegalEntity.objects.get(id=1).email
+        if (sender_email != ''):
+            parameters_dict["mail"] = sender_email
+        parameters_dict["MAC"] = self.get_mac(parameters_dict)
+        return parameters_dict
+
+    def show_pay(self, absolute_uri, lang, supporting):
+        root_url = '/'.join(absolute_uri.split('/')[:-2])
+        formTxt = self.get_html_link(root_url, 'diacamma.payoff/checkPaymentMoneticoPaiement', supporting.id)
+        return formTxt
+
+
+PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement)

@@ -185,13 +185,18 @@ class PayoffTest(LucteriosTest):
                       {'paytype': 3, 'bank_account': 1, 'item_1': 'http://payement.online.com', 'item_2': 'Précisez le N° de devis ou de facture', 'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
 
+        self.factory.xfer = PaymentMethodAddModify()
+        self.calljson('/diacamma.payoff/paymentMethodAddModify',
+                      {'paytype': 4, 'bank_account': 1, 'item_1': '7979879878', 'item_2': 'ababab', 'item_3': '12345678901234567890', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
+
         self.factory.xfer = PayoffConf()
         self.calljson('/diacamma.payoff/payoffConf', {}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffConf')
-        self.assert_count_equal('paymentmethod', 4)
+        self.assert_count_equal('paymentmethod', 5)
         self.assert_json_equal('', '#paymentmethod/headers/@0/@0', 'paytype')
         self.assert_json_equal('', '#paymentmethod/headers/@0/@1', 'type')
-        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '2': 'PayPal', '3': 'en ligne'})
+        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '2': 'PayPal', '3': 'en ligne', '4': 'MoneticoPaiement'})
         self.assert_json_equal('', '#paymentmethod/headers/@0/@4', "%s")
 
         self.assert_json_equal('', 'paymentmethod/@0/paytype', 0)
@@ -209,3 +214,7 @@ class PayoffTest(LucteriosTest):
         self.assert_json_equal('', 'paymentmethod/@3/paytype', 3)
         self.assert_json_equal('', 'paymentmethod/@3/bank_account', "My bank")
         self.assert_json_equal('', 'paymentmethod/@3/info', '{[b]}adresse web{[/b]}{[br/]}http://payement.online.com{[br/]}{[b]}information{[/b]}{[br/]}Précisez le N° de devis ou de facture{[br/]}')
+
+        self.assert_json_equal('', 'paymentmethod/@4/paytype', 4)
+        self.assert_json_equal('', 'paymentmethod/@4/bank_account', "My bank")
+        self.assert_json_equal('', 'paymentmethod/@4/info', '{[b]}code d\'entreprise{[/b]}{[br/]}7979879878{[br/]}{[b]}code TPE{[/b]}{[br/]}ababab{[br/]}{[b]}clef de sécuritée{[/b]}{[br/]}12345678901234567890{[br/]}')

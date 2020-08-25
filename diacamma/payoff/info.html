@@ -27,7 +27,7 @@ BODY {
 	vertical-align: middle;
 	color: black;
     position: relative;
-    top: -25px;
+    top: 0px;
 }
 
 #header {
@@ -105,7 +105,7 @@ li {
 	</div>
 
 	<div id="content1">
-		{{ content1 }}
+		{{ content1 | safe }}
 	</div>
 
 	<div id="content2">
@@ -114,4 +114,10 @@ li {
 
 	<div id="foot">{{ title }} - {% trans "Information" %}</div>
 </body>
+<script type="text/javascript">
+	function submitForm() { 
+		document.getElementById('payment').submit();
+	}
+	window.onload = submitForm;
+</script>
 </html>

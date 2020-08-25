@@ -629,7 +629,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
         self.assertEqual(len(self.json_actions), 3)
 
-    def test_check_payment_paypal(self):
+    def __test_check_payment_paypal(self):
         self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 1}, 'get', 302)
         self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 2}, 'get', 302)
         self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 4}, 'get', 302)
