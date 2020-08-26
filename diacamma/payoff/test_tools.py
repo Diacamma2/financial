@@ -39,6 +39,7 @@ from diacamma.accounting.test_tools import create_account
 from diacamma.accounting.models import FiscalYear, ChartsAccount
 from diacamma.payoff.models import BankAccount, PaymentMethod
 from diacamma.payoff.views_deposit import BankTransactionList, BankTransactionShow
+from diacamma.payoff.payment_type import PaymentTypeMoneticoPaiement
 
 
 def default_bankaccount_fr():
@@ -59,11 +60,17 @@ def default_paymentmethod():
     PaymentMethod.objects.create(paytype=0, bank_account_id=1, extra_data='123456789\nAABBCCDD')
     PaymentMethod.objects.create(paytype=1, bank_account_id=1, extra_data='Truc\n1 rue de la Paix{[newline]}99000 LA-BAS')
     PaymentMethod.objects.create(paytype=2, bank_account_id=2, extra_data='monney@truc.org')
+    PaymentMethod.objects.create(paytype=3, bank_account_id=1, extra_data='http://payement.online.com\nPrécisez le N° de devis ou de facture')
+    PaymentMethod.objects.create(paytype=4, bank_account_id=2, extra_data='7979879878\nababab\n12345678901234567890')
 
 
 class PaymentTest(LucteriosTest):
 
     server_port = 9100
+
+    def setUp(self):
+        if hasattr(settings, "DIACAMMA_PAYOFF_PAYPAL_URL"):
+            del settings.DIACAMMA_PAYOFF_PAYPAL_URL
 
     def check_account(self, year_id, code, value, name=""):
         try:
@@ -88,7 +95,7 @@ class PaymentTest(LucteriosTest):
         self.check_paypal_msg(email_content, itemid, title, amount, tax)
 
     def check_paypal_msg(self, html_content, itemid, title, amount='100.0', tax='0.0'):
-        paypal_href = match(".*<a href='(.*)' target='_blank'>.*", html_content)
+        paypal_href = match(".*<a href='(.*paypal.*)' target='_blank'>.*", html_content)
         paypal_params = dict(parse_qsl(urlsplit(paypal_href.group(1)).query))
         self.assertEqual(paypal_params['currency_code'], 'EUR', paypal_params)
         self.assertEqual(paypal_params['lc'], 'fr', paypal_params)
@@ -181,6 +188,47 @@ class PaymentTest(LucteriosTest):
             self.assert_json_equal('', 'banktransaction/@0/status', 0)
         self.assert_json_equal('', 'banktransaction/@0/payer', 'test buyer')
         self.assert_json_equal('', 'banktransaction/@0/amount', amount)
+
+    def check_payment_moneticopaiement(self, itemid, title, success=True, amount=100.0, payer="Minimum"):
+        monetico_method = PaymentMethod.objects.filter(paytype=PaymentTypeMoneticoPaiement.num).first()
+        monetico_fields = {"TPE": "0000001",
+                           "date": "20/07/2018_a_18:24:10",
+                           "montant": "%.2fEUR" % amount,
+                           "reference": "REF%08d" % itemid,
+                           "texte-libre": title,
+                           "code-retour": "payetest",
+                           "cvx": "oui",
+                           "vld": "1223",
+                           "brand": "VI",
+                           "numauto": "000000",
+                           "usage": "inconnu",
+                           "typecompte": "particulier",
+                           "ecard": "non",
+                           "modepaiement": "CB",
+                           "authentification": "ewogICAicHJvdG9jb2wiIDogIjNEU2VjdXJlIiwKICAgInN0YXR1cyIgOiAibm90X2Vucm9sbGVkIiwKICAgInZlcnNpb24iIDogIjEuMC4yIgp9Cg==",
+                           "MAC": "12345697890"}
+        if success:
+            monetico_fields['MAC'] = monetico_method.paymentType.get_mac(monetico_fields)
+
+        self.factory.xfer = BankTransactionList()
+        self.calljson('/diacamma.payoff/bankTransactionList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'bankTransactionList')
+        self.assert_count_equal('banktransaction', 0)
+
+        self.call_ex('/diacamma.payoff/validationPaymentMoneticoPaiement', monetico_fields, True)
+        self.assertEqual(self.content, "version=2\ncdr=0" if success else "version=2\ncdr=1", 'validationPaymentMoneticoPaiement')
+
+        self.factory.xfer = BankTransactionList()
+        self.calljson('/diacamma.payoff/bankTransactionList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'bankTransactionList')
+        self.assert_count_equal('banktransaction', 1)
+        if success:
+            self.assert_json_equal('', 'banktransaction/@0/status', 1)
+        else:
+            self.assert_json_equal('', 'banktransaction/@0/status', 0)
+        self.assert_json_equal('', 'banktransaction/@0/payer', payer)
+        self.assert_json_equal('', 'banktransaction/@0/amount', amount)
+        self.assert_json_equal('', 'banktransaction/@0/date', '2018-07-20T18:24', True)
 
 
 class TestHTTPServer(HTTPServer, BaseHTTPRequestHandler, Thread):

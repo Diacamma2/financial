@@ -29,16 +29,15 @@ import logging
 from django.utils import timezone
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
-from django.http.response import HttpResponseRedirect, HttpResponse
+from django.http.response import HttpResponse
+from django.core.exceptions import ObjectDoesNotExist
 
 from lucterios.framework.tools import MenuManage, toHtml
 from lucterios.framework.xferbasic import XferContainerAbstract
+from lucterios.framework.error import LucteriosException, IMPORTANT
 
 from diacamma.payoff.models import BankTransaction, PaymentMethod, Supporting, Payoff
-from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal,\
-    PaymentTypeMoneticoPaiement
-from lucterios.framework.error import LucteriosException, IMPORTANT
-from django.core.exceptions import ObjectDoesNotExist
+from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement
 
 
 class ValidationPaymentGeneric(XferContainerAbstract):
@@ -108,7 +107,7 @@ class ValidationPaymentGeneric(XferContainerAbstract):
                 new_payoff.date = self.item.date
                 new_payoff.amount = self.item.amount
                 new_payoff.payer = self.item.payer
-                new_payoff.mode = Payoff.MODE_TRANSFER
+                new_payoff.mode = Payoff.MODE_CREDITCARD
                 new_payoff.bank_account = bank_account
                 new_payoff.reference = self.reference
                 new_payoff.bank_fee = self.bank_fee
@@ -165,8 +164,8 @@ class CheckPaymentGeneric(XferContainerAbstract):
         absolute_uri = self.getparam("url", self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()))
         try:
             support = Supporting.objects.get(id=self.payid).get_final_child()
-            dictionary['content1'] = toHtml(self.payment_meth.paymentType.get_form(absolute_uri, self.language, support))
-            dictionary['content2'] = ''
+            dictionary['content1'] = ''
+            dictionary['content2'] = toHtml(self.payment_meth.paymentType.get_form(absolute_uri, self.language, support))
         except Exception:
             logging.getLogger('diacamma.payoff').exception("CheckPayment")
             dictionary['content1'] = _("It is not possible to pay-off this item with %s !") % self.payment_name
@@ -284,17 +283,22 @@ class ValidationPaymentMoneticoPaiement(ValidationPaymentGeneric):
 
     @property
     def date(self):
-        return timezone.now()
+        try:
+            payoff_date = datetime.strptime(self.getparam("date", ''), '%d/%m/%Y_a_%H:%M:%S')
+            return timezone.make_aware(payoff_date)
+        except Exception:
+            logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.getparam("date", ''))
+            return timezone.now()
 
     def confirm(self):
         try:
-            parameters = dict(self.request.POST)
+            parameters = {key: value[0] if isinstance(value, list) else value for key, value in self.request.POST.items()}
             for key, value in parameters.items():
                 if key != 'MAC':
                     self.item.contains += "%s = %s{[newline]}" % (key, value)
-            if self.payment_meth.paymentType.is_valid_mac(parameters, parameters['MAC']):
+            if self.payment_meth.paymentType.is_valid_mac(parameters):
                 code_retour = parameters['code-retour']
-                res = (code_retour != 'annulation')
+                res = (code_retour.lower() != 'annulation')
                 if not res:
                     self.item.contains += "{[newline]}--- NO VALID ---{[newline]}"
             else:

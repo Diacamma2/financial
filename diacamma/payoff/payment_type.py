@@ -35,6 +35,7 @@ from lucterios.framework.filetools import remove_accent
 from lucterios.CORE.parameters import Params
 
 from lucterios.contacts.models import LegalEntity
+from diacamma.accounting.tools import get_amount_from_format_devise
 
 
 class PaymentType(object):
@@ -128,13 +129,20 @@ class PaymentType(object):
 
     def get_form(self, absolute_uri, lang, supporting):
         root_url = '/'.join(absolute_uri.split('/')[:-2])
-        formTxt = '{[form method="post" id="payment" name="payment" action="%s"]}' % self.get_url(absolute_uri)
+        formTxt = "{[h3]}%s{[/h3]}" % _('Payment')
+        formTxt += '{[table border="0"]}\n'
+        formTxt += "{[tr]}{[th]}%s{[/th]}{[td]}%s{[/td]}{[/tr]}\n" % (_('nature'), str(supporting))
+        formTxt += "{[tr]}{[th]}%s{[/th]}{[td]}%s{[/td]}{[/tr]}\n" % (_('amount'), get_amount_from_format_devise(supporting.total_rest_topay, 5))
+        formTxt += "{[/table]}\n"
+        formTxt += "{[br/]}\n"
+        formTxt += '{[form method="post" id="payment" name="payment" action="%s"]}\n' % self.get_url(absolute_uri)
         for key, value in self._get_parameters_dict(absolute_uri, lang, supporting).items():
-            formTxt += '{[input type="hidden" name="%s" value="%s"]}' % (key, value)
-        formTxt += '{[button type="submit"]}'
-        formTxt += "{[img src='%s/static/diacamma.payoff/images/%s' title='%s' alt='%s' /]}" % (root_url, self.logo_bank, self.name, self.name)
-        formTxt += '{[/button"]}'
-        formTxt += "{[/form]}"
+            formTxt += '{[input type="hidden" name="%s" value="%s" /]}\n' % (key, value)
+        formTxt += '{[button type="submit"]}\n'
+        formTxt += "{[img src='%s/static/diacamma.payoff/images/%s' title='%s' alt='%s' /]}\n" % (root_url, self.logo_bank, self.name, self.name)
+        formTxt += '{[/button]}\n'
+        formTxt += "{[/form]}\n"
+        formTxt += '{[label class="info"]}{[br/]}%s{[/label]}\n' % _('Please wait, you will be logged into the payment platform.')
         return formTxt
 
     def show_pay(self, absolute_uri, lang, supporting):
@@ -265,7 +273,7 @@ class PaymentTypeOnline(PaymentType):
 class PaymentTypeMoneticoPaiement(PaymentType):
     name = _('MoneticoPaiement')
     num = 4
-    logo_bank = 'monetico_logo_75x47.png'
+    logo_bank = 'monetico_logo.png'
 
     def compute_HMACSHA1(self, custumer_key, sData):
         import hashlib
@@ -308,12 +316,12 @@ class PaymentTypeMoneticoPaiement(PaymentType):
         sChaineMAC = '*'.join(["%s=%s" % (key, parameters[key]) for key in paramkeys if key != 'MAC'])
         return self.compute_HMACSHA1(self.get_items()[2], sChaineMAC)
 
-    def is_valid_mac(self, parameters, mac):
-        return self.get_mac(parameters) == mac.lower()
+    def is_valid_mac(self, parameters):
+        return self.get_mac(parameters) == parameters['MAC'].lower()
 
     @classmethod
-    def get_url(cls, absolute_uri, sub_url='paiement.cgi'):
-        return getattr(settings, 'DIACAMMA_MONETICO_PAIEMENT_URL', 'https://p.monetico-services.com/') + sub_url
+    def get_url(cls, absolute_uri):
+        return getattr(settings, 'DIACAMMA_MONETICO_PAIEMENT_URL', 'https://p.monetico-services.com/') + 'paiement.cgi'
 
     def _get_parameters_dict(self, absolute_uri, lang, supporting):
         if abs(supporting.get_payable_without_tax()) < 0.0001:
@@ -324,7 +332,7 @@ class PaymentTypeMoneticoPaiement(PaymentType):
         parameters_dict["TPE"] = self.get_items()[1]
         parameters_dict["contexte_commande"] = b64encode(dumps(self.get_contexte_commande(supporting)).encode('utf8')).decode()
         parameters_dict["date"] = datetime.now().strftime("%d/%m/%Y:%H:%M:%S")
-        parameters_dict["montant"] = '%.2f%s' % (supporting.get_payable_without_tax(), Params.getvalue("accounting-devise-iso"))
+        parameters_dict["montant"] = '%.2f%s' % (supporting.get_total_rest_topay(), Params.getvalue("accounting-devise-iso"))
         parameters_dict["reference"] = 'REF%08d' % supporting.id
         parameters_dict["url_retour_err"] = root_url + '/diacamma.payoff/validationPaymentMoneticoPaiement?ret=BAD'
         parameters_dict["url_retour_ok"] = root_url + '/diacamma.payoff/validationPaymentMoneticoPaiement?ret=OK'

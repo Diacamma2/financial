@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-25 17:37+0000\n"
-"PO-Revision-Date: 2020-08-25 19:34+0200\n"
+"POT-Creation-Date: 2020-08-26 11:13+0000\n"
+"PO-Revision-Date: 2020-08-26 13:12+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: en\n"
@@ -37,7 +37,7 @@ msgstr "repartition mode"
 msgid "linked"
 msgstr "linked"
 
-#: info.html:5 info.html:115
+#: info.html:5 info.html:119
 msgid "Information"
 msgstr "Information"
 
@@ -121,11 +121,11 @@ msgstr "bank codes"
 msgid "cash"
 msgstr "cash"
 
-#: models.py:382 payment_type.py:166
+#: models.py:382 payment_type.py:174
 msgid "cheque"
 msgstr "cheque"
 
-#: models.py:382 payment_type.py:145
+#: models.py:382 payment_type.py:153
 msgid "transfer"
 msgstr "transfer"
 
@@ -157,7 +157,8 @@ msgstr "by date"
 msgid "date"
 msgstr "date"
 
-#: models.py:391 models.py:402 models.py:769 models.py:866 views_deposit.py:174
+#: models.py:391 models.py:402 models.py:769 models.py:866 payment_type.py:135
+#: views_deposit.py:174
 msgid "amount"
 msgstr "amount"
 
@@ -337,63 +338,75 @@ msgstr "default email subject"
 msgid "#reference"
 msgstr "#reference"
 
-#: payment_type.py:149 payment_type.py:155
+#: payment_type.py:132 views.py:331 views.py:334 views_externalpayment.py:142
+msgid "Payment"
+msgstr "Payment"
+
+#: payment_type.py:134
+msgid "nature"
+msgstr "nature"
+
+#: payment_type.py:145
+msgid "Please wait, you will be logged into the payment platform."
+msgstr "Please wait, you will be logged into the payment platform."
+
+#: payment_type.py:157 payment_type.py:163
 msgid "IBAN"
 msgstr "IBAN"
 
-#: payment_type.py:149 payment_type.py:158
+#: payment_type.py:157 payment_type.py:166
 msgid "BIC"
 msgstr "BIC"
 
-#: payment_type.py:170 payment_type.py:185
+#: payment_type.py:178 payment_type.py:193
 msgid "payable to"
 msgstr "payable to"
 
-#: payment_type.py:170 payment_type.py:189
+#: payment_type.py:178 payment_type.py:197
 msgid "address"
 msgstr "address"
 
-#: payment_type.py:198
+#: payment_type.py:206
 msgid "PayPal"
 msgstr "PayPal"
 
-#: payment_type.py:203
+#: payment_type.py:211
 msgid "Paypal account"
 msgstr "Paypal account"
 
-#: payment_type.py:203
+#: payment_type.py:211
 msgid "With control"
 msgstr "With control"
 
-#: payment_type.py:211 payment_type.py:320
+#: payment_type.py:219 payment_type.py:328
 msgid "This item can't be validated!"
 msgstr "This item can't be validated!"
 
-#: payment_type.py:242
+#: payment_type.py:250
 msgid "online"
 msgstr "online"
 
-#: payment_type.py:246 payment_type.py:253
+#: payment_type.py:254 payment_type.py:261
 msgid "web address"
 msgstr "web address"
 
-#: payment_type.py:246 payment_type.py:257
+#: payment_type.py:254 payment_type.py:265
 msgid "info"
 msgstr "info"
 
-#: payment_type.py:266
+#: payment_type.py:274
 msgid "MoneticoPaiement"
 msgstr "MoneticoPaiement"
 
-#: payment_type.py:290
+#: payment_type.py:298
 msgid "companie code"
 msgstr "companie code"
 
-#: payment_type.py:290
+#: payment_type.py:298
 msgid "TPE"
 msgstr "TPE"
 
-#: payment_type.py:290
+#: payment_type.py:298
 msgid "key"
 msgstr "key"
 
@@ -456,10 +469,6 @@ msgstr "message"
 #: views.py:298
 msgid "Send saved report"
 msgstr "Send saved report"
-
-#: views.py:331 views.py:334 views_externalpayment.py:143
-msgid "Payment"
-msgstr "Payment"
 
 #: views.py:347
 msgid "No payment for this document."
@@ -633,24 +642,24 @@ msgstr "Bank transactions"
 msgid "Show bank transaction"
 msgstr "Show bank transaction"
 
-#: views_externalpayment.py:132
+#: views_externalpayment.py:131
 msgid "Payoff terminate."
 msgstr "Payoff terminate."
 
-#: views_externalpayment.py:133
+#: views_externalpayment.py:132
 msgid "Thanks you."
 msgstr "Thanks you."
 
-#: views_externalpayment.py:135
+#: views_externalpayment.py:134
 msgid "Payoff aborded."
 msgstr "Payoff aborded."
 
-#: views_externalpayment.py:172
+#: views_externalpayment.py:171
 #, python-format
 msgid "It is not possible to pay-off this item with %s !"
 msgstr "It is not possible to pay-off this item with  %s !"
 
-#: views_externalpayment.py:173
+#: views_externalpayment.py:172
 msgid "This item is deleted, payed or disabled."
 msgstr "This item is deleted, payed or disabled."
 
