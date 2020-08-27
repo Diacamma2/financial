@@ -25,24 +25,21 @@ Moyen de paiement
 
 Vous pouvez ici préciser les moyens de paiement que vous acceptez.
 
-Actuellement, 5 moyens de paiement sont possibles sous *Diacamma* :
+Actuellement, 5 moyens de paiement sont possibles sous *Diacamma*, pour chacun d'entre eux, vous devez préciser les paramètres correspondants:
 
- - Le virement bancaire
- - Le chèque
- - Le paiement PayPal
- - Le règlement en ligne, via une adresse internet.
- - Le paiement MoneticoPaiement
+ - Le virement bancaire  
+ - Le chèque  
+ - Le paiement PayPal  
+ Dans le cas de PayPal, si votre *Diacamma* est accessible via le Net, le paiement de votre débiteur vous est notifié sous votre application et le règlement correspondant généré directement dans votre logiciel.
+ Il est conseillé de cocher le champ *avec contrôle*. Ainsi, le lien de paiement présenté dans un courriel s'assurera dans un premier temps que, sous votre *Diacamma*, l'élément financier est toujours d'actualité.
+  
+ - Le règlement en ligne, via une adresse internet  
+ - Le paiement MoneticoPaiement  
+ Pour MoneticoPaiement, la plateforme de paiement du Crédit Mutuel et du CIC (voir https://www.monetico-paiement.fr), veuillez prendre contact avec votre agence bancaire pour faire ouvrir votre accès.
+ Et si vous *Diacamma* est accessible via le Net, vous devez déclarer à la plateforme une adresse de retour de type "https://mon.site.diacamma/diacamma.payoff/validationPaymentMoneticoPaiement" ("https://mon.site.diacamma" étant l'adresse d'accès à votre serveur *Diacamma*)
+ 
 
-Pour chacun d'entre eux, vous devez préciser les paramètres correspondants.
-
-Ces moyens de paiement peuvent être utilisés par vos débiteurs pour régler ce qu'ils vous doivent.
-
-Dans le cas de PayPal, si votre *Diacamma* est accessible via le Net, le paiement de votre débiteur vous est notifié sous votre application et le règlement correspondant généré directement dans votre logiciel.
-
-Il est conseillé de cocher le champ *avec contrôle*. Ainsi, le lien de paiement présenté dans un courriel s'assurera dans un premier temps que, sous votre *Diacamma*, l'élément financier est toujours d'actualité. 
-
-Pour MoneticoPaiement, la plateforme de paiement du Crédit Mutuel et du CIC (voir https://www.monetico-paiement.fr), veuillez prendre contact avec votre agence bancaire pour faire ouvrir votre accès.
-Et si vous *Diacamma* est accessible via le Net, vous devez déclarer à la plateforme une adresse de retour de type "https://mon.site.diacamma/diacamma.payoff/validationPaymentMoneticoPaiement" ("https://mon.site.diacamma" étant l'adresse d'accès à votre serveur *Diacamma*)
+Ces moyens de paiement peuvent être utilisés par vos débiteurs, via précision en bas de couriel, pour régler ce qu'ils vous doivent.
 
 Paramètres
 ----------

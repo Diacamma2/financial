@@ -683,7 +683,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assertTrue(self.content.startswith("<!DOCTYPE html>"), self.content)
         self.assertIn("Cet élément est supprimé, réglé ou désactivé.", self.content)
 
-        self.check_payment_paypal(4, "recu A-1 - 1 avril 2015")
+        self.check_payment_moneticopaiement(4, "recu A-1 - 1 avril 2015", payer="Dalton Joe")
         self.call_ex('/diacamma.payoff/checkPaymentMoneticoPaiement', {'payid': 4}, 'get', 200)
         self.assertTrue(self.content.startswith("<!DOCTYPE html>"), self.content)
         self.assertIn("Cet élément est supprimé, réglé ou désactivé.", self.content)

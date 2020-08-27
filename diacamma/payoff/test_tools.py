@@ -69,6 +69,7 @@ class PaymentTest(LucteriosTest):
     server_port = 9100
 
     def setUp(self):
+        LucteriosTest.setUp(self)
         if hasattr(settings, "DIACAMMA_PAYOFF_PAYPAL_URL"):
             del settings.DIACAMMA_PAYOFF_PAYPAL_URL
 
@@ -95,7 +96,8 @@ class PaymentTest(LucteriosTest):
         self.check_paypal_msg(email_content, itemid, title, amount, tax)
 
     def check_paypal_msg(self, html_content, itemid, title, amount='100.0', tax='0.0'):
-        paypal_href = match(".*<a href='(.*paypal.*)' target='_blank'>.*", html_content)
+        paypal_href = match(".*<a href='(.*)' name='paypal' target='_blank'>.*", html_content)
+        self.assertTrue(paypal_href is not None, html_content)
         paypal_params = dict(parse_qsl(urlsplit(paypal_href.group(1)).query))
         self.assertEqual(paypal_params['currency_code'], 'EUR', paypal_params)
         self.assertEqual(paypal_params['lc'], 'fr', paypal_params)
