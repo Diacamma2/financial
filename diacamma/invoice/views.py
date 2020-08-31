@@ -234,7 +234,9 @@ class BillTransition(XferTransition):
         parent.get('payer').setEnabled(type);
     }
     parent.get('mode').setEnabled(type);
-    parent.get('reference').setEnabled(type);
+    if (parent.get('reference')) {
+        parent.get('reference').setEnabled(type);
+    }
     if (parent.get('bank_account')) {
         parent.get('bank_account').setEnabled(type);
     }
@@ -317,8 +319,18 @@ parent.get('print_sep').setEnabled(!is_persitent);
             if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and withpayoff:
                 self.item.affect_num()
                 self.item.save()
-                Payoff.multi_save((self.item.id,), self.getparam('amount', 0.0), self.getparam('mode', 0), self.getparam('payer'),
-                                  self.getparam('reference'), self.getparam('bank_account', 0), self.getparam('date_payoff'), self.getparam('bank_fee', 0.0), repartition=0)
+                new_payoff = Payoff()
+                new_payoff.supporting = self.item
+                new_payoff.amount = self.getparam('amount', 0.0)
+                new_payoff.mode = self.getparam('mode', Payoff.MODE_CASH)
+                new_payoff.payer = self.getparam('payer')
+                new_payoff.reference = self.getparam('reference')
+                if self.getparam('bank_account', 0) != 0:
+                    new_payoff.bank_account_id = self.getparam('bank_account', 0)
+                new_payoff.date = self.getparam('date_payoff')
+                new_payoff.bank_fee = self.getparam('bank_fee', 0.0)
+                new_payoff.editor.before_save(self)
+                new_payoff.save()
             XferTransition.fill_confirm(self, transition, trans)
             if sendemail:
                 self.redirect_action(PayableEmail.get_action("", ""), params={"item_name": self.field_id, "modelname": "", "OK": "YES"})

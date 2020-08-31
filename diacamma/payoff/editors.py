@@ -181,6 +181,7 @@ class PayoffEditor(LucteriosEditor):
             amount_min += up_supporting.get_min_payoff(current_payoff)
             amount_max += up_supporting.get_max_payoff(current_payoff)
         xfer.move(0, 0, 1)
+        col = xfer.get_components("date").col
         lbl = XferCompLabelForm('supportings')
         lbl.set_value_center("{[br/]}".join(title))
         lbl.set_location(1, 0, 2)
@@ -190,7 +191,7 @@ class PayoffEditor(LucteriosEditor):
             sel = XferCompSelect('repartition')
             sel.set_value(xfer.getparam('repartition', Payoff.REPARTITION_BYRATIO))
             sel.set_select(Payoff.LIST_REPARTITIONS)
-            sel.set_location(1, row)
+            sel.set_location(col, row)
             sel.description = _('repartition mode')
             xfer.add_component(sel)
             if xfer.getparam('NO_REPARTITION') is not None:
@@ -225,7 +226,7 @@ class PayoffEditor(LucteriosEditor):
             sel = XferCompSelect('linked_supporting')
             sel.set_value(xfer.getparam('linked_supporting', 0))
             sel.set_select([(item.id, str(item)) for item in linked_supportings])
-            sel.set_location(1, row)
+            sel.set_location(col, row)
             sel.description = _('linked')
             sel.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             xfer.add_component(sel)
