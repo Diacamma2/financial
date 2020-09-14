@@ -568,6 +568,7 @@ class FiscalYear(LucteriosModel):
     class Meta(object):
         verbose_name = _('fiscal year')
         verbose_name_plural = _('fiscal years')
+        ordering = ['begin', 'end']
 
 
 class CostAccounting(LucteriosModel):
