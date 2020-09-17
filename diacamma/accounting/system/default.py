@@ -251,16 +251,27 @@ class DefaultSystemAccounting(object):
         new_entry.closed()
 
     def _create_report_third(self, year):
-        from diacamma.accounting.models import EntryAccount
+        from diacamma.accounting.models import EntryAccount, EntryLineAccount, AccountLink
         last_entry_account = year.last_fiscalyear.entryaccount_set.filter(journal__id=5).order_by('num').last()
         _no_change, debit_rest, credit_rest = last_entry_account.serial_control(last_entry_account.get_serial())
+        multilinks_to_transfere = {}
         if (abs(debit_rest - credit_rest) < 0.0001) and (len(last_entry_account.get_thirds()) > 0):
             end_desig = _("Retained earnings - Third party debt")
             new_entry = EntryAccount.objects.create(year=year, journal_id=1, designation=end_desig, date_value=year.begin)
             for entry_line in last_entry_account.entrylineaccount_set.all():
                 if re.match(self.get_general_mask(), entry_line.account.code):
-                    new_entry.add_entry_line(-1 * entry_line.amount, entry_line.account.code, entry_line.account.name, entry_line.third, entry_line.reference)
+                    new_entry_line = new_entry.add_entry_line(-1 * entry_line.amount, entry_line.account.code, entry_line.account.name, entry_line.third, entry_line.reference)
+                    lines_multilink = EntryLineAccount.objects.filter(entry__year=year.last_fiscalyear, link__entrylineaccount=entry_line, multilink__isnull=False)
+                    if lines_multilink.count() > 0:
+                        multilink = lines_multilink.first().multilink
+                        if multilink not in multilinks_to_transfere:
+                            multilinks_to_transfere[multilink] = []
+                        multilinks_to_transfere[multilink].append(new_entry_line)
+                        multilinks_to_transfere[multilink].extend(EntryLineAccount.objects.filter(entry__year=year, multilink=multilink))
             new_entry.closed()
+            for multilink, entrylines_to_link in multilinks_to_transfere.items():
+                AccountLink.create_link(list(set(entrylines_to_link)))
+                multilink.delete()
 
     def import_lastyear(self, year, import_result):
         self._create_report_lastyearresult(year, import_result)

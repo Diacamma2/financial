@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-08-26 11:13+0000\n"
+"POT-Creation-Date: 2020-09-17 16:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -81,43 +81,43 @@ msgstr "Cloture d'exercice - Tiers"
 msgid "Retained earnings - Balance sheet"
 msgstr "Report à nouveau - Bilan"
 
-#: system/default.py:258
+#: system/default.py:259
 msgid "Retained earnings - Third party debt"
 msgstr "Report à nouveau - Dette tiers"
 
-#: system/default.py:279
+#: system/default.py:290
 msgid "immobilizations & stock"
 msgstr "immobilisatons & stock"
 
-#: system/default.py:282 system/default.py:293 system/default.py:304
-#: system/default.py:316 system/default.py:327
+#: system/default.py:293 system/default.py:304 system/default.py:315
+#: system/default.py:327 system/default.py:338
 msgid "Sub-total"
 msgstr "Sous-total"
 
-#: system/default.py:290
+#: system/default.py:301
 msgid "receivables"
 msgstr "créances"
 
-#: system/default.py:301
+#: system/default.py:312
 msgid "values & availabilities"
 msgstr "Valeurs et disponibilités"
 
-#: system/default.py:313
+#: system/default.py:324
 msgid "capital"
 msgstr "capital"
 
-#: system/default.py:324
+#: system/default.py:335
 msgid "liabilities"
 msgstr "dettes"
 
-#: system/default.py:338 system/default.py:339
+#: system/default.py:349 system/default.py:350
 msgid "Total"
 msgstr "Total"
 
-#: system/default.py:356
+#: system/default.py:367
 msgid "result (deficit)"
 msgstr "résultat (déficit)"
 
-#: system/default.py:358
+#: system/default.py:369
 msgid "result (profit)"
 msgstr "résultat (bénéfice)"

@@ -420,6 +420,11 @@ class FiscalYear(LucteriosModel):
                 entry_noclose.date_value = next_ficalyear.begin
                 entry_noclose.save()
 
+    def unlink_entry_multiyear(self):
+        entrylines = EntryLineAccount.objects.filter(entry__year=self, link__isnull=False, multilink__isnull=False)
+        for entryline in entrylines:
+            entryline.unlink()
+
     @classmethod
     def get_current(cls, select_year=None):
         if select_year is None:
@@ -551,6 +556,7 @@ class FiscalYear(LucteriosModel):
             cost.close()
         self._check_annexe()
         self.move_entry_noclose()
+        self.unlink_entry_multiyear()
         current_system_account().finalize_year(self)
         self.status = FiscalYear.STATUS_FINISHED
         self.save()
@@ -879,7 +885,10 @@ class AccountLink(LucteriosModel):
             div, mod = divmod(nb_link, 26)
             res = letters[mod] + res
             nb_link = int(div) - 1
-        return letters[nb_link] + res
+        res = letters[nb_link] + res
+        if entrylines.exclude(entry__year=year).count() > 0:
+            res += "&"
+        return res
 
     def is_validity(self):
         third_info = None
@@ -904,31 +913,41 @@ class AccountLink(LucteriosModel):
     def create_link(cls, entrylines, check_year=True):
         import re
         regex_third = re.compile(current_system_account().get_third_mask())
-        year = None
+        years = []
         third_info = None
         sum_amount = 0.0
         for entryline in entrylines:
             entryline = EntryLineAccount.objects.get(id=entryline.id)
             if regex_third.match(entryline.account.code) is None:
                 raise LucteriosException(IMPORTANT, _("An entry line is not third!"))
-            if year is None:
-                year = entryline.entry.year
-            elif year != entryline.entry.year:
-                raise LucteriosException(IMPORTANT, _("This entries are not in same fiscal year!"))
+            if entryline.entry.year not in years:
+                years.append(entryline.entry.year)
             if third_info is None:
                 third_info = (entryline.account.code, entryline.third_id)
             elif (third_info[0] != entryline.account.code) or (third_info[1] != entryline.third_id):
                 raise LucteriosException(IMPORTANT, _("This entry lines are not in same third!"))
             sum_amount += float(entryline.amount)
             entryline.unlink()
+        if len(years) > 2:
+            raise LucteriosException(IMPORTANT, _("This entries are over 2 years!"))
+        elif (len(years) == 2) and (years[0].last_fiscalyear != years[1]) and (years[1].last_fiscalyear != years[0]):
+            raise LucteriosException(IMPORTANT, _("These entries are not on 2 consecutive years!"))
+        elif (len(years) == 2) and ((years[0].status == FiscalYear.STATUS_FINISHED) or (years[1].status == FiscalYear.STATUS_FINISHED)):
+            raise LucteriosException(IMPORTANT, _("These entries are closed exercises!"))
         if abs(sum_amount) > 0.0001:
             raise LucteriosException(IMPORTANT, _("The input lines are not balanced!"))
         for entryline in entrylines:
             entryline = EntryLineAccount.objects.get(id=entryline.id)
             entryline.unlink()
         new_link = AccountLink.objects.create()
+        if len(years) == 2:
+            new_multilink = AccountLink.objects.create()
+        else:
+            new_multilink = None
         for entryline in entrylines:
             entryline.link = new_link
+            if entryline.multilink_id is None:
+                entryline.multilink = new_multilink
             entryline.save()
 
     class Meta(object):
@@ -1236,6 +1255,7 @@ class EntryLineAccount(LucteriosModel):
     third = models.ForeignKey('Third', verbose_name=_('third'), null=True, on_delete=models.PROTECT, db_index=True)
     costaccounting = models.ForeignKey('CostAccounting', verbose_name=_('cost accounting'), null=True, on_delete=models.PROTECT)
     link = models.ForeignKey('AccountLink', verbose_name=_('link'), null=True, on_delete=models.SET_NULL)
+    multilink = models.ForeignKey('AccountLink', verbose_name=_('link'), null=True, on_delete=models.SET_NULL, related_name="multiyear")
 
     entry_account = LucteriosVirtualField(verbose_name=_('account'), compute_from='get_entry_account')
     debit = LucteriosVirtualField(verbose_name=_('debit'), compute_from='get_debit', format_string=lambda: format_with_devise(6))
@@ -1507,7 +1527,7 @@ class EntryLineAccount(LucteriosModel):
             return False
 
     def unlink(self):
-        if (self.entry.year.status != 2) and (self.link_id is not None):
+        if (self.entry.year.status != FiscalYear.STATUS_FINISHED) and (self.link_id is not None):
             old_link = self.link
             for entryline in self.link.entrylineaccount_set.all():
                 entryline.link = None

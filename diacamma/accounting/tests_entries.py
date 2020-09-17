@@ -25,6 +25,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from shutil import rmtree
 from datetime import date
+from _io import StringIO
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -36,10 +37,12 @@ from diacamma.accounting.views_entries import EntryAccountList, \
     EntryAccountDel, EntryAccountOpenFromLine, EntryAccountShow, \
     EntryLineAccountDel, EntryAccountUnlock, EntryAccountImport
 from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr,\
-    fill_entries_fr, default_costaccounting, fill_thirds_fr
-from diacamma.accounting.models import EntryAccount, CostAccounting
+    fill_entries_fr, default_costaccounting, fill_thirds_fr, fill_accounts_fr
+from diacamma.accounting.models import EntryAccount, CostAccounting, FiscalYear
 from diacamma.accounting.views_other import CostAccountingAddModify
-from _io import StringIO
+from diacamma.accounting.views import ThirdShow
+from diacamma.accounting.views_accounts import FiscalYearBegin, FiscalYearClose,\
+    FiscalYearReportLastYear, ChartsAccountList
 
 
 class EntryTest(LucteriosTest):
@@ -1120,3 +1123,161 @@ class EntryTest(LucteriosTest):
         self.assert_json_equal('', 'entryline/@9/entry_account', '[602] 602')
         self.assert_json_equal('', 'entryline/@9/costaccounting', None)
         self.assert_json_equal('', 'entryline/@9/debit', -37.01)
+
+    def test_link_entries_multiyear(self):
+        # data last year
+        self.factory.xfer = FiscalYearBegin()
+        self.calljson('/diacamma.accounting/fiscalYearBegin', {'CONFIRME': 'YES', 'year': '1', 'type_of_account': '-1'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearBegin')
+        self.factory.xfer = EntryAccountEdit()
+        self.calljson('/diacamma.accounting/entryAccountEdit', {'SAVE': 'YES', 'year': '1', 'journal': '2',
+                                                                'date_value': '2015-12-27', 'designation': 'Une belle facture'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountEdit')
+        self.factory.xfer = EntryAccountValidate()
+        self.calljson('/diacamma.accounting/entryAccountValidate', {'year': '1', 'journal': '2', 'entryaccount': '1',
+                                                                    'serial_entry': "-6|9|0|364.91|0|0|None|\n-7|1|5|364.91|0|0|None|"}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountValidate')
+        self.factory.xfer = EntryAccountClose()
+        self.calljson('/diacamma.accounting/entryAccountClose',
+                      {'CONFIRME': 'YES', 'year': '1', 'journal': '2', "entryline": "1"}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountClose')
+
+        # data new year
+        new_year = FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
+        fill_accounts_fr(new_year)
+        self.factory.xfer = ChartsAccountList()
+        self.calljson('/diacamma.accounting/chartsAccountList', {'year': '2', 'type_of_account': '-1'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
+        self.factory.xfer = EntryAccountEdit()
+        self.calljson('/diacamma.accounting/entryAccountEdit', {'SAVE': 'YES', 'year': '2', 'journal': '4', 'date_value': '2016-01-03',
+                                                                'designation': 'Règlement de belle facture'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountEdit')
+        self.factory.xfer = EntryAccountValidate()
+        self.calljson('/diacamma.accounting/entryAccountValidate', {'year': '2', 'journal': '4', 'entryaccount': '2',
+                                                                    'serial_entry': "-9|18|5|-364.91|0|0|None|\n-8|19|0|364.91|0|0|BP N°987654|"}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountValidate')
+        self.factory.xfer = EntryAccountClose()
+        self.calljson('/diacamma.accounting/entryAccountClose',
+                      {'CONFIRME': 'YES', 'year': '2', 'journal': '4', "entryline": "4"}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountClose')
+
+        # begin test
+        self.factory.xfer = ThirdShow()
+        self.calljson('/diacamma.accounting/thirdShow', {"third": 5, 'lines_filter': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
+        self.assert_count_equal('entryline', 2)
+        self.assert_json_equal('', 'entryline/@0/id', '2')
+        self.assert_json_equal('', 'entryline/@0/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@0/entry.date_value', '2015-12-27')
+        self.assert_json_equal('', 'entryline/@0/link', None)
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@0/designation_ref', 'Une belle facture')
+        self.assert_json_equal('', 'entryline/@0/debit', -364.91)
+        self.assert_json_equal('', 'entryline/@0/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@1/id', '3')
+        self.assert_json_equal('', 'entryline/@1/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@1/entry.date_value', '2016-01-03')
+        self.assert_json_equal('', 'entryline/@1/link', None)
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@1/designation_ref', 'Règlement de belle facture')
+        self.assert_json_equal('', 'entryline/@1/credit', 364.91)
+        self.assert_json_equal('', 'entryline/@1/costaccounting', None)
+
+        self.factory.xfer = EntryAccountLink()
+        self.calljson('/diacamma.accounting/entryAccountLink', {'entryline': '2;3'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountLink')
+
+        self.factory.xfer = ThirdShow()
+        self.calljson('/diacamma.accounting/thirdShow', {"third": 5, 'lines_filter': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
+        self.assert_count_equal('entryline', 2)
+        self.assert_json_equal('', 'entryline/@0/id', '2')
+        self.assert_json_equal('', 'entryline/@0/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@0/entry.date_value', '2015-12-27')
+        self.assert_json_equal('', 'entryline/@0/link', "A&")
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@0/designation_ref', 'Une belle facture')
+        self.assert_json_equal('', 'entryline/@0/debit', -364.91)
+        self.assert_json_equal('', 'entryline/@0/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@1/id', '3')
+        self.assert_json_equal('', 'entryline/@1/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@1/entry.date_value', '2016-01-03')
+        self.assert_json_equal('', 'entryline/@1/link', "A&")
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@1/designation_ref', 'Règlement de belle facture')
+        self.assert_json_equal('', 'entryline/@1/credit', 364.91)
+        self.assert_json_equal('', 'entryline/@1/costaccounting', None)
+
+        self.factory.xfer = FiscalYearClose()
+        self.calljson('/diacamma.accounting/fiscalYearClose', {'CONFIRME': 'YES', 'year': '1', 'type_of_account': '-1'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearClose')
+
+        self.factory.xfer = ThirdShow()
+        self.calljson('/diacamma.accounting/thirdShow', {"third": 5, 'lines_filter': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
+        self.assert_count_equal('entryline', 3)
+        self.assert_json_equal('', 'entryline/@0/id', '2')
+        self.assert_json_equal('', 'entryline/@0/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@0/entry.date_value', '2015-12-27')
+        self.assert_json_equal('', 'entryline/@0/link', "A")
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@0/designation_ref', 'Une belle facture')
+        self.assert_json_equal('', 'entryline/@0/debit', -364.91)
+        self.assert_json_equal('', 'entryline/@0/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@1/id', '7')
+        self.assert_json_equal('', 'entryline/@1/entry.num', 3)
+        self.assert_json_equal('', 'entryline/@1/entry.date_value', '2015-12-31')
+        self.assert_json_equal('', 'entryline/@1/link', "A")
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@1/designation_ref', "Cloture d'exercice - Tiers{[br/]}Une belle facture")
+        self.assert_json_equal('', 'entryline/@1/credit', 364.91)
+        self.assert_json_equal('', 'entryline/@1/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@2/id', '3')
+        self.assert_json_equal('', 'entryline/@2/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@2/entry.date_value', '2016-01-03')
+        self.assert_json_equal('', 'entryline/@2/link', None)
+        self.assert_json_equal('', 'entryline/@2/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@2/designation_ref', 'Règlement de belle facture')
+        self.assert_json_equal('', 'entryline/@2/credit', 364.91)
+        self.assert_json_equal('', 'entryline/@2/costaccounting', None)
+
+        self.factory.xfer = FiscalYearReportLastYear()
+        self.calljson('/diacamma.accounting/fiscalYearReportLastYear', {'CONFIRME': 'YES', 'year': '2', 'type_of_account': '-1'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearReportLastYear')
+
+        self.factory.xfer = ThirdShow()
+        self.calljson('/diacamma.accounting/thirdShow', {"third": 5, 'lines_filter': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
+        self.assert_count_equal('entryline', 4)
+        self.assert_json_equal('', 'entryline/@0/id', '2')
+        self.assert_json_equal('', 'entryline/@0/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@0/entry.date_value', '2015-12-27')
+        self.assert_json_equal('', 'entryline/@0/link', "A")
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@0/designation_ref', 'Une belle facture')
+        self.assert_json_equal('', 'entryline/@0/debit', -364.91)
+        self.assert_json_equal('', 'entryline/@0/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@1/id', '7')
+        self.assert_json_equal('', 'entryline/@1/entry.num', 3)
+        self.assert_json_equal('', 'entryline/@1/entry.date_value', '2015-12-31')
+        self.assert_json_equal('', 'entryline/@1/link', "A")
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@1/designation_ref', "Cloture d'exercice - Tiers{[br/]}Une belle facture")
+        self.assert_json_equal('', 'entryline/@1/credit', 364.91)
+        self.assert_json_equal('', 'entryline/@1/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@2/id', '12')
+        self.assert_json_equal('', 'entryline/@2/entry.num', 3)
+        self.assert_json_equal('', 'entryline/@2/entry.date_value', '2016-01-01')
+        self.assert_json_equal('', 'entryline/@2/link', "A")
+        self.assert_json_equal('', 'entryline/@2/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@2/designation_ref', 'Report à nouveau - Dette tiers{[br/]}Une belle facture')
+        self.assert_json_equal('', 'entryline/@2/debit', -364.91)
+        self.assert_json_equal('', 'entryline/@2/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@3/id', '3')
+        self.assert_json_equal('', 'entryline/@3/entry.num', 1)
+        self.assert_json_equal('', 'entryline/@3/entry.date_value', '2016-01-03')
+        self.assert_json_equal('', 'entryline/@3/link', "A")
+        self.assert_json_equal('', 'entryline/@3/entry_account', '[411 Dalton William]')
+        self.assert_json_equal('', 'entryline/@3/designation_ref', 'Règlement de belle facture')
+        self.assert_json_equal('', 'entryline/@3/credit', 364.91)
+        self.assert_json_equal('', 'entryline/@3/costaccounting', None)
