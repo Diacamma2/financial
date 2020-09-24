@@ -44,7 +44,7 @@ from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.framework.filetools import remove_accent
 from lucterios.framework.auditlog import auditlog
-from lucterios.CORE.models import PrintModel, Parameter, LucteriosUser
+from lucterios.CORE.models import PrintModel, Parameter, LucteriosUser, Preference
 from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import LegalEntity, Individual
 from lucterios.documents.models import DocumentContainer
@@ -931,14 +931,19 @@ def check_accountlink_from_supporting():
 
 @Signal.decorate('checkparam')
 def payoff_checkparam():
-    Parameter.check_and_create(name='payoff-bankcharges-account', typeparam=0, title=_("payoff-bankcharges-account"),
+    Parameter.check_and_create(name='payoff-bankcharges-account', typeparam=Parameter.TYPE_STRING, title=_("payoff-bankcharges-account"),
                                args="{'Multi':False}", value='', meta='("accounting","ChartsAccount", Q(type_of_account=4) & Q(year__is_actif=True), "code", False)')
-    Parameter.check_and_create(name='payoff-cash-account', typeparam=0, title=_("payoff-cash-account"),
+    Parameter.check_and_create(name='payoff-cash-account', typeparam=Parameter.TYPE_STRING, title=_("payoff-cash-account"),
                                args="{'Multi':False}", value='', meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_cash_mask()) & django.db.models.Q(year__is_actif=True)", "code", True)')
-    Parameter.check_and_create(name='payoff-email-message', typeparam=0, title=_("payoff-email-message"),
+    Parameter.check_and_create(name='payoff-email-message', typeparam=Parameter.TYPE_STRING, title=_("payoff-email-message"),
                                args="{'Multi':True, 'HyperText': True}", value=_('#name{[br/]}{[br/]}Joint in this email #doc.{[br/]}{[br/]}Regards'))
-    Parameter.check_and_create(name='payoff-email-subject', typeparam=0, title=_("payoff-email-subject"),
+    Parameter.check_and_create(name='payoff-email-subject', typeparam=Parameter.TYPE_STRING, title=_("payoff-email-subject"),
                                args="{'Multi':False, 'HyperText': False}", value=_('#reference'))
+
+    Preference.check_and_create(name="payoff-mode", typeparam=Preference.TYPE_INTEGER, title=_("payoff-mode"),
+                                args="{'Multi':False}", value=Payoff.MODE_CASH, meta='("","","%s","",False)' % (Payoff.LIST_MODES,))
+    Preference.check_and_create(name="payoff-bank_account", typeparam=Preference.TYPE_INTEGER, title=_("payoff-bank_account"),
+                                args="{'Multi':False}", value=0, meta='("payoff","BankAccount","django.db.models.Q()", "id", False)')
 
 
 @Signal.decorate('convertdata')

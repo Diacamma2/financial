@@ -28,9 +28,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, XferCompSelect, XferCompLinkLabel
-from lucterios.CORE.parameters import Params
 from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction
 from lucterios.framework.error import LucteriosException, IMPORTANT
+from lucterios.CORE.parameters import Params
+from lucterios.CORE.models import Preference
 from lucterios.contacts.models import LegalEntity
 
 from diacamma.payoff.models import Supporting, Payoff
@@ -212,12 +213,17 @@ class PayoffEditor(LucteriosEditor):
             del banks.select_list[0]
         if len(banks.select_list) == 0:
             mode.select_list = [mode.select_list[0], mode.select_list[-1]]
+            xfer.remove_component("bank_account")
         else:
             # change order of payoff mode
             levy = mode.select_list[5]
             mode.select_list.insert(3, levy)
             del mode.select_list[6]
             xfer.get_components("mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            if self.item.id is None:
+                self.item.mode = xfer.getparam('mode', Preference.get_value("payoff-mode", xfer.request.user))
+                xfer.get_components("mode").value = self.item.mode
+                xfer.get_components("bank_account").value = xfer.getparam('bank_account', Preference.get_value("payoff-bank_account", xfer.request.user))
         linked_supportings = supporting_list[0].get_final_child().get_linked_supportings() if len(supporting_list) == 1 else []
         if len(linked_supportings) == 0:
             mode.select_list = mode.select_list[:-1]
@@ -242,12 +248,6 @@ class PayoffEditor(LucteriosEditor):
                     break
         if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
             xfer.remove_component("bank_account")
-        else:
-            banks = xfer.get_components("bank_account")
-            if banks.select_list[0][0] == 0:
-                del banks.select_list[0]
-            if len(banks.select_list) == 0:
-                xfer.remove_component("bank_account")
         if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
             xfer.remove_component("payer")
         if (fee_code == '') or (self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL)):
