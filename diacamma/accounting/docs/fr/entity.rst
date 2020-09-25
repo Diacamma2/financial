@@ -74,11 +74,12 @@ Lettrage d'écritures
 
 Comme nous l'avons évoqué dans un précédent chapitre, il est fréquent que des mouvements enregistrés en comptabilité trouvent leur source dans une ou plusieurs opérations liées. Dans ce cas, les lignes d'écritures correspondantes peuvent être lettrées. 
 
-Toutefois, trois conditions pour que des lignes d'écriture soient lettrables :
+Toutefois, il y a des conditions pour que des lignes d'écriture soient lettrables :
 
  * Elles doivent concerner le même compte de tiers (fournisseur ou copropriétaire)
  * Pour être lettrables, le total des débits doit être égal au total des crédits
- * Seules les lignes d'un même exercice sont lettrables. C'est pourquoi il faut lettrer les comptes de tiers avant clôture de l'exercice
+ * Soit les lignes sont d’un même exercice non clôturé (il faut donc lettrer les comptes de tiers avant clôture de l’exercice)
+ * Soit les lignes sont sur deux exercices non clôturés qui ce suivent. Le lettrage sera alors temporaire (avec un "&" en suffix) et corrigé définitivement au moment de la clôture et du report à-nouveau.
    
 Les lignes lettrées conjointement se voient attribuer le même code lettre.
 

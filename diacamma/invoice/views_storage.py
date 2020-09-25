@@ -35,12 +35,13 @@ from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferD
     TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE,\
     action_list_sorted, TITLE_CLOSE
 
-from lucterios.CORE.xferprint import XferPrintAction
-from lucterios.CORE.views import ObjectImport
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompGrid, XferCompSelect, XferCompCheckList, \
     GRID_ORDER, XferCompDate, XferCompEdit, XferCompImage, XferCompCheck
 from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
+from lucterios.CORE.xferprint import XferPrintAction
+from lucterios.CORE.views import ObjectImport
+from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
 
 from diacamma.accounting.tools import format_with_devise
 from diacamma.invoice.models import StorageSheet, StorageDetail, Article, Category, StorageArea, InventoryDetail, InventorySheet
@@ -81,6 +82,15 @@ class StorageSheetList(XferListEditor):
             self.filter &= Q(status=status_filter)
         if type_filter != -1:
             self.filter &= Q(sheet_type=type_filter)
+
+
+@ActionsManage.affect_list(_("Search"), "diacamma.invoice/images/storagesheet.png")
+@MenuManage.describ('invoice.change_storagesheet')
+class StorageSheetSearch(XferSavedCriteriaSearchEditor):
+    icon = "storagesheet.png"
+    model = StorageSheet
+    field_id = 'storagesheet'
+    caption = _("Search storage sheet")
 
 
 @ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)

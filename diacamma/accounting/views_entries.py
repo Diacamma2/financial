@@ -367,7 +367,7 @@ class EntryAccountLink(XferContainerAcknowledge):
             if self.items[0].entry.year.status == FiscalYear.STATUS_FINISHED:
                 raise LucteriosException(IMPORTANT, _("Fiscal year finished!"))
             if self.confirme(_('Do you want unlink this entry?')):
-                self.items[0].unlink()
+                self.items[0].unlink(with_multi=True)
         else:
             AccountLink.create_link(self.items)
 

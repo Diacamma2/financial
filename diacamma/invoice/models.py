@@ -1328,6 +1328,13 @@ class StorageSheet(LucteriosModel):
     def get_show_fields(cls):
         return [("sheet_type", "status"), ("date", "storagearea"), ("provider", "bill_date"), ("bill_reference"), ("comment", ), ("storagedetail_set", ), ('total',)]
 
+    @classmethod
+    def get_search_fields(cls):
+        search_fields = ["sheet_type", "status", "date", "storagearea", "comment"]
+        for fieldname in StorageDetail.get_search_fields():
+            search_fields.append(cls.convert_field_for_search("storagedetail_set", fieldname))
+        return search_fields
+
     @property
     def provider_query(self):
         thirdfilter = Q(accountthird__code__regex=current_system_account().get_provider_mask())
@@ -1410,6 +1417,13 @@ class StorageDetail(LucteriosModel):
     @classmethod
     def get_show_fields(cls):
         return ["article", "price", "quantity_txt"]
+
+    @classmethod
+    def get_search_fields(cls):
+        search_fields = ["price", "quantity"]
+        for fieldname in Article.get_search_fields():
+            search_fields.append(cls.convert_field_for_search("article", fieldname))
+        return search_fields
 
     @classmethod
     def get_import_fields(cls):

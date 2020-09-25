@@ -1526,7 +1526,7 @@ class EntryLineAccount(LucteriosModel):
         except ObjectDoesNotExist:
             return False
 
-    def unlink(self):
+    def unlink(self, with_multi=False):
         if (self.entry.year.status != FiscalYear.STATUS_FINISHED) and (self.link_id is not None):
             old_link = self.link
             for entryline in self.link.entrylineaccount_set.all():
@@ -1536,6 +1536,8 @@ class EntryLineAccount(LucteriosModel):
             if (old_link is not None) and (old_link.id is not None):
                 old_link.delete()
             self.link = None
+            if with_multi and (self.multilink_id is not None):
+                self.multilink.delete()
 
     def delete(self):
         self.unlink()

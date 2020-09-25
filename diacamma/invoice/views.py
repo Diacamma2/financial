@@ -84,6 +84,7 @@ def _add_bill_filter(xfer, row, with_third=False):
             q_individual = Q(completename__icontains=third_filter)
             current_filter &= (q_legalentity | q_individual)
     status_filter = xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user))
+    xfer.params['status_filter'] = status_filter
     edt = XferCompSelect("status_filter")
     edt.set_select(Bill.SELECTION_STATUS)
     edt.description = _('Filter by status')
@@ -93,6 +94,7 @@ def _add_bill_filter(xfer, row, with_third=False):
     xfer.add_component(edt)
 
     type_filter = xfer.getparam('type_filter', Preference.get_value("invoice-billtype", xfer.request.user))
+    xfer.params['type_filter'] = type_filter
     edt = XferCompSelect("type_filter")
     edt.set_select(Bill.SELECTION_BILLTYPES)
     edt.description = _('Filter by type')
@@ -159,7 +161,7 @@ class BillSearch(XferSavedCriteriaSearchEditor):
     caption = _("Search bill")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < 1)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES, condition=lambda xfer: xfer.item.status == Bill.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_bill')
 class BillAddModify(XferAddEditor):
@@ -329,7 +331,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
                 self.redirect_action(PayableEmail.get_action("", ""), params={"item_name": self.field_id, "modelname": "", "OK": "YES"})
 
 
-@ActionsManage.affect_grid(_('payoff'), "diacamma.payoff/images/payoff.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) == 1)
+@ActionsManage.affect_grid(_('payoff'), "diacamma.payoff/images/payoff.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) == Bill.STATUS_VALID)
 @MenuManage.describ('payoff.add_payoff')
 class BillMultiPay(XferContainerAcknowledge):
     caption = _("Multi-pay bill")
@@ -359,7 +361,7 @@ class BillFromQuotation(XferContainerAcknowledge):
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < Bill.STATUS_VALID)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @MenuManage.describ('invoice.delete_bill')
 class BillDel(XferDelete):
     icon = "bill.png"
@@ -368,7 +370,7 @@ class BillDel(XferDelete):
     caption = _("Delete bill")
 
 
-@ActionsManage.affect_grid(_('Batch'), "images/upload.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', -1) < Bill.STATUS_VALID)
+@ActionsManage.affect_grid(_('Batch'), "images/upload.png", condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @MenuManage.describ('payoff.add_payoff')
 class BillBatch(XferContainerAcknowledge):
     caption = _("Batch bill")
@@ -445,7 +447,7 @@ def can_printing(xfer, gridname=''):
                 return True
         return False
     else:
-        return xfer.getparam('status_filter', -1) in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)
+        return xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)
 
 
 @ActionsManage.affect_grid(_("Send"), "lucterios.mailing/images/email.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': can_printing(xfer) and can_send_email(xfer))
