@@ -49,7 +49,8 @@ from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
 from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, get_format_value
 from lucterios.framework.auditlog import auditlog
-from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup
+from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup,\
+    Preference
 from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact
 
@@ -409,6 +410,15 @@ class Article(LucteriosModel, CustomizeObject):
                 return float(val[2])
         return None
 
+    def get_stockage_mean_price(self, storagearea=0):
+        for val in self.get_stockage_values():
+            if val[0] == storagearea:
+                if abs(float(val[2])) > 0.0001:
+                    return float(val[3]) / float(val[2])
+                else:
+                    return None
+        return None
+
     def get_stockage_total(self):
         value = self.get_stockage_total_num()
         if value is not None:
@@ -462,17 +472,22 @@ class Provider(LucteriosModel):
 
 
 class Bill(Supporting):
+    BILLTYPE_ALL = -1
     BILLTYPE_QUOTATION = 0
     BILLTYPE_BILL = 1
     BILLTYPE_ASSET = 2
     BILLTYPE_RECEIPT = 3
     LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')))
+    SELECTION_BILLTYPES = ((BILLTYPE_ALL, None),) + LIST_BILLTYPES
 
+    STATUS_BUILDING_VALID = -1
     STATUS_BUILDING = 0
     STATUS_VALID = 1
     STATUS_CANCEL = 2
     STATUS_ARCHIVE = 3
+    STATUS_ALL = -2
     LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')), (STATUS_CANCEL, _('cancel')), (STATUS_ARCHIVE, _('archive')))
+    SELECTION_STATUS = ((STATUS_BUILDING_VALID, '%s+%s' % (_('building'), _('valid'))),) + LIST_STATUS + ((STATUS_ALL, None),)
 
     fiscal_year = models.ForeignKey(
         FiscalYear, verbose_name=_('fiscal year'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
@@ -667,9 +682,10 @@ class Bill(Supporting):
         if len(details) == 0:
             info.append(str(_("no detail")))
         else:
-            for detail in details:
-                if (detail.article_id is not None) and not detail.article.has_sufficiently(detail.storagearea_id, detail.quantity):
-                    info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
+            if self.bill_type != self.BILLTYPE_ASSET:
+                for detail in details:
+                    if (detail.article_id is not None) and not detail.article.has_sufficiently(detail.storagearea_id, detail.quantity):
+                        info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
             for detail in details:
                 if detail.article is not None:
                     if detail.article.accountposting is None:
@@ -713,7 +729,8 @@ class Bill(Supporting):
                     last_sheet.valid()
                 last_sheet = StorageSheet.objects.create(sheet_type=sheet_type, storagearea_id=old_area, date=self.date, comment=str(self), status=0)
             if last_sheet is not None:
-                StorageDetail.objects.create(storagesheet=last_sheet, article=detail.article, quantity=abs(detail.quantity))
+                price = detail.article.get_stockage_mean_price() if (self.bill_type == self.BILLTYPE_ASSET) else 0.0
+                StorageDetail.objects.create(storagesheet=last_sheet, article=detail.article, quantity=abs(detail.quantity), price=price)
         if last_sheet is not None:
             last_sheet.valid()
 
@@ -1799,6 +1816,11 @@ def invoice_checkparam():
                                     StorageSheet.get_permission(True, True, False), Payoff.get_permission(True, True, True), DepositSlip.get_permission(True, True, False))
     LucteriosGroup.redefine_generic(_("# invoice (shower)"), Article.get_permission(True, False, False), Bill.get_permission(True, False, False),
                                     StorageSheet.get_permission(True, False, False), Payoff.get_permission(True, False, False), DepositSlip.get_permission(True, False, False))
+
+    Preference.check_and_create(name="invoice-status", typeparam=Preference.TYPE_INTEGER, title=_("invoice-status"),
+                                args="{'Multi':False}", value=Bill.STATUS_BUILDING_VALID, meta='("","","%s","",False)' % (Bill.SELECTION_STATUS,))
+    Preference.check_and_create(name="invoice-billtype", typeparam=Preference.TYPE_INTEGER, title=_("invoice-billtype"),
+                                args="{'Multi':False}", value=Bill.BILLTYPE_ALL, meta='("","","%s","",False)' % (Bill.SELECTION_BILLTYPES,))
 
 
 @Signal.decorate('convertdata')

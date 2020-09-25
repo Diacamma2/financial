@@ -42,7 +42,7 @@ from diacamma.accounting.tools import current_system_account, format_with_devise
 from diacamma.accounting.models import CostAccounting, FiscalYear, Third
 from diacamma.payoff.editors import SupportingEditor
 from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail,\
-    Bill, Vat, StorageSheet
+    Bill, Vat, StorageSheet, StorageArea
 
 
 class VatEditor(LucteriosEditor):
@@ -360,10 +360,14 @@ class DetailEditor(LucteriosEditor, DetailFilter):
             xfer.params['storagearea'] = 0
         else:
             area_list = []
-            for val in self.item.article.get_stockage_values():
-                if (val[0] != 0) and (abs(val[2]) > 0.0001):
-                    format_txt = "%%.%df" % self.item.article.qtyDecimal
-                    area_list.append((val[0], "%s [%s]" % (val[1], format_txt % val[2])))
+            if self.item.bill.bill_type != Bill.BILLTYPE_ASSET:
+                for val in self.item.article.get_stockage_values():
+                    if (val[0] != 0) and (abs(val[2]) > 0.0001):
+                        format_txt = "%%.%df" % self.item.article.qtyDecimal
+                        area_list.append((val[0], "%s [%s]" % (val[1], format_txt % val[2])))
+            else:
+                for area in StorageArea.objects.all():
+                    area_list.append((area.id, str(area)))
             sel_area = xfer.get_components('storagearea')
             sel_area.set_needed(True)
             sel_area.set_select(area_list)

@@ -49,7 +49,7 @@ from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.CORE.xferprint import XferPrintAction, XferPrintListing, XferPrintLabel
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
-from lucterios.CORE.models import PrintModel, SavedCriteria
+from lucterios.CORE.models import PrintModel, SavedCriteria, Preference
 from lucterios.CORE.views import ObjectMerge
 
 from lucterios.contacts.views_contacts import AbstractContactFindDouble
@@ -83,36 +83,29 @@ def _add_bill_filter(xfer, row, with_third=False):
             # annotate(completename=Concat('third__contact__individual__lastname', Value(' '), 'third__contact__individual__firstname'))
             q_individual = Q(completename__icontains=third_filter)
             current_filter &= (q_legalentity | q_individual)
-    status_filter = xfer.getparam('status_filter', -1)
-    dep_field = Bill.get_field_by_name('status')
-    sel_list = list(dep_field.choices)
-    sel_list.insert(0, (-1, '%s+%s' % (_('building'), _('valid'))))
-    sel_list.append((-2, None))
+    status_filter = xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user))
     edt = XferCompSelect("status_filter")
-    edt.set_select(sel_list)
+    edt.set_select(Bill.SELECTION_STATUS)
     edt.description = _('Filter by status')
     edt.set_value(status_filter)
     edt.set_location(0, row)
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     xfer.add_component(edt)
 
-    type_filter = xfer.getparam('type_filter', -1)
-    dep_field = Bill.get_field_by_name('bill_type')
-    sel_list = list(dep_field.choices)
-    sel_list.insert(0, (-1, None))
+    type_filter = xfer.getparam('type_filter', Preference.get_value("invoice-billtype", xfer.request.user))
     edt = XferCompSelect("type_filter")
-    edt.set_select(sel_list)
+    edt.set_select(Bill.SELECTION_BILLTYPES)
     edt.description = _('Filter by type')
     edt.set_value(type_filter)
     edt.set_location(0, row + 1)
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     xfer.add_component(edt)
 
-    if status_filter >= 0:
-        current_filter &= Q(status=status_filter)
-    elif status_filter == -1:
+    if status_filter == Bill.STATUS_BUILDING_VALID:
         current_filter &= Q(status=Bill.STATUS_BUILDING) | Q(status=Bill.STATUS_VALID)
-    if type_filter >= 0:
+    elif status_filter != Bill.STATUS_ALL:
+        current_filter &= Q(status=status_filter)
+    if type_filter != Bill.BILLTYPE_ALL:
         current_filter &= Q(bill_type=type_filter)
     return current_filter, status_filter
 
