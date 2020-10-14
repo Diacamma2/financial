@@ -36,14 +36,13 @@ CUSTOMER_MASK = r'^40[0-9][0-9a-zA-Z]*$'
 
 EMPLOYED_MASK = r'^455[0-9][0-9a-zA-Z]*$'
 
-SOCIETARY_MASK = r'^47[0-9][0-9a-zA-Z]*|410[0-9a-zA-Z]*$'
+SOCIETARY_MASK = r'^47[0-9][0-9a-zA-Z]*$|^410[0-9a-zA-Z]*$'
 
 REVENUE_MASK = r'^7[0-9][0-9][0-9a-zA-Z]*$'
 
 EXPENSE_MASK = r'^6[0-9][0-9][0-9a-zA-Z]*$'
 
-THIRD_MASK = "%s|%s|%s|%s" % (
-    PROVIDER_MASK, CUSTOMER_MASK, EMPLOYED_MASK, SOCIETARY_MASK)
+THIRD_MASK = "%s|%s|%s|%s" % (PROVIDER_MASK, CUSTOMER_MASK, EMPLOYED_MASK, SOCIETARY_MASK)
 
 GENERAL_CHARTS_ACCOUNT = [
     ("000", "Créanciers, bénéficiaires de garanties de tiers", 5),

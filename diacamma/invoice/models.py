@@ -1274,7 +1274,15 @@ class Detail(LucteriosModel):
     def define_autoreduce(self):
         if (self.bill.third_id is not None) and (self.bill.status in (Bill.STATUS_BUILDING, Bill.STATUS_VALID)) and (float(self.reduce) < 0.0001):
             for red_item in AutomaticReduce.objects.all():
-                self.reduce = max(float(self.reduce), red_item.calcul_reduce(self))
+                if self.bill.bill_type != Bill.BILLTYPE_ASSET:
+                    self.reduce = max(float(self.reduce), red_item.calcul_reduce(self))
+                else:
+                    new_reduce = red_item.calcul_reduce(self)
+                    if abs(new_reduce) > 0.001:
+                        if float(self.reduce) < 0.0001:
+                            self.reduce = new_reduce
+                        else:
+                            self.reduce = min(float(self.reduce), new_reduce)
             return float(self.reduce) > 0.0001
         return False
 

@@ -1165,9 +1165,12 @@ class EntryAccount(LucteriosModel):
                                                                                                                                                      'debit': get_amount_from_format_devise(credit_rest, 7),
                                                                                                                                                      'info': self.get_description()})
             if Params.getvalue("accounting-needcost"):
-                for entryline in self.entrylineaccount_set.all():
-                    if (entryline.account.type_of_account in (3, 4, 5)) and (entryline.costaccounting_id is None):
-                        raise LucteriosException(IMPORTANT, _("Cost accounting is mandatory !"))
+                enties_nocost = self.entrylineaccount_set.filter(Q(account__type_of_account__in=(ChartsAccount.TYPE_REVENUE,
+                                                                                                 ChartsAccount.TYPE_EXPENSE,
+                                                                                                 ChartsAccount.TYPE_CONTRAACCOUNTS)) &
+                                                                 Q(costaccounting__isnull=True)).distinct()
+                if enties_nocost.count() > 0:
+                    raise LucteriosException(IMPORTANT, _("Cost accounting is mandatory !"))
             self.close = True
             val = self.year.entryaccount_set.all().aggregate(Max('num'))
             if val['num__max'] is None:

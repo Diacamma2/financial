@@ -2665,6 +2665,62 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'bill/@3/date', '2015-04-02')
         self.assert_json_equal('LABELFORM', 'sum_summary', [500.0, 50.0, 450.0])
 
+    def test_autoreduce_with_asset_mutliple(self):
+        initial_thirds_fr()
+        default_categories()
+        default_articles()
+
+        self.factory.xfer = AutomaticReduceAddModify()
+        self.calljson('/diacamma.invoice/automaticReduceAddModify', {'name': "reduct #A", 'category': 2, 'mode': 2, 'amount': '10.0', 'occurency': '3', 'filtercriteria': '0', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'automaticReduceAddModify')
+        self.factory.xfer = AutomaticReduceAddModify()
+        self.calljson('/diacamma.invoice/automaticReduceAddModify', {'name': "reduct #B", 'category': 2, 'mode': 2, 'amount': '15.0', 'occurency': '4', 'filtercriteria': '0', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'automaticReduceAddModify')
+        self.factory.xfer = AutomaticReduceAddModify()
+        self.calljson('/diacamma.invoice/automaticReduceAddModify', {'name': "reduct #C", 'category': 2, 'mode': 2, 'amount': '25.0', 'occurency': '5', 'filtercriteria': '0', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'automaticReduceAddModify')
+
+        details = [
+            {'article': 5, 'designation': 'article 5', 'price': '185', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '200', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '200', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '200', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '215', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '185', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '185', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '185', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '200', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '200', 'quantity': 1},
+            {'article': 5, 'designation': 'article 5', 'price': '200', 'quantity': 1},
+        ]
+        self._create_bill(details, 1, '2015-04-01', 6, True)
+
+        self.factory.xfer = ThirdShow()
+        self.calljson('/diacamma.accounting/thirdShow', {'third': 6, 'status_filter': -2, 'GRID_ORDER%bill': 'id'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
+        self.assert_count_equal('bill', 1)
+        self.assert_json_equal('', 'bill/@0/bill_type', 1)
+        self.assert_json_equal('', 'bill/@0/third', 'Dalton Jack')
+        self.assert_json_equal('', 'bill/@0/total', 1616.25)
+        self.assert_json_equal('', 'bill/@0/date', '2015-04-01')
+        self.assert_json_equal('LABELFORM', 'sum_summary', [2155, 538.75, 1616.25])
+
+        self._create_bill([{'article': 5, 'designation': 'article 5', 'price': '200', 'quantity': 1}], 2, '2015-04-02', 6, True)
+
+        self.factory.xfer = ThirdShow()
+        self.calljson('/diacamma.accounting/thirdShow', {'third': 6, 'status_filter': -2, 'GRID_ORDER%bill': 'id'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
+        self.assert_count_equal('bill', 2)
+        self.assert_json_equal('', 'bill/@0/bill_type', 1)
+        self.assert_json_equal('', 'bill/@0/third', 'Dalton Jack')
+        self.assert_json_equal('', 'bill/@0/total', 1616.25)
+        self.assert_json_equal('', 'bill/@0/date', '2015-04-01')
+        self.assert_json_equal('', 'bill/@1/bill_type', 2)
+        self.assert_json_equal('', 'bill/@1/third', 'Dalton Jack')
+        self.assert_json_equal('', 'bill/@1/total', 150.00)
+        self.assert_json_equal('', 'bill/@1/date', '2015-04-02')
+        self.assert_json_equal('LABELFORM', 'sum_summary', [1955, 488.75, 1466.25])
+
     def test_valid_multiple(self):
         default_articles()
         details = [{'article': 0, 'designation': 'article 0', 'price': '20.00', 'quantity': 15}]
