@@ -1555,7 +1555,7 @@ class EntryLineAccount(LucteriosModel):
         verbose_name = _('entry line of account')
         verbose_name_plural = _('entry lines of account')
         default_permissions = []
-        ordering = ['entry__date_value', 'entry__id', 'account__code', 'third']
+        ordering = ['entry__date_value', 'entry_id', 'account__code', 'third']
 
 
 class ModelEntry(LucteriosModel):

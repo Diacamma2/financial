@@ -85,7 +85,7 @@ class EntryAccountList(XferListEditor):
             items = items.filter(Q(num_link__gt=0)).distinct()
         elif self.select_filter == 4:
             items = items.filter(Q(num_link=0)).distinct()
-        return items
+        return items.order_by(*EntryLineAccount._meta.ordering)
 
     def _filter_by_year(self):
         select_year = self.getparam('year')
@@ -239,7 +239,7 @@ class EntryAccountListing(XferPrintListing):
             items = items.filter(Q(num_link__gt=0)).distinct()
         elif self.select_filter == 4:
             items = items.filter(Q(num_link=0)).distinct()
-        return items
+        return items.order_by(*EntryLineAccount._meta.ordering)
 
     def fillresponse(self):
         self.caption = _("Listing accounting entry") + " - " + formats.date_format(date.today(), "DATE_FORMAT")
