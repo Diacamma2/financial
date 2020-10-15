@@ -426,7 +426,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billList', {'status_filter': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 1)
-        self.assert_count_equal('#bill/actions', 5)
+        self.assert_count_equal('#bill/actions', 6)
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
@@ -593,7 +593,7 @@ class BillTest(InvoiceTest):
 
         self.factory.xfer = BillTransition()
         self.calljson('/diacamma.invoice/billTransition',
-                      {'CONFIRME': 'YES', 'bill': 1, 'TRANSITION': 'cancel'}, False)
+                      {'CONFIRME': 'YES', 'bill': 1, 'TRANSITION': 'undo'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
         self.assertEqual(self.response_json['action']['id'], "diacamma.invoice/billShow")
         self.assertEqual(len(self.response_json['action']['params']), 1)
@@ -613,6 +613,10 @@ class BillTest(InvoiceTest):
         self.assert_count_equal('bill', 0)
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 0)
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': 3}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 1)
 
@@ -2028,8 +2032,8 @@ class BillTest(InvoiceTest):
             self.calljson('/diacamma.invoice/billList', {'status_filter': 1}, False)
             self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
             self.assert_count_equal('bill', 4)
-            self.assert_count_equal('#bill/actions', 6)
-            self.assert_action_equal('POST', self.get_json_path('#bill/actions/@5'), ("Envoyer", "lucterios.mailing/images/email.png", "diacamma.invoice", "billPayableEmail", 0, 1, 2))
+            self.assert_count_equal('#bill/actions', 7)
+            self.assert_action_equal('POST', self.get_json_path('#bill/actions/@6'), ("Envoyer", "lucterios.mailing/images/email.png", "diacamma.invoice", "billPayableEmail", 0, 1, 2))
 
             self.factory.xfer = BillPayableEmail()
             self.calljson('/diacamma.invoice/billPayableEmail', {'status_filter': 1, 'bill': '1;2;3;4'}, False)

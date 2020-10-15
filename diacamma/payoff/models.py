@@ -556,8 +556,8 @@ class Payoff(LucteriosModel):
                 new_paypoff.amount = currency_round(supporting.get_total_rest_topay() * amount / amount_sum)
             else:
                 total_rest_topay = supporting.get_total_rest_topay()
-                new_paypoff.amount = min(total_rest_topay, amount_rest)
-            if new_paypoff.amount > 0.0001:
+                new_paypoff.amount = min(max(0, total_rest_topay), amount_rest)
+            if abs(new_paypoff.amount) > 0.0001:
                 amount_rest -= float(new_paypoff.amount)
                 new_paypoff.save(do_generate=False)
                 paypoff_list.append(new_paypoff)

@@ -305,7 +305,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
         sendemail = self.getparam('sendemail', False)
         if (transition != 'valid') or (len(self.items) > 1):
             XferTransition.fill_confirm(self, transition, trans)
-            if transition == 'cancel':
+            if transition == 'undo':
                 if self.trans_result is not None:
                     self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: self.trans_result})
         elif self.getparam("CONFIRME") is None:

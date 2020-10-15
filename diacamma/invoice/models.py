@@ -845,24 +845,25 @@ class Bill(Supporting):
         self.save()
         Signal.call_signal("change_bill", 'archive', self, None)
 
+    transitionname__undo = _("Undo")
+
+    @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT)])
+    def undo(self):
+        new_asset = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET, date=timezone.now(), third=self.third, status=Bill.STATUS_BUILDING, parentbill=self)
+        for detail in self.detail_set.all():
+            detail.id = None
+            detail.bill = new_asset
+            detail.save()
+        self.status = Bill.STATUS_ARCHIVE
+        self.save()
+        Signal.call_signal("change_bill", 'cancel', self, new_asset)
+        return new_asset.id
+
     transitionname__cancel = _("Cancel")
 
-    @transition(field=status, source=STATUS_VALID, target=STATUS_CANCEL, conditions=[lambda item:item.bill_type != Bill.BILLTYPE_ASSET])
+    @transition(field=status, source=STATUS_VALID, target=STATUS_CANCEL, conditions=[lambda item:item.bill_type == Bill.BILLTYPE_QUOTATION])
     def cancel(self):
-        new_asset = None
-        if (self.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT)):
-            new_asset = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET, date=timezone.now(), third=self.third, status=Bill.STATUS_BUILDING, parentbill=self)
-            for detail in self.detail_set.all():
-                detail.id = None
-                detail.bill = new_asset
-                detail.save()
-            self.status = Bill.STATUS_CANCEL
-            self.save()
-            Signal.call_signal("change_bill", 'cancel', self, new_asset)
-        if new_asset is not None:
-            return new_asset.id
-        else:
-            return None
+        return None
 
     def convert_to_bill(self):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
@@ -883,8 +884,8 @@ class Bill(Supporting):
         if self.fiscal_year is not None:
             total_cust = 0
             costumers = {}
-            for bill in Bill.objects.filter(Q(fiscal_year=self.fiscal_year) & Q(
-                    bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE, Bill.STATUS_CANCEL))):
+            for bill in Bill.objects.filter(Q(fiscal_year=self.fiscal_year) & Q(bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) &
+                                            Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))):
                 if bill.third_id not in costumers.keys():
                     costumers[bill.third_id] = 0
                 total_excltax = bill.get_total_excltax()
@@ -914,7 +915,7 @@ class Bill(Supporting):
             if for_quotation:
                 bill_filter = Q(bill__bill_type=Bill.BILLTYPE_QUOTATION) & Q(bill__status=Bill.STATUS_VALID)
             else:
-                bill_filter = Q(bill__bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(bill__status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE, Bill.STATUS_CANCEL))
+                bill_filter = Q(bill__bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(bill__status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))
             for det in Detail.objects.filter(Q(bill__fiscal_year=self.fiscal_year) & bill_filter):
                 if det.article_id not in articles.keys():
                     articles[det.article_id] = [0, 0]
@@ -957,7 +958,7 @@ class Bill(Supporting):
                 begin_date = begin_date - timedelta(days=begin_date.day - 1)
                 end_date = same_day_months_after(begin_date, months=1) - timedelta(days=1)
                 amount_sum = 0.0
-                for bill in Bill.objects.filter(Q(date__gte=begin_date) & Q(date__lte=end_date) & Q(bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE, Bill.STATUS_CANCEL))):
+                for bill in Bill.objects.filter(Q(date__gte=begin_date) & Q(date__lte=end_date) & Q(bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))):
                     total_excltax = bill.get_total_excltax()
                     if without_reduct:
                         total_excltax += bill.get_reduce_excltax()
@@ -1857,6 +1858,9 @@ def invoice_convertdata():
         'invoice_detail': 'vta_rate',
         'invoice_storagedetail': 'price',
     })
+    for bill in Bill.objects.filter(status=Bill.STATUS_CANCEL, bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT), entry__isnull=False):
+        bill.status = Bill.STATUS_ARCHIVE
+        bill.save()
 
 
 def invoice_addon_for_third():
