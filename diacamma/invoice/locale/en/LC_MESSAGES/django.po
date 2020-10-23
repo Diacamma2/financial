@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-15 12:29+0000\n"
+"POT-Creation-Date: 2020-10-23 15:42+0000\n"
 "PO-Revision-Date: 2020-10-15 14:28+0200\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
@@ -27,23 +27,23 @@ msgstr "Diacamma invoice"
 msgid "image"
 msgstr "image"
 
-#: editors.py:133 views_storage.py:51
+#: editors.py:133 views_storage.py:52
 msgid "Storage"
 msgstr "Storage"
 
-#: editors.py:135 views_storage.py:306
+#: editors.py:135 views_storage.py:307
 msgid "Area"
 msgstr "Area"
 
-#: editors.py:136 views_storage.py:307
+#: editors.py:136 views_storage.py:308
 msgid "Quantity"
 msgstr "Quantity"
 
-#: editors.py:137 views_storage.py:308
+#: editors.py:137 views_storage.py:309
 msgid "Amount"
 msgstr "Amount"
 
-#: editors.py:138 views_storage.py:309
+#: editors.py:138 views_storage.py:310
 msgid "Mean price"
 msgstr "Mean price"
 
@@ -86,11 +86,11 @@ msgid "provider"
 msgstr "provider"
 
 #: editors.py:242 models.py:217 printmodel/Article_0001.py:41 views.py:574
-#: views_storage.py:290 views_storage.py:428
+#: views_storage.py:291 views_storage.py:429
 msgid "categories"
 msgstr "categories"
 
-#: editors.py:251 views.py:557 views_storage.py:273 views_storage.py:418
+#: editors.py:251 views.py:557 views_storage.py:274 views_storage.py:419
 msgid "ref./designation"
 msgstr "ref./designation"
 
@@ -128,7 +128,7 @@ msgstr "VATs"
 
 #: models.py:88 models.py:113 models.py:209 models.py:1077
 #: printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0001.py:131 printmodel/Bill_0002.py:148 views_storage.py:305
+#: printmodel/Bill_0001.py:131 printmodel/Bill_0002.py:148 views_storage.py:306
 msgid "designation"
 msgstr "designation"
 
@@ -470,7 +470,7 @@ msgstr "bill reference"
 msgid "bill date"
 msgstr "bill date"
 
-#: models.py:1321 views_storage.py:349
+#: models.py:1321 views_storage.py:350
 msgid "total amount"
 msgstr "total amount"
 
@@ -479,7 +479,7 @@ msgstr "total amount"
 msgid "Article %s is not stockable"
 msgstr "Article %s is not stockable"
 
-#: models.py:1396 models.py:1402 views_storage.py:226
+#: models.py:1396 models.py:1402 views_storage.py:227
 msgid "storage sheet"
 msgstr "storage sheet"
 
@@ -716,11 +716,11 @@ msgstr "Modify bill"
 msgid "Show bill"
 msgstr "Show bill"
 
-#: views.py:211 views_storage.py:134
+#: views.py:211 views_storage.py:135
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: views.py:217 views_storage.py:140
+#: views.py:217 views_storage.py:141
 #, python-format
 msgid "Do you want validate '%s'?"
 msgstr "Do you want validate '%s'?"
@@ -831,7 +831,7 @@ msgstr "Articles"
 msgid "Only activate"
 msgstr "Only activate"
 
-#: views.py:546 views_storage.py:521
+#: views.py:546 views_storage.py:522
 msgid "All"
 msgstr "All"
 
@@ -843,7 +843,7 @@ msgstr "Show article"
 msgid "with stock"
 msgstr "with stock"
 
-#: views.py:600 views_storage.py:87
+#: views.py:600 views_storage.py:88
 msgid "Search"
 msgstr "Search"
 
@@ -1181,157 +1181,174 @@ msgstr "Define parameters for invoice"
 msgid "Configuration of vat"
 msgstr "Configuration of vat"
 
-#: views_storage.py:51
+#: views_storage.py:52
 msgid "Manage of storage"
 msgstr "Manage of storage"
 
-#: views_storage.py:61
+#: views_storage.py:62
 msgid "Management of storage sheet list"
 msgstr "Management of storage sheet list"
 
-#: views_storage.py:66
+#: views_storage.py:67
 msgid "Storage sheet"
 msgstr "Storage sheet"
 
-#: views_storage.py:93
+#: views_storage.py:94
 msgid "Search storage sheet"
 msgstr "Search storage sheet"
 
-#: views_storage.py:103 views_storage.py:489
+#: views_storage.py:104 views_storage.py:490
 msgid "Add storage sheet"
 msgstr "Add storage sheet"
 
-#: views_storage.py:104 views_storage.py:490
+#: views_storage.py:105 views_storage.py:491
 msgid "Modify storage sheet"
 msgstr "Modify storage sheet"
 
-#: views_storage.py:110
+#: views_storage.py:111
 msgid "Show storage sheet"
 msgstr "Show storage sheet"
 
-#: views_storage.py:122
+#: views_storage.py:123
 msgid "Delete storage sheet"
 msgstr "Delete storage sheet"
 
-#: views_storage.py:147
+#: views_storage.py:148
 msgid "target area"
 msgstr "target area"
 
-#: views_storage.py:171
+#: views_storage.py:172
 msgid "Print storage sheet"
 msgstr "Print storage sheet"
 
-#: views_storage.py:186
+#: views_storage.py:187
 msgid "Add storage detail"
 msgstr "Add storage detail"
 
-#: views_storage.py:187
+#: views_storage.py:188
 msgid "Modify storage detail"
 msgstr "Modify storage detail"
 
-#: views_storage.py:196
+#: views_storage.py:197
 msgid "Delete storage detail"
 msgstr "Delete storage detail"
 
-#: views_storage.py:200
+#: views_storage.py:201
 msgid "Import"
 msgstr "Import"
 
-#: views_storage.py:202
+#: views_storage.py:203
 msgid "Storage detail import"
 msgstr "Storage detail import"
 
-#: views_storage.py:230
+#: views_storage.py:231
 msgid "Situation of storage"
 msgstr "Situation of storage"
 
-#: views_storage.py:235
+#: views_storage.py:236
 msgid "Situation"
 msgstr "Situation"
 
-#: views_storage.py:280
+#: views_storage.py:281
 msgid "hide articles without quantity"
 msgstr "hide articles without quantity"
 
-#: views_storage.py:342
+#: views_storage.py:343
 msgid "count of storage"
 msgstr "count of storage"
 
-#: views_storage.py:356
+#: views_storage.py:357
 msgid "Print situation"
 msgstr "Print situation"
 
-#: views_storage.py:364
+#: views_storage.py:365
 msgid "Historic of storage"
 msgstr "Historic of storage"
 
-#: views_storage.py:369
+#: views_storage.py:370
 msgid "Historic"
 msgstr "Historic"
 
-#: views_storage.py:394
+#: views_storage.py:395
 msgid "begin date"
 msgstr "begin date"
 
-#: views_storage.py:401
+#: views_storage.py:402
 msgid "end date"
 msgstr "end date"
 
-#: views_storage.py:448
+#: views_storage.py:449
 msgid "Print historic"
 msgstr "Print historic"
 
-#: views_storage.py:463
+#: views_storage.py:464
 msgid "Management of inventory sheet list"
 msgstr "Management of inventory sheet list"
 
-#: views_storage.py:468
+#: views_storage.py:469
 msgid "Inventory sheet"
 msgstr "Inventory sheet"
 
-#: views_storage.py:496
+#: views_storage.py:497
 msgid "Show inventory sheet"
 msgstr "Show inventory sheet"
 
-#: views_storage.py:521
+#: views_storage.py:522
 msgid "Only the non-entered"
 msgstr "Only the non-entered"
 
-#: views_storage.py:521
+#: views_storage.py:522
 msgid "Only the entered"
 msgstr "Only the entered"
 
-#: views_storage.py:521
+#: views_storage.py:522
 msgid "Only with quantity"
 msgstr "Only with quantity"
 
-#: views_storage.py:524
+#: views_storage.py:525
 msgid "Filter by elements"
 msgstr "Filter by elements"
 
-#: views_storage.py:578
+#: views_storage.py:579
 msgid "Delete inventory sheet"
 msgstr "Delete inventory sheet"
 
-#: views_storage.py:593
+#: views_storage.py:594
 msgid "Print inventory sheet"
 msgstr "Print inventory sheet"
-
-#: views_storage.py:607
-msgid "Add inventory detail"
-msgstr "Add inventory detail"
 
 #: views_storage.py:608
 msgid "Modify inventory detail"
 msgstr "Modify inventory detail"
 
-#: views_storage.py:611
+#: views_storage.py:616
 msgid "Copy"
 msgstr "Copy"
 
-#: views_storage.py:617
+#: views_storage.py:622
 msgid "Copy quantity of inventory detail"
 msgstr "Copy quantity of inventory detail"
+
+#: views_storage.py:629
+msgid "Finalize"
+msgstr "Finalize"
+
+#: views_storage.py:635
+msgid "Finalize quantity non-entered of inventory detail"
+msgstr "Finalize quantity non-entered of inventory detail"
+
+#: views_storage.py:638
+msgid ""
+"This action will report current quantity to article whose non-enterd.{[br/]}"
+"Do you want to do this action ?"
+msgstr ""
+"This action will report current quantity to article whose non-enterd.{[br/]}"
+"Do you want to do this action ?"
+
+#: views_storage.py:644
+#, python-format
+msgid "%d articles are reported."
+msgstr "%d articles are reported."
 
 #: views_summary.py:49
 msgid "View your invoices."
@@ -1344,8 +1361,3 @@ msgstr "Your invoices"
 #: views_summary.py:69
 msgid "Payment"
 msgstr "Payment"
-
-#, fuzzy
-#~| msgid "Amount"
-#~ msgid "count"
-#~ msgstr "Amount"

@@ -884,8 +884,10 @@ class Bill(Supporting):
         if self.fiscal_year is not None:
             total_cust = 0
             costumers = {}
-            for bill in Bill.objects.filter(Q(fiscal_year=self.fiscal_year) & Q(bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) &
-                                            Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))):
+            statistics_filter = Q(fiscal_year=self.fiscal_year)
+            statistics_filter &= Q(bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT))
+            statistics_filter &= Q(status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))
+            for bill in Bill.objects.filter(statistics_filter):
                 if bill.third_id not in costumers.keys():
                     costumers[bill.third_id] = 0
                 total_excltax = bill.get_total_excltax()
@@ -1675,7 +1677,7 @@ class InventorySheet(LucteriosModel):
         res = LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
         if int(self.status) == self.STATUS_BUILDING:
             for article in Article.objects.filter(Q(isdisabled=False) & Q(stockable__in=(1, 2))).order_by('reference').distinct():
-                InventoryDetail.objects.get_or_create(article=article, inventorysheet=self, quantity=None)
+                InventoryDetail.objects.get_or_create(article=article, inventorysheet=self)
         return res
 
     class Meta(object):

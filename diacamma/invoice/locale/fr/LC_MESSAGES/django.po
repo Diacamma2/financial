@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-15 12:29+0000\n"
+"POT-Creation-Date: 2020-10-23 15:42+0000\n"
 "PO-Revision-Date: 2020-10-15 14:29+0200\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
@@ -28,23 +28,23 @@ msgstr "Facturier Diacamma"
 msgid "image"
 msgstr "image"
 
-#: editors.py:133 views_storage.py:51
+#: editors.py:133 views_storage.py:52
 msgid "Storage"
 msgstr "Stockage"
 
-#: editors.py:135 views_storage.py:306
+#: editors.py:135 views_storage.py:307
 msgid "Area"
 msgstr "Lieu de stockage"
 
-#: editors.py:136 views_storage.py:307
+#: editors.py:136 views_storage.py:308
 msgid "Quantity"
 msgstr "Quantité"
 
-#: editors.py:137 views_storage.py:308
+#: editors.py:137 views_storage.py:309
 msgid "Amount"
 msgstr "Montant"
 
-#: editors.py:138 views_storage.py:309
+#: editors.py:138 views_storage.py:310
 msgid "Mean price"
 msgstr "Prix moyen"
 
@@ -87,11 +87,11 @@ msgid "provider"
 msgstr "fournisseur"
 
 #: editors.py:242 models.py:217 printmodel/Article_0001.py:41 views.py:574
-#: views_storage.py:290 views_storage.py:428
+#: views_storage.py:291 views_storage.py:429
 msgid "categories"
 msgstr "catégories"
 
-#: editors.py:251 views.py:557 views_storage.py:273 views_storage.py:418
+#: editors.py:251 views.py:557 views_storage.py:274 views_storage.py:419
 msgid "ref./designation"
 msgstr "réf./désignation"
 
@@ -129,7 +129,7 @@ msgstr "TVAs"
 
 #: models.py:88 models.py:113 models.py:209 models.py:1077
 #: printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0001.py:131 printmodel/Bill_0002.py:148 views_storage.py:305
+#: printmodel/Bill_0001.py:131 printmodel/Bill_0002.py:148 views_storage.py:306
 msgid "designation"
 msgstr "désignation"
 
@@ -471,7 +471,7 @@ msgstr "référence facture"
 msgid "bill date"
 msgstr "date facture"
 
-#: models.py:1321 views_storage.py:349
+#: models.py:1321 views_storage.py:350
 msgid "total amount"
 msgstr "montant total"
 
@@ -480,7 +480,7 @@ msgstr "montant total"
 msgid "Article %s is not stockable"
 msgstr "L'article %s est en non stockable"
 
-#: models.py:1396 models.py:1402 views_storage.py:226
+#: models.py:1396 models.py:1402 views_storage.py:227
 msgid "storage sheet"
 msgstr "bordereau de stockage"
 
@@ -722,11 +722,11 @@ msgstr "Modifier une facture"
 msgid "Show bill"
 msgstr "Voir une facture"
 
-#: views.py:211 views_storage.py:134
+#: views.py:211 views_storage.py:135
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: views.py:217 views_storage.py:140
+#: views.py:217 views_storage.py:141
 #, python-format
 msgid "Do you want validate '%s'?"
 msgstr "Voulez-vous valider '%s' ?"
@@ -837,7 +837,7 @@ msgstr "Articles"
 msgid "Only activate"
 msgstr "Seulement les actifs"
 
-#: views.py:546 views_storage.py:521
+#: views.py:546 views_storage.py:522
 msgid "All"
 msgstr "Tous"
 
@@ -849,7 +849,7 @@ msgstr "Voir un article"
 msgid "with stock"
 msgstr "avec stock"
 
-#: views.py:600 views_storage.py:87
+#: views.py:600 views_storage.py:88
 msgid "Search"
 msgstr "Recherche"
 
@@ -1186,7 +1186,7 @@ msgstr "Définissez les paramètres du facturier."
 msgid "Configuration of vat"
 msgstr "Configurez votre gestion de la TVA."
 
-#: views_storage.py:51
+#: views_storage.py:52
 msgid "Manage of storage"
 msgstr ""
 "Ensemble d'actions vous permettant de gérer un stock :{[br/]}{[ul]}{[li]}"
@@ -1194,153 +1194,170 @@ msgstr ""
 "espaces de stockage.{[/li]}{[li]}Réaliser simplement des entrées et des "
 "sorties de stock.{[/li]}{[/ul]}"
 
-#: views_storage.py:61
+#: views_storage.py:62
 msgid "Management of storage sheet list"
 msgstr "Gestion des bordereaux de stockage"
 
-#: views_storage.py:66
+#: views_storage.py:67
 msgid "Storage sheet"
 msgstr "Bordereaux de stockage"
 
-#: views_storage.py:93
+#: views_storage.py:94
 msgid "Search storage sheet"
 msgstr "Rechercher un bordereau de stockage"
 
-#: views_storage.py:103 views_storage.py:489
+#: views_storage.py:104 views_storage.py:490
 msgid "Add storage sheet"
 msgstr "Ajouter un bordereau de stockage"
 
-#: views_storage.py:104 views_storage.py:490
+#: views_storage.py:105 views_storage.py:491
 msgid "Modify storage sheet"
 msgstr "Modifier un bordereau de stockage"
 
-#: views_storage.py:110
+#: views_storage.py:111
 msgid "Show storage sheet"
 msgstr "Voir un bordereau de stockage"
 
-#: views_storage.py:122
+#: views_storage.py:123
 msgid "Delete storage sheet"
 msgstr "Supprimer un bordereau de stockage"
 
-#: views_storage.py:147
+#: views_storage.py:148
 msgid "target area"
 msgstr "lieu cible"
 
-#: views_storage.py:171
+#: views_storage.py:172
 msgid "Print storage sheet"
 msgstr "Impression d'un bordereau de stockage"
 
-#: views_storage.py:186
+#: views_storage.py:187
 msgid "Add storage detail"
 msgstr "Ajouter un détail"
 
-#: views_storage.py:187
+#: views_storage.py:188
 msgid "Modify storage detail"
 msgstr "Modifier un détail"
 
-#: views_storage.py:196
+#: views_storage.py:197
 msgid "Delete storage detail"
 msgstr "Supprimer un détail"
 
-#: views_storage.py:200
+#: views_storage.py:201
 msgid "Import"
 msgstr "Import"
 
-#: views_storage.py:202
+#: views_storage.py:203
 msgid "Storage detail import"
 msgstr "Import de détail de stock"
 
-#: views_storage.py:230
+#: views_storage.py:231
 msgid "Situation of storage"
 msgstr "Situation de stock"
 
-#: views_storage.py:235
+#: views_storage.py:236
 msgid "Situation"
 msgstr "Situation"
 
-#: views_storage.py:280
+#: views_storage.py:281
 msgid "hide articles without quantity"
 msgstr "cacher les articles sans quantité"
 
-#: views_storage.py:342
+#: views_storage.py:343
 msgid "count of storage"
 msgstr "nombre de stockages"
 
-#: views_storage.py:356
+#: views_storage.py:357
 msgid "Print situation"
 msgstr "Impression de la situation"
 
-#: views_storage.py:364
+#: views_storage.py:365
 msgid "Historic of storage"
 msgstr "Historique de stockage"
 
-#: views_storage.py:369
+#: views_storage.py:370
 msgid "Historic"
 msgstr "Historique"
 
-#: views_storage.py:394
+#: views_storage.py:395
 msgid "begin date"
 msgstr "date de début"
 
-#: views_storage.py:401
+#: views_storage.py:402
 msgid "end date"
 msgstr "date de fin"
 
-#: views_storage.py:448
+#: views_storage.py:449
 msgid "Print historic"
 msgstr "Impression de l'historique"
 
-#: views_storage.py:463
+#: views_storage.py:464
 msgid "Management of inventory sheet list"
 msgstr "Gestion des bordereaux d'inventaire"
 
-#: views_storage.py:468
+#: views_storage.py:469
 msgid "Inventory sheet"
 msgstr "Bordereau d'inventaire"
 
-#: views_storage.py:496
+#: views_storage.py:497
 msgid "Show inventory sheet"
 msgstr "Voir un bordereau d'inventaire"
 
-#: views_storage.py:521
+#: views_storage.py:522
 msgid "Only the non-entered"
 msgstr "Seulement ceux non-saisis"
 
-#: views_storage.py:521
+#: views_storage.py:522
 msgid "Only the entered"
 msgstr "Seulement ceux saisis"
 
-#: views_storage.py:521
+#: views_storage.py:522
 msgid "Only with quantity"
 msgstr "Seulement ceux avec une quantité actuellement"
 
-#: views_storage.py:524
+#: views_storage.py:525
 msgid "Filter by elements"
 msgstr "Filtrer par éléments"
 
-#: views_storage.py:578
+#: views_storage.py:579
 msgid "Delete inventory sheet"
 msgstr "Supprimer un bordereau d'inventaire"
 
-#: views_storage.py:593
+#: views_storage.py:594
 msgid "Print inventory sheet"
 msgstr "Impression d'un bordereau d'inventaire"
-
-#: views_storage.py:607
-msgid "Add inventory detail"
-msgstr "Ajouter un détail d'inventaire"
 
 #: views_storage.py:608
 msgid "Modify inventory detail"
 msgstr "Modifier un détail d'inventaire"
 
-#: views_storage.py:611
+#: views_storage.py:616
 msgid "Copy"
-msgstr "Copie"
+msgstr "Copier"
 
-#: views_storage.py:617
+#: views_storage.py:622
 msgid "Copy quantity of inventory detail"
 msgstr "Copier la quantité du détail d'inventaire"
+
+#: views_storage.py:629
+msgid "Finalize"
+msgstr "Finaliser"
+
+#: views_storage.py:635
+msgid "Finalize quantity non-entered of inventory detail"
+msgstr "Finalise la quantité non-saisie du détail d'inventaire"
+
+#: views_storage.py:638
+msgid ""
+"This action will report current quantity to article whose non-enterd.{[br/]}"
+"Do you want to do this action ?"
+msgstr ""
+"Cet action reportera les quantités actuelles du stock sur les articles non "
+"encore saisie.{[br/]}Voulez-vous réaliser cette action ?"
+
+#: views_storage.py:644
+#, python-format
+msgid "%d articles are reported."
+msgstr "%d articles ont été reportés."
 
 #: views_summary.py:49
 msgid "View your invoices."
@@ -1353,8 +1370,3 @@ msgstr "Vos factures"
 #: views_summary.py:69
 msgid "Payment"
 msgstr "Paiement"
-
-#, fuzzy
-#~| msgid "Amount"
-#~ msgid "count"
-#~ msgstr "Montant"

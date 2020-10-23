@@ -1165,10 +1165,11 @@ class EntryAccount(LucteriosModel):
                                                                                                                                                      'debit': get_amount_from_format_devise(credit_rest, 7),
                                                                                                                                                      'info': self.get_description()})
             if Params.getvalue("accounting-needcost"):
-                enties_nocost = self.entrylineaccount_set.filter(Q(account__type_of_account__in=(ChartsAccount.TYPE_REVENUE,
-                                                                                                 ChartsAccount.TYPE_EXPENSE,
-                                                                                                 ChartsAccount.TYPE_CONTRAACCOUNTS)) &
-                                                                 Q(costaccounting__isnull=True)).distinct()
+                nocost_filter = Q(account__type_of_account__in=(ChartsAccount.TYPE_REVENUE,
+                                                                ChartsAccount.TYPE_EXPENSE,
+                                                                ChartsAccount.TYPE_CONTRAACCOUNTS))
+                nocost_filter &= Q(costaccounting__isnull=True)
+                enties_nocost = self.entrylineaccount_set.filter(nocost_filter).distinct()
                 if enties_nocost.count() > 0:
                     raise LucteriosException(IMPORTANT, _("Cost accounting is mandatory !"))
             self.close = True

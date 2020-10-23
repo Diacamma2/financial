@@ -33,13 +33,13 @@ from diacamma.invoice.test_tools import InvoiceTest, default_area, default_artic
     default_categories
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr
 from diacamma.payoff.test_tools import default_bankaccount_fr
+from diacamma.payoff.views import SupportingThirdValid
 from diacamma.invoice.views import ArticleShow, BillAddModify, DetailAddModify, BillShow, BillTransition, ArticleList
 from diacamma.invoice.views_storage import StorageSheetList, StorageSheetAddModify, StorageSheetShow, StorageDetailAddModify,\
     StorageSheetTransition, StorageDetailImport, StorageDetailDel,\
     StorageSituation, StorageHistoric, InventorySheetList,\
     InventorySheetAddModify, InventorySheetShow, InventoryDetailCopy,\
-    InventorySheetTransition, InventoryDetailModify
-from diacamma.payoff.views import SupportingThirdValid
+    InventorySheetTransition, InventoryDetailModify, InventoryDetailFinalize
 from diacamma.invoice.models import Article
 
 
@@ -979,7 +979,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'storagearea', 'Lieu 2')
         self.assert_json_equal('LABELFORM', 'comment', "blablabla")
         self.assert_count_equal('inventorydetail', 4)
-        self.assert_count_equal('#inventorydetail/actions', 2)
+        self.assert_count_equal('#inventorydetail/actions', 3)
         self.assert_json_equal('', 'inventorydetail/@0/article', "ABC1")
         self.assert_json_equal('', 'inventorydetail/@0/article.designation', "Article 01")
         self.assert_json_equal('', 'inventorydetail/@0/real_quantity_txt', '5,000')
@@ -1028,6 +1028,7 @@ class StorageTest(InvoiceTest):
         self.calljson('/diacamma.invoice/inventorySheetShow', {'inventorysheet': 1, 'enter_mode': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'inventorySheetShow')
         self.assert_count_equal('inventorydetail', 4)
+        self.assert_count_equal('#inventorydetail/actions', 2)
         self.assert_json_equal('', 'inventorydetail/@0/article', "ABC1")
         self.assert_json_equal('', 'inventorydetail/@0/real_quantity_txt', '5,000')
         self.assert_json_equal('', 'inventorydetail/@0/quantity_txt', '5,000')
@@ -1074,7 +1075,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'storagearea', 'Lieu 2')
         self.assert_json_equal('LABELFORM', 'comment', "blablabla")
         self.assert_count_equal('inventorydetail', 4)
-        self.assert_count_equal('#inventorydetail/actions', 2)
+        self.assert_count_equal('#inventorydetail/actions', 3)
         self.assert_json_equal('', 'inventorydetail/@0/article', "ABC1")
         self.assert_json_equal('', 'inventorydetail/@0/real_quantity_txt', '5,000')
         self.assert_json_equal('', 'inventorydetail/@0/quantity_txt', None)
@@ -1167,3 +1168,105 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'storagedetail/@0/quantity_txt', "-1,000")
         self.assert_json_equal('', 'storagedetail/@1/article', "ABC2")
         self.assert_json_equal('', 'storagedetail/@1/quantity_txt', "-2,0")
+
+    def test_inventory_finalize(self):
+        insert_storage(True)
+        self.factory.xfer = StorageSheetList()
+        self.calljson('/diacamma.invoice/storageSheetList', {'status': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'storageSheetList')
+        self.assert_count_equal('storagesheet', 4)
+
+        self.factory.xfer = InventorySheetAddModify()
+        self.calljson('/diacamma.invoice/inventorySheetAddModify', {'SAVE': 'YES', 'storagearea': 2, 'comment': 'blablabla', 'date': '2015-07-13'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'inventorySheetAddModify')
+
+        self.factory.xfer = InventoryDetailModify()
+        self.calljson('/diacamma.invoice/inventoryDetailModify', {'SAVE': 'YES', 'inventorysheet': 1, 'inventorydetail': '1', 'quantity': 4.0}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'inventoryDetailModify')
+
+        self.factory.xfer = InventoryDetailModify()
+        self.calljson('/diacamma.invoice/inventoryDetailModify', {'SAVE': 'YES', 'inventorysheet': 1, 'inventorydetail': '2', 'quantity': 8.0}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'inventoryDetailModify')
+
+        self.factory.xfer = InventorySheetShow()
+        self.calljson('/diacamma.invoice/inventorySheetShow', {'inventorysheet': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'inventorySheetShow')
+        self.assert_json_equal('LABELFORM', 'date', '2015-07-13')
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'storagearea', 'Lieu 2')
+        self.assert_json_equal('LABELFORM', 'comment', "blablabla")
+        self.assert_count_equal('inventorydetail', 3)
+        self.assert_count_equal('#inventorydetail/actions', 3)
+        self.assert_json_equal('', 'inventorydetail/@0/article', "ABC1")
+        self.assert_json_equal('', 'inventorydetail/@0/real_quantity_txt', '5,000')
+        self.assert_json_equal('', 'inventorydetail/@0/quantity_txt', '4,000')
+        self.assert_json_equal('', 'inventorydetail/@1/article', "ABC2")
+        self.assert_json_equal('', 'inventorydetail/@1/real_quantity_txt', "10,0")
+        self.assert_json_equal('', 'inventorydetail/@1/quantity_txt', '8,0')
+        self.assert_json_equal('', 'inventorydetail/@2/article', "ABC4")
+        self.assert_json_equal('', 'inventorydetail/@2/real_quantity_txt', "15")
+        self.assert_json_equal('', 'inventorydetail/@2/quantity_txt', None)
+        self.assertEqual(len(self.json_actions), 3)
+
+        Article.objects.create(reference='ABC6', designation="Article 06",
+                               price="6.89", unit="", isdisabled=False, accountposting_id=4, vat=None, stockable=1, qtyDecimal=0)
+
+        self.factory.xfer = InventorySheetShow()
+        self.calljson('/diacamma.invoice/inventorySheetShow', {'inventorysheet': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'inventorySheetShow')
+        self.assert_count_equal('inventorydetail', 3)
+
+        self.factory.xfer = InventorySheetAddModify()
+        self.calljson('/diacamma.invoice/inventorySheetAddModify', {'SAVE': 'YES', 'inventorysheet': 1, 'storagearea': 2, 'comment': 'blablabla', 'date': '2015-07-13'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'inventorySheetAddModify')
+
+        self.factory.xfer = InventorySheetShow()
+        self.calljson('/diacamma.invoice/inventorySheetShow', {'inventorysheet': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'inventorySheetShow')
+        self.assert_json_equal('LABELFORM', 'date', '2015-07-13')
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'storagearea', 'Lieu 2')
+        self.assert_json_equal('LABELFORM', 'comment', "blablabla")
+        self.assert_count_equal('inventorydetail', 4)
+        self.assert_count_equal('#inventorydetail/actions', 3)
+        self.assert_json_equal('', 'inventorydetail/@0/article', "ABC1")
+        self.assert_json_equal('', 'inventorydetail/@0/real_quantity_txt', '5,000')
+        self.assert_json_equal('', 'inventorydetail/@0/quantity_txt', '4,000')
+        self.assert_json_equal('', 'inventorydetail/@1/article', "ABC2")
+        self.assert_json_equal('', 'inventorydetail/@1/real_quantity_txt', "10,0")
+        self.assert_json_equal('', 'inventorydetail/@1/quantity_txt', '8,0')
+        self.assert_json_equal('', 'inventorydetail/@2/article', "ABC4")
+        self.assert_json_equal('', 'inventorydetail/@2/real_quantity_txt', "15")
+        self.assert_json_equal('', 'inventorydetail/@2/quantity_txt', None)
+        self.assert_json_equal('', 'inventorydetail/@3/article', "ABC6")
+        self.assert_json_equal('', 'inventorydetail/@3/real_quantity_txt', "0")
+        self.assert_json_equal('', 'inventorydetail/@3/quantity_txt', None)
+        self.assertEqual(len(self.json_actions), 3)
+
+        self.factory.xfer = InventoryDetailFinalize()
+        self.calljson('/diacamma.invoice/inventoryDetailFinalize', {'CONFIRME': 'YES', 'inventorysheet': 1}, False)
+        self.assert_observer('core.dialogbox', 'diacamma.invoice', 'inventoryDetailFinalize')
+        self.assert_json_equal('', 'text', '2 articles ont été reportés.')
+
+        self.factory.xfer = InventorySheetShow()
+        self.calljson('/diacamma.invoice/inventorySheetShow', {'inventorysheet': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'inventorySheetShow')
+        self.assert_json_equal('LABELFORM', 'date', '2015-07-13')
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'storagearea', 'Lieu 2')
+        self.assert_json_equal('LABELFORM', 'comment', "blablabla")
+        self.assert_count_equal('inventorydetail', 4)
+        self.assert_count_equal('#inventorydetail/actions', 2)
+        self.assert_json_equal('', 'inventorydetail/@0/article', "ABC1")
+        self.assert_json_equal('', 'inventorydetail/@0/real_quantity_txt', '5,000')
+        self.assert_json_equal('', 'inventorydetail/@0/quantity_txt', '4,000')
+        self.assert_json_equal('', 'inventorydetail/@1/article', "ABC2")
+        self.assert_json_equal('', 'inventorydetail/@1/real_quantity_txt', "10,0")
+        self.assert_json_equal('', 'inventorydetail/@1/quantity_txt', '8,0')
+        self.assert_json_equal('', 'inventorydetail/@2/article', "ABC4")
+        self.assert_json_equal('', 'inventorydetail/@2/real_quantity_txt', "15")
+        self.assert_json_equal('', 'inventorydetail/@2/quantity_txt', "15")
+        self.assert_json_equal('', 'inventorydetail/@3/article', "ABC6")
+        self.assert_json_equal('', 'inventorydetail/@3/real_quantity_txt', "0")
+        self.assert_json_equal('', 'inventorydetail/@3/quantity_txt', "0")
+        self.assertEqual(len(self.json_actions), 4)

@@ -34,11 +34,11 @@ from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, ActionsManag
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, \
     TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE,\
     action_list_sorted, TITLE_CLOSE
-
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompGrid, XferCompSelect, XferCompCheckList, \
     GRID_ORDER, XferCompDate, XferCompEdit, XferCompImage, XferCompCheck
 from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
+from lucterios.framework.error import LucteriosException, GRAVE
 from lucterios.CORE.xferprint import XferPrintAction
 from lucterios.CORE.views import ObjectImport
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
@@ -593,7 +593,7 @@ class InventorySheetPrint(XferPrintAction):
     caption = _("Print inventory sheet")
     icon = "report.png"
     model = InventorySheet
-    field_id = 'bill'
+    field_id = 'inventorysheet'
     action_class = InventorySheetShow
     with_text_export = True
 
@@ -604,8 +604,12 @@ class InventoryDetailModify(XferAddEditor):
     icon = "inventorysheet.png"
     model = InventoryDetail
     field_id = 'inventorydetail'
-    caption_add = _("Add inventory detail")
     caption_modify = _("Modify inventory detail")
+
+    def fillresponse(self):
+        if self.item.id is None:
+            raise LucteriosException(GRAVE, "insert InventoryDetail")
+        XferAddEditor.fillresponse(self)
 
 
 @ActionsManage.affect_grid(_('Copy'), "images/clone.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING))
@@ -619,3 +623,21 @@ class InventoryDetailCopy(XferContainerAcknowledge):
     def fillresponse(self):
         for item in self.items:
             item.copy_value()
+
+
+@ActionsManage.affect_grid(_('Finalize'), "images/upload.png", unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING) and not xfer.old_item.can_valid())
+@MenuManage.describ('invoice.add_inventorysheet')
+class InventoryDetailFinalize(XferContainerAcknowledge):
+    icon = "inventorysheet.png"
+    model = InventoryDetail
+    field_id = 'inventorydetail'
+    caption = _("Finalize quantity non-entered of inventory detail")
+
+    def fillresponse(self, inventorysheet=0):
+        if self.confirme(_("This action will report current quantity to article whose non-enterd.{[br/]}Do you want to do this action ?")):
+            nb_article = 0
+            sheet = InventorySheet.objects.get(id=inventorysheet)
+            for detail in sheet.inventorydetail_set.filter(quantity__isnull=True):
+                detail.copy_value()
+                nb_article += 1
+            self.message(_("%d articles are reported.") % nb_article)
