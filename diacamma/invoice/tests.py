@@ -1050,7 +1050,7 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.print', 'diacamma.invoice', 'billStatisticPrint')
         csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 69, str(content_csv))
+        self.assertEqual(len(content_csv), 57, str(content_csv))
         self.assertEqual(content_csv[1].strip(), '"Impression des statistiques"')
         self.assertEqual(content_csv[14].strip(), '"total";"351,22 €";"100,00 %";')
         self.assertEqual(content_csv[22].strip(), '"total";"351,22 €";"---";"---";"100,00 %";')
