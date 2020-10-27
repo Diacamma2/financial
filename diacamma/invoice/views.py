@@ -304,10 +304,13 @@ parent.get('print_sep').setEnabled(!is_persitent);
         withpayoff = self.getparam('withpayoff', False)
         sendemail = self.getparam('sendemail', False)
         if (transition != 'valid') or (len(self.items) > 1):
-            XferTransition.fill_confirm(self, transition, trans)
             if transition == 'undo':
+                if self.confirme(_("Do you want to undo this bill ?")):
+                    self._confirmed(transition)
                 if self.trans_result is not None:
                     self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: self.trans_result})
+            else:
+                XferTransition.fill_confirm(self, transition, trans)
         elif self.getparam("CONFIRME") is None:
             self.fill_dlg_payoff(withpayoff, sendemail)
         else:

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-23 15:42+0000\n"
-"PO-Revision-Date: 2020-10-15 14:29+0200\n"
+"POT-Creation-Date: 2020-10-27 19:09+0000\n"
+"PO-Revision-Date: 2020-10-27 20:09+0100\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
 "Language: fr\n"
@@ -28,23 +28,23 @@ msgstr "Facturier Diacamma"
 msgid "image"
 msgstr "image"
 
-#: editors.py:133 views_storage.py:52
+#: editors.py:133 views_storage.py:51
 msgid "Storage"
 msgstr "Stockage"
 
-#: editors.py:135 views_storage.py:307
+#: editors.py:135 views_storage.py:306
 msgid "Area"
 msgstr "Lieu de stockage"
 
-#: editors.py:136 views_storage.py:308
+#: editors.py:136 views_storage.py:307
 msgid "Quantity"
 msgstr "Quantité"
 
-#: editors.py:137 views_storage.py:309
+#: editors.py:137 views_storage.py:308
 msgid "Amount"
 msgstr "Montant"
 
-#: editors.py:138 views_storage.py:310
+#: editors.py:138 views_storage.py:309
 msgid "Mean price"
 msgstr "Prix moyen"
 
@@ -73,25 +73,25 @@ msgstr "total HT"
 msgid "price incl. taxes"
 msgstr "prix TTC"
 
-#: editors.py:195 editors.py:197 models.py:507 models.py:1097
+#: editors.py:195 editors.py:197 models.py:507 models.py:1099
 #: printmodel/Bill_0001.py:138 views.py:153
 msgid "total incl. taxes"
 msgstr "total TTC"
 
-#: editors.py:197 models.py:506 models.py:1098
+#: editors.py:197 models.py:506 models.py:1100
 msgid "VTA sum"
 msgstr "total TVA"
 
-#: editors.py:226 models.py:299 models.py:1317
+#: editors.py:226 models.py:299 models.py:1319
 msgid "provider"
 msgstr "fournisseur"
 
-#: editors.py:242 models.py:217 printmodel/Article_0001.py:41 views.py:574
-#: views_storage.py:291 views_storage.py:429
+#: editors.py:242 models.py:217 printmodel/Article_0001.py:41 views.py:577
+#: views_storage.py:290 views_storage.py:428
 msgid "categories"
 msgstr "catégories"
 
-#: editors.py:251 views.py:557 views_storage.py:274 views_storage.py:419
+#: editors.py:251 views.py:560 views_storage.py:273 views_storage.py:418
 msgid "ref./designation"
 msgstr "réf./désignation"
 
@@ -103,7 +103,7 @@ msgstr "Modifier le filtrage pour afficher une liste d'articles utilisables."
 msgid "max quantity"
 msgstr "quantité max."
 
-#: models.py:68 models.py:87 models.py:112 models.py:170 models.py:1500
+#: models.py:68 models.py:87 models.py:112 models.py:170 models.py:1502
 msgid "name"
 msgstr "nom"
 
@@ -127,9 +127,9 @@ msgstr "TVA"
 msgid "VATs"
 msgstr "TVAs"
 
-#: models.py:88 models.py:113 models.py:209 models.py:1077
+#: models.py:88 models.py:113 models.py:209 models.py:1079
 #: printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0001.py:131 printmodel/Bill_0002.py:148 views_storage.py:306
+#: printmodel/Bill_0001.py:131 printmodel/Bill_0002.py:148 views_storage.py:305
 msgid "designation"
 msgstr "désignation"
 
@@ -149,9 +149,9 @@ msgstr "Lieu de stockage"
 msgid "Storage areas"
 msgstr "Lieux de stockage"
 
-#: models.py:137 models.py:438 models.py:444 models.py:1076 models.py:1100
-#: models.py:1403 models.py:1410 models.py:1689 printmodel/Bill_0001.py:130
-#: printmodel/Bill_0002.py:147 views.py:409 views.py:790
+#: models.py:137 models.py:438 models.py:444 models.py:1078 models.py:1102
+#: models.py:1405 models.py:1412 models.py:1691 printmodel/Bill_0001.py:130
+#: printmodel/Bill_0002.py:147 views.py:412 views.py:793
 msgid "article"
 msgstr "article"
 
@@ -200,17 +200,17 @@ msgid "stockable & no marketable"
 msgstr "stockable & non vendable"
 
 #: models.py:208 printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0002.py:159 views.py:976
+#: printmodel/Bill_0002.py:159 views.py:979
 msgid "reference"
 msgstr "référence"
 
-#: models.py:210 models.py:222 models.py:1078 models.py:1089
+#: models.py:210 models.py:222 models.py:1080 models.py:1091
 #: printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
 #: printmodel/Bill_0001.py:132 printmodel/Bill_0002.py:149
 msgid "price"
 msgstr "prix"
 
-#: models.py:212 models.py:1080
+#: models.py:212 models.py:1082
 msgid "unit"
 msgstr "unité"
 
@@ -276,8 +276,8 @@ msgstr "Fournisseurs"
 msgid "quotation"
 msgstr "devis"
 
-#: models.py:480 models.py:1069 models.py:1075 printmodel/Bill_0001.py:31
-#: views.py:393 views.py:942 views.py:972
+#: models.py:480 models.py:1071 models.py:1077 printmodel/Bill_0001.py:31
+#: views.py:396 views.py:945 views.py:975
 msgid "bill"
 msgstr "facture"
 
@@ -289,11 +289,11 @@ msgstr "avoir"
 msgid "receipt"
 msgstr "reçu"
 
-#: models.py:489 models.py:490 models.py:1304 models.py:1610
+#: models.py:489 models.py:490 models.py:1306 models.py:1612
 msgid "building"
 msgstr "en construction"
 
-#: models.py:489 models.py:490 models.py:1304 models.py:1610
+#: models.py:489 models.py:490 models.py:1306 models.py:1612
 msgid "valid"
 msgstr "validé"
 
@@ -317,16 +317,16 @@ msgstr "type de facture"
 msgid "numeros"
 msgstr "numéro"
 
-#: models.py:496 models.py:1312 models.py:1612 printmodel/Bill_0002.py:157
-#: views.py:975
+#: models.py:496 models.py:1314 models.py:1614 printmodel/Bill_0002.py:157
+#: views.py:978
 msgid "date"
 msgstr "date"
 
-#: models.py:497 models.py:1314 models.py:1614
+#: models.py:497 models.py:1316 models.py:1616
 msgid "comment"
 msgstr "commentaire"
 
-#: models.py:498 models.py:1315 models.py:1615 views.py:943
+#: models.py:498 models.py:1317 models.py:1617 views.py:946
 msgid "status"
 msgstr "statut"
 
@@ -338,8 +338,8 @@ msgstr "écriture"
 msgid "parent"
 msgstr "parent"
 
-#: models.py:503 models.py:505 models.py:907 models.py:945 models.py:978
-#: models.py:1005 models.py:1091 models.py:1096 views.py:944
+#: models.py:503 models.py:505 models.py:909 models.py:947 models.py:980
+#: models.py:1007 models.py:1093 models.py:1098 views.py:947
 msgid "total"
 msgstr "total"
 
@@ -361,7 +361,7 @@ msgstr "TVA %s %%"
 msgid "no detail"
 msgstr "pas de détail"
 
-#: models.py:688 models.py:1369
+#: models.py:688 models.py:1371
 #, python-format
 msgid "Article %s is not sufficiently stocked"
 msgstr "L'article %s est en quantité insuffisante"
@@ -370,7 +370,7 @@ msgstr "L'article %s est en quantité insuffisante"
 msgid "article has code account unknown!"
 msgstr "au moins un article a un compte inconnu !"
 
-#: models.py:715 models.py:1354 models.py:1637
+#: models.py:715 models.py:1356 models.py:1639
 #, python-format
 msgid "\"%s\" cannot be deleted!"
 msgstr "\"%s\" ne peut pas être supprimé !"
@@ -387,7 +387,7 @@ msgstr "le compte de TVA n'est pas défini !"
 msgid "Error in accounting generator!"
 msgstr "Erreur sur la génération comptable !"
 
-#: models.py:822 models.py:1372 models.py:1649
+#: models.py:822 models.py:1374 models.py:1651
 msgid "Validate"
 msgstr "Valider"
 
@@ -403,233 +403,233 @@ msgstr "Défaire"
 msgid "Cancel"
 msgstr "Annuler"
 
-#: models.py:1012 models.py:1018
+#: models.py:1014 models.py:1020
 msgid "This item can't be validated!"
 msgstr "Cet élément ne peut pas être validé !"
 
-#: models.py:1058
+#: models.py:1060
 msgid "Payoff not deletable !"
 msgstr "Règlement non supprimable !"
 
-#: models.py:1070
+#: models.py:1072
 msgid "bills"
 msgstr "factures"
 
-#: models.py:1081 models.py:1406 models.py:1408
+#: models.py:1083 models.py:1408 models.py:1410
 msgid "quantity"
 msgstr "quantité"
 
-#: models.py:1083 models.py:1090 models.py:1093 models.py:1094
+#: models.py:1085 models.py:1092 models.py:1095 models.py:1096
 msgid "reduce"
 msgstr "réduction"
 
-#: models.py:1085
+#: models.py:1087
 msgid "vta rate"
 msgstr "taux de TVA"
 
-#: models.py:1087 models.py:1313 models.py:1613
+#: models.py:1089 models.py:1315 models.py:1615
 msgid "storage area"
 msgstr "lieu de stockage"
 
-#: models.py:1157
+#: models.py:1159
 msgid "reduce amount"
 msgstr "réduction (montant)"
 
-#: models.py:1158
+#: models.py:1160
 msgid "reduce ratio"
 msgstr "réduction (ratio)"
 
-#: models.py:1296
+#: models.py:1298
 msgid "detail"
 msgstr "détail"
 
-#: models.py:1297
+#: models.py:1299
 msgid "details"
 msgstr "détails"
 
-#: models.py:1309 models.py:1616
+#: models.py:1311 models.py:1618
 msgid "stock receipt"
 msgstr "réception de stock"
 
-#: models.py:1309 models.py:1617
+#: models.py:1311 models.py:1619
 msgid "stock exit"
 msgstr "sortie de stock"
 
-#: models.py:1309
+#: models.py:1311
 msgid "stock transfer"
 msgstr "transfert de stock"
 
-#: models.py:1311
+#: models.py:1313
 msgid "sheet type"
 msgstr "type de bordereau"
 
-#: models.py:1318
+#: models.py:1320
 msgid "bill reference"
 msgstr "référence facture"
 
-#: models.py:1319
+#: models.py:1321
 msgid "bill date"
 msgstr "date facture"
 
-#: models.py:1321 views_storage.py:350
+#: models.py:1323 views_storage.py:349
 msgid "total amount"
 msgstr "montant total"
 
-#: models.py:1367
+#: models.py:1369
 #, python-format
 msgid "Article %s is not stockable"
 msgstr "L'article %s est en non stockable"
 
-#: models.py:1396 models.py:1402 views_storage.py:227
+#: models.py:1398 models.py:1404 views_storage.py:226
 msgid "storage sheet"
 msgstr "bordereau de stockage"
 
-#: models.py:1397
+#: models.py:1399
 msgid "storage sheets"
 msgstr "bordereaux de stockage"
 
-#: models.py:1404
+#: models.py:1406
 msgid "buying price"
 msgstr "prix d'achat"
 
-#: models.py:1489
+#: models.py:1491
 msgid "storage detail"
 msgstr "détail de stock"
 
-#: models.py:1490
+#: models.py:1492
 msgid "storage details"
 msgstr "détails de stock"
 
-#: models.py:1498
+#: models.py:1500
 msgid "by value"
 msgstr "par valeur"
 
-#: models.py:1498
+#: models.py:1500
 msgid "by percentage"
 msgstr "par pourcentage"
 
-#: models.py:1498
+#: models.py:1500
 msgid "by overall percentage sold"
 msgstr "par pourcentage global vendu"
 
-#: models.py:1501
+#: models.py:1503
 msgid "category"
 msgstr "catégorie"
 
-#: models.py:1502 printmodel/Bill_0002.py:158 views.py:828
+#: models.py:1504 printmodel/Bill_0002.py:158 views.py:831
 msgid "mode"
 msgstr "mode"
 
-#: models.py:1503 models.py:1507 views.py:774 views.py:791 views.py:812
-#: views.py:831 views.py:974
+#: models.py:1505 models.py:1509 views.py:777 views.py:794 views.py:815
+#: views.py:834 views.py:977
 msgid "amount"
 msgstr "montant"
 
-#: models.py:1504
+#: models.py:1506
 msgid "occurency"
 msgstr "occurence"
 
-#: models.py:1505
+#: models.py:1507
 msgid "filter criteria"
 msgstr "critère de filtre"
 
-#: models.py:1602
+#: models.py:1604
 msgid "automatic reduce"
 msgstr "réduction automatique"
 
-#: models.py:1603
+#: models.py:1605
 msgid "automatic reduces"
 msgstr "réductions automatiques"
 
-#: models.py:1653
+#: models.py:1655
 msgid "Receipt from inventory"
 msgstr "Entrée d'article suite à inventaire"
 
-#: models.py:1655
+#: models.py:1657
 msgid "Exit from inventory"
 msgstr "Sortie d'article suite à inventaire"
 
-#: models.py:1682 models.py:1688
+#: models.py:1684 models.py:1690
 msgid "inventory sheet"
 msgstr "bordereau d'inventaire"
 
-#: models.py:1683
+#: models.py:1685
 msgid "inventory sheets"
 msgstr "bordereaux d'inventaires"
 
-#: models.py:1690 models.py:1692
+#: models.py:1692 models.py:1694
 msgid "counted quantity"
 msgstr "quantité compté"
 
-#: models.py:1694 models.py:1695
+#: models.py:1696 models.py:1697
 msgid "current quantity"
 msgstr "quantité actuelle"
 
-#: models.py:1743
+#: models.py:1745
 msgid "inventory detail"
 msgstr "détail d'inventaire"
 
-#: models.py:1744
+#: models.py:1746
 msgid "inventory details"
 msgstr "détails d'inventaire"
 
-#: models.py:1822
+#: models.py:1824
 msgid "invoice-default-sell-account"
 msgstr "compte de vente par défaut"
 
-#: models.py:1824
+#: models.py:1826
 msgid "invoice-reduce-account"
 msgstr "compte de réduction"
 
-#: models.py:1826
+#: models.py:1828
 msgid "invoice-vat-mode"
 msgstr "mode TVA"
 
-#: models.py:1827
+#: models.py:1829
 msgid "invoice-vat-mode.0"
 msgstr "non applicable"
 
-#: models.py:1827
+#: models.py:1829
 msgid "invoice-vat-mode.1"
 msgstr "prix hors taxes"
 
-#: models.py:1827
+#: models.py:1829
 msgid "invoice-vat-mode.2"
 msgstr "prix toutes taxes comprises"
 
-#: models.py:1828
+#: models.py:1830
 msgid "invoice-account-third"
 msgstr "Compte tiers par défaut"
 
-#: models.py:1831
+#: models.py:1833
 msgid "invoice-article-with-picture"
 msgstr "article avec image"
 
-#: models.py:1832
+#: models.py:1834
 msgid "invoice-reduce-with-ratio"
 msgstr "réduction affichée avec %"
 
-#: models.py:1833
+#: models.py:1835
 msgid "invoice-reduce-allow-article-empty"
 msgstr "autoriser les arcticles sans code dans la facture"
 
-#: models.py:1835
+#: models.py:1837
 msgid "# invoice (administrator)"
 msgstr "# facture (administrateur)"
 
-#: models.py:1838
+#: models.py:1840
 msgid "# invoice (editor)"
 msgstr "# facture (éditeur)"
 
-#: models.py:1840
+#: models.py:1842
 msgid "# invoice (shower)"
 msgstr "# facture (observateur)"
 
-#: models.py:1843
+#: models.py:1845
 msgid "invoice-status"
 msgstr "facture > statut"
 
-#: models.py:1845
+#: models.py:1847
 msgid "invoice-billtype"
 msgstr "facture > type de facture"
 
@@ -661,7 +661,7 @@ msgstr "total payé"
 msgid "rest to pay"
 msgstr "reste dû"
 
-#: printmodel/Bill_0002.py:31 printmodel/Bill_0002.py:155 views.py:334
+#: printmodel/Bill_0002.py:31 printmodel/Bill_0002.py:155 views.py:337
 msgid "payoff"
 msgstr "règlement"
 
@@ -669,7 +669,7 @@ msgstr "règlement"
 msgid "payoffs"
 msgstr "règlements"
 
-#: views.py:66 views.py:1071 views.py:1096 views.py:1125 views_conf.py:223
+#: views.py:66 views.py:1074 views.py:1099 views.py:1128 views_conf.py:223
 msgid "Invoice"
 msgstr "Facturier"
 
@@ -698,7 +698,7 @@ msgstr "Filtrer sur le type"
 msgid "Management of bill list"
 msgstr "Gestion de liste de factures"
 
-#: views.py:120 views.py:1014
+#: views.py:120 views.py:1017
 msgid "Bill"
 msgstr "Facture"
 
@@ -722,11 +722,11 @@ msgstr "Modifier une facture"
 msgid "Show bill"
 msgstr "Voir une facture"
 
-#: views.py:211 views_storage.py:135
+#: views.py:211 views_storage.py:134
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: views.py:217 views_storage.py:141
+#: views.py:217 views_storage.py:140
 #, python-format
 msgid "Do you want validate '%s'?"
 msgstr "Voulez-vous valider '%s' ?"
@@ -751,40 +751,44 @@ msgstr "message"
 msgid "Send saved report"
 msgstr "Envoyer le rapport sauvegardé"
 
-#: views.py:337
+#: views.py:308
+msgid "Do you want to undo this bill ?"
+msgstr "Voulez-vous défaire cette facture ?"
+
+#: views.py:340
 msgid "Multi-pay bill"
 msgstr "Multirèglement"
 
-#: views.py:349
+#: views.py:352
 msgid "=> Bill"
 msgstr "=> Facture"
 
-#: views.py:352
+#: views.py:355
 msgid "Convert to bill"
 msgstr "Convertir en facture"
 
-#: views.py:358
+#: views.py:361
 #, python-format
 msgid "Do you want convert '%s' to bill?"
 msgstr "Voulez-vous convertir '%s' en facture?"
 
-#: views.py:370
+#: views.py:373
 msgid "Delete bill"
 msgstr "Supprimer une facture"
 
-#: views.py:373
+#: views.py:376
 msgid "Batch"
 msgstr "En lot"
 
-#: views.py:376
+#: views.py:379
 msgid "Batch bill"
 msgstr "Création de factures en lot"
 
-#: views.py:397
+#: views.py:400
 msgid "thirds"
 msgstr "tiers"
 
-#: views.py:431
+#: views.py:434
 #, python-format
 msgid ""
 "Do you want create this invoice \"%(type)s\" of %(amount)s for %(nbthird)s "
@@ -793,253 +797,253 @@ msgstr ""
 "Voulez-vous créer le justificatif \"%(type)s\" de %(amount)s pour "
 "%(nbthird)s clients ?"
 
-#: views.py:453 views.py:454
+#: views.py:456 views.py:457
 msgid "Send"
 msgstr "Envoyer"
 
-#: views.py:457
+#: views.py:460
 msgid "Send by email"
 msgstr "Envoyer un courriel avec le PDF"
 
-#: views.py:467 views.py:468 views_summary.py:67
+#: views.py:470 views.py:471 views_summary.py:67
 msgid "Print"
 msgstr "Imprimer"
 
-#: views.py:474
+#: views.py:477
 msgid "Print bill"
 msgstr "Imprimer une facture"
 
-#: views.py:490
+#: views.py:493
 msgid "No invoice to print!"
 msgstr "Pas de facture à imprimer !"
 
-#: views.py:500
+#: views.py:503
 msgid "Add detail"
 msgstr "Ajouter un détail"
 
-#: views.py:501
+#: views.py:504
 msgid "Modify detail"
 msgstr "Modifier un détail"
 
-#: views.py:510
+#: views.py:513
 msgid "Delete detail"
 msgstr "Supprimer un détail"
 
-#: views.py:513
+#: views.py:516
 msgid "Management of article list"
 msgstr "Gestion de la liste d'articles"
 
-#: views.py:518 views.py:851
+#: views.py:521 views.py:854
 msgid "Articles"
 msgstr "Articles"
 
-#: views.py:546
+#: views.py:549
 msgid "Only activate"
 msgstr "Seulement les actifs"
 
-#: views.py:546 views_storage.py:522
+#: views.py:549 views_storage.py:521
 msgid "All"
 msgstr "Tous"
 
-#: views.py:549
+#: views.py:552
 msgid "Show articles"
 msgstr "Voir un article"
 
-#: views.py:564
+#: views.py:567
 msgid "with stock"
 msgstr "avec stock"
 
-#: views.py:600 views_storage.py:88
+#: views.py:603 views_storage.py:87
 msgid "Search"
 msgstr "Recherche"
 
-#: views.py:609
+#: views.py:612
 msgid "Print articles"
 msgstr "Impression d'articles"
 
-#: views.py:644
+#: views.py:647
 msgid "Label articles"
 msgstr "Étiquette d'article"
 
-#: views.py:678
+#: views.py:681
 msgid "Search article"
 msgstr "Rechercher un article"
 
-#: views.py:683
+#: views.py:686
 msgid "Merge"
 msgstr "Fusion"
 
-#: views.py:685
+#: views.py:688
 msgid "duplicate"
 msgstr "dupliquer"
 
-#: views.py:692
+#: views.py:695
 msgid "Show article"
 msgstr "Voir un article"
 
-#: views.py:705
+#: views.py:708
 msgid "Add article"
 msgstr "Ajouter un article"
 
-#: views.py:706
+#: views.py:709
 msgid "Modify article"
 msgstr "Modifier un article"
 
-#: views.py:715
+#: views.py:718
 msgid "Delete article"
 msgstr "Supprimer un article"
 
-#: views.py:725
+#: views.py:728
 msgid "Add provider"
 msgstr "Ajouter un fournisseur"
 
-#: views.py:726
+#: views.py:729
 msgid "Modify provider"
 msgstr "Modifier un fournisseur"
 
-#: views.py:735
+#: views.py:738
 msgid "Delete provider"
 msgstr "Supprimer un fournisseur"
 
-#: views.py:738
+#: views.py:741
 msgid "Statistic of selling"
 msgstr "Statistiques des ventes"
 
-#: views.py:743
+#: views.py:746
 msgid "Statistic"
 msgstr "Statistiques"
 
-#: views.py:754
+#: views.py:757
 #, python-format
 msgid "Statistics in date of %s"
 msgstr "Statistiques en date du %s"
 
-#: views.py:765
+#: views.py:768
 msgid "Without reduction"
 msgstr "Sans réduction"
 
-#: views.py:773
+#: views.py:776
 msgid "customer"
 msgstr "client"
 
-#: views.py:775 views.py:794 views.py:813 views.py:832
+#: views.py:778 views.py:797 views.py:816 views.py:835
 msgid "ratio (%)"
 msgstr "ratio (%)"
 
-#: views.py:792 views.py:830
+#: views.py:795 views.py:833
 msgid "number"
 msgstr "nombre"
 
-#: views.py:793
+#: views.py:796
 msgid "mean"
 msgstr "moyen"
 
-#: views.py:811
+#: views.py:814
 msgid "month"
 msgstr "mois"
 
-#: views.py:829
+#: views.py:832
 msgid "bank account"
 msgstr "compte bancaire"
 
-#: views.py:849
+#: views.py:852
 msgid "Customers"
 msgstr "Clients"
 
-#: views.py:853
+#: views.py:856
 msgid "By month"
 msgstr "Par mois"
 
-#: views.py:856
+#: views.py:859
 msgid "By payoff"
 msgstr "Par règlement"
 
-#: views.py:857
+#: views.py:860
 msgid "Payoff of bills and receipts"
 msgstr "Les règlements des factures et des reçus"
 
-#: views.py:858
+#: views.py:861
 msgid "Payoff of assets"
 msgstr "Règlements des avoirs"
 
-#: views.py:860
+#: views.py:863
 msgid "Quotations"
 msgstr "Devis"
 
-#: views.py:862
+#: views.py:865
 msgid "Statistics of quotation in status \"validated\""
 msgstr "Statistiques des devis en statut \"validés\""
 
-#: views.py:867
+#: views.py:870
 msgid "check"
 msgstr "Contrôler"
 
-#: views.py:874
+#: views.py:877
 msgid "Print statistic"
 msgstr "Impression des statistiques"
 
-#: views.py:898
+#: views.py:901
 msgid "No editable: Payoff assign to many bills."
 msgstr "Non éditable : Règlement affecté à plusieurs factures."
 
-#: views.py:905
+#: views.py:908
 msgid "No editable: Entry not found."
 msgstr "Non éditable: Écriture non trouvée."
 
-#: views.py:915
+#: views.py:918
 msgid "Account checking"
 msgstr "Contrôle comptable"
 
-#: views.py:937
+#: views.py:940
 msgid "Bill with different amount in accounting."
 msgstr "Factures avec des montants différents en comptabilité."
 
-#: views.py:945 views.py:977
+#: views.py:948 views.py:980
 msgid "account amount"
 msgstr "montant comptable"
 
-#: views.py:959 views.py:992 views.py:1007
+#: views.py:962 views.py:995 views.py:1010
 msgid "Entry"
 msgstr "Écriture"
 
-#: views.py:966
+#: views.py:969
 msgid "Payoff with different amount in accounting."
 msgstr "Règlements avec des montants différents en comptabilité."
 
-#: views.py:973
+#: views.py:976
 msgid "payer"
 msgstr "payeur"
 
-#: views.py:999
+#: views.py:1002
 msgid "Entries of account no present in invoice."
 msgstr "Écritures de vente non présentes en facturation."
 
-#: views.py:1016
+#: views.py:1019
 msgid "Payoff"
 msgstr "Règlement"
 
-#: views.py:1018
+#: views.py:1021
 msgid "No bill"
 msgstr "Sans facture"
 
-#: views.py:1026
+#: views.py:1029
 msgid "Print account checking"
 msgstr "Impression de contrôle comptable"
 
-#: views.py:1036
+#: views.py:1039
 msgid "Check auto-reduce"
 msgstr "Contrôle de réduction automatique"
 
-#: views.py:1042
+#: views.py:1045
 msgid "Do you want check auto-reduce ?"
 msgstr "Voulez-vous contrôler les réductions automatiques ?"
 
-#: views.py:1076
+#: views.py:1079
 #, python-format
 msgid "You are %d bills"
 msgstr "Vous avez %d factures sur votre compte"
 
-#: views.py:1102
+#: views.py:1105
 #, python-format
 msgid ""
 "There are %(build)d bills, assets or receipts in building and %(valid)d "
@@ -1047,12 +1051,12 @@ msgid ""
 msgstr ""
 "Il y a %(build)d factures, avoirs ou reçus en création et %(valid)d validés"
 
-#: views.py:1108
+#: views.py:1111
 #, python-format
 msgid "There are %(build)d quotations in building and %(valid)d validated"
 msgstr "Il y a %(build)d devis en création et %(valid)d validés"
 
-#: views.py:1150
+#: views.py:1153
 #, python-format
 msgid ""
 "{[b]}Gross total{[/b]} : %(grosstotal)s - {[b]}total of reduces{[/b]} : "
@@ -1061,15 +1065,15 @@ msgstr ""
 "{[b]}Total brut{[/b]} : %(grosstotal)s - {[b]}total des réductions{[/b]} : "
 "%(reducetotal)s = {[b]}total à règler{[/b]} : %(total)s"
 
-#: views.py:1157
+#: views.py:1160
 msgid "Reduce"
 msgstr "Réduction"
 
-#: views.py:1171
+#: views.py:1174
 msgid "Financial"
 msgstr "Financier"
 
-#: views.py:1175
+#: views.py:1178
 #, python-format
 msgid "There are %(build)d bills in building and %(valid)d validated"
 msgstr "Il y a %(build)d factures en création et %(valid)d validées"
@@ -1186,7 +1190,7 @@ msgstr "Définissez les paramètres du facturier."
 msgid "Configuration of vat"
 msgstr "Configurez votre gestion de la TVA."
 
-#: views_storage.py:52
+#: views_storage.py:51
 msgid "Manage of storage"
 msgstr ""
 "Ensemble d'actions vous permettant de gérer un stock :{[br/]}{[ul]}{[li]}"
@@ -1194,159 +1198,159 @@ msgstr ""
 "espaces de stockage.{[/li]}{[li]}Réaliser simplement des entrées et des "
 "sorties de stock.{[/li]}{[/ul]}"
 
-#: views_storage.py:62
+#: views_storage.py:61
 msgid "Management of storage sheet list"
 msgstr "Gestion des bordereaux de stockage"
 
-#: views_storage.py:67
+#: views_storage.py:66
 msgid "Storage sheet"
 msgstr "Bordereaux de stockage"
 
-#: views_storage.py:94
+#: views_storage.py:93
 msgid "Search storage sheet"
 msgstr "Rechercher un bordereau de stockage"
 
-#: views_storage.py:104 views_storage.py:490
+#: views_storage.py:103 views_storage.py:489
 msgid "Add storage sheet"
 msgstr "Ajouter un bordereau de stockage"
 
-#: views_storage.py:105 views_storage.py:491
+#: views_storage.py:104 views_storage.py:490
 msgid "Modify storage sheet"
 msgstr "Modifier un bordereau de stockage"
 
-#: views_storage.py:111
+#: views_storage.py:110
 msgid "Show storage sheet"
 msgstr "Voir un bordereau de stockage"
 
-#: views_storage.py:123
+#: views_storage.py:122
 msgid "Delete storage sheet"
 msgstr "Supprimer un bordereau de stockage"
 
-#: views_storage.py:148
+#: views_storage.py:147
 msgid "target area"
 msgstr "lieu cible"
 
-#: views_storage.py:172
+#: views_storage.py:171
 msgid "Print storage sheet"
 msgstr "Impression d'un bordereau de stockage"
 
-#: views_storage.py:187
+#: views_storage.py:186
 msgid "Add storage detail"
 msgstr "Ajouter un détail"
 
-#: views_storage.py:188
+#: views_storage.py:187
 msgid "Modify storage detail"
 msgstr "Modifier un détail"
 
-#: views_storage.py:197
+#: views_storage.py:196
 msgid "Delete storage detail"
 msgstr "Supprimer un détail"
 
-#: views_storage.py:201
+#: views_storage.py:200
 msgid "Import"
 msgstr "Import"
 
-#: views_storage.py:203
+#: views_storage.py:202
 msgid "Storage detail import"
 msgstr "Import de détail de stock"
 
-#: views_storage.py:231
+#: views_storage.py:230
 msgid "Situation of storage"
 msgstr "Situation de stock"
 
-#: views_storage.py:236
+#: views_storage.py:235
 msgid "Situation"
 msgstr "Situation"
 
-#: views_storage.py:281
+#: views_storage.py:280
 msgid "hide articles without quantity"
 msgstr "cacher les articles sans quantité"
 
-#: views_storage.py:343
+#: views_storage.py:342
 msgid "count of storage"
 msgstr "nombre de stockages"
 
-#: views_storage.py:357
+#: views_storage.py:356
 msgid "Print situation"
 msgstr "Impression de la situation"
 
-#: views_storage.py:365
+#: views_storage.py:364
 msgid "Historic of storage"
 msgstr "Historique de stockage"
 
-#: views_storage.py:370
+#: views_storage.py:369
 msgid "Historic"
 msgstr "Historique"
 
-#: views_storage.py:395
+#: views_storage.py:394
 msgid "begin date"
 msgstr "date de début"
 
-#: views_storage.py:402
+#: views_storage.py:401
 msgid "end date"
 msgstr "date de fin"
 
-#: views_storage.py:449
+#: views_storage.py:448
 msgid "Print historic"
 msgstr "Impression de l'historique"
 
-#: views_storage.py:464
+#: views_storage.py:463
 msgid "Management of inventory sheet list"
 msgstr "Gestion des bordereaux d'inventaire"
 
-#: views_storage.py:469
+#: views_storage.py:468
 msgid "Inventory sheet"
 msgstr "Bordereau d'inventaire"
 
-#: views_storage.py:497
+#: views_storage.py:496
 msgid "Show inventory sheet"
 msgstr "Voir un bordereau d'inventaire"
 
-#: views_storage.py:522
+#: views_storage.py:521
 msgid "Only the non-entered"
 msgstr "Seulement ceux non-saisis"
 
-#: views_storage.py:522
+#: views_storage.py:521
 msgid "Only the entered"
 msgstr "Seulement ceux saisis"
 
-#: views_storage.py:522
+#: views_storage.py:521
 msgid "Only with quantity"
 msgstr "Seulement ceux avec une quantité actuellement"
 
-#: views_storage.py:525
+#: views_storage.py:524
 msgid "Filter by elements"
 msgstr "Filtrer par éléments"
 
-#: views_storage.py:579
+#: views_storage.py:578
 msgid "Delete inventory sheet"
 msgstr "Supprimer un bordereau d'inventaire"
 
-#: views_storage.py:594
+#: views_storage.py:593
 msgid "Print inventory sheet"
 msgstr "Impression d'un bordereau d'inventaire"
 
-#: views_storage.py:608
+#: views_storage.py:607
 msgid "Modify inventory detail"
 msgstr "Modifier un détail d'inventaire"
 
-#: views_storage.py:616
+#: views_storage.py:615
 msgid "Copy"
 msgstr "Copier"
 
-#: views_storage.py:622
+#: views_storage.py:621
 msgid "Copy quantity of inventory detail"
 msgstr "Copier la quantité du détail d'inventaire"
 
-#: views_storage.py:629
+#: views_storage.py:628
 msgid "Finalize"
 msgstr "Finaliser"
 
-#: views_storage.py:635
+#: views_storage.py:634
 msgid "Finalize quantity non-entered of inventory detail"
 msgstr "Finalise la quantité non-saisie du détail d'inventaire"
 
-#: views_storage.py:638
+#: views_storage.py:637
 msgid ""
 "This action will report current quantity to article whose non-enterd.{[br/]}"
 "Do you want to do this action ?"
@@ -1354,7 +1358,7 @@ msgstr ""
 "Cet action reportera les quantités actuelles du stock sur les articles non "
 "encore saisie.{[br/]}Voulez-vous réaliser cette action ?"
 
-#: views_storage.py:644
+#: views_storage.py:643
 #, python-format
 msgid "%d articles are reported."
 msgstr "%d articles ont été reportés."
