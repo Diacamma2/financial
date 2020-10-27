@@ -231,10 +231,10 @@ def paramchange_invoice(params):
         for param_item in invoice_params:
             Parameter.change_value(param_item, correct_accounting_code(Params.getvalue(param_item)))
         Params.clear()
-        for art in Article.objects.all():
-            if art.sell_account != correct_accounting_code(art.sell_account):
-                art.sell_account = correct_accounting_code(art.sell_account)
-                art.save()
+        for acc_post in AccountPosting.objects.all():
+            if acc_post.sell_account != correct_accounting_code(acc_post.sell_account):
+                acc_post.sell_account = correct_accounting_code(acc_post.sell_account)
+                acc_post.save()
     for invoice_param in invoice_params:
         if invoice_param in params:
             code_value = Params.getvalue(invoice_param)
