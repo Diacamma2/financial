@@ -674,6 +674,22 @@ class Bill(Supporting):
         else:
             return []
 
+    def get_default_costaccounting(self):
+        detail_costlist = {}
+        for detail in self.detail_set.all():
+            if (detail.article is not None) and (detail.article.accountposting is not None):
+                detail_cost = detail.article.accountposting.cost_accounting
+                if detail_cost not in detail_costlist.keys():
+                    detail_costlist[detail_cost] = 0
+                detail_costlist[detail_cost] += detail.get_total_excltax() + detail.get_reduce_excltax()
+        default_cost = None
+        last_total = 0
+        for detail_cost, total in detail_costlist.items():
+            if total > last_total:
+                last_total = total
+                default_cost = detail_cost
+        return default_cost
+
     def get_info_state(self):
         info = []
         if self.status == self.STATUS_BUILDING:
@@ -747,6 +763,9 @@ class Bill(Supporting):
                     detail_cost = detail.article.accountposting.cost_accounting_id
             else:
                 detail_code = Params.getvalue("invoice-default-sell-account")
+                cost_account = CostAccounting.objects.filter(status=CostAccounting.STATUS_OPENED, is_default=True).first()
+                if cost_account is not None:
+                    detail_cost = cost_account.id
             detail_account = ChartsAccount.get_account(detail_code, self.fiscal_year)
             if detail_account is None:
                 raise LucteriosException(IMPORTANT, _("article has code account unknown!"))

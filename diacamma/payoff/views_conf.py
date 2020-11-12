@@ -22,7 +22,7 @@ from diacamma.accounting.system import accounting_system_ident
 
 
 def fill_params(xfer, is_mini=False):
-    param_lists = ['payoff-cash-account', 'payoff-bankcharges-account', 'payoff-email-subject', 'payoff-email-message']
+    param_lists = ['payoff-cash-account', 'payoff-email-subject', 'payoff-email-message']
     Params.fill(xfer, param_lists, 1, xfer.get_max_row() + 1)
     btn = XferCompButton('editparam')
     btn.set_is_mini(is_mini)
@@ -113,8 +113,10 @@ class PaymentMethodDelete(XferDelete):
 
 @signal_and_lock.Signal.decorate('compte_no_found')
 def comptenofound_payoff(known_codes, accompt_returned):
-    bank_unknown = BankAccount.objects.exclude(account_code__in=known_codes).values_list('account_code', flat=True)
-    param_unknown = Parameter.objects.filter(name__in=('payoff-cash-account', 'payoff-bankcharges-account')).exclude(value__in=known_codes).values_list('value', flat=True)
+    bank_unknown = list(BankAccount.objects.exclude(account_code__in=known_codes).values_list('account_code', flat=True))
+    bank_unknown += list(BankAccount.objects.exclude(account_code__in=known_codes).values_list('temporary_account_code', flat=True))
+    bank_unknown += list(BankAccount.objects.exclude(account_code__in=known_codes).values_list('fee_account_code', flat=True))
+    param_unknown = Parameter.objects.filter(name__in=('payoff-cash-account')).exclude(value__in=known_codes).values_list('value', flat=True)
     comptenofound = ""
     if (len(bank_unknown) > 0):
         comptenofound = _("bank account") + ":" + ",".join(set(bank_unknown)) + " "
@@ -130,15 +132,20 @@ def comptenofound_payoff(known_codes, accompt_returned):
 def paramchange_payoff(params):
     if 'accounting-sizecode' in params:
         for bank in BankAccount.objects.all():
+            changed = False
             if bank.account_code != correct_accounting_code(bank.account_code):
                 bank.account_code = correct_accounting_code(bank.account_code)
+                changed = True
+            if bank.temporary_account_code != correct_accounting_code(bank.temporary_account_code):
+                bank.temporary_account_code = correct_accounting_code(bank.temporary_account_code)
+                changed = True
+            if bank.fee_account_code != correct_accounting_code(bank.fee_account_code):
+                bank.fee_account_code = correct_accounting_code(bank.fee_account_code)
+                changed = True
+            if changed:
                 bank.save()
     if ('payoff-cash-account' in params) or ('accounting-sizecode' in params):
         Parameter.change_value('payoff-cash-account', correct_accounting_code(Params.getvalue('payoff-cash-account')))
-    if ('payoff-bankcharges-account' in params) or ('accounting-sizecode' in params):
-        pvalue = Params.getvalue('payoff-bankcharges-account')
-        if pvalue != '':
-            Parameter.change_value('payoff-bankcharges-account', correct_accounting_code(pvalue))
     if 'accounting-system' in params:
         system_ident = accounting_system_ident(Params.getvalue("accounting-system"))
         if system_ident == "french":

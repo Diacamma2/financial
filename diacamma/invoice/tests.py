@@ -50,6 +50,7 @@ from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduc
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillFromQuotation, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch,\
     BillCheckAutoreduce, BillPayableEmail, BillBatch
+from diacamma.payoff.models import BankAccount
 
 
 class BillTest(InvoiceTest):
@@ -455,8 +456,9 @@ class BillTest(InvoiceTest):
 
     def test_compta_valid_with_pay(self):
         default_articles()
-        Parameter.change_value('payoff-bankcharges-account', '627')
-        Params.clear()
+        cost = CostAccounting.objects.get(name='open')
+        cost.is_default = False
+        cost.save()
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
                    {'article': 2, 'designation': 'article 2',
                        'price': '3.25', 'quantity': 7},
@@ -472,12 +474,17 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillTransition()
         self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', 'mode': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
+        self.assert_count_equal('', 2 + 8 + 0)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', 'mode': 1, 'bank_account': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
         self.assert_count_equal('', 2 + 9 + 0)
 
         configSMTP('localhost', 2025)
 
         self.factory.xfer = BillTransition()
-        self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', 'mode': 1}, False)
+        self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', 'mode': 1, 'bank_account': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
         self.assert_count_equal('', 2 + 9 + 6)
         self.assert_json_equal('', 'withpayoff', False)
@@ -486,7 +493,8 @@ class BillTest(InvoiceTest):
 
         self.factory.xfer = BillTransition()
         self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', 'CONFIRME': 'YES',
-                                                           'withpayoff': True, 'mode': 1, 'amount': '107.45', 'date_payoff': '2015-04-07', 'mode': 1, 'reference': 'abc123', 'bank_account': 1, 'payer': "Ma'a Dalton", 'bank_fee': '1.08',
+                                                           'withpayoff': True, 'amount': '107.45', 'date_payoff': '2015-04-07', 'mode': 1,
+                                                           'reference': 'abc123', 'bank_account': 2, 'payer': "Ma'a Dalton", 'bank_fee': '1.08',
                                                            'sendemail': True, 'subject': 'my bill', 'message': 'this is a bill.', 'model': 8}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
         self.assert_action_equal('POST', self.response_json['action'], ("", None, "diacamma.payoff", "payableEmail", 1, 1, 1))
@@ -504,12 +512,107 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'entryline/@5/entry_account', '[411 Dalton Jack]')
         self.assert_json_equal('', 'entryline/@5/credit', 107.45)
         self.assert_json_equal('', 'entryline/@5/costaccounting', None)
-        self.assert_json_equal('', 'entryline/@6/entry_account', '[512] 512')
+        self.assert_json_equal('', 'entryline/@6/entry_account', '[581] 581')
         self.assert_json_equal('', 'entryline/@6/debit', -106.37)
         self.assert_json_equal('', 'entryline/@6/costaccounting', None)
         self.assert_json_equal('', 'entryline/@7/entry_account', '[627] 627')
         self.assert_json_equal('', 'entryline/@7/debit', -1.08)
         self.assert_json_equal('', 'entryline/@7/costaccounting', None)
+
+    def test_compta_valid_with_pay_fee_cost(self):
+        default_articles()
+        cost = CostAccounting.objects.get(name='open')
+        cost.is_default = True
+        cost.save()
+        details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
+                   {'article': 2, 'designation': 'article 2',
+                       'price': '3.25', 'quantity': 7},
+                   {'article': 0, 'designation': 'article 3',
+                       'price': '11.10', 'quantity': 2}]
+        self._create_bill(details, 1, '2015-04-01', 6)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', 'CONFIRME': 'YES',
+                                                           'withpayoff': True, 'mode': 1, 'amount': '107.45', 'date_payoff': '2015-04-07', 'mode': 1, 'reference': 'abc123',
+                                                           'bank_account': 2, 'payer': "Ma'a Dalton", 'bank_fee': '1.08',
+                                                           'sendemail': False}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '0', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 5 + 3)
+
+        self.assert_json_equal('', 'entryline/@5/entry.num', None)
+        self.assert_json_equal('', 'entryline/@5/entry.date_entry', None)
+        self.assert_json_equal('', 'entryline/@5/entry.date_value', '2015-04-07')
+        self.assert_json_equal('', 'entryline/@5/designation_ref', 'règlement de Facture A-1')
+        self.assert_json_equal('', 'entryline/@5/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@5/credit', 107.45)
+        self.assert_json_equal('', 'entryline/@5/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@6/entry_account', '[581] 581')
+        self.assert_json_equal('', 'entryline/@6/debit', -106.37)
+        self.assert_json_equal('', 'entryline/@6/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@7/entry_account', '[627] 627')
+        self.assert_json_equal('', 'entryline/@7/debit', -1.08)
+        self.assert_json_equal('', 'entryline/@7/costaccounting', 'open')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('payoff', 1)
+        self.assert_json_equal('', 'payoff/@0/date', "2015-04-07")
+        self.assert_json_equal('', 'payoff/@0/mode', 1)
+        self.assert_json_equal('', 'payoff/@0/amount', 107.45)
+        self.assert_json_equal('', 'payoff/@0/payer', "Ma'a Dalton")
+        self.assert_json_equal('', 'payoff/@0/reference', "abc123")
+        self.assert_json_equal('', 'payoff/@0/bank_account_ex', 'PayPal (frais = 1,08 €)')
+
+    def test_compta_valid_with_pay_fee_maxicost(self):
+        default_articles()
+        post1 = AccountPosting.objects.get(id=1)
+        post1.cost_accounting = CostAccounting.objects.create(name='new', description='New cost', status=0)
+        post1.save()
+        post2 = AccountPosting.objects.get(id=2)
+        post2.cost_accounting = CostAccounting.objects.create(name='other', description='Other cost', status=0)
+        post2.save()
+        cost = CostAccounting.objects.get(name='open')
+        cost.is_default = False
+        cost.save()
+        details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
+                   {'article': 2, 'designation': 'article 2',
+                       'price': '3.25', 'quantity': 7},
+                   {'article': 0, 'designation': 'article 3',
+                       'price': '11.10', 'quantity': 2}]
+        self._create_bill(details, 1, '2015-04-01', 6)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', 'CONFIRME': 'YES',
+                                                           'withpayoff': True, 'mode': 1, 'amount': '107.45', 'date_payoff': '2015-04-07', 'mode': 1,
+                                                           'reference': 'abc123', 'bank_account': 2, 'payer': "Ma'a Dalton", 'bank_fee': '1.08',
+                                                           'sendemail': False}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '0', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 5 + 3)
+
+        self.assert_json_equal('', 'entryline/@5/entry.num', None)
+        self.assert_json_equal('', 'entryline/@5/entry.date_entry', None)
+        self.assert_json_equal('', 'entryline/@5/entry.date_value', '2015-04-07')
+        self.assert_json_equal('', 'entryline/@5/designation_ref', 'règlement de Facture A-1')
+        self.assert_json_equal('', 'entryline/@5/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@5/credit', 107.45)
+        self.assert_json_equal('', 'entryline/@5/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@6/entry_account', '[581] 581')
+        self.assert_json_equal('', 'entryline/@6/debit', -106.37)
+        self.assert_json_equal('', 'entryline/@6/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@7/entry_account', '[627] 627')
+        self.assert_json_equal('', 'entryline/@7/debit', -1.08)
+        self.assert_json_equal('', 'entryline/@7/costaccounting', 'new')
 
     def test_compta_bill(self):
         default_articles()
@@ -520,6 +623,9 @@ class BillTest(InvoiceTest):
         post2 = AccountPosting.objects.get(id=2)
         post2.cost_accounting_id = 3
         post2.save()
+        cost = CostAccounting.objects.get(name='open')
+        cost.is_default = False
+        cost.save()
 
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
                    {'article': 2, 'designation': 'article 2', 'price': '3.25', 'quantity': 7},
@@ -724,6 +830,9 @@ class BillTest(InvoiceTest):
 
     def test_compta_asset(self):
         default_articles()
+        cost = CostAccounting.objects.get(name='open')
+        cost.is_default = True
+        cost.save()
         self._create_bill([{'article': 0, 'designation': 'article A', 'price': '22.20', 'quantity': 3},
                            {'article': 0, 'designation': 'article B', 'price': '11.10', 'quantity': 2}], 2, '2015-04-01', 6)
 
@@ -762,6 +871,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'entryline/@0/credit', 88.80)
         self.assert_json_equal('', 'entryline/@1/entry_account', '[706] 706')
         self.assert_json_equal('', 'entryline/@1/debit', -88.80)
+        self.assert_json_equal('', 'entryline/@1/costaccounting', 'open')
 
         self.check_list_del_archive()
 
@@ -1224,7 +1334,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'payoff/@0/amount', 60.0)
         self.assert_json_equal('', 'payoff/@0/payer', "Ma'a Dalton")
         self.assert_json_equal('', 'payoff/@0/reference', "abc")
-        self.assert_json_equal('', 'payoff/@0/bank_account', None)
+        self.assert_json_equal('', 'payoff/@0/bank_account_ex', None)
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList',
@@ -1359,7 +1469,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'payoff/@0/mode', 3)
         self.assert_json_equal('', 'payoff/@0/amount', 50.0)
         self.assert_json_equal('', 'payoff/@0/reference', "ijk")
-        self.assert_json_equal('', 'payoff/@0/bank_account', "My bank")
+        self.assert_json_equal('', 'payoff/@0/bank_account_ex', "My bank")
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList', {'year': '1', 'journal': '0', 'filter': '0'}, False)
@@ -1800,7 +1910,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'payoff/@0/mode', 6)
         self.assert_json_equal('', 'payoff/@0/amount', 50.0)
         self.assert_json_equal('', 'payoff/@0/reference', "facture A-1 - 1 avril 2015")
-        self.assert_json_equal('', 'payoff/@0/bank_account', None)
+        self.assert_json_equal('', 'payoff/@0/bank_account_ex', None)
 
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': bill_id}, False)
@@ -1813,7 +1923,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'payoff/@0/mode', 6)
         self.assert_json_equal('', 'payoff/@0/amount', 50.0)
         self.assert_json_equal('', 'payoff/@0/reference', "avoir A-1 - 5 avril 2015")
-        self.assert_json_equal('', 'payoff/@0/bank_account', None)
+        self.assert_json_equal('', 'payoff/@0/bank_account_ex', None)
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList', {'year': '1', 'journal': '0', 'filter': '0'}, False)

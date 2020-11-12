@@ -34,7 +34,7 @@ from lucterios.CORE.parameters import Params
 from lucterios.CORE.models import Preference
 from lucterios.contacts.models import LegalEntity
 
-from diacamma.payoff.models import Supporting, Payoff
+from diacamma.payoff.models import Supporting, Payoff, BankAccount
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.tools import current_system_account
 
@@ -134,6 +134,9 @@ class BankAccountEditor(LucteriosEditor):
 var temporary_account_code=current.getValue();
 parent.get('temporary_journal').setEnabled(temporary_account_code!=='');
 """
+        fee_accound_list = [(item.code, str(item)) for item in FiscalYear.get_current().chartsaccount_set.all().filter(type_of_account=4, year__is_actif=True).order_by('code')]
+        fee_accound_list.insert(0, ('', None))
+        self._change_account(xfer, "fee_account_code", fee_accound_list)
 
 
 class PayoffEditor(LucteriosEditor):
@@ -154,7 +157,6 @@ class PayoffEditor(LucteriosEditor):
 
     def edit(self, xfer):
         currency_decimal = Params.getvalue("accounting-devise-prec")
-        fee_code = Params.getvalue("payoff-bankcharges-account")
         supportings = xfer.getparam('supportings', ())
         self.item.mode = int(self.item.mode)
         if len(supportings) > 0:
@@ -223,7 +225,7 @@ class PayoffEditor(LucteriosEditor):
             if self.item.id is None:
                 self.item.mode = xfer.getparam('mode', Preference.get_value("payoff-mode", xfer.request.user))
                 xfer.get_components("mode").value = self.item.mode
-                xfer.get_components("bank_account").value = xfer.getparam('bank_account', Preference.get_value("payoff-bank_account", xfer.request.user))
+                xfer.get_components("bank_account").set_value(xfer.getparam('bank_account', Preference.get_value("payoff-bank_account", xfer.request.user)))
         linked_supportings = supporting_list[0].get_final_child().get_linked_supportings() if len(supporting_list) == 1 else []
         if len(linked_supportings) == 0:
             mode.select_list = mode.select_list[:-1]
@@ -246,11 +248,16 @@ class PayoffEditor(LucteriosEditor):
                     xfer.params['amount'] = float(amount.value)
                     xfer.change_to_readonly("amount")
                     break
+        fee_code = ''
         if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
             xfer.remove_component("bank_account")
+        elif xfer.get_components("bank_account") is not None:
+            xfer.get_components("bank_account").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            bank_account = BankAccount.objects.get(id=xfer.get_components("bank_account").value)
+            fee_code = bank_account.fee_account_code
         if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
             xfer.remove_component("payer")
-        if (fee_code == '') or (self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL)):
+        if fee_code == '':
             xfer.remove_component("bank_fee")
         else:
             bank_fee = xfer.get_components("bank_fee")

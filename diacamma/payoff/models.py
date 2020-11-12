@@ -49,8 +49,10 @@ from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import LegalEntity, Individual
 from lucterios.documents.models import DocumentContainer
 
-from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink
-from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise
+from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink,\
+    CostAccounting
+from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise,\
+    get_amount_from_format_devise
 from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType, PaymentTypeTransfer
 
 
@@ -100,6 +102,9 @@ class Supporting(LucteriosModel):
         return date.today()
 
     def entry_links(self):
+        return None
+
+    def get_default_costaccounting(self):
         return None
 
     def get_email(self, only_main=None):
@@ -334,13 +339,15 @@ class BankAccount(LucteriosModel):
     temporary_account_code = models.CharField(_('temporary account'), max_length=50, null=False, default='')
     temporary_journal = models.ForeignKey(Journal, verbose_name=_('temporary journal'), null=False, default=Journal.DEFAULT_PAYMENT, on_delete=models.PROTECT, related_name='temporary_journal')
 
+    fee_account_code = models.CharField(_('fee account'), max_length=50, null=False, default='')
+
     @classmethod
     def get_default_fields(cls):
-        return ["order_key", "designation", "reference", "account_code", "temporary_account_code"]
+        return ["order_key", "designation", "reference", "account_code", "temporary_account_code", "fee_account_code"]
 
     @classmethod
     def get_edit_fields(cls):
-        return ["designation", "reference", ("account_code", "bank_journal"), ("temporary_account_code", "temporary_journal"), "is_disabled"]
+        return ["designation", "reference", ("account_code", "bank_journal"), ("temporary_account_code", "temporary_journal"), "fee_account_code", "is_disabled"]
 
     def __str__(self):
         return self.designation
@@ -400,13 +407,14 @@ class Payoff(LucteriosModel):
     linked_payoff = models.ForeignKey("payoff.Payoff", verbose_name=_('linked payoff'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
 
     value = LucteriosVirtualField(verbose_name=_('amount'), compute_from='amount', format_string=lambda: format_with_devise(5))
+    bank_account_ex = LucteriosVirtualField(verbose_name=_('bank account'), compute_from='get_bank_account_ex')
 
     def __str__(self):
         return "%s - %s - %s" % (self.payer, get_date_formating(self.date), self.reference)
 
     @classmethod
     def get_default_fields(cls):
-        return ["date", "amount", "mode", "reference", "payer", "bank_account"]
+        return ["date", "amount", "mode", "reference", "payer", "bank_account_ex"]
 
     @classmethod
     def get_edit_fields(cls):
@@ -420,6 +428,11 @@ class Payoff(LucteriosModel):
     @property
     def bank_account_query(self):
         return BankAccount.objects.filter(is_disabled=False)
+
+    def get_bank_account_ex(self):
+        if (self.bank_account is not None) and (self.bank_account.fee_account_code != ''):
+            return _("%(bank)s (fee = %(fee)s)") % {'bank': self.bank_account, 'fee': get_amount_from_format_devise(self.bank_fee, 7)}
+        return self.bank_account
 
     def delete_accounting(self):
         if self.entry is not None:
@@ -464,11 +477,14 @@ class Payoff(LucteriosModel):
                 is_liability = -1
             EntryLineAccount.objects.create(account=third_account, amount=is_liability * is_revenu * sub_amount, third=supporting.third, entry=entry)
             amount_to_bank += float(sub_amount)
-        fee_code = Params.getvalue("payoff-bankcharges-account")
+        fee_code = self.bank_account.fee_account_code if self.bank_account is not None else ''
         if (fee_code != '') and (float(self.bank_fee) > 0.001):
             fee_account = ChartsAccount.get_account(fee_code, entry.year)
             if fee_account is not None:
-                EntryLineAccount.objects.create(account=fee_account, amount=-1 * is_revenu * float(self.bank_fee), entry=entry)
+                cost_accounting = CostAccounting.objects.filter(status=CostAccounting.STATUS_OPENED, is_default=True).first()
+                if cost_accounting is None:
+                    cost_accounting = supporting.get_default_costaccounting()
+                EntryLineAccount.objects.create(account=fee_account, amount=-1 * is_revenu * float(self.bank_fee), entry=entry, costaccounting=cost_accounting)
                 amount_to_bank -= float(self.bank_fee)
         return amount_to_bank, is_revenu
 
@@ -918,6 +934,16 @@ def check_bank_account():
         bank.save()
 
 
+def remove_bankaccount_param():
+    old_param_bankcharges_account = Parameter.objects.filter(name='payoff-bankcharges-account').first()
+    if old_param_bankcharges_account is not None:
+        if old_param_bankcharges_account.value != '':
+            for bank in BankAccount.objects.all():
+                bank.fee_account_code = old_param_bankcharges_account.value
+                bank.save()
+        old_param_bankcharges_account.delete()
+
+
 def check_accountlink_from_supporting():
     nb_link_created = 0
     for supporting in Supporting.objects.filter(Q(payoff__entry__entrylineaccount__third__isnull=False) & Q(payoff__entry__entrylineaccount__link__isnull=True)).distinct():
@@ -931,8 +957,6 @@ def check_accountlink_from_supporting():
 
 @Signal.decorate('checkparam')
 def payoff_checkparam():
-    Parameter.check_and_create(name='payoff-bankcharges-account', typeparam=Parameter.TYPE_STRING, title=_("payoff-bankcharges-account"),
-                               args="{'Multi':False}", value='', meta='("accounting","ChartsAccount", Q(type_of_account=4) & Q(year__is_actif=True), "code", False)')
     Parameter.check_and_create(name='payoff-cash-account', typeparam=Parameter.TYPE_STRING, title=_("payoff-cash-account"),
                                args="{'Multi':False}", value='', meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_cash_mask()) & django.db.models.Q(year__is_actif=True)", "code", True)')
     Parameter.check_and_create(name='payoff-email-message', typeparam=Parameter.TYPE_STRING, title=_("payoff-email-message"),
@@ -951,6 +975,7 @@ def payoff_convertdata():
     check_payoff_accounting()
     check_bank_account()
     correct_db_field({'payoff_payoff': 'amount', })
+    remove_bankaccount_param()
 
 
 @Signal.decorate('auditlog_register')
