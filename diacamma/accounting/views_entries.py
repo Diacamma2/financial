@@ -33,13 +33,14 @@ from django.db.models.aggregates import Count
 
 from lucterios.framework.xferadvance import XferShowEditor, XferDelete, XferSave, TITLE_LISTING, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, TITLE_CLOSE, TITLE_MODIFY,\
     TITLE_EDIT, TITLE_ADD
-from lucterios.framework.tools import FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, SELECT_SINGLE, SELECT_MULTI, SELECT_NONE, CLOSE_YES
+from lucterios.framework.tools import FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, SELECT_SINGLE, SELECT_MULTI, SELECT_NONE, CLOSE_YES,\
+    convert_date, get_date_formating
 from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
 from lucterios.framework.xferadvance import action_list_sorted
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
 from lucterios.framework.xfercomponents import XferCompSelect, XferCompLabelForm, XferCompImage, XferCompFloat, XferCompGrid,\
-    XferCompEdit
+    XferCompEdit, XferCompDate
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.xferprint import XferPrintListing
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
@@ -91,12 +92,36 @@ class EntryAccountList(XferListEditor):
         select_year = self.getparam('year')
         self.item.year = FiscalYear.get_current(select_year)
         self.item.journal = Journal.objects.filter(is_default=True).first()
-        self.fill_from_model(0, 1, False, ['year', 'journal'])
+        self.fill_from_model(0, 1, False, ['year'])
         self.get_components('year').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        self.get_components('year').colspan = 2
+        self.get_components('year').colspan = 3
         self.filter = Q(entry__year=self.item.year)
 
+    def _filter_by_date(self):
+        date_begin = max(self.item.year.begin, convert_date(self.getparam("date_begin"), self.item.year.begin))
+        if date_begin > self.item.year.end:
+            date_begin = self.item.year.begin
+        date_end = min(self.item.year.end, convert_date(self.getparam("date_end"), self.item.year.end))
+        if date_end < self.item.year.begin:
+            date_end = self.item.year.end
+        dt_begin = XferCompDate('date_begin')
+        dt_begin.set_value(date_begin)
+        dt_begin.set_needed(True)
+        dt_begin.set_location(1, 2)
+        dt_begin.description = _("date begin")
+        dt_begin.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        self.add_component(dt_begin)
+        dt_end = XferCompDate('date_end')
+        dt_end.set_value(date_end)
+        dt_end.set_needed(True)
+        dt_end.set_location(2, 2)
+        dt_end.description = _("date end")
+        dt_end.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        self.add_component(dt_end)
+        self.filter &= Q(entry__date_value__gte=date_begin) & Q(entry__date_value__lte=date_end)
+
     def _filter_by_journal(self):
+        self.fill_from_model(0, 3, False, ['journal'])
         select_journal = self.getparam('journal', -1)
         journal = self.get_components('journal')
         journal.select_list.append((0, '---'))
@@ -104,7 +129,7 @@ class EntryAccountList(XferListEditor):
             select_journal = self.item.journal_id if self.item.journal_id is not None else 0
         journal.set_value(select_journal)
         journal.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        journal.colspan = 2
+        journal.colspan = 3
         if select_journal != 0:
             self.filter &= Q(entry__journal__id=select_journal)
 
@@ -113,7 +138,7 @@ class EntryAccountList(XferListEditor):
         sel = XferCompSelect("filter")
         sel.set_select({0: _('All'), 1: _('In progress'), 2: _('Valid'), 3: _('Lettered'), 4: _('Not lettered')})
         sel.set_value(self.select_filter)
-        sel.set_location(0, 3, 2)
+        sel.set_location(0, 4, 3)
         sel.description = _("filter")
         sel.set_size(20, 200)
         sel.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
@@ -129,14 +154,16 @@ class EntryAccountList(XferListEditor):
         edt.set_value(self.filtercode)
         edt.is_default = True
         edt.description = _("accounting code starting with")
-        edt.set_location(0, 4, 2)
+        edt.set_location(0, 5, 3)
         edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(edt)
         if self.filtercode != "":
             self.filter &= Q(entry__entrylineaccount__account__code__startswith=self.filtercode)
 
     def fillresponse_header(self):
+        self.get_components('title').colspan = 3
         self._filter_by_year()
+        self._filter_by_date()
         self._filter_by_journal()
         self._filter_by_nature()
         self._filter_by_code()
@@ -155,12 +182,13 @@ class EntryAccountList(XferListEditor):
         grid.actions = []
         grid.add_action_notified(self, model=EntryAccount)
         grid.order_list = lineorder
+        grid.colspan = 3
         self.params['GRID_ORDER%entryline'] = ','.join(lineorder)
         self.model = EntryAccount
 
     def fillresponse(self):
         XferListEditor.fillresponse(self)
-        add_fiscalyear_result(self, 0, 10, 2, self.item.year, 'result')
+        add_fiscalyear_result(self, 0, 10, 3, self.item.year, 'result')
 
 
 @ActionsManage.affect_list(_("Search"), "diacamma.accounting/images/entry.png", modal=FORMTYPE_NOMODAL, close=CLOSE_YES, condition=lambda xfer: xfer.url_text.endswith('AccountList'))
@@ -219,16 +247,22 @@ class EntryAccountListing(XferPrintListing):
 
     def get_filter(self):
         if self.getparam('CRITERIA') is None:
-            select_year = self.getparam('year')
+            select_year = FiscalYear.get_current(self.getparam('year'))
             select_journal = self.getparam('journal', 4)
             self.select_filter = self.getparam('filter', 1)
-            new_filter = Q(entry__year=FiscalYear.get_current(select_year))
+            date_begin = convert_date(self.getparam("date_begin"), select_year.begin)
+            date_end = convert_date(self.getparam("date_end"), select_year.end)
+            filtercode = self.getparam('filtercode', "").strip()
+            new_filter = Q(entry__year=select_year)
+            new_filter &= Q(entry__date_value__gte=date_begin) & Q(entry__date_value__lte=date_end)
             if self.select_filter == 1:
                 new_filter &= Q(entry__close=False)
             elif self.select_filter == 2:
                 new_filter &= Q(entry__close=True)
             if select_journal != 0:
                 new_filter &= Q(entry__journal__id=select_journal)
+            if filtercode != "":
+                new_filter &= Q(entry__entrylineaccount__account__code__startswith=filtercode)
         else:
             new_filter = XferPrintListing.get_filter(self)
         return new_filter
@@ -245,14 +279,20 @@ class EntryAccountListing(XferPrintListing):
         self.caption = _("Listing accounting entry") + " - " + formats.date_format(date.today(), "DATE_FORMAT")
         if self.getparam('CRITERIA') is None:
             info_list = []
-            select_year = self.getparam('year')
-            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('fiscal year'), str(FiscalYear.get_current(select_year))))
+            select_year = FiscalYear.get_current(self.getparam('year'))
+            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('fiscal year'), str(select_year)))
+            date_begin = convert_date(self.getparam("date_begin"), select_year.begin)
+            date_end = convert_date(self.getparam("date_end"), select_year.end)
+            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s -- {[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('date begin'), get_date_formating(date_begin), _('date end'), get_date_formating(date_end)))
             select_journal = self.getparam('journal', 4)
             if select_journal > 0:
                 info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('journal'), str(Journal.objects.get(id=select_journal))))
             select_filter = self.getparam('filter', 1)
             select_filter_list = {0: _('All'), 1: _('In progress'), 2: _('Valid'), 3: _('Lettered'), 4: _('Not lettered')}
             info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_("Filter"), select_filter_list[select_filter]))
+            filtercode = self.getparam('filtercode', "").strip()
+            if filtercode != "":
+                info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_("accounting code starting with"), filtercode))
             self.info = '{[br]}'.join(info_list)
         XferPrintListing.fillresponse(self)
 
