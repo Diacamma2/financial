@@ -65,12 +65,14 @@ class CompletedEntryTest(LucteriosTest):
         current_year.last_fiscalyear = last_year
         current_year.save()
 
-    def _goto_entrylineaccountlist(self, journal, filterlist, code, nb_line):
+    def _goto_entrylineaccountlist(self, journal, filterlist, code, nb_line, date_begin='', date_end=''):
         self.factory.xfer = EntryAccountList()
+        filter_advance = (code != '') or (date_begin != '') or (date_end != '')
         self.calljson('/diacamma.accounting/entryAccountList',
-                      {'year': '1', 'journal': journal, 'filter': filterlist, 'filtercode': code}, False)
+                      {'year': '1', 'journal': journal, 'filter': filterlist,
+                       'filtercode': code, 'date_begin': date_begin, 'date_end': date_end, 'FilterAdvance': filter_advance}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
-        self.assert_count_equal('', 10)
+        self.assert_count_equal('', 11 if filter_advance else 8)
         self.assert_count_equal('entryline', nb_line)
 
     def test_lastyear(self):
@@ -182,6 +184,9 @@ class CompletedEntryTest(LucteriosTest):
 
     def test_code(self):
         self._goto_entrylineaccountlist(0, 0, '60', 6)
+
+    def test_date(self):
+        self._goto_entrylineaccountlist(0, 0, '', 11, '2015-01-01', '2015-02-19')
 
     def test_summary(self):
         self.factory.xfer = StatusMenu()

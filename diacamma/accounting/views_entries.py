@@ -40,7 +40,7 @@ from lucterios.framework.xferadvance import action_list_sorted
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
 from lucterios.framework.xfercomponents import XferCompSelect, XferCompLabelForm, XferCompImage, XferCompFloat, XferCompGrid,\
-    XferCompEdit, XferCompDate
+    XferCompEdit, XferCompDate, XferCompButton
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.xferprint import XferPrintListing
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
@@ -161,12 +161,22 @@ class EntryAccountList(XferListEditor):
             self.filter &= Q(entry__entrylineaccount__account__code__startswith=self.filtercode)
 
     def fillresponse_header(self):
-        self.get_components('title').colspan = 3
+        title = self.get_components('title')
+        title.colspan = 2
+        filter_advance = self.getparam('FilterAdvance', False)
+        Btn = XferCompButton('FilterAdvanceBtn')
+        Btn.set_is_mini(True)
+        Btn.set_location(3, 0)
+        Btn.set_action(self.request, self.__class__.get_action(caption=_('Filter advanced'), icon_path='images/up.png' if filter_advance else 'images/down.png'),
+                       close=CLOSE_NO, modal=FORMTYPE_REFRESH, params={'FilterAdvance': not filter_advance})
+        self.add_component(Btn)
         self._filter_by_year()
-        self._filter_by_date()
+        if filter_advance:
+            self._filter_by_date()
         self._filter_by_journal()
         self._filter_by_nature()
-        self._filter_by_code()
+        if filter_advance:
+            self._filter_by_code()
 
     def fillresponse_body(self):
         lineorder = self.getparam('GRID_ORDER%entryline', ())
@@ -182,7 +192,7 @@ class EntryAccountList(XferListEditor):
         grid.actions = []
         grid.add_action_notified(self, model=EntryAccount)
         grid.order_list = lineorder
-        grid.colspan = 3
+        grid.colspan = 4
         self.params['GRID_ORDER%entryline'] = ','.join(lineorder)
         self.model = EntryAccount
 
