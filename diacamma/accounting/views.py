@@ -461,6 +461,18 @@ def thirdaddon_accounting(item, xfer):
             pass
 
 
+@signal_and_lock.Signal.decorate('pre_merge')
+def pre_merge_accounting(item, alias_objects):
+    if isinstance(item, AbstractContact):
+        main_third = Third.objects.filter(contact=item).first()
+        third_list = list(Third.objects.filter(contact__in=alias_objects).order_by('status', 'id'))
+        if (main_third is None) and (len(third_list) > 0):
+            main_third = third_list[0]
+            third_list = third_list[1:]
+        if len(third_list) > 0:
+            main_third.merge_objects(third_list)
+
+
 @signal_and_lock.Signal.decorate('post_merge')
 def post_merge_accounting(item):
     if isinstance(item, AbstractContact):
@@ -468,9 +480,3 @@ def post_merge_accounting(item):
         main_third = third_list.first()
         if main_third is not None:
             main_third.merge_objects(list(third_list)[1:])
-            code_list = []
-            for accountthird in main_third.accountthird_set.all():
-                if accountthird.code in code_list:
-                    accountthird.delete()
-                else:
-                    code_list.append(accountthird.code)
