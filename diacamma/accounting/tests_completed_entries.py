@@ -205,11 +205,11 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
         csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 35, str(content_csv))
+        self.assertEqual(len(content_csv), 38, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:20], '"Liste d\'écritures -')
-        self.assertEqual(content_csv[4].strip(), '"N°";"date d\'écriture";"date de pièce";"compte";"nom";"débit";"crédit";"lettrage";')
-        self.assertEqual(content_csv[5].strip(), '"1";"%s";"1 février 2015";"[106] 106";"Report à nouveau";"";"1 250,38 €";"";' % formats.date_format(date.today(), "DATE_FORMAT"))
-        self.assertEqual(content_csv[9].strip(), '"---";"---";"13 février 2015";"[607] 607";"depense 2";"194,08 €";"";"";')
+        self.assertEqual(content_csv[6].strip(), '"N°";"date d\'écriture";"date de pièce";"compte";"nom";"débit";"crédit";"lettrage";')
+        self.assertEqual(content_csv[7].strip(), '"1";"%s";"1 février 2015";"[106] 106";"Report à nouveau";"";"1 250,38 €";"";' % formats.date_format(date.today(), "DATE_FORMAT"))
+        self.assertEqual(content_csv[11].strip(), '"---";"---";"13 février 2015";"[607] 607";"depense 2";"194,08 €";"";"";')
 
         self.factory.xfer = EntryAccountListing()
         self.calljson('/diacamma.accounting/entryAccountListing',
@@ -217,7 +217,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
         csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 18, str(content_csv))
+        self.assertEqual(len(content_csv), 21, str(content_csv))
 
         self.factory.xfer = EntryAccountListing()
         self.calljson('/diacamma.accounting/entryAccountListing',
@@ -225,7 +225,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
         csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 27, str(content_csv))
+        self.assertEqual(len(content_csv), 30, str(content_csv))
 
         self.factory.xfer = EntryAccountListing()
         self.calljson('/diacamma.accounting/entryAccountListing',
@@ -233,7 +233,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
         csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 22, str(content_csv))
+        self.assertEqual(len(content_csv), 25, str(content_csv))
 
         self.factory.xfer = EntryAccountListing()
         self.calljson('/diacamma.accounting/entryAccountListing',
@@ -242,7 +242,7 @@ class CompletedEntryTest(LucteriosTest):
         csv_value = b64decode(
             str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 23, str(content_csv))
+        self.assertEqual(len(content_csv), 26, str(content_csv))
 
         self.factory.xfer = EntryAccountListing()
         self.calljson('/diacamma.accounting/entryAccountListing',
@@ -251,7 +251,7 @@ class CompletedEntryTest(LucteriosTest):
         csv_value = b64decode(
             str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 16, str(content_csv))
+        self.assertEqual(len(content_csv), 19, str(content_csv))
 
     def test_search(self):
         self.factory.xfer = EntryAccountSearch()
@@ -268,11 +268,11 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'entryAccountListing')
         csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 13, str(content_csv))
+        self.assertEqual(len(content_csv), 16, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:20], '"Liste d\'écritures -')
-        self.assertEqual(content_csv[4].strip(), '"N°";"date d\'écriture";"date de pièce";"compte";"nom";"débit";"crédit";"lettrage";')
-        self.assertEqual(content_csv[5].strip(), '"4";"%s";"21 février 2015";"[707] 707";"vente 1";"";"70,64 €";"";' % formats.date_format(date.today(), "DATE_FORMAT"))
-        self.assertEqual(content_csv[7].strip(), '"---";"---";"24 février 2015";"[707] 707";"vente 3";"";"34,01 €";"";')
+        self.assertEqual(content_csv[6].strip(), '"N°";"date d\'écriture";"date de pièce";"compte";"nom";"débit";"crédit";"lettrage";')
+        self.assertEqual(content_csv[7].strip(), '"4";"%s";"21 février 2015";"[707] 707";"vente 1";"";"70,64 €";"";' % formats.date_format(date.today(), "DATE_FORMAT"))
+        self.assertEqual(content_csv[9].strip(), '"---";"---";"24 février 2015";"[707] 707";"vente 3";"";"34,01 €";"";')
 
     def test_report_tool(self):
         values, total = get_totalaccount_for_query(Q(account__type_of_account=0) & Q(entry__year_id=1))

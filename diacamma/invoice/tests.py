@@ -50,7 +50,6 @@ from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduc
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillFromQuotation, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch,\
     BillCheckAutoreduce, BillPayableEmail, BillBatch
-from diacamma.payoff.models import BankAccount
 
 
 class BillTest(InvoiceTest):
@@ -1160,10 +1159,10 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.print', 'diacamma.invoice', 'billStatisticPrint')
         csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 57, str(content_csv))
+        self.assertEqual(len(content_csv), 50, str(content_csv))
         self.assertEqual(content_csv[1].strip(), '"Impression des statistiques"')
-        self.assertEqual(content_csv[14].strip(), '"total";"351,22 €";"100,00 %";')
-        self.assertEqual(content_csv[22].strip(), '"total";"351,22 €";"---";"---";"100,00 %";')
+        self.assertEqual(content_csv[13].strip(), '"total";"351,22 €";"100,00 %";', str(content_csv))
+        self.assertEqual(content_csv[21].strip(), '"total";"351,22 €";"---";"---";"100,00 %";', str(content_csv))
 
         self.factory.xfer = BillPrint()
         self.calljson('/diacamma.invoice/billPrint', {'bill': '1;2;3;4;5'}, False)

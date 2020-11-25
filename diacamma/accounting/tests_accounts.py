@@ -340,12 +340,12 @@ class ChartsAccountTest(LucteriosTest):
         csv_value = b64decode(
             str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 27, str(content_csv))
+        self.assertEqual(len(content_csv), 30, str(content_csv))
         self.assertEqual(content_csv[1].strip()[:27], '"Liste des comptes du plan ')
-        self.assertEqual(content_csv[4].strip(), '"code";"nom";"total de l\'exercice précédent";"total de l\'exercice";"total validé";')
-        self.assertEqual(content_csv[5].strip(), '"106";"106";"Crédit: 1 250,38 €";"Crédit: 1 250,38 €";"Crédit: 1 250,38 €";')
-        self.assertEqual(content_csv[12].strip(), '"512";"512";"Débit: 1 135,93 €";"Débit: 1 130,29 €";"Débit: 1 130,29 €";')
-        self.assertEqual(content_csv[13].strip(), '"531";"531";"Débit: 114,45 €";"Crédit: 79,63 €";"Débit: 114,45 €";')
+        self.assertEqual(content_csv[6].strip(), '"code";"nom";"total de l\'exercice précédent";"total de l\'exercice";"total validé";')
+        self.assertEqual(content_csv[7].strip(), '"106";"106";"Crédit: 1 250,38 €";"Crédit: 1 250,38 €";"Crédit: 1 250,38 €";')
+        self.assertEqual(content_csv[14].strip(), '"512";"512";"Débit: 1 135,93 €";"Débit: 1 130,29 €";"Débit: 1 130,29 €";')
+        self.assertEqual(content_csv[15].strip(), '"531";"531";"Débit: 114,45 €";"Crédit: 79,63 €";"Débit: 114,45 €";')
 
         self.factory.xfer = ChartsAccountListing()
         self.calljson('/diacamma.accounting/chartsAccountListing',
@@ -354,7 +354,7 @@ class ChartsAccountTest(LucteriosTest):
         csv_value = b64decode(
             str(self.response_json['print']['content'])).decode("utf-8")
         content_csv = csv_value.split('\n')
-        self.assertEqual(len(content_csv), 15, str(content_csv))
+        self.assertEqual(len(content_csv), 18, str(content_csv))
 
     def test_budget(self):
         self.factory.xfer = BudgetList()
