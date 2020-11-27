@@ -464,7 +464,7 @@ class ThirdTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdListing')
         self.assert_count_equal('', 5)
         self.assert_comp_equal(('SELECT', 'PRINT_MODE'), "3", (0, 2, 2, 1))
-        self.assert_select_equal('PRINT_MODE', 2)  # nb=2
+        self.assert_select_equal('PRINT_MODE', 3)
         self.assert_comp_equal(('SELECT', 'MODEL'), "5", (0, 3, 2, 1))
         self.assert_select_equal('MODEL', 1)  # nb=1
         self.assertEqual(len(self.json_actions), 2)
