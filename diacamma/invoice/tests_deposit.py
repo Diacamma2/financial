@@ -435,7 +435,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('', '#title/formatstr', "{[br/]}{[center]}{[u]}{[b]}%s{[/b]}{[/u]}{[/center]}")
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
-        self.assertEqual(len(self.json_actions), 3)
+        self.assertEqual(len(self.json_actions), 4)
 
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 3, 'item_name': 'bill'}, False)
@@ -628,7 +628,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'title', "avoir")
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
-        self.assertEqual(len(self.json_actions), 3)
+        self.assertEqual(len(self.json_actions), 4)
 
     def test_check_payment_paypal(self):
         self.call_ex('/diacamma.payoff/checkPaymentPaypal', {'payid': 1}, 'get', 200)

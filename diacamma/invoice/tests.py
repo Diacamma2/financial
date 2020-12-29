@@ -854,7 +854,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'total_excltax', 88.80)
         self.assert_json_equal('LABELFORM', 'num_txt', "A-1")
         self.assert_json_equal('LABELFORM', 'status', 1)
-        self.assertEqual(len(self.json_actions), 3)
+        self.assertEqual(len(self.json_actions), 4)
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList',
@@ -1305,7 +1305,7 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffAddModify')
         self.assert_count_equal('', 7)
         self.assert_json_equal('FLOAT', 'amount', "100.00")
-        self.assert_attrib_equal('amount', 'max', "150.0")
+        self.assert_attrib_equal('amount', 'max', "10000.0")
         self.assert_json_equal('EDIT', 'payer', "Dalton Jack")
 
         self.factory.xfer = PayoffAddModify()
@@ -1347,7 +1347,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.payoff/payoffAddModify', {'supporting': bill_id}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffAddModify')
         self.assert_json_equal('FLOAT', 'amount', "40.00")
-        self.assert_attrib_equal('amount', 'max', "60.0")
+        self.assert_attrib_equal('amount', 'max', "4000.0")
 
         self.factory.xfer = PayoffAddModify()
         self.calljson('/diacamma.payoff/payoffAddModify', {'SAVE': 'YES', 'supporting': bill_id, 'amount': '40.0', 'payer': "Dalton Jack", 'date': '2015-04-04', 'mode': 2, 'reference': 'efg', 'bank_account': 2}, False)
@@ -1383,7 +1383,7 @@ class BillTest(InvoiceTest):
         self.assert_count_equal('', 7)
         self.assert_json_equal('FLOAT', 'amount', "100.00")
         self.assert_attrib_equal('amount', 'min', "0.01")
-        self.assert_attrib_equal('amount', 'max', "150.0")
+        self.assert_attrib_equal('amount', 'max', "10000.0")
         self.assert_json_equal('EDIT', 'payer', "Dalton Jack")
 
         self.factory.xfer = PayoffAddModify()
@@ -1532,7 +1532,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.payoff/payoffAddModify', {'supportings': '%s;%s' % (bill_id1, bill_id2)}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffAddModify')
         self.assert_json_equal('FLOAT', 'amount', "150.00")
-        self.assert_attrib_equal('amount', 'max', "225.0")
+        self.assert_attrib_equal('amount', 'max', "15000.0")
         self.assert_json_equal('EDIT', 'payer', "Dalton Jack")
         self.assert_select_equal('repartition', 2)  # nb=2
         self.assert_json_equal('SELECT', 'repartition', "0")
@@ -1704,7 +1704,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.payoff/payoffAddModify', {'supportings': '%s;%s' % (bill_id1, bill_id2)}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffAddModify')
         self.assert_json_equal('FLOAT', 'amount', "150.00")
-        self.assert_attrib_equal('amount', 'max', "225.0")
+        self.assert_attrib_equal('amount', 'max', "15000.0")
         self.assert_json_equal('EDIT', 'payer', "Dalton Jack")
         self.assert_select_equal('repartition', 2)  # nb=2
         self.assert_json_equal('SELECT', 'repartition', "0")
@@ -1780,7 +1780,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.payoff/payoffAddModify', {'supportings': '%s;%s' % (bill_id1, bill_id2)}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffAddModify')
         self.assert_json_equal('FLOAT', 'amount', "150.00")
-        self.assert_attrib_equal('amount', 'max', "225.0")
+        self.assert_attrib_equal('amount', 'max', "15000.0")
         self.assert_json_equal('EDIT', 'payer', "Dalton Jack")
         self.assert_select_equal('repartition', 2)  # nb=2
         self.assert_json_equal('SELECT', 'repartition', "0")

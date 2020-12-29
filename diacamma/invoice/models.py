@@ -375,7 +375,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_stockage_values(self):
         stock_list = []
-        detail_filter = Q(storagesheet__status=1)
+        detail_filter = Q(storagesheet__status=StorageSheet.STATUS_VALID)
         if self.show_storagearea != 0:
             detail_filter &= Q(storagesheet__storagearea=self.show_storagearea)
         if self.stockable != self.STOCKABLE_NO:
@@ -416,8 +416,13 @@ class Article(LucteriosModel, CustomizeObject):
                 if abs(float(val[2])) > 0.0001:
                     return float(val[3]) / float(val[2])
                 else:
-                    return None
-        return None
+                    break
+        if self.stockable != self.STOCKABLE_NO:
+            detail_filter = Q(storagesheet__status=StorageSheet.STATUS_VALID) & Q(storagesheet__sheet_type=StorageSheet.TYPE_RECEIPT)
+            storage_detail = self.storagedetail_set.filter(detail_filter).order_by('-storagesheet__date').first()
+            if storage_detail is not None:
+                return storage_detail.price
+        return 0.0
 
     def get_stockage_total(self):
         value = self.get_stockage_total_num()
@@ -598,7 +603,7 @@ class Bill(Supporting):
         return min_payoff
 
     def get_max_payoff(self, ignore_payoff=-1):
-        max_payoff = max(self.get_total_rest_topay(ignore_payoff) * 1.5, 0)
+        max_payoff = max(self.get_total_rest_topay(ignore_payoff) * 100, 0)
         if abs(max_payoff) < 0.00001:
             currency_decimal = Params.getvalue("accounting-devise-prec")
             max_payoff = -1 * 10 ** (-1 * currency_decimal)
@@ -866,17 +871,21 @@ class Bill(Supporting):
 
     transitionname__undo = _("Undo")
 
-    @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT)])
+    @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
     def undo(self):
-        new_asset = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET, date=timezone.now(), third=self.third, status=Bill.STATUS_BUILDING, parentbill=self)
+        new_undo = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET if self.bill_type != Bill.BILLTYPE_ASSET else Bill.BILLTYPE_RECEIPT,
+                                       date=timezone.now(),
+                                       third=self.third,
+                                       status=Bill.STATUS_BUILDING,
+                                       parentbill=self)
         for detail in self.detail_set.all():
             detail.id = None
-            detail.bill = new_asset
+            detail.bill = new_undo
             detail.save()
         self.status = Bill.STATUS_ARCHIVE
         self.save()
-        Signal.call_signal("change_bill", 'cancel', self, new_asset)
-        return new_asset.id
+        Signal.call_signal("change_bill", 'cancel', self, new_undo)
+        return new_undo.id
 
     transitionname__cancel = _("Cancel")
 
