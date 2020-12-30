@@ -106,6 +106,7 @@ GENERAL_CHARTS_ACCOUNT = [
     ("456", "45699999", "Associés - Opérations sur le capital", 0),
     ("457", "45799999", "Associés - Dividendes à payer", 0),
     ("458", "45899999", "Associés - Opérations faites en commun et en G.I.E.", 0),
+    ("459", "45999999", "Associés - Créances", 0),
     ("460", "46099999", "Débiteurs divers et créditeurs divers", 1),
     ("461", "46199999", "Débiteurs divers", 0),
     ("462", "46299999", "Créditeurs divers", 1),
