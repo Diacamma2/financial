@@ -58,6 +58,7 @@ from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAcco
 from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code,\
     format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip
+from django.db.models.query import QuerySet
 
 
 class Vat(LucteriosModel):
@@ -1519,6 +1520,82 @@ class StorageDetail(LucteriosModel):
         verbose_name = _('storage detail')
         verbose_name_plural = _('storage details')
         default_permissions = []
+
+
+class ArticleSituationSet(QuerySet):
+
+    def __init__(self, model=None, query=None, using=None, hints=None):
+        QuerySet.__init__(self, model=ArticleSituation, query=query, using=using, hints=hints)
+        self._result_cache = None
+        self.pt_id = 0
+        self.model._meta.pk = Article()._meta.pk
+        self.categories_filter = self._hints['categories_filter']
+        self.hide_empty = self._hints['hide_empty']
+        self.filter = self._hints['filter']
+        self.total_amount = 0
+
+    def _fetch_all(self):
+        if self._result_cache is None:
+            self._result_cache = []
+            self.pt_id = 1
+            self.total_amount = 0
+            items = StorageDetail.objects.filter(self.filter)
+            if len(self.categories_filter) > 0:
+                for cat_item in Category.objects.filter(id__in=self.categories_filter):
+                    items = items.filter(article__categories__in=[cat_item])
+            item_id = 0
+            for item in items.values('article', 'storagesheet__storagearea').annotate(data_sum=Sum('quantity')):
+                if (item['data_sum'] > 0) or not self.hide_empty:
+                    item_id += 1
+                    area_id = item['storagesheet__storagearea']
+                    art = Article.objects.get(id=item['article'])
+                    qty = float(item['data_sum'])
+                    amount = float(art.get_amount_from_area(qty, area_id))
+                    self.total_amount += amount
+                    self._result_cache.append(ArticleSituation(id=item_id,
+                                                               article=art,
+                                                               storagearea_id=area_id,
+                                                               amount=amount,
+                                                               quantity=qty))
+
+
+class ArticleSituation(LucteriosModel):
+    objects = QuerySet()
+
+    id = models.IntegerField(verbose_name=_('id'), null=False, default=0, db_index=True)
+    article = models.ForeignKey(Article, verbose_name=_('article'), null=False, db_index=True, on_delete=models.PROTECT)
+    storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=False, db_index=True, on_delete=models.PROTECT)
+    amount = LucteriosDecimalField(verbose_name=_('buying price'), max_digits=10, decimal_places=3, default=0.0,
+                                   validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5))
+    quantity = models.DecimalField(verbose_name=_('quantity'), max_digits=12, decimal_places=3, default=1.0,
+                                   validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)])
+    quantity_txt = LucteriosVirtualField(verbose_name=_('quantity'), compute_from="get_quantity_txt")
+    mean = LucteriosVirtualField(verbose_name=_('mean'), compute_from="get_mean", format_string=lambda: format_with_devise(5))
+    designation = LucteriosVirtualField(verbose_name=_('designation'), compute_from=lambda item: item.article.designation)
+
+    @classmethod
+    def get_default_fields(cls):
+        return ['article', 'designation', 'storagearea', 'quantity_txt', 'amount', 'mean']
+
+    def get_quantity_txt(self):
+        if self.quantity is None:
+            return None
+        if self.article_id is not None:
+            format_txt = "N%d" % self.article.qtyDecimal
+        else:
+            format_txt = "N3"
+        return format_to_string(float(self.quantity), format_txt, None)
+
+    def get_mean(self):
+        if (self.quantity is not None) and (self.quantity > 0.0001):
+            return self.amount / self.quantity
+        else:
+            return None
+
+    class Meta(object):
+        abstract = True
+        verbose_name = _('article situation')
+        verbose_name_plural = _('articles situations')
 
 
 class AutomaticReduce(LucteriosModel):

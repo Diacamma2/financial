@@ -1885,7 +1885,10 @@ def accounting_convertdata():
     check_accountingcost()
     check_accountlink()
     for year in FiscalYear.objects.all().order_by('end'):
-        year.check_report()
+        try:
+            year.check_report()
+        except Exception:
+            getLogger("lucterios.core.print").exception('accounting_convertdata')
         entries = year.get_result_entries()
         if (len(entries) == 1) and (entries[0].entrylineaccount_set.count() == 1):
             current_system_account()._add_total_income_entrylines(year, entries[0])
