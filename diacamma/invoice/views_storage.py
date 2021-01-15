@@ -25,18 +25,17 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.aggregates import Sum
 from django.db.models.query import QuerySet
 from django.db.models import Q
+from django.utils import formats, timezone
 
 from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES, \
-    FORMTYPE_REFRESH, CLOSE_NO, SELECT_NONE, WrapAction, format_to_string,\
-    convert_date
+    FORMTYPE_REFRESH, CLOSE_NO, SELECT_NONE, WrapAction, convert_date
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, \
     TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE,\
     action_list_sorted, TITLE_CLOSE
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompGrid, XferCompSelect, XferCompCheckList, \
-    GRID_ORDER, XferCompDate, XferCompEdit, XferCompImage, XferCompCheck
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheck,\
+    XferCompCheckList, XferCompButton, XferCompDate, XferCompEdit, XferCompImage
 from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.error import LucteriosException, GRAVE
@@ -44,11 +43,11 @@ from lucterios.CORE.xferprint import XferPrintAction, XferPrintListing
 from lucterios.CORE.views import ObjectImport
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
 
-from diacamma.accounting.tools import format_with_devise
-from diacamma.invoice.models import StorageSheet, StorageDetail, Article, Category, StorageArea, InventoryDetail, InventorySheet, AccountPosting,\
+from diacamma.accounting.tools import format_with_devise,\
+    get_amount_from_format_devise
+from diacamma.invoice.models import StorageSheet, StorageDetail, Category, StorageArea, InventoryDetail, InventorySheet, AccountPosting,\
     ArticleSituation, ArticleSituationSet
 from diacamma.invoice.editors import add_filters
-from django.utils import timezone, formats
 
 
 MenuManage.add_sub("storage", "invoice", "diacamma.invoice/images/storage.png", _("Storage"), _("Manage of storage"), 10)
@@ -200,7 +199,7 @@ class StorageDetailDel(XferDelete):
 
 
 @MenuManage.describ('contacts.add_vat')
-@ActionsManage.affect_grid(_('Import'), "images/up.png", unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0) and (int(xfer.item.sheet_type) == StorageSheet.STATUS_BUILDING))
+@ActionsManage.affect_grid(_('Import'), "images/up.png", unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0))
 class StorageDetailImport(ObjectImport):
     caption = _("Storage detail import")
     icon = "storagesheet.png"
@@ -216,6 +215,12 @@ class StorageDetailImport(ObjectImport):
             csv_readed_item['storagesheet_id'] = self.getparam("storagesheet", 0)
             new_csv_readed.append(csv_readed_item)
         return fields_description, new_csv_readed
+
+    def _select_fields(self):
+        ObjectImport._select_fields(self)
+        storage_sheet = StorageSheet.objects.get(id=self.getparam('storagesheet', 0))
+        if storage_sheet.sheet_type != StorageSheet.TYPE_RECEIPT:
+            self.remove_component('fld_price')
 
     def fillresponse(self, modelname, quotechar="'", delimiter=";", encoding="utf-8", dateformat="%d/%m/%Y", step=0):
         ObjectImport.fillresponse(self, modelname, quotechar, delimiter, encoding, dateformat, step)
@@ -245,6 +250,7 @@ class StorageSituation(XferListEditor):
         return ArticleSituationSet(hints={'filter': self.filter, 'hide_empty': self.hide_empty, 'categories_filter': self.categories_filter})
 
     def fillresponse_header(self):
+        self.get_components('title').colspan = 2
         show_storagearea = self.getparam('storagearea', 0)
         self.categories_filter = self.getparam('cat_filter', ())
         show_accountposting = self.getparam('accountposting', 0)
@@ -257,13 +263,13 @@ class StorageSituation(XferListEditor):
         sel_stock.set_select_query(StorageArea.objects.all())
         sel_stock.set_value(show_storagearea)
         sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        sel_stock.set_location(0, 4)
+        sel_stock.set_location(1, 4)
         sel_stock.description = StorageArea._meta.verbose_name
         self.add_component(sel_stock)
 
         edt = XferCompEdit("ref_filter")
         edt.set_value(ref_filter)
-        edt.set_location(0, 5)
+        edt.set_location(1, 5)
         edt.is_default = True
         edt.description = _('ref./designation')
         edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
@@ -274,7 +280,7 @@ class StorageSituation(XferListEditor):
         sel_account.set_select_query(AccountPosting.objects.all())
         sel_account.set_value(show_accountposting)
         sel_account.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        sel_account.set_location(0, 6)
+        sel_account.set_location(1, 6)
         sel_account.description = AccountPosting._meta.verbose_name
         self.add_component(sel_account)
 
@@ -282,13 +288,13 @@ class StorageSituation(XferListEditor):
         date_situation.set_needed(False)
         date_situation.set_value(show_datesituation)
         date_situation.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        date_situation.set_location(1, 6)
+        date_situation.set_location(2, 6)
         date_situation.description = _('date situation')
         self.add_component(date_situation)
 
         ckc = XferCompCheck("hide_empty")
         ckc.set_value(self.hide_empty)
-        ckc.set_location(0, 7)
+        ckc.set_location(1, 7)
         ckc.description = _('hide articles without quantity')
         ckc.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         self.add_component(ckc)
@@ -298,7 +304,7 @@ class StorageSituation(XferListEditor):
             edt = XferCompCheckList("cat_filter")
             edt.set_select_query(cat_list)
             edt.set_value(self.categories_filter)
-            edt.set_location(1, 4, 0, 2)
+            edt.set_location(2, 4, 0, 2)
             edt.description = _('categories')
             edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
             self.add_component(edt)
@@ -317,31 +323,42 @@ class StorageSituation(XferListEditor):
             info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (sel_account.description, AccountPosting.objects.get(id=show_accountposting)))
         if (show_datesituation is not None) and (show_datesituation != 'NULL'):
             self.filter &= Q(storagesheet__date__lte=show_datesituation)
-            info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('date situation'), formats.date_format(convert_date(show_datesituation), "DATE_FORMAT")))
+        else:
+            show_datesituation = timezone.now()
+        info_list.append("{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('date situation'), formats.date_format(convert_date(show_datesituation), "DATE_FORMAT")))
         self.params['INFO'] = '{[br]}'.join(info_list)
 
     def fillresponse_body(self):
         row_id = self.get_max_row()
         self.items = self.get_items_from_filter()
         self.fill_grid(row_id + 3, self.model, self.field_id, self.items)
+        self.get_components(self.field_id).colspan = 3
+        self.params['INFO'] = self.params['INFO'] + '{[br]}' + "{[b]}{[u]}%s{[/u]}{[/b]} : %s" % (_('total amount'), get_amount_from_format_devise(self.items.total_amount, 7))
 
         lbl = XferCompLabelForm("sep")
         lbl.set_value("{[hr/]}")
-        lbl.set_location(0, row_id + 1, 2)
+        lbl.set_location(0, row_id + 1, 3)
         self.add_component(lbl)
+
+        btn = XferCompButton("refreshSituation")
+        btn.set_action(self.request, self.return_action("", "images/refresh.png"), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        btn.set_is_mini(True)
+        btn.set_location(0, row_id + 2)
+        self.add_component(btn)
 
         lbl = XferCompLabelForm("nb")
         lbl.set_value(len(self.items))
         lbl.set_format('N0')
-        lbl.set_location(0, row_id + 2)
+        lbl.set_location(1, row_id + 2)
         lbl.description = _('count of storage')
         self.add_component(lbl)
 
         lbl = XferCompLabelForm("total")
         lbl.set_value(self.items.total_amount)
         lbl.set_format(format_with_devise(5))
-        lbl.set_location(1, row_id + 2)
+        lbl.set_location(2, row_id + 2)
         lbl.description = _('total amount')
+
         self.add_component(lbl)
         self.add_action(StorageSituationPrint.get_action(TITLE_PRINT, "images/print.png"), close=CLOSE_NO)
 
