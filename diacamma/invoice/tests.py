@@ -1161,8 +1161,8 @@ class BillTest(InvoiceTest):
         content_csv = csv_value.split('\n')
         self.assertEqual(len(content_csv), 50, str(content_csv))
         self.assertEqual(content_csv[1].strip(), '"Impression des statistiques"')
-        self.assertEqual(content_csv[13].strip(), '"total";"351,22 €";"100,00 %";', str(content_csv))
-        self.assertEqual(content_csv[20].strip(), '"total";"351,22 €";"---";"---";"100,00 %";', str(content_csv))
+        self.assertEqual(content_csv[13].strip(), '"total";"351,22 €";"100,00 %";', str(content_csv))
+        self.assertEqual(content_csv[20].strip(), '"total";"351,22 €";"---";"---";"100,00 %";', str(content_csv))
 
         self.factory.xfer = BillPrint()
         self.calljson('/diacamma.invoice/billPrint', {'bill': '1;2;3;4;5'}, False)
