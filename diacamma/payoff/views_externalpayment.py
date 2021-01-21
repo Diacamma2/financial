@@ -165,7 +165,7 @@ class CheckPaymentGeneric(XferContainerAbstract):
         try:
             support = Supporting.objects.get(id=self.payid).get_final_child()
             dictionary['content1'] = ''
-            dictionary['content2'] = toHtml(self.payment_meth.paymentType.get_form(absolute_uri, self.language, support))
+            dictionary['content2'] = toHtml(self.payment_meth.paymentType.get_form(absolute_uri, self.language, support), withclean=False)
         except Exception:
             logging.getLogger('diacamma.payoff').exception("CheckPayment")
             dictionary['content1'] = _("It is not possible to pay-off this item with %s !") % self.payment_name
