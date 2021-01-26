@@ -168,7 +168,7 @@ class EntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryAccountEdit',
                       {'year': '1', 'journal': '2', 'entryaccount': '1', 'num_cpt_txt': '401'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountEdit')
-        self.assert_count_equal('', 16)
+        self.assert_count_equal('', 17)
 
         self.assert_json_equal('EDIT', 'num_cpt_txt', '401')
         self.assert_json_equal('SELECT', 'num_cpt', '4')
@@ -176,6 +176,8 @@ class EntryTest(LucteriosTest):
         self.assert_json_equal('FLOAT', 'debit_val', '0.00')
         self.assert_json_equal('FLOAT', 'credit_val', '0.00')
         self.assert_json_equal('SELECT', 'third', '0')
+        self.assert_json_equal('BUTTON', 'new-third', '')
+        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'images/new.png', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '401'}))
         self.assert_select_equal('third', 5)  # nb=5
         self.assert_count_equal('entrylineaccount_serial', 0)
         self.assertEqual(len(self.json_actions), 2)
@@ -313,12 +315,15 @@ class EntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryLineAccountEdit', {'year': '1', 'journal': '2', 'entryaccount': '1',
                                                                     'serial_entry': "-1|4|0|152.340000|0|0|None|\n-2|12|0|152.340000|0|0|None|", 'entrylineaccount_serial': '-1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryLineAccountEdit')
-        self.assert_count_equal('', 5)
+        self.assert_count_equal('', 6)
 
         self.assert_json_equal('LABELFORM', 'account', '[401] 401')
         self.assert_json_equal('FLOAT', 'debit_val', '0.00')
         self.assert_json_equal('FLOAT', 'credit_val', '152.34')
         self.assert_json_equal('SELECT', 'third', '0')
+        self.assert_json_equal('BUTTON', 'new-third', '')
+        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'images/new.png', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '401'}))
+
         self.assert_select_equal('third', 5)  # nb=5
         self.assertEqual(self.json_actions[0]['id'], "diacamma.accounting/entryLineAccountAdd")
         self.assertEqual(len(self.json_actions[0]['params']), 1)
@@ -358,12 +363,13 @@ class EntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryLineAccountEdit', {'year': '1', 'journal': '2', 'entryaccount': '1',
                                                                     'serial_entry': "-1|4|3|152.340000|0|0|None|\n-2|12|0|152.340000|0|0|None|", 'entrylineaccount_serial': '-1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryLineAccountEdit')
-        self.assert_count_equal('', 5)
+        self.assert_count_equal('', 6)
 
         self.assert_json_equal('LABELFORM', 'account', '[401] 401')
         self.assert_json_equal('FLOAT', 'debit_val', '0.00')
         self.assert_json_equal('FLOAT', 'credit_val', '152.34')
         self.assert_json_equal('SELECT', 'third', '3')
+        self.assert_json_equal('BUTTON', 'new-third', '')
         self.assert_select_equal('third', 5)  # nb=5
         self.assertEqual(self.json_actions[0]['id'], "diacamma.accounting/entryLineAccountAdd")
         self.assertEqual(len(self.json_actions[0]['params']), 1)

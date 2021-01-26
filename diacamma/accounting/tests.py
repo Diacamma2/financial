@@ -1028,11 +1028,13 @@ class ModelTest(LucteriosTest):
         self.calljson('/diacamma.accounting/modelLineEntryAddModify',
                       {'modelentry': '1', 'code': '411'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'modelLineEntryAddModify')
-        self.assert_count_equal('', 5)
+        self.assert_count_equal('', 6)
         self.assert_json_equal('EDIT', 'code', '411')
         self.assert_json_equal('SELECT', 'third', '0')
         self.assert_json_equal('FLOAT', 'credit_val', '0.00')
         self.assert_json_equal('FLOAT', 'debit_val', '0.00')
+        self.assert_json_equal('BUTTON', 'new-third', '')
+        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'images/new.png', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '411'}))
 
         self.factory.xfer = ModelLineEntryAddModify()
         self.calljson('/diacamma.accounting/modelLineEntryAddModify',

@@ -34,7 +34,8 @@ from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompButton, XferCompGrid, XferCompEdit, XferCompFloat
-from lucterios.framework.tools import FORMTYPE_REFRESH, CLOSE_NO, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES
+from lucterios.framework.tools import FORMTYPE_REFRESH, CLOSE_NO, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES,\
+    FORMTYPE_MODAL
 from lucterios.framework.xferadvance import TITLE_MODIFY
 from lucterios.CORE.parameters import Params
 
@@ -251,7 +252,7 @@ class EntryAccountEditor(LucteriosEditor):
         lbl.set_value_center("{[hr/]}")
         xfer.add_component(lbl)
         grid_lines = XferCompGrid('entrylineaccount')
-        grid_lines.set_location(0, last_row + 2, 4)
+        grid_lines.set_location(0, last_row + 2, 6)
         grid_lines.set_model(xfer.item.entrylineaccount_set.all(), EntryLineAccount.get_other_fields(), xfer)
         grid_lines.description = _('entry line of account')
         if len(xfer.item.entrylineaccount_set.filter(Q(account__type_of_account__in=(3, 4, 5)) & (Q(costaccounting__isnull=True) | Q(costaccounting__status=0)))) > 0:
@@ -280,7 +281,7 @@ class EntryAccountEditor(LucteriosEditor):
                 link_grid_lines = XferCompGrid('entryaccount_link')
                 link_grid_lines.description = _("Linked entries")
                 link_grid_lines.set_model(linkentries, fieldnames=None, xfer_custom=xfer)
-                link_grid_lines.set_location(0, last_row + 5, 4)
+                link_grid_lines.set_location(0, last_row + 5, 6)
                 link_grid_lines.add_action(xfer.request, ActionsManage.get_action_url('accounting.EntryAccount', 'OpenFromLine', xfer), unique=SELECT_SINGLE, close=CLOSE_YES, params={'field_id': 'entryaccount_link', 'journal': ''})
                 xfer.add_component(link_grid_lines)
         if self.added:
@@ -301,7 +302,7 @@ class EntryAccountEditor(LucteriosEditor):
         if entry_line.has_account:
             btn = XferCompButton('entrybtn')
             btn.is_default = True
-            btn.set_location(3, last_row + 5)
+            btn.set_location(3, last_row + 5, 2)
             btn.set_action(xfer.request, ActionsManage.get_action_url(
                 'accounting.EntryLineAccount', 'Add', xfer), close=CLOSE_YES)
             xfer.add_component(btn)
@@ -366,6 +367,12 @@ def edit_third_for_line(xfer, column, row, account_code, current_third, vertical
             cb_third.set_location(column, row)
             cb_third.description = _('third')
         xfer.add_component(cb_third)
+        btn_new = XferCompButton('new-third')
+        btn_new.set_is_mini(True)
+        btn_new.set_location(cb_third.col + cb_third.colspan, cb_third.row)
+        btn_new.set_action(xfer.request, ActionsManage.get_action_url('accounting.Third', 'Add', xfer),
+                           modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'new_account': account_code})
+        xfer.add_component(btn_new)
 
 
 class EntryLineAccountEditor(LucteriosEditor):
@@ -401,6 +408,12 @@ class EntryLineAccountEditor(LucteriosEditor):
             if abs(self.item.amount) < 0.0001:
                 self.item.set_montant(debit_rest, credit_rest)
         xfer.add_component(sel)
+        if (num_cpt_txt != '') and (len(sel.select_list) == 0) and (current_system_account().new_charts_account(num_cpt_txt)[1] >= 0):
+            btn_new = XferCompButton('new-cpt')
+            btn_new.set_is_mini(True)
+            btn_new.set_location(column + 2, row + 1, 1)
+            btn_new.set_action(xfer.request, ActionsManage.get_action_url('accounting.ChartsAccount', 'AddModify', xfer), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'code': num_cpt_txt})
+            xfer.add_component(btn_new)
         return lbl, edt
 
     def edit_extra_for_line(self, xfer, column, row, vertical=True):
@@ -465,7 +478,7 @@ class EntryLineAccountEditor(LucteriosEditor):
     def edit_line(self, xfer, init_col, init_row, debit_rest, credit_rest):
         self.edit_account_for_line(xfer, init_col, init_row, debit_rest, credit_rest)
         self.edit_creditdebit_for_line(xfer, init_col + 1, init_row + 2)
-        self.edit_extra_for_line(xfer, init_col + 2, init_row)
+        self.edit_extra_for_line(xfer, init_col + 3, init_row)
 
 
 class ModelEntryEditor(EntryLineAccountEditor):
