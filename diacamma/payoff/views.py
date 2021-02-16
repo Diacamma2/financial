@@ -49,7 +49,7 @@ from diacamma.payoff.models import Payoff, Supporting, PaymentMethod, BankAccoun
 from diacamma.accounting.models import Third
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': abs(xfer.item.get_total_rest_topay()) > 0.001)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.can_add_pay())
 @ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
 @MenuManage.describ('payoff.add_payoff')
 class PayoffAddModify(XferAddEditor):

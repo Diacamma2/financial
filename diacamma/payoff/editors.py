@@ -246,7 +246,8 @@ class PayoffEditor(LucteriosEditor):
                     amount.value = min(current_total_rest_topay if current_total_rest_topay > 1e-3 else supporting_list[0].get_final_child().get_max_payoff(),
                                        linked_total_rest_topay if linked_total_rest_topay > 1e-3 else linked_supporting.get_max_payoff())
                     xfer.params['amount'] = float(amount.value)
-                    xfer.change_to_readonly("amount")
+                    if abs(amount.value) > 0.001:
+                        xfer.change_to_readonly("amount")
                     break
         fee_code = ''
         if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):

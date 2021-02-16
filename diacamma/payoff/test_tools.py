@@ -66,7 +66,7 @@ def default_paymentmethod():
 
 class PaymentTest(LucteriosTest):
 
-    server_port = 9100
+    server_port = 9500
 
     def setUp(self):
         LucteriosTest.setUp(self)

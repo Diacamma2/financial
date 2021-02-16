@@ -486,12 +486,12 @@ class Bill(Supporting):
     LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')))
     SELECTION_BILLTYPES = ((BILLTYPE_ALL, None),) + LIST_BILLTYPES
 
+    STATUS_ALL = -2
     STATUS_BUILDING_VALID = -1
     STATUS_BUILDING = 0
     STATUS_VALID = 1
     STATUS_CANCEL = 2
     STATUS_ARCHIVE = 3
-    STATUS_ALL = -2
     LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')), (STATUS_CANCEL, _('cancel')), (STATUS_ARCHIVE, _('archive')))
     SELECTION_STATUS = ((STATUS_BUILDING_VALID, '%s+%s' % (_('building'), _('valid'))),) + LIST_STATUS + ((STATUS_ALL, None),)
 

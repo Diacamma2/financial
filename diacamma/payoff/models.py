@@ -172,6 +172,9 @@ class Supporting(LucteriosModel):
     def get_send_email_objects(self):
         return [self]
 
+    def can_add_pay(self):
+        return abs(self.get_total_rest_topay()) > 0.001
+
     def can_send_email(self):
         if self.third.contact.email != '':
             return True
