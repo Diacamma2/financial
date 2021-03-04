@@ -128,6 +128,7 @@ class Configuration(XferListEditor):
     def fillresponse(self):
         XferListEditor.fillresponse(self)
         add_year_info(self)
+        self.get_components('fiscalyear').move_action(FiscalYearActive.get_action().url_text, 0)
         self.new_tab(_('Journals'))
         self.fill_grid(self.get_max_row() + 1, Journal, 'journal', Journal.objects.all())
         self.new_tab(_('Parameters'))

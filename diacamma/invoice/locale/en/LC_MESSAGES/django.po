@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-04 13:12+0000\n"
-"PO-Revision-Date: 2021-01-04 14:12+0100\n"
+"POT-Creation-Date: 2021-03-04 08:52+0000\n"
+"PO-Revision-Date: 2021-03-04 09:52+0100\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
 "Language: en\n"
@@ -27,7 +27,7 @@ msgstr "Diacamma invoice"
 msgid "image"
 msgstr "image"
 
-#: editors.py:133 views_storage.py:54
+#: editors.py:133 views_storage.py:53
 msgid "Storage"
 msgstr "Storage"
 
@@ -90,13 +90,13 @@ msgid "provider"
 msgstr "provider"
 
 #: editors.py:242 models.py:218 printmodel/ArticleSituation_0002.py:45
-#: printmodel/Article_0001.py:41 views.py:577 views_storage.py:302
-#: views_storage.py:314 views_storage.py:442
+#: printmodel/Article_0001.py:41 views.py:577 views_storage.py:308
+#: views_storage.py:320 views_storage.py:459
 msgid "categories"
 msgstr "categories"
 
-#: editors.py:251 views.py:560 views_storage.py:268 views_storage.py:309
-#: views_storage.py:432
+#: editors.py:251 views.py:560 views_storage.py:274 views_storage.py:315
+#: views_storage.py:449
 msgid "ref./designation"
 msgstr "ref./designation"
 
@@ -298,11 +298,11 @@ msgstr "asset"
 msgid "receipt"
 msgstr "receipt"
 
-#: models.py:495 models.py:496 models.py:1335 models.py:1717
+#: models.py:495 models.py:496 models.py:1717
 msgid "building"
 msgstr "building"
 
-#: models.py:495 models.py:496 models.py:1335 models.py:1717
+#: models.py:495 models.py:496 models.py:1717
 msgid "valid"
 msgstr "valid"
 
@@ -456,6 +456,16 @@ msgstr "detail"
 msgid "details"
 msgstr "details"
 
+#: models.py:1335
+#, fuzzy
+#| msgid "building"
+msgid "building storage"
+msgstr "building"
+
+#: models.py:1335
+msgid "valid storage"
+msgstr "valid"
+
 #: models.py:1340 models.py:1723
 msgid "stock receipt"
 msgstr "stock receipt"
@@ -480,7 +490,7 @@ msgstr "bill reference"
 msgid "bill date"
 msgstr "bill date"
 
-#: models.py:1352 views_storage.py:344
+#: models.py:1352 views_storage.py:336 views_storage.py:360
 msgid "total amount"
 msgstr "total amount"
 
@@ -489,7 +499,7 @@ msgstr "total amount"
 msgid "Article %s is not stockable"
 msgstr "Article %s is not stockable"
 
-#: models.py:1427 models.py:1433 views_storage.py:229
+#: models.py:1427 models.py:1433 views_storage.py:234
 msgid "storage sheet"
 msgstr "storage sheet"
 
@@ -746,11 +756,11 @@ msgstr "Modify bill"
 msgid "Show bill"
 msgstr "Show bill"
 
-#: views.py:211 views_storage.py:137
+#: views.py:211 views_storage.py:136
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: views.py:217 views_storage.py:143
+#: views.py:217 views_storage.py:142
 #, python-format
 msgid "Do you want validate '%s'?"
 msgstr "Do you want validate '%s'?"
@@ -865,7 +875,7 @@ msgstr "Articles"
 msgid "Only activate"
 msgstr "Only activate"
 
-#: views.py:549 views_storage.py:535
+#: views.py:549 views_storage.py:552
 msgid "All"
 msgstr "All"
 
@@ -877,7 +887,7 @@ msgstr "Show article"
 msgid "with stock"
 msgstr "with stock"
 
-#: views.py:603 views_storage.py:90
+#: views.py:603 views_storage.py:89
 msgid "Search"
 msgstr "Search"
 
@@ -1211,163 +1221,163 @@ msgstr "Define parameters for invoice"
 msgid "Configuration of vat"
 msgstr "Configuration of vat"
 
-#: views_storage.py:54
+#: views_storage.py:53
 msgid "Manage of storage"
 msgstr "Manage of storage"
 
-#: views_storage.py:64
+#: views_storage.py:63
 msgid "Management of storage sheet list"
 msgstr "Management of storage sheet list"
 
-#: views_storage.py:69
+#: views_storage.py:68
 msgid "Storage sheet"
 msgstr "Storage sheet"
 
-#: views_storage.py:96
+#: views_storage.py:95
 msgid "Search storage sheet"
 msgstr "Search storage sheet"
 
-#: views_storage.py:106 views_storage.py:503
+#: views_storage.py:105 views_storage.py:520
 msgid "Add storage sheet"
 msgstr "Add storage sheet"
 
-#: views_storage.py:107 views_storage.py:504
+#: views_storage.py:106 views_storage.py:521
 msgid "Modify storage sheet"
 msgstr "Modify storage sheet"
 
-#: views_storage.py:113
+#: views_storage.py:112
 msgid "Show storage sheet"
 msgstr "Show storage sheet"
 
-#: views_storage.py:125
+#: views_storage.py:124
 msgid "Delete storage sheet"
 msgstr "Delete storage sheet"
 
-#: views_storage.py:150
+#: views_storage.py:149
 msgid "target area"
 msgstr "target area"
 
-#: views_storage.py:174
+#: views_storage.py:173
 msgid "Print storage sheet"
 msgstr "Print storage sheet"
 
-#: views_storage.py:189
+#: views_storage.py:188
 msgid "Add storage detail"
 msgstr "Add storage detail"
 
-#: views_storage.py:190
+#: views_storage.py:189
 msgid "Modify storage detail"
 msgstr "Modify storage detail"
 
-#: views_storage.py:199
+#: views_storage.py:198
 msgid "Delete storage detail"
 msgstr "Delete storage detail"
 
-#: views_storage.py:203
+#: views_storage.py:202
 msgid "Import"
 msgstr "Import"
 
-#: views_storage.py:205
+#: views_storage.py:204
 msgid "Storage detail import"
 msgstr "Storage detail import"
 
-#: views_storage.py:233
+#: views_storage.py:238
 msgid "Situation of storage"
 msgstr "Situation of storage"
 
-#: views_storage.py:238 views_storage.py:354
+#: views_storage.py:243 views_storage.py:371
 msgid "Situation"
 msgstr "Situation"
 
-#: views_storage.py:286 views_storage.py:320
+#: views_storage.py:292 views_storage.py:328
 msgid "date situation"
 msgstr "date situation"
 
-#: views_storage.py:292
+#: views_storage.py:298
 msgid "hide articles without quantity"
 msgstr "hide articles without quantity"
 
-#: views_storage.py:337
+#: views_storage.py:353
 msgid "count of storage"
 msgstr "count of storage"
 
-#: views_storage.py:378
+#: views_storage.py:395
 msgid "Historic of storage"
 msgstr "Historic of storage"
 
-#: views_storage.py:383
+#: views_storage.py:400
 msgid "Historic"
 msgstr "Historic"
 
-#: views_storage.py:408
+#: views_storage.py:425
 msgid "begin date"
 msgstr "begin date"
 
-#: views_storage.py:415
+#: views_storage.py:432
 msgid "end date"
 msgstr "end date"
 
-#: views_storage.py:462
+#: views_storage.py:479
 msgid "Print historic"
 msgstr "Print historic"
 
-#: views_storage.py:477
+#: views_storage.py:494
 msgid "Management of inventory sheet list"
 msgstr "Management of inventory sheet list"
 
-#: views_storage.py:482
+#: views_storage.py:499
 msgid "Inventory sheet"
 msgstr "Inventory sheet"
 
-#: views_storage.py:510
+#: views_storage.py:527
 msgid "Show inventory sheet"
 msgstr "Show inventory sheet"
 
-#: views_storage.py:535
+#: views_storage.py:552
 msgid "Only the non-entered"
 msgstr "Only the non-entered"
 
-#: views_storage.py:535
+#: views_storage.py:552
 msgid "Only the entered"
 msgstr "Only the entered"
 
-#: views_storage.py:535
+#: views_storage.py:552
 msgid "Only with quantity"
 msgstr "Only with quantity"
 
-#: views_storage.py:538
+#: views_storage.py:555
 msgid "Filter by elements"
 msgstr "Filter by elements"
 
-#: views_storage.py:592
+#: views_storage.py:609
 msgid "Delete inventory sheet"
 msgstr "Delete inventory sheet"
 
-#: views_storage.py:607
+#: views_storage.py:624
 msgid "Print inventory sheet"
 msgstr "Print inventory sheet"
 
-#: views_storage.py:621
+#: views_storage.py:638
 msgid "Modify inventory detail"
 msgstr "Modify inventory detail"
 
-#: views_storage.py:629
+#: views_storage.py:646
 msgid "Copy"
 msgstr "Copy"
 
-#: views_storage.py:635
+#: views_storage.py:652
 msgid "Copy quantity of inventory detail"
 msgstr "Copy quantity of inventory detail"
 
-#: views_storage.py:642
+#: views_storage.py:659
 msgid "Finalize"
 msgstr "Finalize"
 
-#: views_storage.py:648
+#: views_storage.py:665
 msgid "Finalize quantity non-entered of inventory detail"
 msgstr "Finalize quantity non-entered of inventory detail"
 
-#: views_storage.py:651
+#: views_storage.py:668
 msgid ""
 "This action will report current quantity to article whose non-enterd.{[br/]}"
 "Do you want to do this action ?"
@@ -1375,7 +1385,7 @@ msgstr ""
 "This action will report current quantity to article whose non-enterd.{[br/]}"
 "Do you want to do this action ?"
 
-#: views_storage.py:657
+#: views_storage.py:674
 #, python-format
 msgid "%d articles are reported."
 msgstr "%d articles are reported."

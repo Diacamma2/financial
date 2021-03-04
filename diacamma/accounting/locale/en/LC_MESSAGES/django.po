@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-04 13:12+0000\n"
-"PO-Revision-Date: 2020-11-25 09:45+0100\n"
+"POT-Creation-Date: 2021-03-04 08:52+0000\n"
+"PO-Revision-Date: 2021-03-04 09:29+0100\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
 "Language: en\n"
@@ -23,86 +23,86 @@ msgstr ""
 msgid "Diacamma accounting"
 msgstr "Diacamma accounting"
 
-#: editors.py:108 models.py:300
+#: editors.py:109 models.py:300
 msgid "This fiscal year is not the last!"
 msgstr "This fiscal year is not the last!"
 
-#: editors.py:122
+#: editors.py:123
 msgid "Blank"
 msgstr "Blank"
 
-#: editors.py:122 views_accounts.py:175
+#: editors.py:123 views_accounts.py:175
 msgid "Initial"
 msgstr "Initial"
 
-#: editors.py:124 views_accounts.py:138 views_budget.py:213
+#: editors.py:125 views_accounts.py:138 views_budget.py:213
 #: views_entries.py:310
 msgid "Import"
 msgstr "Import"
 
-#: editors.py:126 views_accounts.py:55 views_accounts.py:61
+#: editors.py:127 views_accounts.py:55 views_accounts.py:61
 msgid "Charts of account"
 msgstr "Charts of account"
 
-#: editors.py:139
+#: editors.py:140
 msgid "end of fiscal year must be after begin!"
 msgstr "end of fiscal year must be after begin!"
 
-#: editors.py:149
+#: editors.py:150
 msgid "Some enties for last year report are not closed!"
 msgstr "Some enties for last year retained are not closed!"
 
-#: editors.py:200 models.py:1631 models.py:1709
+#: editors.py:201 models.py:1631 models.py:1709
 msgid "Invalid code"
 msgstr "Invalid code"
 
-#: editors.py:210
+#: editors.py:211
 msgid "Changment not allowed!"
 msgstr "Changment not allowed!"
 
-#: editors.py:256 models.py:1556
+#: editors.py:257 models.py:1556
 msgid "entry line of account"
 msgstr "entry line of account"
 
-#: editors.py:264
+#: editors.py:265
 msgid "entry of accounting for an asset"
 msgstr "entry of accounting for an asset"
 
-#: editors.py:281
+#: editors.py:282
 msgid "Linked entries"
 msgstr "Linked entries"
 
-#: editors.py:297
+#: editors.py:298
 msgid "Add a entry line"
 msgstr "Add a entry line"
 
-#: editors.py:361 editors.py:367 models.py:62 models.py:200 models.py:205
+#: editors.py:362 editors.py:368 models.py:62 models.py:200 models.py:205
 #: models.py:1259 models.py:1611
 msgid "third"
 msgstr "third"
 
-#: editors.py:379 models.py:253 models.py:1255 models.py:1264 models.py:1685
+#: editors.py:386 models.py:253 models.py:1255 models.py:1264 models.py:1685
 #: printmodel/EntryLineAccount_0001.py:44 printmodel/Third_0001.py:39
 msgid "account"
 msgstr "account"
 
-#: editors.py:425 editors.py:430 models.py:663 models.py:968 models.py:1260
+#: editors.py:438 editors.py:443 models.py:663 models.py:968 models.py:1260
 #: models.py:1565 models.py:1684 views_budget.py:45 views_budget.py:254
 #: views_entries.py:455
 msgid "cost accounting"
 msgstr "cost accounting"
 
-#: editors.py:440 editors.py:445 models.py:1258
+#: editors.py:453 editors.py:458 models.py:1258
 msgid "reference"
 msgstr "reference"
 
-#: editors.py:456 models.py:1265 models.py:1614
+#: editors.py:469 models.py:1265 models.py:1614
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:423
 #: views_reports.py:506
 msgid "debit"
 msgstr "debit"
 
-#: editors.py:462 models.py:1266 models.py:1615
+#: editors.py:475 models.py:1266 models.py:1615
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:424
 #: views_reports.py:507
 msgid "credit"
@@ -216,15 +216,15 @@ msgstr ""
 "b]} %(closed)s"
 
 #: models.py:273
-msgid "building"
+msgid "building year"
 msgstr "building"
 
 #: models.py:273
-msgid "running"
+msgid "running year"
 msgstr "running"
 
 #: models.py:273
-msgid "finished"
+msgid "finished year"
 msgstr "finished"
 
 #: models.py:275 views_other.py:82 views_reports.py:695
@@ -362,8 +362,9 @@ msgid "The cost accounting \"%s\" is include in a model of entry!"
 msgstr "The cost accounting \"%s\" is include in a model of entry!"
 
 #: models.py:655
-msgid "This cost accounting have entry with another year!"
-msgstr "This cost accounting have entry with another year!"
+#, python-format
+msgid "The cost accounting \"%s\" have entry with another year!"
+msgstr "The cost accounting \"%s\" have entry with another year!"
 
 #: models.py:664
 msgid "costs accounting"

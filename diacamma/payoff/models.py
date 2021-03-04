@@ -675,7 +675,7 @@ class DepositSlip(LucteriosModel):
     STATUS_BUILDING = 0
     STATUS_CLOSED = 1
     STATUS_VALID = 2
-    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_CLOSED, _('closed')), (STATUS_VALID, _('valid')))
+    LIST_STATUS = ((STATUS_BUILDING, _('building deposit')), (STATUS_CLOSED, _('closed deposit')), (STATUS_VALID, _('valid deposit')))
 
     status = FSMIntegerField(verbose_name=_('status'), choices=LIST_STATUS, null=False, default=STATUS_BUILDING, db_index=True)
     bank_account = models.ForeignKey(BankAccount, verbose_name=_('bank account'), null=False, db_index=True, on_delete=models.PROTECT)

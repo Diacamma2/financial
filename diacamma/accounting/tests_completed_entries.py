@@ -33,7 +33,6 @@ from django.db.models import Q
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir, get_user_path
-from lucterios.CORE.models import Parameter
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.views import StatusMenu
 from lucterios.contacts.models import CustomField
@@ -798,8 +797,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_select_equal('cost_accounting_id', {0: None, 2: 'open', 3: 'aaa'})  # nb=3
         self.assert_json_equal('SELECT', 'cost_accounting_id', '2')
 
-        Parameter.change_value('accounting-needcost', '1')
-        Params.clear()
+        Params.setvalue('accounting-needcost', '1')
 
         self.factory.xfer = EntryAccountClose()
         self.calljson('/diacamma.accounting/entryAccountClose', {'CONFIRME': 'YES', 'year': '1', 'journal': '2', 'entryline': '10;11'}, False)

@@ -1332,7 +1332,7 @@ class Detail(LucteriosModel):
 class StorageSheet(LucteriosModel):
     STATUS_BUILDING = 0
     STATUS_VALID = 1
-    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')))
+    LIST_STATUS = ((STATUS_BUILDING, _('building storage')), (STATUS_VALID, _('valid storage')))
 
     TYPE_RECEIPT = 0
     TYPE_EXIT = 1

@@ -25,6 +25,7 @@ from base64 import b64decode
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
+from lucterios.CORE.parameters import Params
 from lucterios.documents.views import DocumentSearch
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, fill_entries_fr, set_accounting_system, add_entry,\
@@ -625,6 +626,7 @@ class FiscalYearWorkflowTest(PaymentTest):
 
     def test_close(self):
         self._add_subvention()
+        Params.setvalue('accounting-needcost', '1')
         self.factory.xfer = DocumentSearch()
         self.calljson('/lucterios.documents/documentSearch', {}, False)
         self.assert_observer('core.custom', 'lucterios.documents', 'documentSearch')

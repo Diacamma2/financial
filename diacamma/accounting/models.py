@@ -154,13 +154,15 @@ class Third(LucteriosModel, CustomizeObject):
             Signal.call_signal("addon_search", cls, fieldnames)
         return fieldnames
 
-    def get_total(self, current_date=None, strict=True):
+    def get_total(self, current_date=None, strict=True, ignore_close=False):
         current_filter = Q(third=self)
         if current_date is not None:
             if strict:
                 current_filter &= Q(entry__date_value__lte=current_date)
             else:
                 current_filter &= Q(entry__date_value__lt=current_date)
+        if ignore_close:
+            current_filter &= ~Q(entry__designation=current_system_account().CLOSE_TITLE_THIRD)
         active_sum = get_amount_sum(EntryLineAccount.objects.filter(current_filter & Q(account__type_of_account=0)).aggregate(Sum('amount')))
         passive_sum = get_amount_sum(EntryLineAccount.objects.filter(current_filter & Q(account__type_of_account=1)).aggregate(Sum('amount')))
         other_sum = get_amount_sum(EntryLineAccount.objects.filter(current_filter & Q(account__type_of_account__gt=1)).aggregate(Sum('amount')))
@@ -270,7 +272,7 @@ class FiscalYear(LucteriosModel):
     STATUS_BUILDING = 0
     STATUS_RUNNING = 1
     STATUS_FINISHED = 2
-    LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_RUNNING, _('running')), (STATUS_FINISHED, _('finished')))
+    LIST_STATUS = ((STATUS_BUILDING, _('building year')), (STATUS_RUNNING, _('running year')), (STATUS_FINISHED, _('finished year')))
 
     begin = models.DateField(verbose_name=_('begin'))
     end = models.DateField(verbose_name=_('end'))
@@ -652,7 +654,7 @@ class CostAccounting(LucteriosModel):
         if (self.id is not None) and (self.year is not None):
             entries = EntryAccount.objects.filter(entrylineaccount__costaccounting=self).exclude(year=self.year)
             if len(entries) > 0:
-                raise LucteriosException(IMPORTANT, _('This cost accounting have entry with another year!'))
+                raise LucteriosException(IMPORTANT, _('The cost accounting "%s" have entry with another year!') % self)
         res = LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
         for budget_item in self.budget_set.all():
             budget_item.year = self.year
@@ -1156,7 +1158,7 @@ class EntryAccount(LucteriosModel):
                 total_debit += serial[idx].get_debit(with_correction=False)
         return no_change, currency_round(max(0, total_credit - total_debit)), currency_round(max(0, total_debit - total_credit))
 
-    def closed(self, check_balance=True):
+    def closed(self, check_balance=True, check_needcost=True):
         if (self.year.status != 2) and not self.close:
             if check_balance:
                 _no_change, debit_rest, credit_rest = self.serial_control(self.get_serial())
@@ -1164,7 +1166,7 @@ class EntryAccount(LucteriosModel):
                     raise LucteriosException(GRAVE, _("Account entry not balanced{[br/]}total credit=%(credit)s - total debit=%(debit)s%(info)s") % {'credit': get_amount_from_format_devise(debit_rest, 7),
                                                                                                                                                      'debit': get_amount_from_format_devise(credit_rest, 7),
                                                                                                                                                      'info': self.get_description()})
-            if Params.getvalue("accounting-needcost"):
+            if check_needcost and Params.getvalue("accounting-needcost"):
                 nocost_filter = Q(account__type_of_account__in=(ChartsAccount.TYPE_REVENUE,
                                                                 ChartsAccount.TYPE_EXPENSE,
                                                                 ChartsAccount.TYPE_CONTRAACCOUNTS))

@@ -37,6 +37,9 @@ from diacamma.accounting.tools import get_amount_from_format_devise, correct_acc
 
 class DefaultSystemAccounting(object):
 
+    CLOSE_TITLE_RESULT = _("Fiscal year closing - Result")
+    CLOSE_TITLE_THIRD = _("Fiscal year closing - Third")
+
     NEGATIF_ACCOUNT = ""
     POSITIF_ACCOUNT = ""
 
@@ -170,14 +173,13 @@ class DefaultSystemAccounting(object):
         expense = year.total_expense
         if abs(expense - revenue) > 0.0001:
             from diacamma.accounting.models import EntryAccount
-            end_desig = _("Fiscal year closing - Result")
-            new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=end_desig, date_value=year.end)
+            new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=self.CLOSE_TITLE_RESULT, date_value=year.end)
             self._add_total_income_entrylines(year, new_entry)
             if expense > revenue:
                 new_entry.add_entry_line(revenue - expense, self.NEGATIF_ACCOUNT)
             elif abs(expense - revenue) > 1e-4:
                 new_entry.add_entry_line(revenue - expense, self.POSITIF_ACCOUNT)
-            new_entry.closed()
+            new_entry.closed(check_needcost=False)
 
     def _add_sumline_in_account(self, last_account_id, sum_account, new_entry):
         from diacamma.accounting.models import EntryLineAccount
@@ -194,9 +196,8 @@ class DefaultSystemAccounting(object):
     def _create_thirds_ending_entry(self, year):
         from diacamma.accounting.models import ChartsAccount, AccountLink, EntryAccount, EntryLineAccount
         from lucterios.CORE.parameters import Params
-        end_desig = _("Fiscal year closing - Third")
 
-        new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=end_desig, date_value=year.end)
+        new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=self.CLOSE_TITLE_THIRD, date_value=year.end)
         nolettering_account = ChartsAccount.objects.filter(year=year, code__in=Params.getvalue("accounting-lettering-check").split('{[br/]}')).order_by('code').distinct()
         for account_item in nolettering_account:
             amounts_by_third = EntryLineAccount.objects.filter(Q(account=account_item)).order_by('third').values('third').annotate(amount=Sum('amount'))
