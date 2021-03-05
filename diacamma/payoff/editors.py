@@ -44,7 +44,8 @@ class SupportingEditor(LucteriosEditor):
     def show_third(self, xfer, right=''):
         xfer.params['supporting'] = self.item.id
         third = xfer.get_components('third')
-        third.colspan -= 1
+        third.colspan = max(1, third.colspan - 1)
+        xfer.tab = third.tab
         if (self.item.third_id is not None) and (self.item.third.contact.email != ''):
             xfer.remove_component('third')
             new_third = XferCompLinkLabel('third')
