@@ -87,10 +87,8 @@ class Migration(migrations.Migration):
                     verbose_name='ID', auto_created=True, serialize=False, primary_key=True)),
                 ('begin', models.DateField(verbose_name='begin')),
                 ('end', models.DateField(verbose_name='end')),
-                ('status', models.IntegerField(verbose_name='status', choices=[
-                 (0, 'building'), (1, 'running'), (2, 'finished')], default=0)),
-                ('is_actif', models.BooleanField(
-                    verbose_name='actif', default=False, db_index=True)),
+                ('status', models.IntegerField(verbose_name='status', choices=[(0, 'building year'), (1, 'running year'), (2, 'finished year')], default=0)),
+                ('is_actif', models.BooleanField(verbose_name='actif', default=False, db_index=True)),
                 ('last_fiscalyear', models.ForeignKey(to='accounting.FiscalYear', verbose_name='last fiscal year', related_name='next_fiscalyear',
                                                       null=True, on_delete=models.SET_NULL)),
             ],
@@ -217,6 +215,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'default_permissions': [],
+                'ordering': ['entry__date_value', 'entry_id', 'account__code', 'third'],
                 'verbose_name': 'entry line of account',
                 'verbose_name_plural': 'entry lines of account',
             },

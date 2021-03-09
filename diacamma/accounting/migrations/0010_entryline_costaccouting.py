@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='entrylineaccount',
-            options={'default_permissions': [], 'ordering': ['entry__date_value', 'entry__id', 'account__code', 'third'], 'verbose_name': 'entry line of account', 'verbose_name_plural': 'entry lines of account'},
+            options={'default_permissions': [], 'ordering': ['entry__date_value', 'entry_id', 'account__code', 'third'], 'verbose_name': 'entry line of account', 'verbose_name_plural': 'entry lines of account'},
         ),
         migrations.AddField(
             model_name='entrylineaccount',

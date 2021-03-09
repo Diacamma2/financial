@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             name='InventoryDetail',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('quantity', models.DecimalField(decimal_places=3, default=None, max_digits=12, null=True, validators=[django.core.validators.MinValueValidator(0.0), django.core.validators.MaxValueValidator(9999999.999)], verbose_name='quantity')),
+                ('quantity', models.DecimalField(decimal_places=3, default=None, max_digits=12, null=True, validators=[django.core.validators.MinValueValidator(0.0), django.core.validators.MaxValueValidator(9999999.999)], verbose_name='counted quantity')),
                 ('article', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='invoice.Article', verbose_name='article')),
                 ('inventorysheet', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='invoice.InventorySheet', verbose_name='inventory sheet')),
             ],
