@@ -328,6 +328,31 @@ parent.get('print_sep').setEnabled(!is_persitent);
                 self.fillresponse_sendmultimessages(subject, message, model)
 
 
+def add_payment_methods(xfer, supporting, payments):
+    if not supporting.payoff_have_payment() or (len(payments) == 0):
+        return
+    max_row = xfer.get_max_row() + 1
+    lbl = XferCompLabelForm('lb_sep')
+    lbl.set_value("{[hr/]}")
+    lbl.set_location(1, max_row, 4)
+    xfer.add_component(lbl)
+    lbl = XferCompLabelForm('lb_title')
+    lbl.set_value_as_infocenter(_("Payement methods"))
+    lbl.set_location(1, max_row + 1, 4)
+    xfer.add_component(lbl)
+    for paymeth in payments:
+        max_row = xfer.get_max_row() + 1
+        lbl = XferCompLabelForm('paymeth_%d' % paymeth.id)
+        lbl.description = get_value_if_choices(paymeth.paytype, paymeth.get_field_by_name('paytype'))
+        lbl.set_value(paymeth.show_pay(xfer.request.META.get('HTTP_REFERER', xfer.request.build_absolute_uri()), xfer.language, supporting))
+        lbl.set_location(1, max_row, 3)
+        xfer.add_component(lbl)
+        lbl = XferCompLabelForm('sep_paymeth_%d' % paymeth.id)
+        lbl.set_value("{[br/]}")
+        lbl.set_location(2, max_row + 1)
+        xfer.add_component(lbl)
+
+
 @ActionsManage.affect_show(_("Payment"), "diacamma.payoff/images/payments.png", condition=lambda xfer: xfer.item.payoff_have_payment() and (len(PaymentMethod.objects.all()) > 0))
 @MenuManage.describ('')
 class PayableShow(XferContainerCustom):
@@ -351,26 +376,7 @@ class PayableShow(XferContainerCustom):
         img.set_location(0, 0, 1, 6)
         self.add_component(img)
         self.fill_from_model(1, max_row, True, self.item.get_payment_fields())
-        max_row = self.get_max_row() + 1
-        lbl = XferCompLabelForm('lb_sep')
-        lbl.set_value("{[hr/]}")
-        lbl.set_location(1, max_row, 4)
-        self.add_component(lbl)
-        lbl = XferCompLabelForm('lb_title')
-        lbl.set_value_as_infocenter(_("Payement methods"))
-        lbl.set_location(1, max_row + 1, 4)
-        self.add_component(lbl)
-        for paymeth in payments:
-            max_row = self.get_max_row() + 1
-            lbl = XferCompLabelForm('paymeth_%d' % paymeth.id)
-            lbl.description = get_value_if_choices(paymeth.paytype, paymeth.get_field_by_name('paytype'))
-            lbl.set_value(paymeth.show_pay(self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()), self.language, self.item))
-            lbl.set_location(1, max_row, 3)
-            self.add_component(lbl)
-            lbl = XferCompLabelForm('sep_paymeth_%d' % paymeth.id)
-            lbl.set_value("{[br/]}")
-            lbl.set_location(2, max_row + 1)
-            self.add_component(lbl)
+        add_payment_methods(self, self.item, payments)
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
 
 
