@@ -630,9 +630,9 @@ class ArticlePrint(XferPrintListing):
             new_filter &= Q(isdisabled=False)
         if show_stockable != -1:
             if show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
-                self.filter &= Q(stockable=show_stockable)
+                new_filter &= Q(stockable=show_stockable)
             else:
-                self.filter &= ~Q(stockable=Article.STOCKABLE_NO)
+                new_filter &= ~Q(stockable=Article.STOCKABLE_NO)
         if show_storagearea != 0:
             new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
         return new_filter
