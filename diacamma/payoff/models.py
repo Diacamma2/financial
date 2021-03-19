@@ -871,7 +871,7 @@ class PaymentMethod(LucteriosModel):
         verbose_name = _('payment method')
         verbose_name_plural = _('payment methods')
         default_permissions = []
-        ordering = ['paytype']
+        ordering = ['id']
 
 
 class BankTransaction(LucteriosModel):

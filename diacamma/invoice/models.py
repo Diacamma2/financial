@@ -516,6 +516,7 @@ class Bill(Supporting):
     vta_details = LucteriosVirtualField(verbose_name='', compute_from='get_vta_details', format_string=lambda: format_with_devise(5))
 
     origin = LucteriosVirtualField(verbose_name=_('origin'), compute_from='get_origin')
+    description = LucteriosVirtualField(verbose_name='', compute_from='get_description')
 
     def __str__(self):
         billtype = get_value_if_choices(self.bill_type, self.get_field_by_name('bill_type'))
@@ -651,6 +652,21 @@ class Bill(Supporting):
             return _('origin : %s') % self.parentbill
         else:
             return ""
+
+    def get_description(self):
+        res = "{[table width='100%' border='1' style='border-collapse: collapse;']}\n"
+        res += "{[tr]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[/tr]}\n" % (_('designation'), _('price'), _('quantity'), _('unit'), _('reduce'), _('total'))
+        for det in self.detail_set.all():
+            res += "{[tr]}"
+            res += "{[td]}%s{[/td]}" % det.designation
+            res += "{[td]}%s{[/td]}" % get_amount_from_format_devise(det.price_txt, 5)
+            res += "{[td]}%s{[/td]}" % round(det.quantity, det.article.qtyDecimal if det.article_id is not None else 3)
+            res += "{[td]}%s{[/td]}" % det.unit
+            res += "{[td]}%s{[/td]}" % (det.reduce_txt if det.reduce_txt is not None else '',)
+            res += "{[td]}%s{[/td]}" % get_amount_from_format_devise(det.total, 5)
+            res += "{[/tr]}\n"
+        res += "{[/table]}\n"
+        return res
 
     def get_vta_detail_list(self):
         vtas = {}
