@@ -33,7 +33,8 @@ from django.utils import formats
 
 from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, WrapAction, convert_date, ActionsManage, SELECT_MULTI
 from lucterios.framework.xfergraphic import XferContainerCustom
-from lucterios.framework.xfercomponents import XferCompImage, XferCompSelect, XferCompLabelForm, XferCompGrid, XferCompEdit, XferCompCheck
+from lucterios.framework.xfercomponents import XferCompImage, XferCompSelect, XferCompLabelForm, XferCompGrid, XferCompEdit, XferCompCheck,\
+    XferCompDate
 from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE
 from lucterios.contacts.models import LegalEntity
 from lucterios.CORE.parameters import Params
@@ -44,6 +45,7 @@ from diacamma.accounting.models import FiscalYear, EntryLineAccount, ChartsAccou
 from diacamma.accounting.tools import correct_accounting_code, current_system_account, format_with_devise
 from diacamma.accounting.tools_reports import get_spaces, convert_query_to_account, add_cell_in_grid, fill_grid, add_item_in_grid
 from diacamma.accounting.views_entries import add_fiscalyear_result
+from lucterios.framework.xferbasic import NULL_VALUE
 
 MenuManage.add_sub("bookkeeping_report", "financial", "diacamma.accounting/images/accounting.png", _("Reports"), _("Report of Bookkeeping"), 30)
 
@@ -85,16 +87,16 @@ class FiscalYearReport(XferContainerCustom):
 
     def fill_filterCode(self):
         if self.add_filtering:
-            filtercode = self.getparam('filtercode', Params.getvalue("accounting-code-report-filter"))
+            self.filtercode = self.getparam('filtercode', Params.getvalue("accounting-code-report-filter"))
             edt = XferCompEdit('filtercode')
-            edt.set_value(filtercode)
+            edt.set_value(self.filtercode)
             edt.is_default = True
             edt.description = _("accounting code starting with")
             edt.set_location(1, 3, 3)
             edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             self.add_component(edt)
-            if filtercode != '':
-                self.filter &= Q(account__code__startswith=filtercode)
+            if self.filtercode != '':
+                self.filter &= Q(account__code__startswith=self.filtercode)
 
     def fill_header(self):
         self.item = FiscalYear.get_current(self.getparam("year"))
@@ -528,9 +530,9 @@ class FiscalYearTrialBalance(FiscalYearReport):
                         account_title = account.get_name()
                     balance_values[account_code] = [account_title, 0, 0]
                 if (account.credit_debit_way() * data_line['data_sum']) > 0.0001:
-                    balance_values[account_code][2] = account.credit_debit_way() * data_line['data_sum']
+                    balance_values[account_code][2] += account.credit_debit_way() * data_line['data_sum']
                 else:
-                    balance_values[account_code][1] = -1 * account.credit_debit_way() * data_line['data_sum']
+                    balance_values[account_code][1] += -1 * account.credit_debit_way() * data_line['data_sum']
         return balance_values
 
     def calcul_table(self):
@@ -644,8 +646,14 @@ class CostAccountingReport(FiscalYearReport):
         self.fill_header()
         self.addNameCol = False
         for self.item in self.items:
-            self.filter = Q(costaccounting=self.item)
             self.new_tab(str(self.item))
+            self.filter = Q(costaccounting=self.item)
+            if self.date_begin != NULL_VALUE:
+                self.filter &= Q(entry__date_value__gte=self.date_begin)
+            if self.date_end != NULL_VALUE:
+                self.filter &= Q(entry__date_value__lte=self.date_end)
+            if self.add_filtering and self.filtercode != '':
+                self.filter &= Q(account__code__startswith=self.filtercode)
             self.define_gridheader()
             self.fill_filterheader()
             self.calcul_table()
@@ -672,8 +680,9 @@ class CostAccountingReport(FiscalYearReport):
         pass
 
     def fill_header(self):
-        self.date_begin = self.getparam("begin_date")
-        self.date_end = self.getparam("end_date")
+        datereadonly = self.getparam("datereadonly", False)
+        self.date_begin = self.getparam("begin_date", NULL_VALUE)
+        self.date_end = self.getparam("end_date", NULL_VALUE)
         img = XferCompImage('img')
         img.set_value(self.icon_path())
         img.set_location(0, 0, 1, 3)
@@ -685,24 +694,34 @@ class CostAccountingReport(FiscalYearReport):
             lbl.description = self.model._meta.verbose_name
             self.add_component(lbl)
 
-        self.filter = Q(costaccounting=self.item)
-        if self.date_begin is not None:
+        if datereadonly:
             begin_filter = XferCompLabelForm('begin_date')
-            begin_filter.set_location(1, 4)
-            begin_filter.set_needed(True)
             begin_filter.set_value(datetime.strptime(self.date_begin, "%Y-%m-%d").date())
             begin_filter.set_format("D")
-            begin_filter.description = _('begin')
-            self.add_component(begin_filter)
-            self.filter &= Q(entry__date_value__gte=self.date_begin)
-        if self.date_end is not None:
+            begin_filter.set_needed(True)
             end_filter = XferCompLabelForm('end_date')
-            end_filter.set_location(2, 4)
-            end_filter.set_needed(True)
             end_filter.set_value(datetime.strptime(self.date_end, "%Y-%m-%d").date())
+            end_filter.set_needed(True)
             end_filter.set_format("D")
-            end_filter.description = _('end')
-            self.add_component(end_filter)
+        else:
+            begin_filter = XferCompDate('begin_date')
+            begin_filter.set_value(self.date_begin)
+            begin_filter.set_needed(False)
+            begin_filter.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            end_filter = XferCompDate('end_date')
+            end_filter.set_value(self.date_end)
+            end_filter.set_needed(False)
+            end_filter.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        begin_filter.set_location(1, 4)
+        end_filter.set_location(2, 4)
+        begin_filter.description = _('begin')
+        end_filter.description = _('end')
+        self.add_component(begin_filter)
+        self.add_component(end_filter)
+        self.filter = Q(costaccounting=self.item)
+        if self.date_begin != NULL_VALUE:
+            self.filter &= Q(entry__date_value__gte=self.date_begin)
+        if self.date_end != NULL_VALUE:
             self.filter &= Q(entry__date_value__lte=self.date_end)
         self.fill_filterCode()
 
@@ -733,10 +752,12 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
             add_cell_in_grid(self.grid, self.line_offset, 'name', '{[b]}{[u]}%s{[/u]}{[/b]}' % self.item)
             self.line_offset += 1
             self.filter = Q(costaccounting=self.item)
-            if self.date_begin is not None:
+            if self.date_begin != NULL_VALUE:
                 self.filter &= Q(entry__date_value__gte=self.date_begin)
-            if self.date_end is not None:
+            if self.date_end != NULL_VALUE:
                 self.filter &= Q(entry__date_value__lte=self.date_end)
+            if self.add_filtering and self.filtercode != '':
+                self.filter &= Q(account__code__startswith=self.filtercode)
             self.fill_filterheader()
             all_have_last = all_have_last or (self.lastfilter is not None)
             self.calcul_table()
@@ -793,7 +814,7 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
             self.lastfilter = None
 
     def calcul_table(self):
-        if (self.date_begin is not None) or (self.date_end is not None):
+        if (self.date_begin != NULL_VALUE) or (self.date_end != NULL_VALUE):
             self.budgetfilter_right = None
             self.budgetfilter_left = None
             self.lastfilter = None

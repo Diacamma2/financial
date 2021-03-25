@@ -97,7 +97,7 @@ class CostAccountingReportByDate(XferContainerAcknowledge):
             list_cost = set(list_cost)
             if len(list_cost) == 0:
                 raise LucteriosException(IMPORTANT, _("No cost accounting finds for this range !"))
-            self.redirect_action(CostAccountingIncomeStatement.get_action(), modal=FORMTYPE_NOMODAL, close=CLOSE_YES, params={'begin_date': begin_date, 'end_date': end_date, 'costaccounting': ";".join(list_cost)})
+            self.redirect_action(CostAccountingIncomeStatement.get_action(), modal=FORMTYPE_NOMODAL, close=CLOSE_YES, params={'begin_date': begin_date, 'end_date': end_date, 'datereadonly': True, 'costaccounting': ";".join(list_cost)})
 
 
 @ActionsManage.affect_grid(_("Default"), "images/default.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
