@@ -1576,9 +1576,6 @@ class ArticleSituationSet(QuerySet):
 
 
 class ArticleSituation(LucteriosModel):
-    objects = QuerySet()
-
-    id = models.IntegerField(verbose_name=_('id'), null=False, default=0, db_index=True)
     article = models.ForeignKey(Article, verbose_name=_('article'), null=False, db_index=True, on_delete=models.PROTECT)
     storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=False, db_index=True, on_delete=models.PROTECT)
     amount = LucteriosDecimalField(verbose_name=_('buying price'), max_digits=10, decimal_places=3, default=0.0,
@@ -1609,7 +1606,8 @@ class ArticleSituation(LucteriosModel):
             return None
 
     class Meta(object):
-        abstract = True
+        managed = False
+        default_permissions = []
         verbose_name = _('article situation')
         verbose_name_plural = _('articles situations')
 
