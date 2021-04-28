@@ -618,9 +618,8 @@ class Payoff(LucteriosModel):
         old_is_revenu = None
         new_supporting_list = []
         for supporting in supporting_list:
-            masks_by_amount = supporting.get_third_masks_by_amount(100.0)
-            if len(masks_by_amount) == 1:
-                third_account = supporting.third.get_account(entry.year, masks_by_amount[0][0])
+            for account, _subamount in supporting.get_third_masks_by_amount(0.0):
+                third_account = supporting.third.get_account(entry.year, account)
                 entryline_filter = Q(account=third_account)
                 entryline_filter &= Q(third=supporting.third)
                 is_revenu = 1 if not supporting.is_revenu else -1
@@ -635,6 +634,7 @@ class Payoff(LucteriosModel):
                     entryline_filter &= Q(amount__lt=0)
                 if entry.entrylineaccount_set.filter(entryline_filter).count() > 0:
                     new_supporting_list.append(supporting)
+                    break
         return new_supporting_list
 
     @classmethod

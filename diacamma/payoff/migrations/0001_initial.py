@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(
                     auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('status', models.IntegerField(db_index=True, choices=[
-                 (0, 'building'), (1, 'closed'), (2, 'valid')], verbose_name='status', default=0)),
+                 (0, 'building deposit'), (1, 'closed deposit'), (2, 'valid deposit')], verbose_name='status', default=0)),
                 ('date', models.DateField(verbose_name='date')),
                 ('reference', models.CharField(
                     null=False, verbose_name='reference', max_length=100, default='')),
