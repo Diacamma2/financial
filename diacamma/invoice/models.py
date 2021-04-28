@@ -1576,8 +1576,8 @@ class ArticleSituationSet(QuerySet):
 
 
 class ArticleSituation(LucteriosModel):
-    article = models.ForeignKey(Article, verbose_name=_('article'), null=False, db_index=True, on_delete=models.PROTECT)
-    storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=False, db_index=True, on_delete=models.PROTECT)
+    article = models.ForeignKey(Article, verbose_name=_('article'), null=False, db_index=True, on_delete=models.DO_NOTHING)
+    storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=False, db_index=True, on_delete=models.DO_NOTHING)
     amount = LucteriosDecimalField(verbose_name=_('buying price'), max_digits=10, decimal_places=3, default=0.0,
                                    validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5))
     quantity = models.DecimalField(verbose_name=_('quantity'), max_digits=12, decimal_places=3, default=1.0,
