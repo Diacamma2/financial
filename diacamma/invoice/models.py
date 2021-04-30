@@ -1606,7 +1606,6 @@ class ArticleSituation(LucteriosModel):
             return None
 
     class Meta(object):
-        managed = False
         default_permissions = []
         verbose_name = _('article situation')
         verbose_name_plural = _('articles situations')
