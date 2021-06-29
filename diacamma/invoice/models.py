@@ -886,7 +886,7 @@ class Bill(Supporting):
         self.save()
         Signal.call_signal("change_bill", 'archive', self, None)
 
-    transitionname__undo = _("Undo")
+    transitionname__undo = _("=> Asset")
 
     @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
     def undo(self):

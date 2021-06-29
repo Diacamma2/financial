@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-04 08:52+0000\n"
+"POT-Creation-Date: 2021-06-29 14:08+0000\n"
 "PO-Revision-Date: 2021-03-04 09:50+0100\n"
 "Last-Translator: b'Paul ARULATEDA <paul531@orange.fr>'\n"
 "Language-Team: \n"
@@ -23,19 +23,19 @@ msgstr ""
 msgid "Diacamma payoff"
 msgstr "Règlement Diacamma"
 
-#: editors.py:146
+#: editors.py:147
 msgid "payoff null!"
 msgstr "règlement vide !"
 
-#: editors.py:167 models.py:559
+#: editors.py:168 models.py:559
 msgid "No-valid selection!"
 msgstr "Sélection non valide!"
 
-#: editors.py:198
+#: editors.py:199
 msgid "repartition mode"
 msgstr "répartition proportionnelle"
 
-#: editors.py:238
+#: editors.py:239
 msgid "linked"
 msgstr "associé"
 
@@ -212,7 +212,7 @@ msgstr "le compte n'est pas défini !"
 msgid "payoff for %d multi-pay"
 msgstr "règlement de %d factures"
 
-#: models.py:630
+#: models.py:629
 msgid "bill type different !"
 msgstr "type de justificatifs différents !"
 
@@ -356,7 +356,7 @@ msgstr "règlement > mode"
 msgid "payoff-bank_account"
 msgstr "règlement > compte bancaire"
 
-#: payment_type.py:132 views.py:331 views.py:334 views_externalpayment.py:142
+#: payment_type.py:132 views.py:356 views.py:359 views_externalpayment.py:142
 msgid "Payment"
 msgstr "Paiement"
 
@@ -490,13 +490,13 @@ msgstr "message"
 msgid "Send saved report"
 msgstr "Envoyer le rapport sauvegardé"
 
-#: views.py:347
-msgid "No payment for this document."
-msgstr "Pas de paiement pour ce document"
-
-#: views.py:360 views.py:379
+#: views.py:340 views.py:385
 msgid "Payement methods"
 msgstr "Moyens de paiement"
+
+#: views.py:372
+msgid "No payment for this document."
+msgstr "Pas de paiement pour ce document"
 
 #: views_conf.py:34
 msgid "Management of parameters and configuration of payoff"
