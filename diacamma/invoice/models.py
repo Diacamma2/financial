@@ -888,7 +888,7 @@ class Bill(Supporting):
 
     transitionname__undo = _("=> Asset")
 
-    @transition(field=status, source=(STATUS_VALID, STATUS_ARCHIVE), target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
+    @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
     def undo(self):
         new_undo = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET if self.bill_type != Bill.BILLTYPE_ASSET else Bill.BILLTYPE_RECEIPT,
                                        date=timezone.now(),
