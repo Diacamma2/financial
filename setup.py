@@ -66,5 +66,5 @@ setup(
         "diacamma.payoff.migrations": ['*'],
         "diacamma.payoff": ['build', 'images/*', 'locale/*/*/*', 'help/*'],
     },
-    install_requires=["lucterios ~=2.5", "lucterios-contacts ~=2.5", "requests"],
+    install_requires=["lucterios ~=2.6", "lucterios-contacts ~=2.6", "requests"],
 )
