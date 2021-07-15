@@ -451,7 +451,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billList', {'status_filter': 3}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 1)
-        self.assert_count_equal('#bill/actions', 2)
+        self.assert_count_equal('#bill/actions', 3)
 
     def test_compta_valid_with_pay(self):
         default_articles()

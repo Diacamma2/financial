@@ -305,7 +305,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
         sendemail = self.getparam('sendemail', False)
         if (transition != 'valid') or (len(self.items) > 1):
             if transition == 'undo':
-                if self.confirme(_("Do you want to create an avoid from this bill ?")):
+                if self.confirme(_("Do you want to create an compensation (avoid or invoice) from this bill ?")):
                     self._confirmed(transition)
                 if self.trans_result is not None:
                     self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: self.trans_result})

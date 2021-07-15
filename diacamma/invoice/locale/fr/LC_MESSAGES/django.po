@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-29 14:08+0000\n"
-"PO-Revision-Date: 2021-06-29 16:08+0200\n"
+"POT-Creation-Date: 2021-07-15 08:28+0000\n"
+"PO-Revision-Date: 2021-07-15 10:28+0200\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
 "Language: fr\n"
@@ -415,8 +415,8 @@ msgid "Archive"
 msgstr "Archiver"
 
 #: models.py:889
-msgid "=> Asset"
-msgstr "=> Avoir"
+msgid "=> Compensation"
+msgstr "=> Compensation"
 
 #: models.py:907
 msgid "Cancel"
@@ -787,8 +787,11 @@ msgid "Send saved report"
 msgstr "Envoyer le rapport sauvegardé"
 
 #: views.py:308
-msgid "Do you want to create an avoid from this bill ?"
-msgstr "Voulez-vous créer un avoir depuis cette facture ?"
+msgid ""
+"Do you want to create an compensation (avoid or invoice) from this bill ?"
+msgstr ""
+"Voulez-vous créer une compensation (avoir ou facture) depuis ce "
+"justificatif ?"
 
 #: views.py:340
 msgid "Multi-pay bill"
@@ -1405,6 +1408,9 @@ msgstr "Vos factures"
 #: views_summary.py:69
 msgid "Payment"
 msgstr "Paiement"
+
+#~ msgid "=> Asset"
+#~ msgstr "=> Avoir"
 
 #~ msgid "Undo"
 #~ msgstr "Défaire"

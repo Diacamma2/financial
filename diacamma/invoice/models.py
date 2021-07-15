@@ -886,11 +886,11 @@ class Bill(Supporting):
         self.save()
         Signal.call_signal("change_bill", 'archive', self, None)
 
-    transitionname__undo = _("=> Asset")
+    transitionname__undo = _("=> Compensation")
 
-    @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
+    @transition(field=status, source=(STATUS_VALID, STATUS_ARCHIVE), target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
     def undo(self):
-        new_undo = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET if self.bill_type != Bill.BILLTYPE_ASSET else Bill.BILLTYPE_RECEIPT,
+        new_undo = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET if self.bill_type != Bill.BILLTYPE_ASSET else Bill.BILLTYPE_BILL,
                                        date=timezone.now(),
                                        third=self.third,
                                        status=Bill.STATUS_BUILDING,
