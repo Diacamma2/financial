@@ -2078,7 +2078,7 @@ class BillTest(InvoiceTest):
             self.assertEqual(1, server.count())
             self.assertEqual('mr-sylvestre@worldcompany.com', server.get(0)[1])
             self.assertEqual(['Jack.Dalton@worldcompany.com', 'mr-sylvestre@worldcompany.com'], server.get(0)[2])
-            msg, msg_txt, msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
+            msg_txt, msg, msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
             self.assertEqual('text/plain', msg_txt.get_content_type())
             self.assertEqual('text/html', msg.get_content_type())
             self.assertEqual('base64', msg.get('Content-Transfer-Encoding', ''))
@@ -2109,7 +2109,7 @@ class BillTest(InvoiceTest):
                           {'bill': bill_id, 'OK': 'YES', 'PRINT_PERSITENT': True, 'item_name': 'bill', 'subject': 'my bill', 'message': 'this is a bill.', 'model': 8, }, False)
             self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
             self.assertEqual(1, server.count())
-            _msg, _msg_txt, msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
+            _msg_txt, _msg, msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
             check_pdfreport(self, 'Bill', bill_id, True, msg_file.get_payload())
         finally:
             server.stop()
