@@ -495,8 +495,7 @@ class Bill(Supporting):
     LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')), (STATUS_CANCEL, _('cancel')), (STATUS_ARCHIVE, _('archive')))
     SELECTION_STATUS = ((STATUS_BUILDING_VALID, '%s+%s' % (_('building'), _('valid'))),) + LIST_STATUS + ((STATUS_ALL, None),)
 
-    fiscal_year = models.ForeignKey(
-        FiscalYear, verbose_name=_('fiscal year'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
+    fiscal_year = models.ForeignKey(FiscalYear, verbose_name=_('fiscal year'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
     bill_type = models.IntegerField(verbose_name=_('bill type'), choices=LIST_BILLTYPES, null=False, default=BILLTYPE_QUOTATION, db_index=True)
     num = models.IntegerField(verbose_name=_('numeros'), null=True)
     date = models.DateField(verbose_name=_('date'), null=False)
@@ -1918,6 +1917,14 @@ def correct_quotation_asset_account():
                 nb_asset_correct += 1
     if (nb_quotation_correct > 0) or (nb_asset_correct > 0):
         print(" * account correction assert = %d / quotation = %s" % (nb_asset_correct, nb_quotation_correct))
+
+
+@Signal.decorate('delete_fiscalyear')
+def invoice_deleteyear(year):
+    for bill in Bill.objects.filter(entry__year=year):
+        bill.delete()
+    for bill in Bill.objects.filter(Q(date__gte=year.begin) & Q(date__lte=year.end)):
+        bill.delete()
 
 
 @Signal.decorate('check_report')

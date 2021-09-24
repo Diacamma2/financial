@@ -783,7 +783,7 @@ class DepositSlip(LucteriosModel):
 
 class DepositDetail(LucteriosModel):
     deposit = models.ForeignKey(DepositSlip, verbose_name=_('deposit'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
-    payoff = models.ForeignKey(Payoff, verbose_name=_('payoff'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
+    payoff = models.ForeignKey(Payoff, verbose_name=_('payoff'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
 
     amount = LucteriosVirtualField(verbose_name=_('amount'), compute_from='get_amount', format_string=lambda: format_with_devise(5))
 

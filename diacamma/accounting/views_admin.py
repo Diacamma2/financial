@@ -242,13 +242,20 @@ class FiscalYearInitAccount(XferContainerAcknowledge):
             self.redirect_action(ChartsAccountImportFiscalYear.get_action(), params={'year': self.item.id, 'CONFIRME': 'YES'})
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.delete_fiscalyear')
 class FiscalYearDel(XferDelete):
     icon = "accountingYear.png"
     model = FiscalYear
     field_id = 'fiscalyear'
     caption = _("Delete fiscal year")
+
+    def fillresponse(self):
+        self.check_can_delete()
+        if self.confirme(_("Do you want delete this fiscal year ?{[br]}Warning: all accounting entries and financial vouchers for this year will also be destroyed.")):
+            self.delete_list()
+            if (FiscalYear.objects.filter(is_actif=True).count() == 0) and (FiscalYear.objects.all().count() > 0):
+                FiscalYear.objects.all().last().set_has_actif()
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png")

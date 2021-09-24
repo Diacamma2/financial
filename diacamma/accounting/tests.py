@@ -937,9 +937,8 @@ class AdminTest(LucteriosTest):
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearDel')
 
         self.factory.xfer = FiscalYearDel()
-        self.calljson('/diacamma.accounting/fiscalYearDel', {'fiscalyear': '1'}, False)
-        self.assert_observer('core.exception', 'diacamma.accounting', 'fiscalYearDel')
-        self.assert_json_equal('', 'message', "Cet exercice est terminé !")
+        self.calljson('/diacamma.accounting/fiscalYearDel', {'CONFIRME': 'YES', 'fiscalyear': '1'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearDel')
 
     def test_system_accounting(self):
         clear_system_account()

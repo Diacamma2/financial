@@ -300,14 +300,15 @@ class FiscalYear(LucteriosModel):
         fiscal_years = FiscalYear.objects.order_by('end')
         if (len(fiscal_years) != 0) and (fiscal_years.last().id != self.id):
             return _('This fiscal year is not the last!')
-        elif self.status == FiscalYear.STATUS_FINISHED:
-            return _('Fiscal year finished!')
         else:
             return ''
 
     def delete(self, using=None):
-        self.entryaccount_set.all().delete()
+        signal_and_lock.Signal.call_signal("delete_fiscalyear", self)
+        for entry in self.entryaccount_set.all():
+            entry.delete()
         LucteriosModel.delete(self, using=using)
+        self.folder.delete()
 
     def create_folder(self):
         if self.folder is None:
@@ -591,7 +592,7 @@ class CostAccounting(LucteriosModel):
                                             related_name='next_costaccounting', null=True, on_delete=models.SET_NULL)
     is_default = models.BooleanField(verbose_name=_('default'), default=False)
     is_protected = models.BooleanField(verbose_name=_('default'), default=False)
-    year = models.ForeignKey('FiscalYear', verbose_name=_('fiscal year'), null=True, default=None, on_delete=models.PROTECT, db_index=True)
+    year = models.ForeignKey('FiscalYear', verbose_name=_('fiscal year'), null=True, default=None, on_delete=models.CASCADE, db_index=True)
 
     total_revenue = LucteriosVirtualField(verbose_name=_('total revenue'), compute_from='get_total_revenue', format_string=lambda: format_with_devise(5))
     total_expense = LucteriosVirtualField(verbose_name=_('total expense'), compute_from='get_total_expense', format_string=lambda: format_with_devise(5))
@@ -1534,7 +1535,10 @@ class EntryLineAccount(LucteriosModel):
 
     def unlink(self, with_multi=False):
         if (self.entry.year.status != FiscalYear.STATUS_FINISHED) and (self.link_id is not None):
-            old_link = self.link
+            try:
+                old_link = self.link
+            except ObjectDoesNotExist:
+                return
             for entryline in self.link.entrylineaccount_set.all():
                 entryline.link = None
                 if not entryline.entry.delete_if_ghost_entry():
