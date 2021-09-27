@@ -1687,7 +1687,7 @@ class ModelLineEntry(LucteriosModel):
 
 class Budget(LucteriosModel):
     year = models.ForeignKey('FiscalYear', verbose_name=_('fiscal year'), null=True, default=None, on_delete=models.CASCADE)
-    cost_accounting = models.ForeignKey('CostAccounting', verbose_name=_('cost accounting'), null=True, default=None, on_delete=models.PROTECT)
+    cost_accounting = models.ForeignKey('CostAccounting', verbose_name=_('cost accounting'), null=True, default=None, on_delete=models.CASCADE)
     code = models.CharField(_('account'), max_length=50)
     amount = models.FloatField(_('amount'), default=0)
 
