@@ -42,7 +42,8 @@ from diacamma.accounting.tools import current_system_account, format_with_devise
 from diacamma.accounting.models import CostAccounting, FiscalYear, Third
 from diacamma.payoff.editors import SupportingEditor
 from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail,\
-    Bill, Vat, StorageSheet, StorageArea
+    Bill, Vat, StorageSheet, StorageArea, AccountPosting
+from lucterios.framework.xferbasic import NULL_VALUE
 
 
 class VatEditor(LucteriosEditor):
@@ -76,6 +77,11 @@ class AccountPostingEditor(LucteriosEditor):
         comp = xfer.get_components("cost_accounting")
         comp.set_needed(False)
         comp.set_select_query(CostAccounting.objects.filter(Q(status=0) & (Q(year=None) | Q(year=FiscalYear.get_current()))).distinct())
+        btn = XferCompButton("addcost_accounting")
+        btn.set_location(comp.col + comp.colspan, comp.row)
+        btn.set_is_mini(True)
+        btn.set_action(xfer.request, ActionsManage.get_action_url(CostAccounting.get_long_name(), 'AddModify', xfer), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'cost_accounting': NULL_VALUE})
+        xfer.add_component(btn)
 
 
 class ArticleEditor(LucteriosEditor):
@@ -97,6 +103,14 @@ class ArticleEditor(LucteriosEditor):
             upload.add_filter('.bmp')
             upload.set_location(0, xfer.get_max_row() + 1, 2, 1)
             xfer.add_component(upload)
+        accountposting_comp = xfer.get_components('accountposting')
+        accountposting_comp.colspan = 1
+        xfer.tab = accountposting_comp.tab
+        btn = XferCompButton("addaccountposting")
+        btn.set_location(accountposting_comp.col + accountposting_comp.colspan, accountposting_comp.row)
+        btn.set_is_mini(True)
+        btn.set_action(xfer.request, ActionsManage.get_action_url(AccountPosting.get_long_name(), 'AddModify', xfer), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'accountposting': NULL_VALUE})
+        xfer.add_component(btn)
 
     def saving(self, xfer):
         if Params.getvalue("invoice-article-with-picture"):

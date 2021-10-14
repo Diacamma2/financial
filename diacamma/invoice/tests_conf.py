@@ -127,7 +127,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = AccountPostingAddModify()
         self.calljson('/diacamma.invoice/accountPostingAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'accountPostingAddModify')
-        self.assert_count_equal('', 4)
+        self.assert_count_equal('', 5)
         self.assert_select_equal('sell_account', 3)
         self.assert_select_equal('cost_accounting', {0: None, 2: 'open'})
 
@@ -246,7 +246,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ArticleAddModify()
         self.calljson('/diacamma.invoice/articleAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleAddModify')
-        self.assert_count_equal('', 11)
+        self.assert_count_equal('', 12)
 
         self.factory.xfer = ArticleAddModify()
         self.calljson('/diacamma.invoice/articleAddModify',
@@ -294,7 +294,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ArticleAddModify()
         self.calljson('/diacamma.invoice/articleAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleAddModify')
-        self.assert_count_equal('', 13)
+        self.assert_count_equal('', 14)
 
         self.factory.xfer = ArticleAddModify()
         self.calljson('/diacamma.invoice/articleAddModify',
@@ -723,7 +723,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ArticleAddModify()
         self.calljson('/diacamma.invoice/articleAddModify', {'article': '1'}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleAddModify')
-        self.assert_count_equal('', 13)
+        self.assert_count_equal('', 14)
         self.assert_json_equal('EDIT', 'reference', 'ABC1')
 
         self.factory.xfer = ArticleAddModify()

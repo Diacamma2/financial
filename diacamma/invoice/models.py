@@ -181,7 +181,7 @@ class AccountPosting(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return ["name", "sell_account", "cost_accounting"]
+        return ["name", "sell_account", ("cost_accounting", None)]
 
     @classmethod
     def get_show_fields(cls):
@@ -260,7 +260,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_edit_fields(cls):
-        fields = {_('001@Description'): ["reference", "designation", ("price", "unit"), ("accountposting", 'vat'), ("stockable", "isdisabled"), ("qtyDecimal",)]}
+        fields = {_('001@Description'): ["reference", "designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting", )]}
         if len(Category.objects.all()) > 0:
             fields[_('002@Extra')] = ['categories']
         return fields
@@ -268,7 +268,7 @@ class Article(LucteriosModel, CustomizeObject):
     @classmethod
     def get_show_fields(cls):
         fields = {'': ["reference"]}
-        fields_desc = ["designation", ("price", "unit"), ("accountposting", 'vat'), ("stockable", "isdisabled"), ("qtyDecimal",)]
+        fields_desc = ["designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting", )]
         fields_desc.extend(cls.get_fields_to_show())
         if len(Category.objects.all()) > 0:
             fields_desc.append('categories')
@@ -279,7 +279,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_search_fields(cls):
-        fields = ["reference", "designation", "price", "unit", "accountposting", 'vat', "stockable", "isdisabled", "qtyDecimal"]
+        fields = ["reference", "designation", "price", "unit", "qtyDecimal", "stockable", 'vat', "isdisabled", "accountposting"]
         for cf_name, cf_model in CustomField.get_fields(cls):
             fields.append((cf_name, cf_model.get_field(), 'articlecustomfield__value', Q(articlecustomfield__field__id=cf_model.id)))
         if len(Category.objects.all()) > 0:
