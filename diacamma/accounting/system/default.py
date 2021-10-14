@@ -24,6 +24,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
 from functools import reduce
+from logging import getLogger
 import re
 
 from django.utils.translation import ugettext_lazy as _
@@ -33,6 +34,7 @@ from django.db.models import Q
 from lucterios.framework.tools import get_icon_path
 from lucterios.framework.xferadvance import TITLE_OK, TITLE_CANCEL
 from diacamma.accounting.tools import get_amount_from_format_devise, correct_accounting_code
+from diacamma.accounting.models import Journal
 
 
 class DefaultSystemAccounting(object):
@@ -253,7 +255,7 @@ class DefaultSystemAccounting(object):
 
     def _create_report_third(self, year):
         from diacamma.accounting.models import EntryAccount, EntryLineAccount, AccountLink
-        last_entry_account = year.last_fiscalyear.entryaccount_set.filter(journal__id=5).order_by('num').last()
+        last_entry_account = year.last_fiscalyear.entryaccount_set.filter(journal__id=Journal.DEFAULT_OTHER).order_by('num').last()
         _no_change, debit_rest, credit_rest = last_entry_account.serial_control(last_entry_account.get_serial())
         multilinks_to_transfere = {}
         if (abs(debit_rest - credit_rest) < 0.0001) and (len(last_entry_account.get_thirds()) > 0):
@@ -268,11 +270,14 @@ class DefaultSystemAccounting(object):
                         if multilink not in multilinks_to_transfere:
                             multilinks_to_transfere[multilink] = []
                         multilinks_to_transfere[multilink].append(new_entry_line)
-                        multilinks_to_transfere[multilink].extend(EntryLineAccount.objects.filter(entry__year=year, multilink=multilink))
+                        multilinks_to_transfere[multilink].extend(EntryLineAccount.objects.filter(entry__year=year, multilink=multilink).distinct())
             new_entry.closed()
             for multilink, entrylines_to_link in multilinks_to_transfere.items():
-                AccountLink.create_link(list(set(entrylines_to_link)))
-                multilink.delete()
+                if len(entrylines_to_link) > 1:
+                    AccountLink.create_link(entrylines_to_link)
+                    multilink.delete()
+                else:
+                    getLogger("diacamma.accounting").warning("Bad entry lines : %s" % entrylines_to_link)
 
     def import_lastyear(self, year, import_result):
         self._create_report_lastyearresult(year, import_result)

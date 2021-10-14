@@ -913,7 +913,7 @@ class AccountLink(LucteriosModel):
             self.delete()
 
     @classmethod
-    def create_link(cls, entrylines, check_year=True):
+    def create_link(cls, entrylines):
         import re
         regex_third = re.compile(current_system_account().get_third_mask())
         years = []
@@ -952,6 +952,13 @@ class AccountLink(LucteriosModel):
             if entryline.multilink_id is None:
                 entryline.multilink = new_multilink
             entryline.save()
+
+    def clean(self):
+        for entry in self.entryaccount_set.all():
+            entry.link = None
+            if not entry.delete_if_ghost_entry():
+                entry.save()
+        self.delete()
 
     class Meta(object):
 
@@ -1185,13 +1192,10 @@ class EntryAccount(LucteriosModel):
             self.save()
 
     def unlink(self):
-        if (self.year.status != 2) and (self.link_id is not None):
-            for entry in self.link.entryaccount_set.all():
-                entry.link = None
-                if not entry.delete_if_ghost_entry():
-                    entry.save()
-            self.link.delete()
-            self.link = None
+        if self.year.status != FiscalYear.STATUS_FINISHED:
+            if self.link_id is not None:
+                self.link.clean()
+                self.link = None
 
     def delete_if_ghost_entry(self):
         if (self.id is not None) and (len(self.entrylineaccount_set.all()) == 0) and not RecordLocker.is_lock(self):
@@ -1534,20 +1538,19 @@ class EntryLineAccount(LucteriosModel):
             return False
 
     def unlink(self, with_multi=False):
-        if (self.entry.year.status != FiscalYear.STATUS_FINISHED) and (self.link_id is not None):
-            try:
-                old_link = self.link
-            except ObjectDoesNotExist:
-                return
-            for entryline in self.link.entrylineaccount_set.all():
-                entryline.link = None
-                if not entryline.entry.delete_if_ghost_entry():
-                    entryline.save()
-            if (old_link is not None) and (old_link.id is not None):
-                old_link.delete()
-            self.link = None
+        if self.entry.year.status != FiscalYear.STATUS_FINISHED:
+            if self.link_id is not None:
+                try:
+                    self.link.clean()
+                except ObjectDoesNotExist:
+                    pass
+                self.link = None
             if with_multi and (self.multilink_id is not None):
-                self.multilink.delete()
+                try:
+                    self.multilink.clean()
+                except ObjectDoesNotExist:
+                    pass
+                self.multilink = None
 
     def delete(self):
         self.unlink()
@@ -1813,7 +1816,7 @@ def check_accountlink():
                 entryline_by_third[third_id].append(entryline_third)
         for entrylines in entryline_by_third.values():
             try:
-                AccountLink.create_link(set(entrylines), check_year=False)
+                AccountLink.create_link(set(entrylines))
                 new_link += 1
             except LucteriosException as lct_ext:
                 print('!!! check_accountlink Error:', lct_ext, ' - lines:', entrylines)
@@ -1886,10 +1889,7 @@ def accounting_checkparam():
                                     Third.get_permission(True, False, False), EntryAccount.get_permission(True, False, False))
 
 
-@Signal.decorate('convertdata')
-def accounting_convertdata():
-    check_accountingcost()
-    check_accountlink()
+def check_total_income():
     for year in FiscalYear.objects.all().order_by('end'):
         try:
             year.check_report()
@@ -1898,12 +1898,42 @@ def accounting_convertdata():
         entries = year.get_result_entries()
         if (len(entries) == 1) and (entries[0].entrylineaccount_set.count() == 1):
             current_system_account()._add_total_income_entrylines(year, entries[0])
+
+
+def check_yearaccount():
     for entryline in EntryLineAccount.objects.exclude(Q(entry__year=F("account__year"))):  # check link between year of entry and year of account code
         entryline.account = entryline.entry.year.getorcreate_chartaccount(entryline.account.code, entryline.account.name)
         entryline.save()
+
+
+def check_third():
     for entryline in EntryLineAccount.objects.filter(Q(third__isnull=False) & ~Q(account__code__regex=current_system_account().get_third_mask())):
         entryline.third = None
         entryline.save()
+
+
+def check_multilink():
+    for link in AccountLink.objects.filter(entrylineaccount__multilink__isnull=False).exclude(entrylineaccount__entry__year__status=FiscalYear.STATUS_FINISHED):
+        lines = link.entrylineaccount_set.all()
+        if len(set([line.entry.year for line in lines])) == 1:
+            firstline = lines.first()
+            if firstline and (firstline.multilink_id is not None):
+                try:
+                    firstline.multilink.clean()
+                except ObjectDoesNotExist:
+                    pass
+                firstline.multilink = None
+            print('* remove multilink for', link, [str(line) for line in lines])
+
+
+@Signal.decorate('convertdata')
+def accounting_convertdata():
+    check_accountingcost()
+    check_accountlink()
+    check_total_income()
+    check_yearaccount()
+    check_third()
+    check_multilink()
 
 
 @Signal.decorate('auditlog_register')
