@@ -146,13 +146,13 @@ def convert_query_to_account(query1, query2=None, query_budget=None, sign_value=
     return res, total1, total2, total3
 
 
-def add_cell_in_grid(grid, line_idx, colname, value, formttext='%s'):
+def add_cell_in_grid(grid, line_idx, colname, value, formttext='%s', line_ident=0):
     if value is None:
         return
     if formttext != '%s':
-        grid.set_value("L%04d" % line_idx, colname, {'value': value, 'format': formttext.replace('%s', '{0}')})
+        grid.set_value("L%04d-%d" % (line_idx, line_ident), colname, {'value': value, 'format': formttext.replace('%s', '{0}')})
     else:
-        grid.set_value("L%04d" % line_idx, colname, value)
+        grid.set_value("L%04d-%d" % (line_idx, line_ident), colname, value)
 
 
 def add_item_in_grid(grid, line_idx, side, data_item, formttext='%s'):

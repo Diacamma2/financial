@@ -43,7 +43,7 @@ from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr,
 from diacamma.accounting.views_other import CostAccountingList, CostAccountingClose, CostAccountingAddModify
 from diacamma.accounting.views_reports import FiscalYearBalanceSheet, FiscalYearIncomeStatement, FiscalYearLedger, FiscalYearTrialBalance,\
     CostAccountingTrialBalance, CostAccountingLedger, CostAccountingIncomeStatement,\
-    FiscalYearReportPrint
+    FiscalYearReportPrint, FiscalYearLedgerShow
 from diacamma.accounting.views_admin import FiscalYearExport
 from diacamma.accounting.models import FiscalYear, Third
 from diacamma.accounting.tools_reports import get_totalaccount_for_query, get_totalbudget_for_query
@@ -887,6 +887,10 @@ class CompletedEntryTest(LucteriosTest):
         self.assertFalse('__tab_3' in self.json_data.keys(), self.json_data.keys())
         self.assert_count_equal('report_1', 5)
         self.assert_count_equal('report_2', 15)
+        self.assert_count_equal('#report_1/actions', 1)
+        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
+        self.assert_count_equal('#report_2/actions', 1)
+        self.assert_action_equal('GET', '#report_2/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_2"}))
 
         self.factory.xfer = CostAccountingLedger()
         self.calljson('/diacamma.accounting/costAccountingLedger', {'costaccounting': '2', 'begin_date': '2015-02-14', 'end_date': '2015-02-20'}, False)
@@ -1069,6 +1073,25 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/fiscalYearLedger', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearLedger')
         self._check_result()
+        self.assert_count_equal('report_1', 79)
+        self.assert_json_equal('', 'report_1/@0/id', 'L0001-0')
+        self.assert_json_equal('', 'report_1/@0/entry.designation', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[106] 106{[/b]}{[/u]}')
+        self.assert_json_equal('', 'report_1/@1/id', 'L0002-1')
+        self.assert_json_equal('', 'report_1/@1/entry.designation', 'Report à nouveau')
+        self.assert_json_equal('', 'report_1/@2/id', 'L0003-0')
+        self.assert_json_equal('', 'report_1/@2/entry.designation', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[i]}total{[/i]}')
+        self.assert_count_equal('#report_1/actions', 1)
+        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
+
+        self.factory.xfer = FiscalYearLedgerShow()
+        self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-1'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearLedgerShow')
+        self.assert_action_equal('POST', self.response_json['action'], ('Editer', 'images/edit.png', "diacamma.accounting", "entryAccountOpenFromLine", "1", '1', '1', {"entryaccount": "1"}))
+
+        self.factory.xfer = FiscalYearLedgerShow()
+        self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-0'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearLedgerShow')
+        self.assertNotIn('action', self.response_json)
 
     def test_fiscalyear_ledger_filter(self):
         self.factory.xfer = FiscalYearLedger()

@@ -25,27 +25,27 @@ from __future__ import unicode_literals
 import sys
 import re
 from datetime import date, datetime
+from logging import getLogger
 
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.db.models.aggregates import Sum
 from django.utils import formats
 
-from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, WrapAction, convert_date, ActionsManage, SELECT_MULTI
-from lucterios.framework.xfergraphic import XferContainerCustom
-from lucterios.framework.xfercomponents import XferCompImage, XferCompSelect, XferCompLabelForm, XferCompGrid, XferCompEdit, XferCompCheck,\
-    XferCompDate
-from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE
+from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, WrapAction, convert_date, ActionsManage, SELECT_MULTI,\
+    FORMTYPE_MODAL, SELECT_SINGLE
+from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
+from lucterios.framework.xfercomponents import XferCompImage, XferCompSelect, XferCompLabelForm, XferCompGrid, XferCompEdit, XferCompCheck, XferCompDate
+from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_EDIT
+from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.contacts.models import LegalEntity
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.xferprint import XferPrintAction
 
-from diacamma.accounting.models import FiscalYear, EntryLineAccount, ChartsAccount, CostAccounting, Third,\
-    EntryAccount
+from diacamma.accounting.models import FiscalYear, EntryLineAccount, ChartsAccount, CostAccounting, Third, EntryAccount
 from diacamma.accounting.tools import correct_accounting_code, current_system_account, format_with_devise
 from diacamma.accounting.tools_reports import get_spaces, convert_query_to_account, add_cell_in_grid, fill_grid, add_item_in_grid
 from diacamma.accounting.views_entries import add_fiscalyear_result
-from lucterios.framework.xferbasic import NULL_VALUE
 
 MenuManage.add_sub("bookkeeping_report", "financial", "diacamma.accounting/images/accounting.png", _("Reports"), _("Report of Bookkeeping"), 30)
 
@@ -416,7 +416,8 @@ class FiscalYearLedger(FiscalYearReport):
         FiscalYearReport.fill_filterCode(self)
 
     def define_gridheader(self):
-        self.grid = XferCompGrid('report_%d' % self.item.id)
+        grid_name = 'report_%d' % self.item.id
+        self.grid = XferCompGrid(grid_name)
         self.grid.add_header('entry.num', _('numeros'))
         self.grid.add_header('entry.date_entry', _('date entry'))
         self.grid.add_header('entry.date_value', _('date value'))
@@ -424,6 +425,7 @@ class FiscalYearLedger(FiscalYearReport):
         self.grid.add_header('link_costaccounting', _('link/cost accounting'))
         self.grid.add_header('debit', _('debit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
         self.grid.add_header('credit', _('credit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
+        self.grid.add_action(self.request, FiscalYearLedgerShow.get_action(TITLE_EDIT, 'images/show.png'), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE, params={'gridname': grid_name})
 
     def _add_total_account(self):
         if self.last_account is not None:
@@ -465,13 +467,29 @@ class FiscalYearLedger(FiscalYearReport):
                     value = getattr(line, header.name)
                 else:
                     value = line.evaluate('#' + header.name)
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, header.name, value)
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, header.name, value, line_ident=line.entry.id)
             if line.amount > 0:
                 self.last_total[0] += line.amount
             else:
                 self.last_total[1] -= line.amount
             self.line_idx += 1
         self._add_total_account()
+
+
+@MenuManage.describ('accounting.change_fiscalyear')
+class FiscalYearLedgerShow(XferContainerAcknowledge):
+    caption = _("Ledger")
+    methods_allowed = ('GET', )
+
+    def fillresponse(self, gridname):
+        try:
+            ledger_id = self.getparam(gridname, '')
+            _rowid, entryid = ledger_id.split('-')
+            entryid = int(entryid)
+            if entryid != 0:
+                self.redirect_action(ActionsManage.get_action_url(EntryAccount.get_long_name(), 'OpenFromLine', self), params={'entryaccount': entryid})
+        except Exception:
+            getLogger("diacamma.accounting").exception('Ledget show')
 
 
 @MenuManage.describ('accounting.change_fiscalyear', FORMTYPE_NOMODAL, 'bookkeeping_report', _('Show trial balance for current fiscal year'))
