@@ -403,7 +403,7 @@ class FiscalYearLedger(FiscalYearReport):
         edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(edt)
         if self.only_nonull:
-            self.filter &= Q(link__isnull=True) & Q(third__isnull=False)
+            self.filter &= (Q(link__isnull=True) | Q(link__date_max__gt=self.item.end)) & Q(third__isnull=False)
             if self.getparam('filtercode', '') == '':
                 third_mask = current_system_account().get_third_mask()
                 while re.match("[0-9a-zA-Z]", third_mask[0]) is None:
@@ -421,7 +421,7 @@ class FiscalYearLedger(FiscalYearReport):
         self.grid.add_header('entry.num', _('numeros'))
         self.grid.add_header('entry.date_entry', _('date entry'))
         self.grid.add_header('entry.date_value', _('date value'))
-        self.grid.add_header('entry.designation', _('name'))
+        self.grid.add_header('designation_ref', _('name'))
         self.grid.add_header('link_costaccounting', _('link/cost accounting'))
         self.grid.add_header('debit', _('debit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
         self.grid.add_header('credit', _('credit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
@@ -429,7 +429,7 @@ class FiscalYearLedger(FiscalYearReport):
 
     def _add_total_account(self):
         if self.last_account is not None:
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(30) + "{[i]}%s{[/i]}" % _('total'))
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(30) + "{[i]}%s{[/i]}" % _('total'))
             if self.last_account.credit_debit_way() == -1:
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', self.last_total[0], "{[i]}%s{[/i]}")
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', self.last_total[1], "{[i]}%s{[/i]}")
@@ -438,11 +438,11 @@ class FiscalYearLedger(FiscalYearReport):
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', self.last_total[0], "{[i]}%s{[/i]}")
             self.line_idx += 1
             last_total = self.last_total[0] - self.last_total[1]
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(30) + "{[u]}{[i]}%s{[/i]}{[/u]}" % _('balance'))
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(30) + "{[u]}{[i]}%s{[/i]}{[/u]}" % _('balance'))
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', max((0, -1 * self.last_account.credit_debit_way() * last_total)), "{[u]}{[i]}%s{[/i]}{[/u]}")
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', max((0, self.last_account.credit_debit_way() * last_total)), "{[u]}{[i]}%s{[/i]}{[/u]}")
             self.line_idx += 1
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', '{[br/]}')
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', '{[br/]}')
             self.line_idx += 1
             self.last_total = [0.0, 0.0]
 
@@ -456,10 +456,10 @@ class FiscalYearLedger(FiscalYearReport):
                 self._add_total_account()
                 self.last_account = line.account
                 self.last_third = None
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % str(self.last_account))
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % str(self.last_account))
                 self.line_idx += 1
             if self.last_third != line.third:
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'entry.designation', get_spaces(8) + "{[b]}%s{[/b]}" % str(line.entry_account))
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(8) + "{[b]}%s{[/b]}" % str(line.entry_account))
                 self.line_idx += 1
             self.last_third = line.third
             for header in self.grid.headers:

@@ -885,6 +885,13 @@ class Bill(Supporting):
         self.save()
         Signal.call_signal("change_bill", 'archive', self, None)
 
+    transitionname__unarchive = _("Unarchive")
+
+    @transition(field=status, source=STATUS_ARCHIVE, target=STATUS_VALID)
+    def unarchive(self):
+        self.status = self.STATUS_VALID
+        self.save()
+
     transitionname__undo = _("=> Compensation")
 
     @transition(field=status, source=(STATUS_VALID, STATUS_ARCHIVE), target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
@@ -1115,6 +1122,7 @@ class Bill(Supporting):
         verbose_name = _('bill')
         verbose_name_plural = _('bills')
         ordering = ['-date', 'status']
+        default_permissions = ['add', 'change', 'delete', 'archive', 'asset']
 
 
 class Detail(LucteriosModel):

@@ -180,8 +180,18 @@ class BillShow(XferShowEditor):
     model = Bill
     field_id = 'bill'
 
+    def rename_button(self):
+        for action_info in self.actions:
+            if (action_info[4] is not None) and ('TRANSITION' in action_info[4]) and (action_info[4]['TRANSITION'] == 'undo'):
+                action = action_info[0]
+                if self.item.bill_type == Bill.BILLTYPE_ASSET:
+                    action.caption = '=> ' + str(_('bill')).capitalize()
+                elif self.item.bill_type == Bill.BILLTYPE_BILL:
+                    action.caption = '=> ' + str(_('asset')).capitalize()
+
     def fillresponse(self):
         XferShowEditor.fillresponse(self)
+        self.rename_button()
         if self.item.parentbill is not None:
             auditlogbtn = self.get_components('auditlogbtn')
             if auditlogbtn is None:
@@ -199,9 +209,7 @@ class BillShow(XferShowEditor):
                         close=CLOSE_NO, params={'item_name': self.field_id}, pos_act=0)
 
 
-@ActionsManage.affect_transition("status", multi_list=('archive', 'valid'))
-@MenuManage.describ('invoice.add_bill')
-class BillTransition(XferTransition):
+class BillTransitionAbstract(XferTransition):
     icon = "bill.png"
     model = Bill
     field_id = 'bill'
@@ -332,6 +340,24 @@ parent.get('print_sep').setEnabled(!is_persitent);
             XferTransition.fill_confirm(self, transition, trans)
             if sendemail:
                 self.redirect_action(PayableEmail.get_action("", ""), params={"item_name": self.field_id, "modelname": "", "OK": "YES"})
+
+
+@ActionsManage.affect_transition("status", multi_list=('valid',), ignore_all=('undo', 'archive', 'unarchive'))
+@MenuManage.describ('invoice.add_bill')
+class BillTransition(BillTransitionAbstract):
+    pass
+
+
+@ActionsManage.affect_transition("status", only_one=('undo', ), ignore_grid=('undo', ))
+@MenuManage.describ('invoice.asset_bill')
+class BillTransitionUndo(BillTransitionAbstract):
+    pass
+
+
+@ActionsManage.affect_transition("status", multi_list=('archive', 'unarchive'), only_one=('archive', 'unarchive'))
+@MenuManage.describ('invoice.archive_bill')
+class BillTransitionArchive(BillTransitionAbstract):
+    pass
 
 
 @ActionsManage.affect_grid(_('payoff'), "diacamma.payoff/images/payoff.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) == Bill.STATUS_VALID)
@@ -513,30 +539,51 @@ class DetailDel(XferDelete):
     caption = _("Delete detail")
 
 
-@MenuManage.describ('invoice.change_article', FORMTYPE_NOMODAL, 'invoice', _('Management of article list'))
-class ArticleList(XferListEditor):
-    icon = "article.png"
-    model = Article
-    field_id = 'article'
-    caption = _("Articles")
+class ArticleFilter(object):
 
     STOCKABLE_WITH_STOCK = 3
 
-    def __init__(self, **kwargs):
-        XferListEditor.__init__(self, **kwargs)
-        self.categories_filter = ()
-
-    def get_items_from_filter(self):
-        items = XferListEditor.get_items_from_filter(self)
-        if len(self.categories_filter) > 0:
-            for cat_item in Category.objects.filter(id__in=self.categories_filter):
+    def items_filtering(self, items, categories_filter, show_stockable):
+        if len(categories_filter) > 0:
+            for cat_item in Category.objects.filter(id__in=categories_filter):
                 items = items.filter(categories__in=[cat_item])
-        if self.show_stockable == self.STOCKABLE_WITH_STOCK:
+        if show_stockable == self.STOCKABLE_WITH_STOCK:
             new_items = QuerySet(model=Article)
             new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num() > 0]
             return new_items
         else:
             return items.distinct()
+
+    def get_search_filter(self, ref_filter, show_filter, show_stockable, show_storagearea):
+        new_filter = Q()
+        if ref_filter != '':
+            new_filter &= Q(reference__icontains=ref_filter) | Q(designation__icontains=ref_filter)
+        if show_filter == 0:
+            new_filter &= Q(isdisabled=False)
+        if show_stockable != -1:
+            if show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
+                new_filter &= Q(stockable=show_stockable)
+            else:
+                new_filter &= ~Q(stockable=Article.STOCKABLE_NO)
+        if show_storagearea != 0:
+            new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
+        return new_filter
+
+
+@MenuManage.describ('invoice.change_article', FORMTYPE_NOMODAL, 'invoice', _('Management of article list'))
+class ArticleList(XferListEditor, ArticleFilter):
+    icon = "article.png"
+    model = Article
+    field_id = 'article'
+    caption = _("Articles")
+
+    def __init__(self, **kwargs):
+        XferListEditor.__init__(self, **kwargs)
+        self.categories_filter = ()
+        self.show_stockable = -1
+
+    def get_items_from_filter(self):
+        return self.items_filtering(XferListEditor.get_items_from_filter(self), self.categories_filter, self.show_stockable)
 
     def fillresponse_header(self):
         show_filter = self.getparam('show_filter', 0)
@@ -588,24 +635,13 @@ class ArticleList(XferListEditor):
         if len(sel_stock.select_list) > 1:
             self.add_component(sel_stock)
 
-        self.filter = Q()
-        if ref_filter != '':
-            self.filter &= Q(reference__icontains=ref_filter) | Q(designation__icontains=ref_filter)
-        if show_filter == 0:
-            self.filter &= Q(isdisabled=False)
-        if self.show_stockable != -1:
-            if self.show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
-                self.filter &= Q(stockable=self.show_stockable)
-            else:
-                self.filter &= ~Q(stockable=Article.STOCKABLE_NO)
-        if show_storagearea != 0:
-            self.filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
+        self.filter = self.get_search_filter(ref_filter, show_filter, self.show_stockable, show_storagearea)
         self.add_action(ArticleSearch.get_action(_("Search"), "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
 
 
 @ActionsManage.affect_list(TITLE_PRINT, "images/print.png", close=CLOSE_NO)
 @MenuManage.describ('invoice.change_article')
-class ArticlePrint(XferPrintListing):
+class ArticlePrint(XferPrintListing, ArticleFilter):
     icon = "article.png"
     model = Article
     field_id = 'article'
@@ -613,29 +649,15 @@ class ArticlePrint(XferPrintListing):
 
     def filter_callback(self, items):
         categories_filter = self.getparam('cat_filter', ())
-        if len(categories_filter) > 0:
-            for cat_item in Category.objects.filter(id__in=categories_filter):
-                items = items.filter(categories__in=[cat_item])
-        return items.distinct()
+        show_stockable = self.getparam('stockable', -1)
+        return self.items_filtering(items, categories_filter, show_stockable)
 
     def get_filter(self):
         show_filter = self.getparam('show_filter', 0)
         show_stockable = self.getparam('stockable', -1)
         ref_filter = self.getparam('ref_filter', '')
         show_storagearea = self.getparam('storagearea', 0)
-        new_filter = Q()
-        if ref_filter != '':
-            new_filter &= Q(reference__icontains=ref_filter) | Q(designation__icontains=ref_filter)
-        if show_filter == 0:
-            new_filter &= Q(isdisabled=False)
-        if show_stockable != -1:
-            if show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
-                new_filter &= Q(stockable=show_stockable)
-            else:
-                new_filter &= ~Q(stockable=Article.STOCKABLE_NO)
-        if show_storagearea != 0:
-            new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
-        return new_filter
+        return self.get_search_filter(ref_filter, show_filter, show_stockable, show_storagearea)
 
 
 @ActionsManage.affect_list(TITLE_LABEL, "images/print.png", close=CLOSE_NO)

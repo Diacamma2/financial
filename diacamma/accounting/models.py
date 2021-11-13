@@ -872,6 +872,7 @@ class Journal(LucteriosModel):
 class AccountLink(LucteriosModel):
 
     letter = LucteriosVirtualField(verbose_name=_('link'), compute_from='get_letter')
+    date_max = models.DateField(verbose_name=_('date max'), null=True, default=None)
 
     def __str__(self):
         return self.letter
@@ -892,6 +893,17 @@ class AccountLink(LucteriosModel):
         if entrylines.exclude(entry__year=year).count() > 0:
             res += "&"
         return res
+
+    def fill_date(self):
+        search_maxdate = self.entrylineaccount_set.aggregate(Max('entry__date_value'))
+        if 'entry__date_value__max' in search_maxdate:
+            self.date_max = search_maxdate['entry__date_value__max']
+            self.save()
+
+    @classmethod
+    def fill_emptydate(cls):
+        for link in cls.objects.filter(date_max__isnull=True):
+            link.fill_date()
 
     def is_validity(self):
         third_info = None
@@ -952,6 +964,9 @@ class AccountLink(LucteriosModel):
             if entryline.multilink_id is None:
                 entryline.multilink = new_multilink
             entryline.save()
+        new_link.fill_date()
+        if new_multilink is not None:
+            new_multilink.fill_date()
 
     def clean(self):
         for entry in self.entryaccount_set.all():
@@ -1924,6 +1939,7 @@ def check_multilink():
                     pass
                 firstline.multilink = None
             print('* remove multilink for', link, [str(line) for line in lines])
+    AccountLink.fill_emptydate()
 
 
 @Signal.decorate('convertdata')
