@@ -405,11 +405,11 @@ class Article(LucteriosModel, CustomizeObject):
             return False
         return True
 
-    def get_stockage_total_num(self, storagearea=0):
+    def get_stockage_total_num(self, storagearea=0, default=None):
         for val in self.get_stockage_values():
             if val[0] == storagearea:
                 return float(val[2])
-        return None
+        return default
 
     def get_stockage_mean_price(self, storagearea=0):
         for val in self.get_stockage_values():

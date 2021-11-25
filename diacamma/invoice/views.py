@@ -543,13 +543,13 @@ class ArticleFilter(object):
 
     STOCKABLE_WITH_STOCK = 3
 
-    def items_filtering(self, items, categories_filter, show_stockable):
+    def items_filtering(self, items, categories_filter, show_stockable, storagearea=0):
         if len(categories_filter) > 0:
             for cat_item in Category.objects.filter(id__in=categories_filter):
                 items = items.filter(categories__in=[cat_item])
         if show_stockable == self.STOCKABLE_WITH_STOCK:
             new_items = QuerySet(model=Article)
-            new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num() > 0]
+            new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num(storagearea, default=0.0) > 0]
             return new_items
         else:
             return items.distinct()
@@ -583,14 +583,14 @@ class ArticleList(XferListEditor, ArticleFilter):
         self.show_stockable = -1
 
     def get_items_from_filter(self):
-        return self.items_filtering(XferListEditor.get_items_from_filter(self), self.categories_filter, self.show_stockable)
+        return self.items_filtering(XferListEditor.get_items_from_filter(self), self.categories_filter, self.show_stockable, self.show_storagearea)
 
     def fillresponse_header(self):
         show_filter = self.getparam('show_filter', 0)
         self.show_stockable = self.getparam('stockable', -1)
         ref_filter = self.getparam('ref_filter', '')
         self.categories_filter = self.getparam('cat_filter', ())
-        show_storagearea = self.getparam('storagearea', 0)
+        self.show_storagearea = self.getparam('storagearea', 0)
 
         edt = XferCompSelect("show_filter")
         edt.set_select([(0, _('Only activate')), (1, _('All'))])
@@ -628,14 +628,14 @@ class ArticleList(XferListEditor, ArticleFilter):
         sel_stock = XferCompSelect('storagearea')
         sel_stock.set_needed(False)
         sel_stock.set_select_query(StorageArea.objects.all())
-        sel_stock.set_value(show_storagearea)
+        sel_stock.set_value(self.show_storagearea)
         sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         sel_stock.set_location(0, 6)
         sel_stock.description = StorageArea._meta.verbose_name
         if len(sel_stock.select_list) > 1:
             self.add_component(sel_stock)
 
-        self.filter = self.get_search_filter(ref_filter, show_filter, self.show_stockable, show_storagearea)
+        self.filter = self.get_search_filter(ref_filter, show_filter, self.show_stockable, self.show_storagearea)
         self.add_action(ArticleSearch.get_action(_("Search"), "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
 
 
@@ -650,7 +650,8 @@ class ArticlePrint(XferPrintListing, ArticleFilter):
     def filter_callback(self, items):
         categories_filter = self.getparam('cat_filter', ())
         show_stockable = self.getparam('stockable', -1)
-        return self.items_filtering(items, categories_filter, show_stockable)
+        show_storagearea = self.getparam('storagearea', 0)
+        return self.items_filtering(items, categories_filter, show_stockable, show_storagearea)
 
     def get_filter(self):
         show_filter = self.getparam('show_filter', 0)
