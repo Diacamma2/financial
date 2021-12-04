@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-13 18:17+0000\n"
+"POT-Creation-Date: 2021-12-04 09:25+0000\n"
 "PO-Revision-Date: 2021-11-13 19:16+0100\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
@@ -53,7 +53,7 @@ msgstr "la fin de l'exercice doit être postérieure à son début !"
 msgid "Some enties for last year report are not closed!"
 msgstr "Des écritures au journal Report à nouveau ne sont pas validées !"
 
-#: editors.py:201 models.py:1655 models.py:1733
+#: editors.py:201 models.py:1656 models.py:1734
 msgid "Invalid code"
 msgstr "Code invalide !"
 
@@ -61,7 +61,7 @@ msgstr "Code invalide !"
 msgid "Changment not allowed!"
 msgstr "Changement non permis !"
 
-#: editors.py:257 models.py:1580
+#: editors.py:257 models.py:1581
 msgid "entry line of account"
 msgstr "ligne d'écriture"
 
@@ -78,38 +78,38 @@ msgid "Add a entry line"
 msgstr "Ajouter une ligne d'écriture"
 
 #: editors.py:362 editors.py:368 models.py:62 models.py:202 models.py:207
-#: models.py:1281 models.py:1635
+#: models.py:1282 models.py:1636
 msgid "third"
 msgstr "tiers"
 
-#: editors.py:386 models.py:255 models.py:1277 models.py:1286 models.py:1709
+#: editors.py:386 models.py:255 models.py:1278 models.py:1287 models.py:1710
 #: printmodel/EntryLineAccount_0001.py:44 printmodel/Third_0001.py:39
 msgid "account"
 msgstr "compte"
 
-#: editors.py:438 editors.py:443 models.py:666 models.py:993 models.py:1282
-#: models.py:1589 models.py:1708 views_budget.py:45 views_budget.py:254
+#: editors.py:438 editors.py:443 models.py:666 models.py:994 models.py:1283
+#: models.py:1590 models.py:1709 views_budget.py:45 views_budget.py:254
 #: views_entries.py:455
 msgid "cost accounting"
 msgstr "comptabilité analytique"
 
-#: editors.py:453 editors.py:458 models.py:1280
+#: editors.py:453 editors.py:458 models.py:1281
 msgid "reference"
 msgstr "référence"
 
-#: editors.py:469 models.py:1287 models.py:1638
+#: editors.py:469 models.py:1288 models.py:1639
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:426
 #: views_reports.py:526
 msgid "debit"
 msgstr "débit"
 
-#: editors.py:475 models.py:1288 models.py:1639
+#: editors.py:475 models.py:1289 models.py:1640
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:427
 #: views_reports.py:527
 msgid "credit"
 msgstr "crédit"
 
-#: migrations/0001_initial.py:162 models.py:593 models.py:594 models.py:834
+#: migrations/0001_initial.py:162 models.py:593 models.py:594 models.py:835
 msgid "default"
 msgstr "défaut"
 
@@ -166,7 +166,7 @@ msgstr "contact"
 msgid "status"
 msgstr "statut"
 
-#: models.py:103 models.py:210 models.py:1592 printmodel/Third_0001.py:39
+#: models.py:103 models.py:210 models.py:1593 printmodel/Third_0001.py:39
 #: views.py:415 views_reports.py:202 views_reports.py:208 views_reports.py:432
 #: views_reports.py:557
 msgid "total"
@@ -192,7 +192,7 @@ msgstr "Ce tiers n'a pas de compte correct !"
 msgid "thirds"
 msgstr "tiers"
 
-#: models.py:208 models.py:690 models.py:1634 models.py:1712
+#: models.py:208 models.py:690 models.py:1635 models.py:1713
 #: printmodel/ChartsAccount_0001.py:41
 msgid "code"
 msgstr "code"
@@ -299,7 +299,7 @@ msgstr "La somme des comptes annexes doit être nulle !"
 msgid "This fiscal year is not 'in running'!"
 msgstr "Cet exercice n'est pas 'en cours' !"
 
-#: models.py:578 models.py:595 models.py:692 models.py:986 models.py:1707
+#: models.py:578 models.py:595 models.py:692 models.py:987 models.py:1708
 #: views_accounts.py:238 views_budget.py:37 views_budget.py:245
 #: views_entries.py:293
 msgid "fiscal year"
@@ -317,14 +317,14 @@ msgstr "ouverte"
 msgid "closed"
 msgstr "clôturé"
 
-#: models.py:588 models.py:691 models.py:833 models.py:992 models.py:1289
-#: models.py:1588 printmodel/ChartsAccount_0001.py:41
+#: models.py:588 models.py:691 models.py:834 models.py:993 models.py:1290
+#: models.py:1589 printmodel/ChartsAccount_0001.py:41
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:424
 #: views_reports.py:523
 msgid "name"
 msgstr "nom"
 
-#: models.py:589 models.py:996
+#: models.py:589 models.py:997
 msgid "description"
 msgstr "description"
 
@@ -400,117 +400,121 @@ msgstr "Autres comptes"
 msgid "type of account"
 msgstr "type de compte"
 
-#: models.py:695 printmodel/ChartsAccount_0001.py:41
+#: models.py:694
+msgid "rubric"
+msgstr "rubrique"
+
+#: models.py:696 printmodel/ChartsAccount_0001.py:41
 msgid "total of last year"
 msgstr "total de l'exercice précédent"
 
-#: models.py:696 printmodel/ChartsAccount_0001.py:41
+#: models.py:697 printmodel/ChartsAccount_0001.py:41
 msgid "total current"
 msgstr "total de l'exercice"
 
-#: models.py:697 printmodel/ChartsAccount_0001.py:41
+#: models.py:698 printmodel/ChartsAccount_0001.py:41
 msgid "total validated"
 msgstr "total validé"
 
-#: models.py:801
+#: models.py:802
 msgid "Account already exists for this fiscal year!"
 msgstr "Ce compte existe déjà pour cet exercice fiscal !"
 
-#: models.py:819
+#: models.py:820
 msgid "charts of account"
 msgstr "plan comptable"
 
-#: models.py:820
+#: models.py:821
 msgid "charts of accounts"
 msgstr "plans comptables"
 
-#: models.py:841
+#: models.py:842
 msgid "journal reserved!"
 msgstr "journal réservé !"
 
-#: models.py:867
+#: models.py:868
 msgid "accounting journal"
 msgstr "journal"
 
-#: models.py:868
+#: models.py:869
 msgid "accounting journals"
 msgstr "journaux"
 
-#: models.py:874 models.py:989 models.py:1283 models.py:1284
+#: models.py:875 models.py:990 models.py:1284 models.py:1285
 #: printmodel/EntryLineAccount_0001.py:44
 msgid "link"
 msgstr "lettrage"
 
-#: models.py:875
+#: models.py:876
 msgid "date max"
 msgstr "date max"
 
-#: models.py:937
+#: models.py:938
 msgid "An entry line is not third!"
 msgstr "Une ligne d'écriture n'a pas de compte de tiers !"
 
-#: models.py:943
+#: models.py:944
 msgid "This entry lines are not in same third!"
 msgstr "Ces lignes d'écritures ne concernent pas le même tiers !"
 
-#: models.py:947
+#: models.py:948
 msgid "This entries are over 2 years!"
 msgstr "Ces écritures sont sur plus que 2 exercices !"
 
-#: models.py:949
+#: models.py:950
 msgid "These entries are not on 2 consecutive years!"
 msgstr "Ces écritures ne sont pas sur des exercices consécutifs !"
 
-#: models.py:951
+#: models.py:952
 msgid "These entries are closed exercises!"
 msgstr "Ces écritures ont des exercices clôturés !"
 
-#: models.py:953
+#: models.py:954
 msgid "The input lines are not balanced!"
 msgstr "Ces lignes d'écritures ne s'équilibrent pas !"
 
-#: models.py:980
+#: models.py:981
 msgid "letter"
 msgstr "Lettrage"
 
-#: models.py:981
+#: models.py:982
 msgid "letters"
 msgstr "Lettrages"
 
-#: models.py:987 printmodel/EntryLineAccount_0001.py:44 views_reports.py:421
+#: models.py:988 printmodel/EntryLineAccount_0001.py:44 views_reports.py:421
 msgid "numeros"
 msgstr "N°"
 
-#: models.py:988 models.py:1587 views_entries.py:299
+#: models.py:989 models.py:1588 views_entries.py:299
 msgid "journal"
 msgstr "journal"
 
-#: models.py:990 printmodel/EntryLineAccount_0001.py:44 views_reports.py:422
+#: models.py:991 printmodel/EntryLineAccount_0001.py:44 views_reports.py:422
 msgid "date entry"
 msgstr "date d'écriture"
 
-#: models.py:991 printmodel/EntryLineAccount_0001.py:44 views_reports.py:423
+#: models.py:992 printmodel/EntryLineAccount_0001.py:44 views_reports.py:423
 msgid "date value"
 msgstr "date de pièce"
 
-#: models.py:994
+#: models.py:995
 msgid "close"
 msgstr "validé"
 
-#: models.py:1020 models.py:1279 models.py:1326 models.py:1636 models.py:1710
-#: models.py:1713
+#: models.py:1021 models.py:1280 models.py:1327 models.py:1637 models.py:1711
+#: models.py:1714
 msgid "amount"
 msgstr "montant"
 
-#: models.py:1083
+#: models.py:1084
 msgid "entry of account closed!"
 msgstr "écriture validée !"
 
-#: models.py:1158
+#: models.py:1159
 msgid "This kind of entry is not allowed for this journal!"
 msgstr "Ce type d'écriture n'est pas permis dans ce journal !"
 
-#: models.py:1189 models.py:1458
+#: models.py:1190 models.py:1459
 #, python-format
 msgid ""
 "Account entry not balanced{[br/]}total credit=%(credit)s - total debit="
@@ -519,132 +523,132 @@ msgstr ""
 "Écriture comptable non équilibré{[br/]}total crédit=%(credit)s - total débit="
 "%(debit)s%(info)s"
 
-#: models.py:1199
+#: models.py:1200
 msgid "Cost accounting is mandatory !"
 msgstr "La comptabilité analytique est obligatoire !"
 
-#: models.py:1225
+#: models.py:1226
 #, python-format
 msgid "payment of %s"
 msgstr "règlement de %s"
 
-#: models.py:1271 views.py:436
+#: models.py:1272 views.py:436
 msgid "entry of account"
 msgstr "écriture comptable"
 
-#: models.py:1272
+#: models.py:1273
 msgid "entries of account"
 msgstr "écritures comptables"
 
-#: models.py:1278
+#: models.py:1279
 msgid "entry"
 msgstr "écriture"
 
-#: models.py:1290 views_reports.py:425
+#: models.py:1291 views_reports.py:425
 msgid "link/cost accounting"
 msgstr "lettrage/analytique"
 
-#: models.py:1425
+#: models.py:1426
 #, python-format
 msgid "Third '%s' unknown !"
 msgstr "Tiers '%s' inconnu !"
 
-#: models.py:1431
+#: models.py:1432
 #, python-format
 msgid "Cost accounting '%s' unknown !"
 msgstr "Comptabilité analytique '%s' inconnue !"
 
-#: models.py:1440
+#: models.py:1441
 #, python-format
 msgid "Account code '%s' unknown !"
 msgstr "Code comptable \"%s\" inconnu !"
 
-#: models.py:1450
+#: models.py:1451
 #, python-format
 msgid "Invalid date '%s' !"
 msgstr "Date '%s' invalide !"
 
-#: models.py:1461
+#: models.py:1462
 #, python-format
 msgid "Account entry '%s' with only one line"
 msgstr "L'écriture '%s' n'a qu'une seule ligne."
 
-#: models.py:1581
+#: models.py:1582
 msgid "entry lines of account"
 msgstr "lignes d'écriture"
 
-#: models.py:1627
+#: models.py:1628
 msgid "Model of entry"
 msgstr "Modèle d'écriture"
 
-#: models.py:1628 views_other.py:166
+#: models.py:1629 views_other.py:166
 msgid "Models of entry"
 msgstr "Modèles d'écriture"
 
-#: models.py:1633
+#: models.py:1634
 msgid "model"
 msgstr "modèle"
 
-#: models.py:1694
+#: models.py:1695
 #, python-format
 msgid "Account code \"%s\" unknown for this fiscal year!"
 msgstr ""
 "Le code comptable \"%s\" est inconnu pour cet exercice ; vérifier le plan "
 "comptable !"
 
-#: models.py:1701
+#: models.py:1702
 msgid "Model line"
 msgstr "Ligne de modèle"
 
-#: models.py:1702
+#: models.py:1703
 msgid "Model lines"
 msgstr "Lignes de modèle"
 
-#: models.py:1797
+#: models.py:1798
 msgid "Budget line"
 msgstr "Ligne de budget"
 
-#: models.py:1798
+#: models.py:1799
 msgid "Budget lines"
 msgstr "Lignes de budget"
 
-#: models.py:1887
+#: models.py:1888
 msgid "accounting-devise-iso"
 msgstr "Devise (iso)"
 
-#: models.py:1889
+#: models.py:1890
 msgid "accounting-devise-prec"
 msgstr "Devise (précision)"
 
-#: models.py:1890
+#: models.py:1891
 msgid "accounting-system"
 msgstr "système comptable"
 
-#: models.py:1891
+#: models.py:1892
 msgid "accounting-sizecode"
 msgstr "Taille des codes comptables"
 
-#: models.py:1892
+#: models.py:1893
 msgid "accounting-needcost"
 msgstr "Comptabilité analytique obligatoire"
 
-#: models.py:1893
+#: models.py:1894
 msgid "accounting-code-report-filter"
 msgstr "Code comptable (filtre de rapport)"
 
-#: models.py:1894
+#: models.py:1895
 msgid "accounting-lettering-check"
 msgstr "comptes contrôlés non-lettrable"
 
-#: models.py:1897
+#: models.py:1898
 msgid "# accounting (administrator)"
 msgstr "# comptabilité (administrateur)"
 
-#: models.py:1900
+#: models.py:1901
 msgid "# accounting (editor)"
 msgstr "# comptabilité (éditeur)"
 
-#: models.py:1903
+#: models.py:1904
 msgid "# accounting (shower)"
 msgstr "# comptabilité (observateur)"
 

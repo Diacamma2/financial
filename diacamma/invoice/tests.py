@@ -72,13 +72,13 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billAddModify')
         self.assert_count_equal('', 5)
-        self.assert_select_equal('bill_type', 4)  # nb=4
+        self.assert_select_equal('bill_type', 5)  # nb=4
 
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify', {'bill_type': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billAddModify')
         self.assert_count_equal('', 5)
-        self.assert_select_equal('bill_type', 4)  # nb=4
+        self.assert_select_equal('bill_type', 5)  # nb=4
 
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify',

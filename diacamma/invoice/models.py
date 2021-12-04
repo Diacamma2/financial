@@ -483,7 +483,8 @@ class Bill(Supporting):
     BILLTYPE_BILL = 1
     BILLTYPE_ASSET = 2
     BILLTYPE_RECEIPT = 3
-    LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')))
+    BILLTYPE_ORDER = 4
+    LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')), (BILLTYPE_ORDER, _('order')))
     SELECTION_BILLTYPES = ((BILLTYPE_ALL, None),) + LIST_BILLTYPES
 
     STATUS_ALL = -2

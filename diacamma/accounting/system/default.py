@@ -250,7 +250,8 @@ class DefaultSystemAccounting(object):
         for charts_account in year.last_fiscalyear.chartsaccount_set.filter(type_of_account__in=(0, 1, 2)):
             code = charts_account.code
             name = charts_account.name
-            new_entry.add_entry_line(charts_account.get_current_validated(with_correction=True), code, name, with_correction=True)
+            rubric = charts_account.rubric
+            new_entry.add_entry_line(charts_account.get_current_validated(with_correction=True), code, name, with_correction=True, rubric=rubric)
         new_entry.closed()
 
     def _create_report_third(self, year):
@@ -263,7 +264,7 @@ class DefaultSystemAccounting(object):
             new_entry = EntryAccount.objects.create(year=year, journal_id=1, designation=end_desig, date_value=year.begin)
             for entry_line in last_entry_account.entrylineaccount_set.all():
                 if re.match(self.get_general_mask(), entry_line.account.code):
-                    new_entry_line = new_entry.add_entry_line(-1 * entry_line.amount, entry_line.account.code, entry_line.account.name, entry_line.third, entry_line.reference)
+                    new_entry_line = new_entry.add_entry_line(-1 * entry_line.amount, entry_line.account.code, entry_line.account.name, entry_line.third, entry_line.reference, rubric=entry_line.account.rubric)
                     lines_multilink = EntryLineAccount.objects.filter(entry__year=year.last_fiscalyear, link__entrylineaccount=entry_line, multilink__isnull=False)
                     if lines_multilink.count() > 0:
                         multilink = lines_multilink.first().multilink

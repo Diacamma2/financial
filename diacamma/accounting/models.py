@@ -388,7 +388,7 @@ class FiscalYear(LucteriosModel):
         if self.status == FiscalYear.STATUS_FINISHED:
             raise LucteriosException(IMPORTANT, _('Fiscal year finished!'))
         for last_charts_account in self.last_fiscalyear.chartsaccount_set.all():
-            self.getorcreate_chartaccount(last_charts_account.code, last_charts_account.name)
+            self.getorcreate_chartaccount(last_charts_account.code, last_charts_account.name, last_charts_account.rubric)
 
     def run_report_lastyear(self, import_result):
         if self.last_fiscalyear is None:
@@ -397,7 +397,7 @@ class FiscalYear(LucteriosModel):
             raise LucteriosException(IMPORTANT, _("This fiscal year is not 'in building'!"))
         current_system_account().import_lastyear(self, import_result)
 
-    def getorcreate_chartaccount(self, code, name=None):
+    def getorcreate_chartaccount(self, code, name=None, rubric=""):
         code = correct_accounting_code(code)
         try:
             return self.chartsaccount_set.get(code=code)
@@ -405,7 +405,7 @@ class FiscalYear(LucteriosModel):
             descript, typeaccount = current_system_account().new_charts_account(code)
             if name is None:
                 name = descript
-            return ChartsAccount.objects.create(year=self, code=code, name=name, type_of_account=typeaccount)
+            return ChartsAccount.objects.create(year=self, code=code, name=name, rubric=rubric, type_of_account=typeaccount)
 
     def move_entry_noclose(self):
         if self.status == FiscalYear.STATUS_RUNNING:
@@ -417,7 +417,7 @@ class FiscalYear(LucteriosModel):
                     except BaseException:
                         raise LucteriosException(IMPORTANT, _("This fiscal year has entries not closed and not next fiscal year!"))
                 for entryline in entry_noclose.entrylineaccount_set.all():
-                    entryline.account = next_ficalyear.getorcreate_chartaccount(entryline.account.code, entryline.account.name)
+                    entryline.account = next_ficalyear.getorcreate_chartaccount(entryline.account.code, entryline.account.name, entryline.account.rubric)
                     entryline.save()
                 entry_noclose.year = next_ficalyear
                 entry_noclose.date_value = next_ficalyear.begin
@@ -691,6 +691,7 @@ class ChartsAccount(LucteriosModel):
     name = models.CharField(_('name'), max_length=200)
     year = models.ForeignKey('FiscalYear', verbose_name=_('fiscal year'), null=False, on_delete=models.CASCADE, db_index=True)
     type_of_account = models.IntegerField(verbose_name=_('type of account'), choices=LIST_TYPES, null=True, db_index=True)
+    rubric = models.CharField(_('rubric'), max_length=200, null=True, default="")
 
     last_year_total = LucteriosVirtualField(verbose_name=_('total of last year'), compute_from='get_last_year_total', format_string=lambda: format_with_devise(2))
     current_total = LucteriosVirtualField(verbose_name=_('total current'), compute_from='get_current_total', format_string=lambda: format_with_devise(2))
@@ -698,19 +699,19 @@ class ChartsAccount(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        return ['code', 'name', 'last_year_total', 'current_total', 'current_validated']
+        return ['code', 'name', 'rubric', 'last_year_total', 'current_total', 'current_validated']
 
     @classmethod
     def get_edit_fields(cls):
-        return ['code', 'name', 'type_of_account']
+        return ['code', 'name', 'type_of_account', 'rubric']
 
     @classmethod
     def get_show_fields(cls):
-        return ['code', 'name', 'type_of_account']
+        return ['code', 'name', 'type_of_account', 'rubric']
 
     @classmethod
     def get_print_fields(cls):
-        return ['code', 'name', 'last_year_total', 'current_total', 'current_validated', 'entrylineaccount_set']
+        return ['code', 'name', 'last_year_total', 'current_total', 'current_validated', 'entrylineaccount_set', 'rubric']
 
     @classmethod
     def get_current_total_from_code(cls, code, year=None):
@@ -1233,11 +1234,11 @@ class EntryAccount(LucteriosModel):
                     serial_val += line.create_clone_inverse()
             return new_entry, serial_val
 
-    def add_entry_line(self, amount, code, name=None, third=None, reference=None, with_correction=False):
+    def add_entry_line(self, amount, code, name=None, third=None, reference=None, with_correction=False, rubric=""):
         if abs(amount) > 0.0001:
             new_entry_line = EntryLineAccount()
             new_entry_line.entry = self
-            new_entry_line.account = self.year.getorcreate_chartaccount(code, name)
+            new_entry_line.account = self.year.getorcreate_chartaccount(code, name, rubric)
             if with_correction:
                 new_entry_line.amount = new_entry_line.account.credit_debit_way() * amount
             else:
@@ -1917,7 +1918,7 @@ def check_total_income():
 
 def check_yearaccount():
     for entryline in EntryLineAccount.objects.exclude(Q(entry__year=F("account__year"))):  # check link between year of entry and year of account code
-        entryline.account = entryline.entry.year.getorcreate_chartaccount(entryline.account.code, entryline.account.name)
+        entryline.account = entryline.entry.year.getorcreate_chartaccount(entryline.account.code, entryline.account.name, entryline.account.rubric)
         entryline.save()
 
 
