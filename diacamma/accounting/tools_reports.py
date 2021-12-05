@@ -28,6 +28,7 @@ from django.db.models.aggregates import Sum
 
 from diacamma.accounting.models import EntryLineAccount, ChartsAccount, Budget, Third
 from diacamma.accounting.tools import correct_accounting_code
+from django.db.models.expressions import Subquery, OuterRef
 
 
 def get_spaces(size):
@@ -85,7 +86,8 @@ def get_totalaccount_for_query(query, sign_value=None, with_third=False):
 def get_totalbudget_for_query(query):
     total = 0
     values = {}
-    for data_line in Budget.objects.filter(query).order_by('code').values('code').annotate(data_sum=Sum('amount')):
+    budget_queryset = Budget.objects.all().annotate(rubric=Subquery(ChartsAccount.objects.filter(code=OuterRef('code')).values('rubric')))
+    for data_line in budget_queryset.filter(query).order_by('code').values('code').annotate(data_sum=Sum('amount')):
         if abs(data_line['data_sum']) > 0.001:
             account = ChartsAccount.get_chart_account(data_line['code'])
             account_code = account.code

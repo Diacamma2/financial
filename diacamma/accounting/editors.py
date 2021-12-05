@@ -33,7 +33,8 @@ from django.db.models import Q
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.editors import LucteriosEditor
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompButton, XferCompGrid, XferCompEdit, XferCompFloat
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompButton, XferCompGrid, XferCompEdit, XferCompFloat,\
+    XferCompCheck
 from lucterios.framework.tools import FORMTYPE_REFRESH, CLOSE_NO, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES,\
     FORMTYPE_MODAL
 from lucterios.framework.xferadvance import TITLE_MODIFY
@@ -210,6 +211,36 @@ class ChartsAccountEditor(LucteriosEditor):
         elif typeaccount != self.item.type_of_account:
             error_msg = _("Changment not allowed!")
             code_ed.set_value(self.item.code + '!')
+        if typeaccount in (ChartsAccount.TYPE_REVENUE, ChartsAccount.TYPE_EXPENSE):
+            rubric_list = self.item.year.get_rubric_list()
+            rubric_comp = XferCompEdit('rubric')
+            rubric_comp.set_value(xfer.item.rubric)
+            rubric_comp.set_location(1, xfer.get_max_row() + 1)
+            rubric_comp.description = _('rubric')
+            xfer.add_component(rubric_comp)
+            if len(rubric_list) > 0:
+                rubric_list.insert(0, '')
+                sel = XferCompSelect('rubric_select')
+                sel.set_select([(rubric, rubric) for rubric in rubric_list])
+                sel.set_value(rubric_comp.value)
+                sel.set_location(rubric_comp.col, rubric_comp.row + 1, rubric_comp.colspan, rubric_comp.rowspan)
+                sel.description = rubric_comp.description
+                sel.java_script = """
+var rubric=current.getValue();
+parent.get('rubric').setValue({'value':rubric});
+"""
+                xfer.add_component(sel)
+                check = XferCompCheck('rubric_add')
+                check.set_value(xfer.getparam('rubric_add', False))
+                check.set_location(rubric_comp.col, rubric_comp.row + 2, rubric_comp.colspan, rubric_comp.rowspan)
+                check.description = _('new rubric')
+                check.java_script = """
+var new_rubric=current.getValue();
+parent.get('rubric').setVisible(new_rubric);
+parent.get('rubric_select').setVisible(!new_rubric);
+"""
+                xfer.add_component(check)
+
         lbl = XferCompLabelForm('error_code')
         lbl.set_location(1, xfer.get_max_row() + 1, 2)
         lbl.set_color('red')
@@ -219,6 +250,13 @@ class ChartsAccountEditor(LucteriosEditor):
 
     def show(self, xfer):
         row = xfer.get_max_row() + 1
+        if xfer.item.type_of_account in (ChartsAccount.TYPE_REVENUE, ChartsAccount.TYPE_EXPENSE):
+            rubric_comp = XferCompLabelForm('rubric')
+            rubric_comp.set_value(xfer.item.rubric)
+            rubric_comp.set_location(1, row)
+            rubric_comp.description = _('rubric')
+            xfer.add_component(rubric_comp)
+            row += 1
         comp = XferCompGrid('entryaccount')
         comp.set_model(EntryAccount.objects.filter(entrylineaccount__account=self.item).distinct(), None, xfer)
         comp.description = EntryLineAccount._meta.verbose_name

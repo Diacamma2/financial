@@ -47,7 +47,7 @@ class ChartsAccountTest(LucteriosTest):
         LucteriosTest.setUp(self)
         set_accounting_system()
         initial_thirds_fr()
-        default_compta_fr()
+        default_compta_fr(with_rubric=self._testMethodName == "test_modify_with_rubric")
         fill_entries_fr(1)
         rmtree(get_user_dir(), True)
 
@@ -333,7 +333,7 @@ class ChartsAccountTest(LucteriosTest):
 
         self.factory.xfer = ChartsAccountAddModify()
         self.calljson('/diacamma.accounting/chartsAccountAddModify',
-                      {'SAVE': 'YES', 'year': '1', 'type_of_account': '-1', 'chartsaccount': '9', 'code': '7061', 'name': "new code name", 'rubric': 'abcd'}, False)
+                      {'SAVE': 'YES', 'year': '1', 'type_of_account': '-1', 'chartsaccount': '9', 'code': '7061', 'name': "new code name", 'rubric': ''}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'chartsAccountAddModify')
 
         self.factory.xfer = ChartsAccountAddModify()
@@ -343,7 +343,7 @@ class ChartsAccountTest(LucteriosTest):
         self.assert_count_equal('', 6)
         self.assert_json_equal('LABELFORM', 'code', '706')
         self.assert_json_equal('EDIT', 'name', 'new code name')
-        self.assert_json_equal('EDIT', 'rubric', 'abcd')
+        self.assert_json_equal('EDIT', 'rubric', '')
         self.assert_json_equal('LABELFORM', 'type_of_account', 3)
         self.assert_json_equal('LABELFORM', 'error_code', "")
 
@@ -463,6 +463,51 @@ class ChartsAccountTest(LucteriosTest):
         self.assert_count_equal('budget_expense', 3)
         self.assert_count_equal('#budget_expense/actions', 0)
         self.assert_json_equal('LABELFORM', 'result', 70.78)
+
+    def test_modify_with_rubric(self):
+        self.factory.xfer = ChartsAccountAddModify()
+        self.calljson('/diacamma.accounting/chartsAccountAddModify',
+                      {'year': '1', 'type_of_account': '-1', 'chartsaccount': '9'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountAddModify')
+        self.assert_count_equal('', 8)
+        self.assert_json_equal('EDIT', 'code', '706')
+        self.assert_json_equal('EDIT', 'name', '706')
+        self.assert_json_equal('EDIT', 'rubric', 'DDD')
+        self.assert_json_equal('SELECT', 'rubric_select', 'DDD')
+        self.assert_json_equal('CHECK', 'rubric_add', 0)
+        self.assert_json_equal('LABELFORM', 'type_of_account', 3)
+        self.assert_json_equal('LABELFORM', 'error_code', "")
+
+        self.factory.xfer = ChartsAccountAddModify()
+        self.calljson('/diacamma.accounting/chartsAccountAddModify',
+                      {'year': '1', 'type_of_account': '-1', 'chartsaccount': '9', 'rubric_add': True}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountAddModify')
+        self.assert_count_equal('', 8)
+        self.assert_json_equal('EDIT', 'code', '706')
+        self.assert_json_equal('EDIT', 'name', '706')
+        self.assert_json_equal('EDIT', 'rubric', 'DDD')
+        self.assert_json_equal('SELECT', 'rubric_select', 'DDD')
+        self.assert_json_equal('CHECK', 'rubric_add', 1)
+        self.assert_json_equal('LABELFORM', 'type_of_account', 3)
+        self.assert_json_equal('LABELFORM', 'error_code', "")
+
+        self.factory.xfer = ChartsAccountAddModify()
+        self.calljson('/diacamma.accounting/chartsAccountAddModify',
+                      {'SAVE': 'YES', 'year': '1', 'type_of_account': '-1', 'chartsaccount': '9', 'rubric': 'AAA'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'chartsAccountAddModify')
+
+        self.factory.xfer = ChartsAccountAddModify()
+        self.calljson('/diacamma.accounting/chartsAccountAddModify',
+                      {'year': '1', 'type_of_account': '-1', 'chartsaccount': '9'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountAddModify')
+        self.assert_count_equal('', 8)
+        self.assert_json_equal('EDIT', 'code', '706')
+        self.assert_json_equal('EDIT', 'name', '706')
+        self.assert_json_equal('EDIT', 'rubric', 'AAA')
+        self.assert_json_equal('SELECT', 'rubric_select', 'AAA')
+        self.assert_json_equal('CHECK', 'rubric_add', 0)
+        self.assert_json_equal('LABELFORM', 'type_of_account', 3)
+        self.assert_json_equal('LABELFORM', 'error_code', "Code invalide !")
 
 
 class FiscalYearWorkflowTest(PaymentTest):

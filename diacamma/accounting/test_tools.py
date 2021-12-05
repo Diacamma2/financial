@@ -92,12 +92,12 @@ def create_year(status=0):
     return new_year
 
 
-def create_account(codes, type_of_account, year=None):
+def create_account(codes, type_of_account, year=None, rubric=""):
     account_ids = []
     if year is None:
         year = FiscalYear.get_current()
     for code in codes:
-        chart = ChartsAccount.objects.create(code=code, name=code, type_of_account=type_of_account, year=year)
+        chart = ChartsAccount.objects.create(code=code, name=code, rubric=rubric, type_of_account=type_of_account, year=year)
         account_ids.append(chart.id)
     return account_ids
 
@@ -124,18 +124,20 @@ def initial_thirds_be():
     fill_thirds_be()
 
 
-def fill_accounts_fr(year=None, with12=True, with8=False):
+def fill_accounts_fr(year=None, with12=True, with8=False, with_rubric=False):
     Parameter.change_value('accounting-sizecode', 3)
     Params.clear()
-    create_account(['411', '512', '531'], 0, year)  # 1 2 3
-    create_account(['401'], 1, year)  # 4
-    create_account(['106', '110', '119'], 2, year)  # 5 6 7
-    create_account(['701', '706', '707'], 3, year)  # 8 9 10
-    create_account(['601', '602', '604', '607', '627'], 4, year)  # 11 12 13 14 15
+    create_account(['411'], 0, year, "AAA" if with_rubric else "")  # 1 2 3
+    create_account(['512', '531'], 0, year, "BBB" if with_rubric else "")  # 1 2 3
+    create_account(['401'], 1, year, "AAA" if with_rubric else "")  # 4
+    create_account(['106', '110', '119'], 2, year, "CCC" if with_rubric else "")  # 5 6 7
+    create_account(['701', '706', '707'], 3, year, "DDD" if with_rubric else "")  # 8 9 10
+    create_account(['601', '602', '604'], 4, year, "EEE" if with_rubric else "")  # 11 12 13
+    create_account(['607', '627'], 4, year, "FFF" if with_rubric else "")  # 14 15
     if with12:
-        create_account(['120', '129'], 2, year)  # 16 17
+        create_account(['120', '129'], 2, year, "GGG" if with_rubric else "")  # 16 17
     if with8:
-        create_account(['860', '870'], 5, year)  # 18 19
+        create_account(['860', '870'], 5, year, "HHH" if with_rubric else "")  # 18 19
 
 
 def fill_accounts_be(year=None, with12=True, with8=False):
@@ -184,12 +186,12 @@ def get_accounting_system():
     return None
 
 
-def default_compta_fr(status=0, with12=True, with8=False):
+def default_compta_fr(status=0, with12=True, with8=False, with_rubric=False):
     from diacamma.payoff.views_conf import paramchange_payoff
     paramchange_payoff([])
     set_accounting_system('FR')
     year = create_year(status)
-    fill_accounts_fr(year, with12, with8)
+    fill_accounts_fr(year, with12, with8, with_rubric)
 
 
 def default_compta_be(status=0, with12=True, with8=False):

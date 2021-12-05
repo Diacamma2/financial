@@ -72,6 +72,8 @@ class FiscalYearReport(XferContainerCustom):
         hfield = format_with_devise(5).split(';')
         self.format_str = ";".join(hfield[1:])
         self.hfield = hfield[0]
+        self.budgetfilter_right = Q()
+        self.budgetfilter_left = Q()
 
     def fillresponse(self):
         self.fill_header()
@@ -242,6 +244,42 @@ class FiscalYearReport(XferContainerCustom):
                 add_item_in_grid(self.grid, self.line_offset + line_idx, 'right', data_line_right[line_idx])
         return self.add_total_in_grid(total_in_left, total1_left, total2_left, totalb_left, total1_right, total2_right, totalb_right, line_idx)
 
+    def calcul_rubric(self, left_line_idx, right_line_idx, left_filter, rigth_filter, rubric_name):
+        rubric_title = rubric_name if rubric_name != '' else _('others')
+        rubric_filter = Q(account__rubric=rubric_name)
+        budget_rubric_filter = Q(rubric=rubric_name)
+        data_line_left, subtotal1_left, subtotal2_left, subtotalb_left = convert_query_to_account(self.filter & left_filter & rubric_filter, self.lastfilter & rubric_filter if self.lastfilter is not None else None, self.budgetfilter_left & budget_rubric_filter)
+        if len(data_line_left) > 0:
+            add_cell_in_grid(self.grid, left_line_idx, 'left', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
+            left_line_idx += 1
+            left_line_idx = fill_grid(self.grid, left_line_idx, 'left', data_line_left)
+            add_item_in_grid(self.grid, left_line_idx, 'left', (get_spaces(10) + "%s" % _('Sub-total'), subtotal1_left, subtotal2_left, subtotalb_left), "{[i]}%s{[/i]}")
+            left_line_idx += 1
+            add_cell_in_grid(self.grid, left_line_idx, 'left', '')
+            left_line_idx += 1
+        data_line_right, subtotal1_right, subtotal2_right, subtotalb_right = convert_query_to_account(self.filter & rigth_filter & rubric_filter, self.lastfilter & rubric_filter if self.lastfilter is not None else None, self.budgetfilter_right & budget_rubric_filter)
+        if len(data_line_right) > 0:
+            add_cell_in_grid(self.grid, right_line_idx, 'right', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
+            right_line_idx += 1
+            right_line_idx = fill_grid(self.grid, right_line_idx, 'right', data_line_right)
+            add_item_in_grid(self.grid, right_line_idx, 'right', (get_spaces(10) + "%s" % _('Sub-total'), subtotal1_right, subtotal2_right, subtotalb_right), "{[i]}%s{[/i]}")
+            right_line_idx += 1
+            add_cell_in_grid(self.grid, right_line_idx, 'right', '')
+            right_line_idx += 1
+        self.total_summary_left = (self.total_summary_left[0] + subtotal1_left, self.total_summary_left[1] + subtotal2_left, self.total_summary_left[2] + subtotalb_left)
+        self.total_summary_right = (self.total_summary_right[0] + subtotal1_right, self.total_summary_right[1] + subtotal2_right, self.total_summary_right[2] + subtotalb_right)
+        return left_line_idx, right_line_idx
+
+    def _add_left_right_accounting_with_rubric(self, left_filter, rigth_filter, total_in_left, rubric_names):
+        left_line_idx, right_line_idx = 0, 0
+        for rubric_name in rubric_names:
+            left_line_idx, right_line_idx = self.calcul_rubric(left_line_idx, right_line_idx, left_filter, rigth_filter, rubric_name)
+        left_line_idx, right_line_idx = self.calcul_rubric(left_line_idx, right_line_idx, left_filter, rigth_filter, "")
+        total1_left, total2_left, totalb_left = self.total_summary_left
+        total1_right, total2_right, totalb_right = self.total_summary_right
+        line_idx = self.add_total_in_grid(total_in_left, total1_left, total2_left, totalb_left, total1_right, total2_right, totalb_right, max(left_line_idx, right_line_idx))
+        return line_idx
+
     def calcul_table(self):
         pass
 
@@ -376,7 +414,12 @@ class FiscalYearIncomeStatement(FiscalYearReport):
         filter_exclude = Q(entry__in=[entry for entry in EntryAccount.objects.filter(journal_id=5, entrylineaccount__account__code__in=current_system_account().result_accounting_codes)])
         self.budgetfilter_right = Q(year=self.item) & Q(code__regex=current_system_account().get_revenue_mask())
         self.budgetfilter_left = Q(year=self.item) & Q(code__regex=current_system_account().get_expence_mask())
-        line_idx = self._add_left_right_accounting(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True)
+
+        rubric_names = self.item.get_rubric_list(type_of_account=(3, 4))
+        if len(rubric_names) > 0:
+            line_idx = self._add_left_right_accounting_with_rubric(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True, rubric_names)
+        else:
+            line_idx = self._add_left_right_accounting(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True)
         self.show_annexe(line_idx, Q(year=self.item), filter_exclude)
 
 
@@ -843,8 +886,13 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
         else:
             self.budgetfilter_right = Q(cost_accounting=self.item) & Q(code__regex=current_system_account().get_revenue_mask())
             self.budgetfilter_left = Q(cost_accounting=self.item) & Q(code__regex=current_system_account().get_expence_mask())
+
         filter_exclude = Q(entry__in=[entry for entry in EntryAccount.objects.filter(journal_id=5, entrylineaccount__account__code__in=current_system_account().result_accounting_codes)])
-        line_idx = self._add_left_right_accounting(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True)
+        rubric_list = ChartsAccount.get_rubriclist_from_entryline()
+        if len(rubric_list) > 0:
+            line_idx = self._add_left_right_accounting_with_rubric(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True, rubric_list)
+        else:
+            line_idx = self._add_left_right_accounting(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True)
         self.show_annexe(line_idx, Q(cost_accounting=self.item), filter_exclude)
 
 

@@ -63,7 +63,7 @@ class ChartsAccountList(XferListEditor):
 
     def fillresponse_header(self):
         select_year = self.getparam('year')
-        select_type = self.getparam('type_of_account', 0)
+        select_type = self.getparam('type_of_account', ChartsAccount.TYPE_ASSET)
         self.item.year = FiscalYear.get_current(select_year)
         self.fill_from_model(0, 1, False, ['year', 'type_of_account'])
         comp_year = self.get_components('year')
@@ -80,6 +80,9 @@ class ChartsAccountList(XferListEditor):
         self.filter = Q(year=self.item.year)
         if select_type != -1:
             self.filter &= Q(type_of_account=select_type)
+        if select_type in (ChartsAccount.TYPE_REVENUE, ChartsAccount.TYPE_EXPENSE):
+            self.fieldnames = ChartsAccount.get_default_fields()
+            self.fieldnames.insert(2, 'rubric')
 
     def fillresponse(self):
         XferListEditor.fillresponse(self)

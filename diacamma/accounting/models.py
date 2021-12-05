@@ -456,6 +456,15 @@ class FiscalYear(LucteriosModel):
 
         return account_list, current_account
 
+    def get_rubric_list(self, type_of_account=None):
+        account_filter = Q()
+        if isinstance(type_of_account, tuple):
+            account_filter = Q(type_of_account__in=type_of_account)
+        rubric_list = [account.rubric for account in self.chartsaccount_set.filter(account_filter) if account.rubric != ""]
+        rubric_list = list(set(rubric_list))
+        rubric_list.sort()
+        return rubric_list
+
     def get_context(self):
         entries_by_journal = []
         for journal in Journal.objects.all():
@@ -699,15 +708,15 @@ class ChartsAccount(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        return ['code', 'name', 'rubric', 'last_year_total', 'current_total', 'current_validated']
+        return ['code', 'name', 'last_year_total', 'current_total', 'current_validated']
 
     @classmethod
     def get_edit_fields(cls):
-        return ['code', 'name', 'type_of_account', 'rubric']
+        return ['code', 'name', 'type_of_account']
 
     @classmethod
     def get_show_fields(cls):
-        return ['code', 'name', 'type_of_account', 'rubric']
+        return ['code', 'name', 'type_of_account']
 
     @classmethod
     def get_print_fields(cls):
@@ -791,6 +800,13 @@ class ChartsAccount(LucteriosModel):
             descript, typeaccount = current_system_account().new_charts_account(code)
             chart = ChartsAccount(year=current_year, code=code, name=descript, type_of_account=typeaccount)
         return chart
+
+    @classmethod
+    def get_rubriclist_from_entryline(self, filter):
+        rubric_list = [account.rubric for account in ChartsAccount.objects.filter(entrylineaccount__in=EntryLineAccount.objects.filter(filter)) if account.rubric != ""]
+        rubric_list = list(set(rubric_list))
+        rubric_list.sort()
+        return rubric_list
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         try:
