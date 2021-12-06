@@ -127,17 +127,17 @@ def initial_thirds_be():
 def fill_accounts_fr(year=None, with12=True, with8=False, with_rubric=False):
     Parameter.change_value('accounting-sizecode', 3)
     Params.clear()
-    create_account(['411'], 0, year, "AAA" if with_rubric else "")  # 1 2 3
-    create_account(['512', '531'], 0, year, "BBB" if with_rubric else "")  # 1 2 3
-    create_account(['401'], 1, year, "AAA" if with_rubric else "")  # 4
-    create_account(['106', '110', '119'], 2, year, "CCC" if with_rubric else "")  # 5 6 7
+    create_account(['411'], 0, year)  # 1 2 3
+    create_account(['512', '531'], 0, year)  # 1 2 3
+    create_account(['401'], 1, year)  # 4
+    create_account(['106', '110', '119'], 2, year)  # 5 6 7
     create_account(['701', '706', '707'], 3, year, "DDD" if with_rubric else "")  # 8 9 10
     create_account(['601', '602', '604'], 4, year, "EEE" if with_rubric else "")  # 11 12 13
     create_account(['607', '627'], 4, year, "FFF" if with_rubric else "")  # 14 15
     if with12:
-        create_account(['120', '129'], 2, year, "GGG" if with_rubric else "")  # 16 17
+        create_account(['120', '129'], 2, year)  # 16 17
     if with8:
-        create_account(['860', '870'], 5, year, "HHH" if with_rubric else "")  # 18 19
+        create_account(['860', '870'], 5, year)  # 18 19
 
 
 def fill_accounts_be(year=None, with12=True, with8=False):

@@ -802,8 +802,8 @@ class ChartsAccount(LucteriosModel):
         return chart
 
     @classmethod
-    def get_rubriclist_from_entryline(self, filter):
-        rubric_list = [account.rubric for account in ChartsAccount.objects.filter(entrylineaccount__in=EntryLineAccount.objects.filter(filter)) if account.rubric != ""]
+    def get_rubriclist_from_entryline(self, entryline_filter):
+        rubric_list = [account.rubric for account in ChartsAccount.objects.filter(entrylineaccount__in=EntryLineAccount.objects.filter(entryline_filter)) if account.rubric != ""]
         rubric_list = list(set(rubric_list))
         rubric_list.sort()
         return rubric_list

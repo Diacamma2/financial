@@ -888,7 +888,7 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
             self.budgetfilter_left = Q(cost_accounting=self.item) & Q(code__regex=current_system_account().get_expence_mask())
 
         filter_exclude = Q(entry__in=[entry for entry in EntryAccount.objects.filter(journal_id=5, entrylineaccount__account__code__in=current_system_account().result_accounting_codes)])
-        rubric_list = ChartsAccount.get_rubriclist_from_entryline()
+        rubric_list = ChartsAccount.get_rubriclist_from_entryline(self.filter)
         if len(rubric_list) > 0:
             line_idx = self._add_left_right_accounting_with_rubric(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True, rubric_list)
         else:
