@@ -428,13 +428,13 @@ class ConfigTest(LucteriosTest):
         initial_thirds_fr()
         default_categories()
         default_accountPosting()
-        csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref'
-'A123','article N°1','','Kg','code1','stockable','cat 2','Dalton Avrel','POIYT'
-'B234','article N°2','23,56','L','code1','stockable','cat 3','',''
-'C345','article N°3','45.74','','code2','non stockable','cat 1','Dalton Avrel','MLKJH'
-'D456','article N°4','56,89','m','code1','stockable & non vendable','','Maximum','987654'
-'A123','article N°1','13.57','Kg','code1','stockable','cat 3','',''
-'A123','article N°1','16,95','Kg','code1','stockable','','Maximum','654321'
+        csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref','desactif',
+'A123','article N°1','','Kg','code1','stockable','cat 2','Dalton Avrel','POIYT','non',
+'B234','article N°2','23,56','L','code1','stockable','cat 3','','','Oui',
+'C345','article N°3','45.74','','code2','non stockable','cat 1','Dalton Avrel','MLKJH','yEs',
+'D456','article N°4','56,89','m','code1','stockable & non vendable','','Maximum','987654','non',
+'A123','article N°1','13.57','Kg','code1','stockable','cat 3','','','non',
+'A123','article N°1','16,95','Kg','code1','stockable','','Maximum','654321','non',
 """
 
         self.factory.xfer = ArticleList()
@@ -447,8 +447,8 @@ class ConfigTest(LucteriosTest):
                                                           'delimiter': ',', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent': StringIO(csv_content)}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
         self.assert_count_equal('', 6 + 12)
-        self.assert_select_equal('fld_reference', 9)  # nb=9
-        self.assert_select_equal('fld_categories', 10)  # nb=10
+        self.assert_select_equal('fld_reference', 10)  # nb=9
+        self.assert_select_equal('fld_categories', 11)  # nb=10
         self.assert_count_equal('CSV', 6)
         self.assert_count_equal('#CSV/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
@@ -460,7 +460,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/articleImport', {'step': 2, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
-                                                          "fld_unit": "unité", "fld_isdisabled": "", "fld_accountposting": "compte",
+                                                          "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': 'categorie',
                                                           'fld_provider.third.contact': 'fournisseur', 'fld_provider.reference': 'ref', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
@@ -474,7 +474,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
-                                                          "fld_unit": "unité", "fld_isdisabled": "", "fld_accountposting": "compte",
+                                                          "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': 'categorie',
                                                           'fld_provider.third.contact': 'fournisseur', 'fld_provider.reference': 'ref', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
@@ -501,7 +501,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@1/designation', "article N°2")
         self.assert_json_equal('', 'article/@1/price', 23.56)
         self.assert_json_equal('', 'article/@1/unit', 'L')
-        self.assert_json_equal('', 'article/@1/isdisabled', False)
+        self.assert_json_equal('', 'article/@1/isdisabled', True)
         self.assert_json_equal('', 'article/@1/accountposting', "code1")
         self.assert_json_equal('', 'article/@1/stockable', 1)
         self.assert_json_equal('', 'article/@1/categories', ["cat 3"])
@@ -510,7 +510,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@2/designation', "article N°3")
         self.assert_json_equal('', 'article/@2/price', 45.74)
         self.assert_json_equal('', 'article/@2/unit', '')
-        self.assert_json_equal('', 'article/@2/isdisabled', False)
+        self.assert_json_equal('', 'article/@2/isdisabled', True)
         self.assert_json_equal('', 'article/@2/accountposting', "code2")
         self.assert_json_equal('', 'article/@2/stockable', 0)
         self.assert_json_equal('', 'article/@2/categories', ["cat 1"])
@@ -540,7 +540,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
-                                                          "fld_unit": "unité", "fld_isdisabled": "", "fld_accountposting": "compte",
+                                                          "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': 'categorie',
                                                           'fld_provider.third.contact': 'fournisseur', 'fld_provider.reference': 'ref', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
@@ -565,20 +565,20 @@ class ConfigTest(LucteriosTest):
         initial_thirds_fr()
         default_categories()
         default_accountPosting()
-        csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref'
-'A123','article N°1','ssdqs','Kg','code1','stockable','cat 2','Avrel','POIYT'
-'B234','article N°2','23.56','L','code1','stockable','cat 3','',''
-'C345','article N°3','45.74','','code2','non stockable','cat 1','Avrel','MLKJH'
-'D456','article N°4','56.89','m','code1','stockable & non vendable','','Maximum','987654'
-'A123','article N°1','13.57','Kg','code1','stockable','cat 3','',''
-'A123','article N°1','16.95','Kg','code1','stockable','','Maximum','654321'
+        csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref','desactif'
+'A123','article N°1','ssdqs','Kg','code1','stockable','cat 2','Avrel','POIYT',0
+'B234','article N°2','23.56','L','code1','stockable','cat 3','','',1
+'C345','article N°3','45.74','','code2','non stockable','cat 1','Avrel','MLKJH',1
+'D456','article N°4','56.89','m','code1','stockable & non vendable','','Maximum','987654',0
+'A123','article N°1','13.57','Kg','code1','stockable','cat 3','','',0
+'A123','article N°1','16.95','Kg','code1','stockable','','Maximum','654321',0
 """
 
         self.factory.xfer = ArticleImport()
         self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
-                                                          "fld_unit": "unité", "fld_isdisabled": "", "fld_accountposting": "compte",
+                                                          "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': '',
                                                           'fld_provider.third.contact': '', 'fld_provider.reference': '', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
@@ -604,7 +604,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@1/designation', "article N°2")
         self.assert_json_equal('', 'article/@1/price', 23.56)
         self.assert_json_equal('', 'article/@1/unit', 'L')
-        self.assert_json_equal('', 'article/@1/isdisabled', False)
+        self.assert_json_equal('', 'article/@1/isdisabled', True)
         self.assert_json_equal('', 'article/@1/accountposting', "code1")
         self.assert_json_equal('', 'article/@1/stockable', 1)
         self.assert_json_equal('', 'article/@1/categories', [])
@@ -613,7 +613,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@2/designation', "article N°3")
         self.assert_json_equal('', 'article/@2/price', 45.74)
         self.assert_json_equal('', 'article/@2/unit', '')
-        self.assert_json_equal('', 'article/@2/isdisabled', False)
+        self.assert_json_equal('', 'article/@2/isdisabled', True)
         self.assert_json_equal('', 'article/@2/accountposting', "code2")
         self.assert_json_equal('', 'article/@2/stockable', 0)
         self.assert_json_equal('', 'article/@2/categories', [])
@@ -638,20 +638,20 @@ class ConfigTest(LucteriosTest):
     def test_article_import3(self):
         default_customize()
         default_accountPosting()
-        csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref','color','size'
-'A123','article N°1','12.45','Kg','code1','stockable','cat 2','Avrel','POIYT','---','10'
-'B234','article N°2','23.56','L','code1','stockable','cat 3','','','noir','25'
-'C345','article N°3','45.74','','code2','non stockable','cat 1','Avrel','MLKJH','rouge','75'
-'D456','article N°4','56.89','m','code1','stockable & non vendable','','Maximum','987654','blanc','1'
-'A123','article N°1','13.57','Kg','code1','stockable','cat 3','','','bleu','10'
-'A123','article N°1','16.95','Kg','code1','stockable','','Maximum','654321','bleu','15'
+        csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref','color','size','desactif'
+'A123','article N°1','12.45','Kg','code1','stockable','cat 2','Avrel','POIYT','---','10','False'
+'B234','article N°2','23.56','L','code1','stockable','cat 3','','','noir','25','True'
+'C345','article N°3','45.74','','code2','non stockable','cat 1','Avrel','MLKJH','rouge','75','true'
+'D456','article N°4','56.89','m','code1','stockable & non vendable','','Maximum','987654','blanc','1','False'
+'A123','article N°1','13.57','Kg','code1','stockable','cat 3','','','bleu','10','False'
+'A123','article N°1','16.95','Kg','code1','stockable','','Maximum','654321','bleu','15','False'
 """
 
         self.factory.xfer = ArticleImport()
         self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
-                                                          "fld_unit": "unité", "fld_isdisabled": "", "fld_accountposting": "compte",
+                                                          "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
                                                           "fld_vat": "", "fld_stockable": "stock?",
                                                           "fld_custom_1": "color", "fld_custom_2": "size", }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
@@ -676,7 +676,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@1/designation', "article N°2")
         self.assert_json_equal('', 'article/@1/price', 23.56)
         self.assert_json_equal('', 'article/@1/unit', 'L')
-        self.assert_json_equal('', 'article/@1/isdisabled', False)
+        self.assert_json_equal('', 'article/@1/isdisabled', True)
         self.assert_json_equal('', 'article/@1/accountposting', "code1")
         self.assert_json_equal('', 'article/@1/stockable', 1)
 
@@ -684,7 +684,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@2/designation', "article N°3")
         self.assert_json_equal('', 'article/@2/price', 45.74)
         self.assert_json_equal('', 'article/@2/unit', '')
-        self.assert_json_equal('', 'article/@2/isdisabled', False)
+        self.assert_json_equal('', 'article/@2/isdisabled', True)
         self.assert_json_equal('', 'article/@2/accountposting', "code2")
         self.assert_json_equal('', 'article/@2/stockable', 0)
 
