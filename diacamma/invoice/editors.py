@@ -150,15 +150,25 @@ class ArticleEditor(LucteriosEditor):
             grid.add_header('qty', _('Quantity'))
             grid.add_header('amount', _('Amount'), format_with_devise(7))
             grid.add_header('mean', _('Mean price'), format_with_devise(7))
+            grid.add_header('available', _('available'))
             grid.set_location(1, 1)
             grid.description = _('quantities')
             format_txt = "N%d" % self.item.qtyDecimal
+            area_qty_list = [area_id for area_id, _area, _qty, _amount in self.item.get_stockage_values()]
+            for area_id, area, qty in self.item.get_booking_values():
+                if area_id not in area_qty_list:
+                    grid.set_value(area_id, 'area', area)
+                    grid.set_value(area_id, 'qty', None)
+                    grid.set_value(area_id, 'amount', None)
+                    grid.set_value(area_id, 'mean', None)
+                    grid.set_value(area_id, 'available', format_to_string(-1 * qty, format_txt, None))
             for area_id, area, qty, amount in self.item.get_stockage_values():
                 grid.set_value(area_id, 'area', get_value_formated(area, area_id))
                 grid.set_value(area_id, 'qty', get_value_formated(format_to_string(float(qty), format_txt, None), area_id))
                 grid.set_value(area_id, 'amount', get_value_formated(amount, area_id))
                 if abs(qty) > 0.001:
                     grid.set_value(area_id, 'mean', get_value_formated(amount / qty, area_id))
+                grid.set_value(area_id, 'available', get_value_formated(format_to_string(float(self.item.get_available_total_num(storagearea=area_id, default=0)), format_txt, None), area_id))
             xfer.add_component(grid)
 
             grid = XferCompGrid('moving')

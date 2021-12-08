@@ -542,6 +542,7 @@ class DetailDel(XferDelete):
 class ArticleFilter(object):
 
     STOCKABLE_WITH_STOCK = 3
+    STOCKABLE_WITH_STOCK_AVAILABLE = 4
 
     def items_filtering(self, items, categories_filter, show_stockable, storagearea=0):
         if len(categories_filter) > 0:
@@ -550,6 +551,10 @@ class ArticleFilter(object):
         if show_stockable == self.STOCKABLE_WITH_STOCK:
             new_items = QuerySet(model=Article)
             new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num(storagearea, default=0.0) > 0]
+            return new_items
+        elif show_stockable == self.STOCKABLE_WITH_STOCK_AVAILABLE:
+            new_items = QuerySet(model=Article)
+            new_items._result_cache = [item for item in items.distinct() if item.get_available_total_num(storagearea, default=0.0) > 0]
             return new_items
         else:
             return items.distinct()
@@ -561,10 +566,10 @@ class ArticleFilter(object):
         if show_filter == 0:
             new_filter &= Q(isdisabled=False)
         if show_stockable != -1:
-            if show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
-                new_filter &= Q(stockable=show_stockable)
-            else:
+            if (show_stockable == ArticleList.STOCKABLE_WITH_STOCK) or (show_stockable == ArticleList.STOCKABLE_WITH_STOCK_AVAILABLE):
                 new_filter &= ~Q(stockable=Article.STOCKABLE_NO)
+            else:
+                new_filter &= Q(stockable=show_stockable)
         if show_storagearea != 0:
             new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
         return new_filter
@@ -612,6 +617,7 @@ class ArticleList(XferListEditor, ArticleFilter):
         sel_stock = self.get_components('stockable')
         sel_stock.select_list.insert(0, (-1, '---'))
         sel_stock.select_list.append((self.STOCKABLE_WITH_STOCK, _('with stock')))
+        sel_stock.select_list.append((self.STOCKABLE_WITH_STOCK_AVAILABLE, _('with stock available')))
         sel_stock.set_value(self.show_stockable)
         sel_stock.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
 

@@ -220,6 +220,8 @@ class Article(LucteriosModel, CustomizeObject):
     accountposting = models.ForeignKey(AccountPosting, verbose_name=_('account posting code'), null=True, default=None, on_delete=models.PROTECT)
 
     stockage_total = LucteriosVirtualField(verbose_name=_('quantities'), compute_from='get_stockage_total')
+    booking_total = LucteriosVirtualField(verbose_name=_('booking'), compute_from='get_booking_total')
+    available_total = LucteriosVirtualField(verbose_name=_('available'), compute_from='get_available_total')
     price_txt = LucteriosVirtualField(verbose_name=_('price'), compute_from='price', format_string=lambda: format_with_devise(5))
 
     def __init__(self, *args, **kwargs):
@@ -256,6 +258,7 @@ class Article(LucteriosModel, CustomizeObject):
             fields.append('categories')
         if len(StorageArea.objects.all()) > 0:
             fields.append('stockage_total')
+            fields.append('available_total')
         return fields
 
     @classmethod
@@ -396,6 +399,25 @@ class Article(LucteriosModel, CustomizeObject):
             stock_list.append((0, _('Total'), total_qty, total_amount))
         return stock_list
 
+    def get_booking_values(self):
+        booking_list = []
+        detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type=Bill.BILLTYPE_QUOTATION)
+        if self.show_storagearea != 0:
+            detail_filter &= Q(storagearea=self.show_storagearea)
+        if self.stockable != self.STOCKABLE_NO:
+            booking = {}
+            for val in self.detail_set.filter(detail_filter).values('storagearea').annotate(data_sum=Sum('quantity')):
+                if abs(val['data_sum']) > 0.001:
+                    if not val['storagearea'] in booking.keys():
+                        booking[val['storagearea']] = [str(StorageArea.objects.get(id=val['storagearea'])), 0.0]
+                    booking[val['storagearea']][1] += float(val['data_sum'])
+            total_qty = 0.0
+            for key in sorted(list(booking.keys())):
+                booking_list.append((int(key), booking[key][0], booking[key][1]))
+                total_qty += booking[key][1]
+            booking_list.append((0, _('Total'), total_qty))
+        return booking_list
+
     def has_sufficiently(self, storagearea_id, quantity):
         if self.stockable != self.STOCKABLE_NO:
             for val in self.get_stockage_values():
@@ -409,6 +431,19 @@ class Article(LucteriosModel, CustomizeObject):
         for val in self.get_stockage_values():
             if val[0] == storagearea:
                 return float(val[2])
+        return default
+
+    def get_booking_total_num(self, storagearea=0, default=None):
+        for val in self.get_booking_values():
+            if val[0] == storagearea:
+                return float(val[2])
+        return default
+
+    def get_available_total_num(self, storagearea=0, default=None):
+        if self.stockable != self.STOCKABLE_NO:
+            stockage = self.get_stockage_total_num(storagearea=storagearea, default=0)
+            booking = self.get_booking_total_num(storagearea=storagearea, default=0)
+            return stockage - booking
         return default
 
     def get_stockage_mean_price(self, storagearea=0):
@@ -427,6 +462,20 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_stockage_total(self):
         value = self.get_stockage_total_num()
+        if value is not None:
+            format_txt = "N%d" % int(self.qtyDecimal)
+            return format_to_string(value, format_txt, None)
+        return None
+
+    def get_booking_total(self):
+        value = self.get_booking_total_num()
+        if value is not None:
+            format_txt = "N%d" % int(self.qtyDecimal)
+            return format_to_string(value, format_txt, None)
+        return None
+
+    def get_available_total(self):
+        value = self.get_available_total_num()
         if value is not None:
             format_txt = "N%d" % int(self.qtyDecimal)
             return format_to_string(value, format_txt, None)
