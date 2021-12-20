@@ -105,12 +105,14 @@ class SupportingEditor(LucteriosEditor):
                            modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'third': self.item.third.id})
             xfer.add_component(btn)
 
-    def show(self, xfer):
+    def show(self, xfer, readonly=False):
         xfer.params['supporting'] = self.item.id
         xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, self.item.get_payoff_fields())
         payoff = xfer.get_components("payoff")
         if not self.item.is_revenu:
             payoff.delete_header('payer')
+        if readonly:
+            payoff.actions = []
 
 
 class BankAccountEditor(LucteriosEditor):

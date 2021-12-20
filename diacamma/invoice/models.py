@@ -41,7 +41,7 @@ from django.utils.dateformat import DateFormat
 from django.utils import timezone
 from django_fsm import FSMIntegerField, transition
 
-from lucterios.framework.models import LucteriosModel, correct_db_field
+from lucterios.framework.models import LucteriosModel, correct_db_field, LucteriosLogEntry
 from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField,\
     get_obj_contains
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
@@ -49,8 +49,7 @@ from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
 from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, get_format_value
 from lucterios.framework.auditlog import auditlog
-from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup,\
-    Preference
+from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser
 from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact
 
@@ -737,7 +736,7 @@ class Bill(Supporting):
         return list(self.get_vta_detail_list().values())
 
     def payoff_is_revenu(self):
-        return (self.bill_type != 0) and (self.bill_type != 2)
+        return (self.bill_type != self.BILLTYPE_QUOTATION) and (self.bill_type != self.BILLTYPE_ASSET)
 
     def entry_links(self):
         if self.entry_id is not None:
@@ -923,7 +922,7 @@ class Bill(Supporting):
         Signal.call_signal("change_bill", 'valid', self, None)
 
     def generate_pdfreport(self):
-        if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and (self.bill_type != self.BILLTYPE_QUOTATION):
+        if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and not (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
             return Supporting.generate_pdfreport(self)
         return None
 
@@ -967,10 +966,29 @@ class Bill(Supporting):
         return None
 
     def convert_to_bill(self):
-        if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
+        if (self.status == Bill.STATUS_VALID) and (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
             new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_BILL, date=timezone.now(), third=self.third, status=Bill.STATUS_BUILDING, comment=self.comment, parentbill=self)
+            for detail in self.detail_set.all():
+                detail.id = None
+                detail.bill = new_bill
+                detail.save(check_autoreduce=False)
+            for payoff in self.payoff_set.all():
+                payoff.supporting = new_bill
+                payoff.save(do_generate=False, do_linking=False, do_internal=False)
+            Signal.call_signal("change_bill", 'convert', self, new_bill)
+            return new_bill
+        else:
+            return None
+
+    def convert_to_order(self):
+        if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
+            self.status = Bill.STATUS_ARCHIVE
+            self.save()
+            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_ORDER, date=timezone.now(), third=self.third, status=Bill.STATUS_VALID, comment=self.comment, parentbill=self)
+            new_bill.affect_num()
+            new_bill.save()
             for detail in self.detail_set.all():
                 detail.id = None
                 detail.bill = new_bill
@@ -1160,6 +1178,12 @@ class Bill(Supporting):
         if payoff.entry.year.status == FiscalYear.STATUS_FINISHED:
             raise LucteriosException(IMPORTANT, _('Payoff not deletable !'))
         return
+
+    def user_creator(self):
+        create_log = LucteriosLogEntry.objects.filter(Q(modelname=self.get_long_name()) & Q(object_pk=self.id) & Q(action=LucteriosLogEntry.Action.CREATE)).last()
+        if create_log is not None:
+            return LucteriosUser.objects.filter(username=create_log.username).first()
+        return None
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.bill_type = int(self.bill_type)
@@ -2004,18 +2028,20 @@ def convert_asset_and_revenue():
 
 @Signal.decorate('checkparam')
 def invoice_checkparam():
-    Parameter.check_and_create(name='invoice-default-sell-account', typeparam=0, title=_("invoice-default-sell-account"),
+    Parameter.check_and_create(name='invoice-default-sell-account', typeparam=Parameter.TYPE_STRING, title=_("invoice-default-sell-account"),
                                args="{'Multi':False}", value='', meta='("accounting","ChartsAccount", Q(type_of_account=3) & Q(year__is_actif=True), "code", True)')
-    Parameter.check_and_create(name='invoice-reduce-account', typeparam=0, title=_("invoice-reduce-account"),
+    Parameter.check_and_create(name='invoice-reduce-account', typeparam=Parameter.TYPE_STRING, title=_("invoice-reduce-account"),
                                args="{'Multi':False}", value='', meta='("accounting","ChartsAccount", Q(type_of_account=3) & Q(year__is_actif=True), "code", True)')
-    Parameter.check_and_create(name='invoice-vat-mode', typeparam=4, title=_("invoice-vat-mode"),
+    Parameter.check_and_create(name='invoice-vat-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-vat-mode"),
                                args="{'Enum':3}", value='0', param_titles=(_("invoice-vat-mode.0"), _("invoice-vat-mode.1"), _("invoice-vat-mode.2")))
-    Parameter.check_and_create(name="invoice-account-third", typeparam=0, title=_("invoice-account-third"),
+    Parameter.check_and_create(name="invoice-account-third", typeparam=Parameter.TYPE_STRING, title=_("invoice-account-third"),
                                args="{'Multi':False}", value='',
                                meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_customer_mask()) & django.db.models.Q(year__is_actif=True)", "code", True)')
-    Parameter.check_and_create(name='invoice-article-with-picture', typeparam=3, title=_("invoice-article-with-picture"), args="{}", value='False')
-    Parameter.check_and_create(name='invoice-reduce-with-ratio', typeparam=3, title=_("invoice-reduce-with-ratio"), args="{}", value='True')
-    Parameter.check_and_create(name='invoice-reduce-allow-article-empty', typeparam=3, title=_("invoice-reduce-allow-article-empty"), args="{}", value='True')
+    Parameter.check_and_create(name='invoice-article-with-picture', typeparam=Parameter.TYPE_BOOL, title=_("invoice-article-with-picture"), args="{}", value='False')
+    Parameter.check_and_create(name='invoice-reduce-with-ratio', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-with-ratio"), args="{}", value='True')
+    Parameter.check_and_create(name='invoice-reduce-allow-article-empty', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-allow-article-empty"), args="{}", value='True')
+    Parameter.check_and_create(name='invoice-order-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-order-mode"),
+                               args="{'Enum':2}", value='0', param_titles=(_("invoice-order-mode.0"), _("invoice-order-mode.1")))
 
     LucteriosGroup.redefine_generic(_("# invoice (administrator)"), Vat.get_permission(True, True, True), BankAccount.get_permission(True, True, True), BankTransaction.get_permission(True, True, True),
                                     Article.get_permission(True, True, True), Bill.get_permission(True, True, True),

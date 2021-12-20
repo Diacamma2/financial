@@ -194,6 +194,7 @@ class BillEditor(SupportingEditor):
         comp_comment.with_hypertext = True
         comp_comment.set_size(100, 375)
         com_type = xfer.get_components('bill_type')
+        com_type.remove_select(Bill.BILLTYPE_ORDER)
         com_type.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def show(self, xfer):
@@ -223,6 +224,9 @@ class BillEditor(SupportingEditor):
             SupportingEditor.show_third(self, xfer, 'invoice.add_bill')
             xfer.get_components('date').colspan += 1
             xfer.get_components('detail').colspan += 1
+            if xfer.item.payoff_set.count() > 0:
+                SupportingEditor.show(self, xfer, True)
+                xfer.get_components('payoff').colspan += 1
         else:
             SupportingEditor.show_third_ex(self, xfer)
             details.actions = []

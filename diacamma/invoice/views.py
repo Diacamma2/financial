@@ -101,6 +101,8 @@ def _add_bill_filter(xfer, row, with_third=False):
     edt.set_value(type_filter)
     edt.set_location(0, row + 1)
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+    if Params.getvalue('invoice-order-mode') == 0:
+        edt.remove_select(Bill.BILLTYPE_ORDER)
     xfer.add_component(edt)
 
     if status_filter == Bill.STATUS_BUILDING_VALID:
@@ -375,19 +377,150 @@ class BillMultiPay(XferContainerAcknowledge):
             self.redirect_action(PayoffAddModify.get_action("", ""), params={"supportings": ";".join([str(bill_id) for bill_id in bill_ids])})
 
 
-@ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
+@ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)))
 @MenuManage.describ('invoice.add_bill')
-class BillFromQuotation(XferContainerAcknowledge):
+class BillToBill(XferContainerAcknowledge):
     caption = _("Convert to bill")
     icon = "bill.png"
     model = Bill
     field_id = 'bill'
 
     def fillresponse(self):
-        if (self.item.bill_type == Bill.BILLTYPE_QUOTATION) and (self.item.status == Bill.STATUS_VALID) and self.confirme(_("Do you want convert '%s' to bill?") % self.item):
+        if (self.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)) and (self.item.status == Bill.STATUS_VALID) and self.confirme(_("Do you want convert '%s' to bill?") % self.item):
             new_bill = self.item.convert_to_bill()
             if new_bill is not None:
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
+
+
+@ActionsManage.affect_show(_("=> Order"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
+@MenuManage.describ('invoice.add_bill')
+class BillToOrder(XferContainerAcknowledge):
+    caption = _("Convert to order")
+    icon = "bill.png"
+    model = Bill
+    field_id = 'bill'
+
+    def fill_dlg_payoff(self, withpayoff, sendemail):
+        dlg = self.create_custom(Payoff)
+        dlg.caption = _("Confirmation")
+        icon = XferCompImage('img')
+        icon.set_location(0, 0, 1, 6)
+        icon.set_value(self.icon_path())
+        dlg.add_component(icon)
+        lbl = XferCompLabelForm('lb_title')
+        lbl.set_value_as_infocenter(_("Do you want convert this quotation to order ?"))
+        lbl.set_location(1, 1, 2)
+        dlg.add_component(lbl)
+        if abs(self.item.get_total_rest_topay()) > 0.0001:
+            check_payoff = XferCompCheck('withpayoff')
+            check_payoff.set_value(withpayoff)
+            check_payoff.set_location(1, 2)
+            check_payoff.java_script = """
+    var type=current.getValue();
+    parent.get('date_payoff').setEnabled(type);
+    parent.get('amount').setEnabled(type);
+    if (parent.get('payer')) {
+        parent.get('payer').setEnabled(type);
+    }
+    parent.get('mode').setEnabled(type);
+    if (parent.get('reference')) {
+        parent.get('reference').setEnabled(type);
+    }
+    if (parent.get('bank_account')) {
+        parent.get('bank_account').setEnabled(type);
+    }
+    """
+            check_payoff.description = _("Payment of deposit or cash")
+            dlg.add_component(check_payoff)
+            dlg.item.supporting = self.item
+            dlg.item.supporting.is_revenu = True
+            dlg.fill_from_model(2, 3, False)
+            if dlg.get_components("bank_fee") is not None:
+                check_payoff.java_script += "parent.get('bank_fee').setEnabled(type);\n"
+            dlg.get_components("date").name = "date_payoff"
+            dlg.get_components("mode").set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        user = self.item.user_creator()
+        if (user is not None) and (user != self.request.user) and can_send_email(dlg) and self.item.can_send_email():
+            row = dlg.get_max_row()
+            check_payoff = XferCompCheck('sendemail')
+            check_payoff.set_value(sendemail)
+            check_payoff.set_location(1, row + 1)
+            check_payoff.java_script = """
+    var type=current.getValue();
+    parent.get('subject').setEnabled(type);
+    parent.get('message').setEnabled(type);
+    parent.get('model').setEnabled(type);
+    """
+            check_payoff.description = _("Send email to quotation creator")
+            dlg.add_component(check_payoff)
+            lbl = XferCompLabelForm('user')
+            lbl.set_value(user.get_full_name())
+            lbl.set_location(2, row + 2)
+            lbl.description = _('creator')
+            dlg.add_component(lbl)
+            edt = XferCompEdit('subject')
+            edt.set_value(str(self.item))
+            edt.set_location(2, row + 3)
+            edt.description = _('subject')
+            dlg.add_component(edt)
+            memo = XferCompMemo('message')
+            memo.description = _('message')
+            email_message = _("{[p]}Hello #name{[/p]}{[p]}The quotation '#doc' has been accepted.{[/p]}")
+            email_message = email_message.replace('#name', user.get_full_name())
+            email_message = email_message.replace('#doc', self.item.get_docname())
+            memo.set_value(email_message)
+            memo.with_hypertext = True
+            memo.set_size(130, 450)
+            memo.set_location(2, row + 4)
+            dlg.add_component(memo)
+            selectors = PrintModel.get_print_selector(2, self.item.__class__)[0]
+            sel = XferCompSelect('model')
+            sel.set_select(selectors[2])
+            sel.set_location(2, row + 6)
+            sel.description = selectors[1]
+            dlg.add_component(sel)
+        else:
+            dlg.params['sendemail'] = False
+        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
+        dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+
+    def payoff_order(self, new_order):
+        new_payoff = Payoff()
+        new_payoff.supporting = new_order
+        new_payoff.amount = self.getparam('amount', 0.0)
+        new_payoff.mode = self.getparam('mode', Payoff.MODE_CASH)
+        new_payoff.payer = self.getparam('payer')
+        new_payoff.reference = self.getparam('reference')
+        if self.getparam('bank_account', 0) != 0:
+            new_payoff.bank_account_id = self.getparam('bank_account', 0)
+        new_payoff.date = self.getparam('date_payoff')
+        new_payoff.bank_fee = self.getparam('bank_fee', 0.0)
+        new_payoff.editor.before_save(self)
+        new_payoff.save()
+
+    def send_order(self, new_order):
+        from django.utils.module_loading import import_module
+        user = self.item.user_creator()
+        subject = self.getparam('subject', '')
+        message = self.getparam('message', '')
+        model = self.getparam('model', 0)
+        fct_mailing_mod = import_module('lucterios.mailing.email_functions')
+        fct_mailing_mod.send_email(user.email, subject, message, [new_order.get_pdfreport(model)], cclist=[], withcopy=True)
+
+    def fillresponse(self):
+        if (self.item.bill_type == Bill.BILLTYPE_QUOTATION) and (self.item.status == Bill.STATUS_VALID):
+            withpayoff = self.getparam('withpayoff', True)
+            sendemail = self.getparam('sendemail', True)
+            if self.getparam("CONFIRME") is None:
+                self.fill_dlg_payoff(withpayoff, sendemail)
+            else:
+                new_order = self.item.convert_to_order()
+                if new_order is not None:
+                    if withpayoff:
+                        self.payoff_order(new_order)
+                    if sendemail:
+                        self.send_order(new_order)
+                    self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_order.id})
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
@@ -430,6 +563,8 @@ class BillBatch(XferContainerAcknowledge):
         dlg.add_component(sel)
         dlg.fill_from_model(1, 2, False, desc_fields=[("bill_type", "date"), "comment"])
         dlg.remove_component('third')
+        com_type = dlg.get_components('bill_type')
+        com_type.remove_select(Bill.BILLTYPE_ORDER)
         lbl = XferCompLabelForm('sep_bill')
         lbl.set_value("{[hr/]}{[hr/]}")
         lbl.set_location(1, 8, 2)

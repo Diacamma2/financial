@@ -47,7 +47,7 @@ from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport
 from diacamma.invoice.models import Bill, AccountPosting
 from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_categories, default_customize
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
-from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillFromQuotation, \
+from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillToBill, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch,\
     BillCheckAutoreduce, BillPayableEmail, BillBatch
 
@@ -72,13 +72,13 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billAddModify')
         self.assert_count_equal('', 5)
-        self.assert_select_equal('bill_type', 5)  # nb=4
+        self.assert_select_equal('bill_type', 4)
 
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify', {'bill_type': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billAddModify')
         self.assert_count_equal('', 5)
-        self.assert_select_equal('bill_type', 5)  # nb=4
+        self.assert_select_equal('bill_type', 4)
 
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify',
@@ -786,10 +786,10 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('entryline', 0)
 
-        self.factory.xfer = BillFromQuotation()
-        self.calljson('/diacamma.invoice/billFromQuotation',
+        self.factory.xfer = BillToBill()
+        self.calljson('/diacamma.invoice/billToBill',
                       {'CONFIRME': 'YES', 'bill': 1}, False)
-        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billFromQuotation')
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToBill')
         self.assertEqual(self.response_json['action']['id'], "diacamma.invoice/billShow")
         self.assertEqual(len(self.response_json['action']['params']), 1)
         self.assertEqual(self.response_json['action']['params']['bill'], 2)
@@ -2607,9 +2607,9 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', '#sum_summary/formatstr', "{[b]}Total brut{[/b]} : {0} - {[b]}total des réductions{[/b]} : {1} = {[b]}total à règler{[/b]} : {2}")
         self.assert_json_equal('', 'sum_summary', [510.0, 52.5, 457.5])
 
-        self.factory.xfer = BillFromQuotation()
-        self.calljson('/diacamma.invoice/billFromQuotation', {'CONFIRME': 'YES', 'bill': 1}, False)
-        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billFromQuotation')
+        self.factory.xfer = BillToBill()
+        self.calljson('/diacamma.invoice/billToBill', {'CONFIRME': 'YES', 'bill': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToBill')
 
         self.factory.xfer = ThirdShow()
         self.calljson('/diacamma.accounting/thirdShow', {"third": 6, 'status_filter': -2, 'GRID_ORDER%bill': 'id'}, False)
