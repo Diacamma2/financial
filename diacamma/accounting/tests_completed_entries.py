@@ -43,7 +43,7 @@ from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr,
 from diacamma.accounting.views_other import CostAccountingList, CostAccountingClose, CostAccountingAddModify
 from diacamma.accounting.views_reports import FiscalYearBalanceSheet, FiscalYearIncomeStatement, FiscalYearLedger, FiscalYearTrialBalance,\
     CostAccountingTrialBalance, CostAccountingLedger, CostAccountingIncomeStatement,\
-    FiscalYearReportPrint, FiscalYearLedgerShow
+    FiscalYearReportPrint, FiscalYearLedgerShow, CostAccountingReportPrint
 from diacamma.accounting.views_admin import FiscalYearExport
 from diacamma.accounting.models import FiscalYear, Third
 from diacamma.accounting.tools_reports import get_totalaccount_for_query, get_totalbudget_for_query
@@ -405,7 +405,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
         self.assert_count_equal('costaccounting', 2)
 
-    def test_costaccouting_budget(self):
+    def test_costaccounting_budget(self):
         self.factory.xfer = CostAccountingAddModify()
         self.calljson('/diacamma.accounting/costAccountingAddModify', {"SAVE": "YES", 'name': 'aaa', 'description': 'aaa', 'year': '1'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'costAccountingAddModify')  # id = 3
@@ -847,6 +847,11 @@ class CompletedEntryTest(LucteriosTest):
         self.assertFalse('__tab_1' in self.json_data.keys(), self.json_data.keys())
         self.assert_grid_equal('report_2', {"left": "Charges", "left_n": "Valeur", "space": "", "right": "Produits", "right_n": "Valeur"}, 6)
 
+        self.factory.xfer = CostAccountingReportPrint()
+        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingIncomeStatement', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date":"NULL","end_date":"NULL"}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
+        self.save_pdf()
+
     def test_costaccounting_importbudget(self):
         FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
         self.factory.xfer = CostAccountingAddModify()
@@ -900,6 +905,11 @@ class CompletedEntryTest(LucteriosTest):
         self.assertFalse('__tab_2' in self.json_data.keys(), self.json_data.keys())
         self.assert_count_equal('report_2', 5)
 
+        self.factory.xfer = CostAccountingReportPrint()
+        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingLedger', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date":"NULL","end_date":"NULL"}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
+        self.save_pdf()
+
     def test_costaccounting_trialbalance(self):
         self.factory.xfer = CostAccountingTrialBalance()
         self.calljson('/diacamma.accounting/costAccountingTrialBalance', {'costaccounting': '1;2'}, False)
@@ -917,6 +927,11 @@ class CompletedEntryTest(LucteriosTest):
         self.assertTrue('__tab_1' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_2' in self.json_data.keys(), self.json_data.keys())
         self.assert_count_equal('report_2', 3)
+
+        self.factory.xfer = CostAccountingReportPrint()
+        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingTrialBalance', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date":"NULL","end_date":"NULL"}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
+        self.save_pdf()
 
     def test_fiscalyear_balancesheet(self):
         self.factory.xfer = FiscalYearBalanceSheet()
