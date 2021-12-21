@@ -400,7 +400,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_booking_values(self):
         booking_list = []
-        detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type=Bill.BILLTYPE_QUOTATION)
+        detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER))
         if self.show_storagearea != 0:
             detail_filter &= Q(storagearea=self.show_storagearea)
         if self.stockable != self.STOCKABLE_NO:
@@ -914,7 +914,7 @@ class Bill(Supporting):
     def valid(self):
         self.affect_num()
         self.status = self.STATUS_VALID
-        if self.bill_type != self.BILLTYPE_QUOTATION:
+        if not (self.bill_type in (self.BILLTYPE_QUOTATION, self.BILLTYPE_ORDER)):
             self.generate_entry()
             self.generate_storage()
         self.generate_pdfreport()
@@ -1179,10 +1179,14 @@ class Bill(Supporting):
             raise LucteriosException(IMPORTANT, _('Payoff not deletable !'))
         return
 
-    def user_creator(self):
-        create_log = LucteriosLogEntry.objects.filter(Q(modelname=self.get_long_name()) & Q(object_pk=self.id) & Q(action=LucteriosLogEntry.Action.CREATE)).last()
-        if create_log is not None:
-            return LucteriosUser.objects.filter(username=create_log.username).first()
+    def user_quotation_creator(self):
+        invoice = self
+        while (invoice is not None) and (invoice.bill_type != Bill.BILLTYPE_QUOTATION):
+            invoice = invoice.parentbill
+        if invoice is not None:
+            create_log = LucteriosLogEntry.objects.filter(Q(modelname=self.get_long_name()) & Q(object_pk=invoice.id) & Q(action=LucteriosLogEntry.Action.CREATE)).last()
+            if create_log is not None:
+                return LucteriosUser.objects.filter(username=create_log.username).first()
         return None
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):

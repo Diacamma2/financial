@@ -848,7 +848,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_grid_equal('report_2', {"left": "Charges", "left_n": "Valeur", "space": "", "right": "Produits", "right_n": "Valeur"}, 6)
 
         self.factory.xfer = CostAccountingReportPrint()
-        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingIncomeStatement', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date":"NULL","end_date":"NULL"}, False)
+        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingIncomeStatement', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date": "NULL", "end_date": "NULL"}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
         self.save_pdf()
 
@@ -906,7 +906,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_count_equal('report_2', 5)
 
         self.factory.xfer = CostAccountingReportPrint()
-        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingLedger', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date":"NULL","end_date":"NULL"}, False)
+        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingLedger', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date": "NULL", "end_date": "NULL"}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
         self.save_pdf()
 
@@ -929,7 +929,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_count_equal('report_2', 3)
 
         self.factory.xfer = CostAccountingReportPrint()
-        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingTrialBalance', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date":"NULL","end_date":"NULL"}, False)
+        self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingTrialBalance', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date": "NULL", "end_date": "NULL"}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
         self.save_pdf()
 

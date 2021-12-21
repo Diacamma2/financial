@@ -211,12 +211,72 @@ class BillShow(XferShowEditor):
                         close=CLOSE_NO, params={'item_name': self.field_id}, pos_act=0)
 
 
-class BillTransitionAbstract(XferTransition):
+class BillForUserQuotation(object):
+
+    def ask_user_quotation_email(self, dlg, sendemail_quotation):
+        user = self.item.user_quotation_creator()
+        if (len(StorageArea.objects.all()) > 0) and (user is not None) and (user != self.request.user) and can_send_email(dlg) and self.item.can_send_email():
+            row = dlg.get_max_row()
+            check_payoff = XferCompCheck('sendemail_quotation')
+            check_payoff.set_value(sendemail_quotation)
+            check_payoff.set_location(1, row + 1)
+            check_payoff.java_script = """
+        var type=current.getValue();
+        parent.get('subject_quotation').setEnabled(type);
+        parent.get('message_quotation').setEnabled(type);
+        parent.get('model_quotation').setEnabled(type);
+        """
+            check_payoff.description = _("Send email to quotation creator")
+            dlg.add_component(check_payoff)
+            lbl = XferCompLabelForm('user')
+            lbl.set_value(user.get_full_name())
+            lbl.set_location(2, row + 2)
+            lbl.description = _('creator')
+            dlg.add_component(lbl)
+            edt = XferCompEdit('subject_quotation')
+            edt.set_value(str(self.item))
+            edt.set_location(2, row + 3)
+            edt.description = _('subject')
+            dlg.add_component(edt)
+            memo = XferCompMemo('message_quotation')
+            memo.description = _('message')
+            email_message = _("{[p]}Hello #name{[/p]}{[p]}The quotation '#doc' has been accepted.{[/p]}")
+            email_message = email_message.replace('#name', user.get_full_name())
+            email_message = email_message.replace('#doc', self.item.get_docname())
+            memo.set_value(email_message)
+            memo.with_hypertext = True
+            memo.set_size(130, 450)
+            memo.set_location(2, row + 4)
+            dlg.add_component(memo)
+            selectors = PrintModel.get_print_selector(2, self.item.__class__)[0]
+            sel = XferCompSelect('model_quotation')
+            sel.set_select(selectors[2])
+            sel.set_location(2, row + 6)
+            sel.description = selectors[1]
+            dlg.add_component(sel)
+        else:
+            dlg.params['sendemail_quotation'] = False
+
+    def send_email_to_user_quotation(self, new_bill):
+        from django.utils.module_loading import import_module
+        user = self.item.user_quotation_creator()
+        if user:
+            subject = self.getparam('subject_quotation', '')
+            message = self.getparam('message_quotation', '')
+            model = self.getparam('model_quotation', 0)
+            html_message = "<html>"
+            html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
+            html_message += "</html>"
+            fct_mailing_mod = import_module('lucterios.mailing.email_functions')
+            fct_mailing_mod.send_email(user.email, subject, html_message, [new_bill.get_pdfreport(model)], cclist=[], withcopy=True)
+
+
+class BillTransitionAbstract(XferTransition, BillForUserQuotation):
     icon = "bill.png"
     model = Bill
     field_id = 'bill'
 
-    def fill_dlg_payoff(self, withpayoff, sendemail):
+    def fill_dlg_payoff(self, withpayoff, sendemail, sendemail_quotation):
         dlg = self.create_custom(Payoff)
         dlg.caption = _("Confirmation")
         icon = XferCompImage('img')
@@ -307,12 +367,15 @@ parent.get('print_sep').setEnabled(!is_persitent);
             sel.set_location(2, row + 6)
             sel.description = selectors[1]
             dlg.add_component(sel)
+        if self.item.bill_type == Bill.BILLTYPE_BILL:
+            self.ask_user_quotation_email(dlg, sendemail_quotation)
         dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
         dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
 
     def fill_confirm(self, transition, trans):
         withpayoff = self.getparam('withpayoff', False)
         sendemail = self.getparam('sendemail', False)
+        sendemail_quotation = self.getparam('sendemail_quotation', False)
         if (transition != 'valid') or (len(self.items) > 1):
             if transition == 'undo':
                 if self.confirme(_("Do you want to create an compensation (avoid or invoice) from this bill ?")):
@@ -322,7 +385,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
             else:
                 XferTransition.fill_confirm(self, transition, trans)
         elif self.getparam("CONFIRME") is None:
-            self.fill_dlg_payoff(withpayoff, sendemail)
+            self.fill_dlg_payoff(withpayoff, sendemail, sendemail_quotation)
         else:
             if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and withpayoff:
                 self.item.affect_num()
@@ -340,6 +403,8 @@ parent.get('print_sep').setEnabled(!is_persitent);
                 new_payoff.editor.before_save(self)
                 new_payoff.save()
             XferTransition.fill_confirm(self, transition, trans)
+            if sendemail_quotation:
+                self.send_email_to_user_quotation(self.item)
             if sendemail:
                 self.redirect_action(PayableEmail.get_action("", ""), params={"item_name": self.field_id, "modelname": "", "OK": "YES"})
 
@@ -394,13 +459,13 @@ class BillToBill(XferContainerAcknowledge):
 
 @ActionsManage.affect_show(_("=> Order"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
 @MenuManage.describ('invoice.add_bill')
-class BillToOrder(XferContainerAcknowledge):
+class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
     caption = _("Convert to order")
     icon = "bill.png"
     model = Bill
     field_id = 'bill'
 
-    def fill_dlg_payoff(self, withpayoff, sendemail):
+    def fill_dlg_payoff(self, withpayoff, sendemail_quotation):
         dlg = self.create_custom(Payoff)
         dlg.caption = _("Confirmation")
         icon = XferCompImage('img')
@@ -439,48 +504,7 @@ class BillToOrder(XferContainerAcknowledge):
                 check_payoff.java_script += "parent.get('bank_fee').setEnabled(type);\n"
             dlg.get_components("date").name = "date_payoff"
             dlg.get_components("mode").set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-        user = self.item.user_creator()
-        if (user is not None) and (user != self.request.user) and can_send_email(dlg) and self.item.can_send_email():
-            row = dlg.get_max_row()
-            check_payoff = XferCompCheck('sendemail')
-            check_payoff.set_value(sendemail)
-            check_payoff.set_location(1, row + 1)
-            check_payoff.java_script = """
-    var type=current.getValue();
-    parent.get('subject').setEnabled(type);
-    parent.get('message').setEnabled(type);
-    parent.get('model').setEnabled(type);
-    """
-            check_payoff.description = _("Send email to quotation creator")
-            dlg.add_component(check_payoff)
-            lbl = XferCompLabelForm('user')
-            lbl.set_value(user.get_full_name())
-            lbl.set_location(2, row + 2)
-            lbl.description = _('creator')
-            dlg.add_component(lbl)
-            edt = XferCompEdit('subject')
-            edt.set_value(str(self.item))
-            edt.set_location(2, row + 3)
-            edt.description = _('subject')
-            dlg.add_component(edt)
-            memo = XferCompMemo('message')
-            memo.description = _('message')
-            email_message = _("{[p]}Hello #name{[/p]}{[p]}The quotation '#doc' has been accepted.{[/p]}")
-            email_message = email_message.replace('#name', user.get_full_name())
-            email_message = email_message.replace('#doc', self.item.get_docname())
-            memo.set_value(email_message)
-            memo.with_hypertext = True
-            memo.set_size(130, 450)
-            memo.set_location(2, row + 4)
-            dlg.add_component(memo)
-            selectors = PrintModel.get_print_selector(2, self.item.__class__)[0]
-            sel = XferCompSelect('model')
-            sel.set_select(selectors[2])
-            sel.set_location(2, row + 6)
-            sel.description = selectors[1]
-            dlg.add_component(sel)
-        else:
-            dlg.params['sendemail'] = False
+        self.ask_user_quotation_email(dlg, sendemail_quotation)
         dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
         dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
 
@@ -498,28 +522,19 @@ class BillToOrder(XferContainerAcknowledge):
         new_payoff.editor.before_save(self)
         new_payoff.save()
 
-    def send_order(self, new_order):
-        from django.utils.module_loading import import_module
-        user = self.item.user_creator()
-        subject = self.getparam('subject', '')
-        message = self.getparam('message', '')
-        model = self.getparam('model', 0)
-        fct_mailing_mod = import_module('lucterios.mailing.email_functions')
-        fct_mailing_mod.send_email(user.email, subject, message, [new_order.get_pdfreport(model)], cclist=[], withcopy=True)
-
     def fillresponse(self):
         if (self.item.bill_type == Bill.BILLTYPE_QUOTATION) and (self.item.status == Bill.STATUS_VALID):
             withpayoff = self.getparam('withpayoff', True)
-            sendemail = self.getparam('sendemail', True)
+            sendemail_quotation = self.getparam('sendemail_quotation', True)
             if self.getparam("CONFIRME") is None:
-                self.fill_dlg_payoff(withpayoff, sendemail)
+                self.fill_dlg_payoff(withpayoff, sendemail_quotation)
             else:
                 new_order = self.item.convert_to_order()
                 if new_order is not None:
                     if withpayoff:
                         self.payoff_order(new_order)
-                    if sendemail:
-                        self.send_order(new_order)
+                    if sendemail_quotation:
+                        self.send_email_to_user_quotation(new_order)
                     self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_order.id})
 
 
