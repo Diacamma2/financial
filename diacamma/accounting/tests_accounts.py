@@ -22,6 +22,7 @@ from shutil import rmtree
 from importlib import import_module
 from base64 import b64decode
 
+from django.db.models import Q
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -39,6 +40,7 @@ from diacamma.accounting.views_budget import BudgetList, BudgetAddModify, Budget
 from diacamma.payoff.test_tools import PaymentTest
 from diacamma.accounting.views_reports import FiscalYearIncomeStatement,\
     FiscalYearBalanceSheet
+from diacamma.accounting.tools_reports import get_budget_total
 
 
 class ChartsAccountTest(LucteriosTest):
@@ -810,6 +812,26 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.assert_observer('core.custom', 'lucterios.documents', 'documentSearch')
         self.assert_count_equal('document', 4)
 
+        self.check_account(1, '601', 0)
+        self.check_account(1, '602', 63.94)
+        self.check_account(1, '604', 0)
+        self.check_account(1, '607', 0)
+        self.check_account(1, '627', 12.34)
+        self.check_account(1, '701', 0)
+        self.check_account(1, '706', 0)
+        self.check_account(1, '707', 196.61)
+        self.check_account(1, '740', 135.45)
+
+        self.assertAlmostEqual(8.19, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '601'), delta=0.0001)
+        self.assertAlmostEqual(7.35, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '602'), delta=0.0001)
+        self.assertAlmostEqual(6.24, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '604'), delta=0.0001)
+        self.assertAlmostEqual(0, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '607'), delta=0.0001)
+        self.assertAlmostEqual(0, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '627'), delta=0.0001)
+        self.assertAlmostEqual(67.89, get_budget_total(Q(code__regex=r'^7.*$') & Q(year_id=1), '701'), delta=0.0001)
+        self.assertAlmostEqual(0, get_budget_total(Q(code__regex=r'^7.*$') & Q(year_id=1), '706'), delta=0.0001)
+        self.assertAlmostEqual(123.45, get_budget_total(Q(code__regex=r'^7.*$') & Q(year_id=1), '707'), delta=0.0001)
+        self.assertAlmostEqual(0, get_budget_total(Q(code__regex=r'^7.*$') & Q(year_id=1), '740'), delta=0.0001)
+
         self.factory.xfer = FiscalYearIncomeStatement()
         self.calljson('/diacamma.accounting/fiscalYearIncomeStatement', {'year': '1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearIncomeStatement')
@@ -823,7 +845,7 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.assert_json_equal('', 'report_1/@0/right_b', 67.89)
         self.assert_json_equal('', 'report_1/@1/left', "[602] 602")
         self.assert_json_equal('', 'report_1/@1/left_n', 63.94)
-        self.assert_json_equal('', 'report_1/@1/left_b', 7.359)
+        self.assert_json_equal('', 'report_1/@1/left_b', 7.35)
         self.assert_json_equal('', 'report_1/@1/right', "[707] 707")
         self.assert_json_equal('', 'report_1/@1/right_n', 196.61)
         self.assert_json_equal('', 'report_1/@1/right_b', 123.45)

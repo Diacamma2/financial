@@ -46,7 +46,7 @@ from diacamma.accounting.views_reports import FiscalYearBalanceSheet, FiscalYear
     FiscalYearReportPrint, FiscalYearLedgerShow, CostAccountingReportPrint
 from diacamma.accounting.views_admin import FiscalYearExport
 from diacamma.accounting.models import FiscalYear, Third
-from diacamma.accounting.tools_reports import get_totalaccount_for_query, get_totalbudget_for_query
+from diacamma.accounting.tools_reports import get_totalaccount_for_query, get_budget_total
 from diacamma.accounting.views_budget import BudgetList, BudgetAddModify, BudgetDel, BudgetImport
 
 
@@ -304,14 +304,9 @@ class CompletedEntryTest(LucteriosTest):
         self.assertAlmostEqual(230.62, values['707'][0], delta=0.0001)
         self.assertEqual('[707] 707', values['707'][1])
 
-        values, total = get_totalbudget_for_query(Q(code__regex=r'^6.*$') & Q(year_id=1))
-        self.assertAlmostEqual(21.78, total, delta=0.0001)
-        self.assertAlmostEqual(8.19, values['601'][0], delta=0.0001)
-        self.assertEqual('[601] 601', values['601'][1])
-        self.assertAlmostEqual(7.35, values['602'][0], delta=0.0001)
-        self.assertEqual('[602] 602', values['602'][1])
-        self.assertAlmostEqual(6.24, values['604'][0], delta=0.0001)
-        self.assertEqual('[604] 604', values['604'][1])
+        self.assertAlmostEqual(8.19, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '601'), delta=0.0001)
+        self.assertAlmostEqual(7.35, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '602'), delta=0.0001)
+        self.assertAlmostEqual(6.24, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '604'), delta=0.0001)
 
     def test_costaccounting(self):
         self.factory.xfer = EntryAccountEdit()

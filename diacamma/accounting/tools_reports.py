@@ -24,11 +24,11 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
 
+from django.db.models import Q
 from django.db.models.aggregates import Sum
 
 from diacamma.accounting.models import EntryLineAccount, ChartsAccount, Budget, Third
 from diacamma.accounting.tools import correct_accounting_code
-from django.db.models.expressions import Subquery, OuterRef
 
 
 def get_spaces(size):
@@ -83,24 +83,78 @@ def get_totalaccount_for_query(query, sign_value=None, with_third=False):
     return values, total
 
 
-def get_totalbudget_for_query(query):
+def get_account_total(query, account_codethird, sign_value=None):
     total = 0
-    values = {}
-    budget_queryset = Budget.objects.all().annotate(rubric=Subquery(ChartsAccount.objects.filter(code=OuterRef('code')).values('rubric')))
-    for data_line in budget_queryset.filter(query).order_by('code').values('code').annotate(data_sum=Sum('amount')):
+    account_code_and_third = account_codethird.split('#')
+    if len(account_code_and_third) == 2:
+        extra_filter = Q(account__code=account_code_and_third[0]) & Q(third_id=int(account_code_and_third[1]))
+    else:
+        extra_filter = Q(account__code=account_code_and_third[0])
+    for data_line in EntryLineAccount.objects.filter(query & extra_filter).order_by('account').values('account').annotate(data_sum=Sum('amount')):
         if abs(data_line['data_sum']) > 0.001:
-            account = ChartsAccount.get_chart_account(data_line['code'])
-            account_code = account.code
-            account_title = account.get_name()
+            amount = None
+            if sign_value is None:
+                amount = data_line['data_sum']
+            elif isinstance(sign_value, bool):
+                if sign_value:
+                    amount = credit_debit_way(data_line) * data_line['data_sum']
+                else:
+                    amount = -1 * credit_debit_way(data_line) * data_line['data_sum']
+            else:
+                amount = sign_value * credit_debit_way(data_line) * data_line['data_sum']
+                if (amount < 0):
+                    amount = None
+            if amount is not None:
+                total += amount
+    return total
+
+
+def get_budget_total(query, account_codethird):
+    total = 0
+    account_code_and_third = account_codethird.split('#')
+    extra_filter = Q(code=account_code_and_third[0])
+    for data_line in Budget.objects.filter(query & extra_filter).order_by('code').values('code').annotate(data_sum=Sum('amount')):
+        if abs(data_line['data_sum']) > 0.001:
             amount = data_line['data_sum']
-            if account_code not in values.keys():
-                values[account_code] = [0, account_title]
-            values[account_code][0] += amount
             total += amount
-    return values, total
+    return total
 
 
-def convert_query_to_account(query1, query2=None, query_budget=None, sign_value=None, with_third=False):
+def add_account_without_amount(dict_account, query1, query2, query_budget_list, sign_value):
+    extra_account = ~Q(code__in=[account_codethird.split('#')[0] for account_codethird in dict_account.keys()])
+    for item in query1.children:
+        if isinstance(item, tuple) and (item[0].startswith('account__') or (item[0] == 'entry__year')):
+            extra_account &= Q(**{'__'.join(item[0].split('__')[1:]): item[1]})
+    total2 = 0
+    if query_budget_list is not None:
+        total3_initial = [0 for _item in query_budget_list]
+    else:
+        total3_initial = [0]
+    total3 = total3_initial[:]
+    for account in ChartsAccount.objects.filter(extra_account):
+        value2 = 0
+        total_b = []
+        if query2 is not None:
+            value2 = get_account_total(query2, account.code, sign_value)
+        if query_budget_list is not None:
+            for query_budget_item in query_budget_list:
+                total_b.append(get_budget_total(query_budget_item, account.code))
+
+        if (value2 != 0) or ((total_b != []) and (total_b != total3_initial)):
+            dict_account[account.code] = [str(account), None, None] + [0 for _item in query_budget_list]
+            if abs(value2) > 0.001:
+                dict_account[account.code][2] = value2
+            total2 += value2
+            if query_budget_list is not None:
+                for budget_item_idx in range(len(query_budget_list)):
+                    if abs(total_b[budget_item_idx]) > 0.001:
+                        dict_account[account.code][budget_item_idx + 3] = total_b[budget_item_idx]
+                    total3 = [total3[budget_item_idx] + total_b[budget_item_idx] for budget_item_idx in range(len(query_budget_list))]
+
+    return total2, total3
+
+
+def convert_query_to_account(query1, query2=None, query_budget=None, sign_value=None, with_third=False, old_accountcode=None):
     def check_account(account_code, account_title):
         if account_code not in dict_account.keys():
             dict_account[account_code] = [account_title, None, None]
@@ -109,43 +163,59 @@ def convert_query_to_account(query1, query2=None, query_budget=None, sign_value=
                     dict_account[account_code].append(None)
             else:
                 dict_account[account_code].append(None)
-    dict_account = {}
-    values1, total1 = get_totalaccount_for_query(query1, sign_value, with_third)
-    for account_code in values1.keys():
-        check_account(account_code, values1[account_code][1])
-        dict_account[account_code][1] = values1[account_code][0]
-    if query2 is not None:
-        values2, total2 = get_totalaccount_for_query(query2, sign_value, with_third)
-        for account_code in values2.keys():
-            check_account(account_code, values2[account_code][1])
-            dict_account[account_code][2] = values2[account_code][0]
-    else:
-        total2 = 0
     if query_budget is not None:
         if isinstance(query_budget, list):
             query_budget_list = query_budget
         else:
             query_budget_list = [query_budget]
-        total_b = []
-        id_dict = 3
-        for query_budget_item in query_budget_list:
-            valuesb, total3 = get_totalbudget_for_query(query_budget_item)
-            for account_code in valuesb.keys():
-                check_account(account_code, valuesb[account_code][1])
-                dict_account[account_code][id_dict] = valuesb[account_code][0]
-            id_dict += 1
-            total_b.append(total3)
-        if isinstance(query_budget, list):
-            total3 = total_b
-        else:
-            total3 = total_b[0]
     else:
-        total3 = 0
+        query_budget_list = None
+    dict_account = {}
+    total2 = 0
+    total3 = 0 if not isinstance(query_budget, list) else [0 for _item in query_budget_list]
+    values1, total1 = get_totalaccount_for_query(query1, sign_value, with_third)
+    for account_code in values1.keys():
+        check_account(account_code, values1[account_code][1])
+        dict_account[account_code][1] = values1[account_code][0]
+        if query2 is not None:
+            value2 = get_account_total(query2, account_code, sign_value)
+            if abs(value2) > 0.001:
+                dict_account[account_code][2] = value2
+            total2 += value2
+        if query_budget_list is not None:
+            total_b = []
+            id_dict = 3
+            for query_budget_item in query_budget_list:
+                valueb = get_budget_total(query_budget_item, account_code)
+                if abs(valueb) > 0.001:
+                    dict_account[account_code][id_dict] = valueb
+                total_b.append(valueb)
+                id_dict += 1
+            if isinstance(query_budget, list):
+                total3 = [total3[budget_item_idx] + total_b[budget_item_idx] for budget_item_idx in range(len(query_budget_list))]
+            else:
+                total3 += total_b[0]
+    if (query2 is not None) or (query_budget is not None):
+        total_2, total_3 = add_account_without_amount(dict_account, query1, query2, query_budget_list, sign_value)
+        total2 += total_2
+        if isinstance(query_budget, list):
+            total3 = [total3[budget_item_idx] + total_3[budget_item_idx] for budget_item_idx in range(len(query_budget_list))]
+        else:
+            total3 += total_3[0]
+    if (query2 is not None) and (old_accountcode is not None):
+        old_accountcode.extend(dict_account.keys())
+        values_2, total_2 = get_totalaccount_for_query(query2 & ~Q(account__code__in=[account_codethird.split('#')[0] for account_codethird in old_accountcode]), sign_value, with_third)
+        sub_total2 = 0.0
+        for account_code in values_2.keys():
+            check_account(account_code, values_2[account_code][1])
+            dict_account[account_code][2] = values_2[account_code][0]
+            sub_total2 += values_2[account_code][0]
+        total2 += total_2
     res = []
-    keys = sorted(dict_account.keys())
-    for key in keys:
-        res.append(dict_account[key])
-    return res, total1, total2, total3
+    account_codes = sorted(dict_account.keys())
+    for account_code in account_codes:
+        res.append(dict_account[account_code])
+    return res, total1, total2, total3, account_codes
 
 
 def add_cell_in_grid(grid, line_idx, colname, value, formttext='%s', line_ident=0):

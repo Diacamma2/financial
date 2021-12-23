@@ -34,7 +34,6 @@ from django.db.models import Q
 from lucterios.framework.tools import get_icon_path
 from lucterios.framework.xferadvance import TITLE_OK, TITLE_CANCEL
 from diacamma.accounting.tools import get_amount_from_format_devise, correct_accounting_code
-from diacamma.accounting.models import Journal
 
 
 class DefaultSystemAccounting(object):
@@ -255,7 +254,7 @@ class DefaultSystemAccounting(object):
         new_entry.closed()
 
     def _create_report_third(self, year):
-        from diacamma.accounting.models import EntryAccount, EntryLineAccount, AccountLink
+        from diacamma.accounting.models import Journal, EntryAccount, EntryLineAccount, AccountLink
         last_entry_account = year.last_fiscalyear.entryaccount_set.filter(journal__id=Journal.DEFAULT_OTHER).order_by('num').last()
         _no_change, debit_rest, credit_rest = last_entry_account.serial_control(last_entry_account.get_serial())
         multilinks_to_transfere = {}
@@ -292,7 +291,7 @@ class DefaultSystemAccounting(object):
 
         left_line_idx = 0
         actif1 = Q(account__type_of_account=0) & ~cash_filter & ~third_filter
-        data_line_left, total1_lefta, total2_lefta, _b_left = convert_query_to_account(currentfilter & actif1, lastfilter & actif1 if lastfilter is not None else None, None)
+        data_line_left, total1_lefta, total2_lefta, _b_left, _account_codes = convert_query_to_account(currentfilter & actif1, lastfilter & actif1 if lastfilter is not None else None, None)
         if len(data_line_left) > 0:
             add_cell_in_grid(grid, left_line_idx, 'left', get_spaces(5) + "{[i]}%s{[/i]}" % _('immobilizations & stock'))
             left_line_idx += 1
@@ -303,7 +302,7 @@ class DefaultSystemAccounting(object):
             left_line_idx += 1
 
         actif2 = third_filter
-        data_line_left, total1_leftb, total2_leftb, _b_left = convert_query_to_account(currentfilter & actif2, lastfilter & actif2 if lastfilter is not None else None, None, sign_value=-1)
+        data_line_left, total1_leftb, total2_leftb, _b_left, _account_codes = convert_query_to_account(currentfilter & actif2, lastfilter & actif2 if lastfilter is not None else None, None, sign_value=-1)
         if len(data_line_left) > 0:
             add_cell_in_grid(grid, left_line_idx, 'left', get_spaces(5) + "{[i]}%s{[/i]}" % _('receivables'))
             left_line_idx += 1
@@ -314,7 +313,7 @@ class DefaultSystemAccounting(object):
             left_line_idx += 1
 
         actif3 = Q(account__type_of_account=0) & cash_filter
-        data_line_left, total1_leftc, total2_leftc, _b_left = convert_query_to_account(currentfilter & actif3, lastfilter & actif3 if lastfilter is not None else None, None)
+        data_line_left, total1_leftc, total2_leftc, _b_left, _account_codes = convert_query_to_account(currentfilter & actif3, lastfilter & actif3 if lastfilter is not None else None, None)
         if len(data_line_left) > 0:
             add_cell_in_grid(grid, left_line_idx, 'left', get_spaces(5) + "{[i]}%s{[/i]}" % _('values & availabilities'))
             left_line_idx += 1
@@ -326,7 +325,7 @@ class DefaultSystemAccounting(object):
 
         right_line_idx = 0
         passif1 = Q(account__type_of_account=2)
-        data_line_right, total1_righta, total2_righta, _b_right = convert_query_to_account(currentfilter & passif1, lastfilter & passif1 if lastfilter is not None else None, None)
+        data_line_right, total1_righta, total2_righta, _b_right, _account_codes = convert_query_to_account(currentfilter & passif1, lastfilter & passif1 if lastfilter is not None else None, None)
         if len(data_line_right) > 0:
             add_cell_in_grid(grid, right_line_idx, 'right', get_spaces(5) + "{[i]}%s{[/i]}" % _('capital'))
             right_line_idx += 1
@@ -337,7 +336,7 @@ class DefaultSystemAccounting(object):
             right_line_idx += 1
 
         passif2 = third_filter
-        data_line_right, total1_rightb, total2_rightb, _b_right = convert_query_to_account(currentfilter & passif2, lastfilter & passif2 if lastfilter is not None else None, None, sign_value=1)
+        data_line_right, total1_rightb, total2_rightb, _b_right, _account_codes = convert_query_to_account(currentfilter & passif2, lastfilter & passif2 if lastfilter is not None else None, None, sign_value=1)
         if len(data_line_right) > 0:
             add_cell_in_grid(grid, right_line_idx, 'right', get_spaces(5) + "{[i]}%s{[/i]}" % _('liabilities'))
             right_line_idx += 1

@@ -74,6 +74,8 @@ class FiscalYearReport(XferContainerCustom):
         self.hfield = hfield[0]
         self.budgetfilter_right = Q()
         self.budgetfilter_left = Q()
+        self.account_codes_left = []
+        self.account_codes_right = []
 
     def fillresponse(self):
         self.fill_header()
@@ -232,9 +234,9 @@ class FiscalYearReport(XferContainerCustom):
         return line_idx
 
     def _add_left_right_accounting(self, left_filter, rigth_filter, total_in_left):
-        data_line_left, total1_left, total2_left, totalb_left = convert_query_to_account(
+        data_line_left, total1_left, total2_left, totalb_left, self.account_codes_left = convert_query_to_account(
             self.filter & left_filter, self.lastfilter & left_filter if self.lastfilter is not None else None, self.budgetfilter_left)
-        data_line_right, total1_right, total2_right, totalb_right = convert_query_to_account(
+        data_line_right, total1_right, total2_right, totalb_right, self.account_codes_right = convert_query_to_account(
             self.filter & rigth_filter, self.lastfilter & rigth_filter if self.lastfilter is not None else None, self.budgetfilter_right)
         line_idx = 0
         for line_idx in range(max(len(data_line_left), len(data_line_right))):
@@ -247,8 +249,7 @@ class FiscalYearReport(XferContainerCustom):
     def calcul_rubric(self, left_line_idx, right_line_idx, left_filter, rigth_filter, rubric_name):
         rubric_title = rubric_name if rubric_name != '' else _('others')
         rubric_filter = Q(account__rubric=rubric_name)
-        budget_rubric_filter = Q(rubric=rubric_name)
-        data_line_left, subtotal1_left, subtotal2_left, subtotalb_left = convert_query_to_account(self.filter & left_filter & rubric_filter, self.lastfilter & rubric_filter if self.lastfilter is not None else None, self.budgetfilter_left & budget_rubric_filter)
+        data_line_left, subtotal1_left, subtotal2_left, subtotalb_left, account_codes_left = convert_query_to_account(self.filter & left_filter & rubric_filter, self.lastfilter & left_filter if self.lastfilter is not None else None, self.budgetfilter_left, old_accountcode=self.account_codes_left if rubric_name == '' else None)
         if len(data_line_left) > 0:
             add_cell_in_grid(self.grid, left_line_idx, 'left', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
             left_line_idx += 1
@@ -257,7 +258,7 @@ class FiscalYearReport(XferContainerCustom):
             left_line_idx += 1
             add_cell_in_grid(self.grid, left_line_idx, 'left', '')
             left_line_idx += 1
-        data_line_right, subtotal1_right, subtotal2_right, subtotalb_right = convert_query_to_account(self.filter & rigth_filter & rubric_filter, self.lastfilter & rubric_filter if self.lastfilter is not None else None, self.budgetfilter_right & budget_rubric_filter)
+        data_line_right, subtotal1_right, subtotal2_right, subtotalb_right, account_codes_right = convert_query_to_account(self.filter & rigth_filter & rubric_filter, self.lastfilter & rigth_filter if self.lastfilter is not None else None, self.budgetfilter_right, old_accountcode=self.account_codes_right if rubric_name == '' else None)
         if len(data_line_right) > 0:
             add_cell_in_grid(self.grid, right_line_idx, 'right', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
             right_line_idx += 1
@@ -266,6 +267,8 @@ class FiscalYearReport(XferContainerCustom):
             right_line_idx += 1
             add_cell_in_grid(self.grid, right_line_idx, 'right', '')
             right_line_idx += 1
+        self.account_codes_left.extend(account_codes_left)
+        self.account_codes_right.extend(account_codes_right)
         self.total_summary_left = (self.total_summary_left[0] + subtotal1_left, self.total_summary_left[1] + subtotal2_left, self.total_summary_left[2] + subtotalb_left)
         self.total_summary_right = (self.total_summary_right[0] + subtotal1_right, self.total_summary_right[1] + subtotal2_right, self.total_summary_right[2] + subtotalb_right)
         return left_line_idx, right_line_idx
@@ -372,14 +375,14 @@ class FiscalYearIncomeStatement(FiscalYearReport):
         add_cell_in_grid(self.grid, self.line_offset + line_idx + 1, 'left', '')
         other_filter = Q(account__code__regex=current_system_account().get_annexe_mask()) & ~excludefilter
         budget_other = Q(code__regex=current_system_account().get_annexe_mask())
-        data_line_left, anx_total1_left, anx_total2_left, anx_totalb_left = convert_query_to_account(self.filter & other_filter,
-                                                                                                     self.lastfilter & other_filter if self.lastfilter is not None else None,
-                                                                                                     budgetfilter & budget_other,
-                                                                                                     sign_value=-1)
-        data_line_right, anx_total1_right, anx_total2_right, anx_totalb_right = convert_query_to_account(self.filter & other_filter,
-                                                                                                         self.lastfilter & other_filter if self.lastfilter is not None else None,
-                                                                                                         budgetfilter & budget_other,
-                                                                                                         sign_value=1)
+        data_line_left, anx_total1_left, anx_total2_left, anx_totalb_left, _account_codes_left = convert_query_to_account(self.filter & other_filter,
+                                                                                                                          self.lastfilter & other_filter if self.lastfilter is not None else None,
+                                                                                                                          budgetfilter & budget_other,
+                                                                                                                          sign_value=-1)
+        data_line_right, anx_total1_right, anx_total2_right, anx_totalb_right, _account_codes_right = convert_query_to_account(self.filter & other_filter,
+                                                                                                                               self.lastfilter & other_filter if self.lastfilter is not None else None,
+                                                                                                                               budgetfilter & budget_other,
+                                                                                                                               sign_value=1)
         if (len(data_line_left) > 0) or (len(data_line_right) > 0):
             add_cell_in_grid(self.grid, self.line_offset + line_idx + 1, 'left', get_spaces(20) + "{[i]}%s{[/i]}" % _('annexe'))
             add_cell_in_grid(self.grid, self.line_offset + line_idx + 1, 'right', get_spaces(20) + "{[i]}%s{[/i]}" % _('annexe'))
