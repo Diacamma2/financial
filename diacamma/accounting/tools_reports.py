@@ -149,7 +149,7 @@ def add_account_without_amount(dict_account, query1, query2, query_budget_list, 
                 for budget_item_idx in range(len(query_budget_list)):
                     if abs(total_b[budget_item_idx]) > 0.001:
                         dict_account[account.code][budget_item_idx + 3] = total_b[budget_item_idx]
-                    total3 = [total3[budget_item_idx] + total_b[budget_item_idx] for budget_item_idx in range(len(query_budget_list))]
+                        total3[budget_item_idx] += total_b[budget_item_idx]
 
     return total2, total3
 
