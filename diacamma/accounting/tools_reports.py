@@ -141,7 +141,7 @@ def add_account_without_amount(dict_account, query1, query2, query_budget_list, 
                 total_b.append(get_budget_total(query_budget_item, account.code))
 
         if (value2 != 0) or ((total_b != []) and (total_b != total3_initial)):
-            dict_account[account.code] = [str(account), None, None] + [0 for _item in query_budget_list]
+            dict_account[account.code] = [str(account), None, None] + total3_initial
             if abs(value2) > 0.001:
                 dict_account[account.code][2] = value2
             total2 += value2
