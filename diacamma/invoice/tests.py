@@ -50,7 +50,7 @@ from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_c
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillToBill, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch,\
-    BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder
+    BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo
 from lucterios.framework.auditlog import log_create
 
 
@@ -704,10 +704,10 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 1)
 
-        self.factory.xfer = BillTransition()
-        self.calljson('/diacamma.invoice/billTransition',
-                      {'CONFIRME': 'YES', 'bill': 1, 'TRANSITION': 'undo'}, False)
-        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+        self.factory.xfer = BillUndo()
+        self.calljson('/diacamma.invoice/billUndo',
+                      {'CONFIRME': 'YES', 'bill': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billUndo')
         self.assertEqual(self.response_json['action']['id'], "diacamma.invoice/billShow")
         self.assertEqual(len(self.response_json['action']['params']), 1)
         self.assertEqual(self.response_json['action']['params']['bill'], 2)
@@ -766,6 +766,51 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('entryline', 10)
         self.assert_json_equal('LABELFORM', 'result', [0.00, 0.00, 0.00, 0.00, 0.00])
+
+    def test_assert_mode(self):
+        Params.setvalue('invoice-asset-mode', 1)
+        default_articles()
+        details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
+                   {'article': 2, 'designation': 'article 2', 'price': '3.25', 'quantity': 7},
+                   {'article': 0, 'designation': 'article 3', 'price': '11.10', 'quantity': 2}]
+        self._create_bill(details, 1, '2015-04-01', 6)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition',
+                      {'CONFIRME': 'YES', 'bill': 1, 'withpayoff': False, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 13)
+        self.assert_json_equal('LABELFORM', 'num_txt', "A-1")
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_json_equal('LABELFORM', 'title', "facture")
+
+        self.factory.xfer = BillUndo()
+        self.calljson('/diacamma.invoice/billUndo',
+                      {'CONFIRME': 'YES', 'bill': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billUndo')
+        self.assertEqual(self.response_json['action']['id'], "diacamma.invoice/billShow")
+        self.assertEqual(len(self.response_json['action']['params']), 1)
+        self.assertEqual(self.response_json['action']['params']['bill'], 2)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'total_excltax', 107.45)
+        self.assert_json_equal('LABELFORM', 'num_txt', None)
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'title', "avoir")
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 13)
+        self.assert_json_equal('LABELFORM', 'num_txt', "A-1")
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_json_equal('LABELFORM', 'title', "facture")
 
     def test_add_quotation(self):
         default_articles()

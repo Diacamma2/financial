@@ -941,9 +941,6 @@ class Bill(Supporting):
         self.status = self.STATUS_VALID
         self.save()
 
-    transitionname__undo = _("=> Compensation")
-
-    @transition(field=status, source=(STATUS_VALID, STATUS_ARCHIVE), target=STATUS_ARCHIVE, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)])
     def undo(self):
         new_undo = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET if self.bill_type != Bill.BILLTYPE_ASSET else Bill.BILLTYPE_BILL,
                                        date=timezone.now(),
@@ -954,7 +951,8 @@ class Bill(Supporting):
             detail.id = None
             detail.bill = new_undo
             detail.save()
-        self.status = Bill.STATUS_ARCHIVE
+        if Params.getvalue("invoice-asset-mode") == 0:
+            self.status = Bill.STATUS_ARCHIVE
         self.save()
         Signal.call_signal("change_bill", 'cancel', self, new_undo)
         return new_undo.id
@@ -2046,6 +2044,8 @@ def invoice_checkparam():
     Parameter.check_and_create(name='invoice-reduce-allow-article-empty', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-allow-article-empty"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-order-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-order-mode"),
                                args="{'Enum':2}", value='0', param_titles=(_("invoice-order-mode.0"), _("invoice-order-mode.1")))
+    Parameter.check_and_create(name='invoice-asset-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-asset-mode"),
+                               args="{'Enum':2}", value='0', param_titles=(_("invoice-asset-mode.0"), _("invoice-asset-mode.1")))
 
     LucteriosGroup.redefine_generic(_("# invoice (administrator)"), Vat.get_permission(True, True, True), BankAccount.get_permission(True, True, True), BankTransaction.get_permission(True, True, True),
                                     Article.get_permission(True, True, True), Bill.get_permission(True, True, True),

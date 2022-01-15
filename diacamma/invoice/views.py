@@ -184,7 +184,7 @@ class BillShow(XferShowEditor):
 
     def rename_button(self):
         for action_info in self.actions:
-            if (action_info[4] is not None) and ('TRANSITION' in action_info[4]) and (action_info[4]['TRANSITION'] == 'undo'):
+            if action_info[0].url_text == 'diacamma.invoice/billUndo':
                 action = action_info[0]
                 if self.item.bill_type == Bill.BILLTYPE_ASSET:
                     action.caption = '=> ' + str(_('bill')).capitalize()
@@ -377,13 +377,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
         sendemail = self.getparam('sendemail', False)
         sendemail_quotation = self.getparam('sendemail_quotation', False)
         if (transition != 'valid') or (len(self.items) > 1):
-            if transition == 'undo':
-                if self.confirme(_("Do you want to create an compensation (avoid or invoice) from this bill ?")):
-                    self._confirmed(transition)
-                if self.trans_result is not None:
-                    self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: self.trans_result})
-            else:
-                XferTransition.fill_confirm(self, transition, trans)
+            XferTransition.fill_confirm(self, transition, trans)
         elif self.getparam("CONFIRME") is None:
             self.fill_dlg_payoff(withpayoff, sendemail, sendemail_quotation)
         else:
@@ -409,15 +403,9 @@ parent.get('print_sep').setEnabled(!is_persitent);
                 self.redirect_action(PayableEmail.get_action("", ""), params={"item_name": self.field_id, "modelname": "", "OK": "YES"})
 
 
-@ActionsManage.affect_transition("status", multi_list=('valid',), ignore_all=('undo', 'archive', 'unarchive'))
+@ActionsManage.affect_transition("status", multi_list=('valid',), ignore_all=('archive', 'unarchive'))
 @MenuManage.describ('invoice.add_bill')
 class BillTransition(BillTransitionAbstract):
-    pass
-
-
-@ActionsManage.affect_transition("status", only_one=('undo', ), ignore_grid=('undo', ))
-@MenuManage.describ('invoice.asset_bill')
-class BillTransitionUndo(BillTransitionAbstract):
     pass
 
 
@@ -425,6 +413,19 @@ class BillTransitionUndo(BillTransitionAbstract):
 @MenuManage.describ('invoice.archive_bill')
 class BillTransitionArchive(BillTransitionAbstract):
     pass
+
+
+@ActionsManage.affect_show(_('=> Compensation'), "images/transition.png", close=CLOSE_NO, condition=lambda xfer: (xfer.item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)) and (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)))
+@MenuManage.describ('invoice.asset_bill')
+class BillUndo(XferContainerAcknowledge):
+    icon = "bill.png"
+    model = Bill
+    field_id = 'bill'
+
+    def fillresponse(self):
+        if self.confirme(_("Do you want to create an compensation (avoid or invoice) from this bill ?")):
+            new_bill_id = self.item.undo()
+            self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill_id})
 
 
 @ActionsManage.affect_grid(_('payoff'), "diacamma.payoff/images/payoff.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) == Bill.STATUS_VALID)

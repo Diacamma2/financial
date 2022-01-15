@@ -482,10 +482,12 @@ class FiscalYear(LucteriosModel):
             raise LucteriosException(IMPORTANT, _('No export for this accounting system!'))
         xml_file, xsd_file = xmlfiles
         template = engines['django'].from_string(read_file(xml_file).decode('utf-8'))
-        fiscal_year_xml = str(template.render(self.get_context()))
+        context_data = self.get_context()
+        fiscal_year_xml = str(template.render(context_data))
         res_val = xml_validator(fiscal_year_xml, xsd_file)
         if res_val is not None:
-            raise LucteriosException(GRAVE, res_val)
+            getLogger("diacamma.accounting").exception("Failure to export: '%s'" % context_data)
+            raise LucteriosException(IMPORTANT, _("Failure to export this fiscal year !"))
         save_file(get_user_path("accounting", file_name), fiscal_year_xml)
         return join("accounting", file_name)
 

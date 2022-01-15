@@ -188,6 +188,8 @@ class FiscalYearExport(XferContainerCustom):
         self.add_component(lbl)
         down = XferCompDownLoad('filename')
         down.compress = False
+        down.http_file = True
+        down.maxsize = 0
         down.set_value('export_year_%s_%s.xml' %
                        (self.item.begin.isoformat(), self.item.end.isoformat()))
         down.set_download(destination_file)

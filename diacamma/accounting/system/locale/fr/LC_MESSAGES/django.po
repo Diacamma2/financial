@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-23 11:11+0000\n"
+"POT-Creation-Date: 2022-01-15 14:51+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,27 +26,27 @@ msgstr "Plan comptable générale Français"
 msgid "Belgium system acounting"
 msgstr "Plan comptable Belge"
 
-#: system/default.py:42
+#: system/default.py:41
 msgid "Fiscal year closing - Result"
 msgstr "Cloture d'exercice - Résultat"
 
-#: system/default.py:43
+#: system/default.py:42
 msgid "Fiscal year closing - Third"
 msgstr "Cloture d'exercice - Tiers"
 
-#: system/default.py:94
+#: system/default.py:93
 msgid "profit"
 msgstr "bénéfice"
 
-#: system/default.py:96
+#: system/default.py:95
 msgid "deficit"
 msgstr "déficite"
 
-#: system/default.py:102
+#: system/default.py:101
 msgid "Profit and deficit"
 msgstr "Bénéfices et Pertes"
 
-#: system/default.py:105
+#: system/default.py:104
 #, python-format
 msgid ""
 "{[i]}You have a %(type)s of %(value)s.{[br/]}You must to define the account "
@@ -55,7 +55,7 @@ msgstr ""
 "{[i]}Vous avez un %(type)s de %(value)s.{[br/]}Vous devez definir sur quel "
 "compte l'affecter.{[br/]}{[/i]}"
 
-#: system/default.py:106
+#: system/default.py:105
 #, python-format
 msgid ""
 "{[br/]}After validation, you begin '%s'.{[br/]}{[br/]}{[i]}{[u]}Warning:{[/"
@@ -64,11 +64,11 @@ msgstr ""
 "{[br/]}En validant, vous commencerez '%s'{[br/]}{[br/]}{[i]}{[u]}Attention:"
 "{[/u]} Votre report à nouveau doit être totalement fait.{[/i]}"
 
-#: system/default.py:131
+#: system/default.py:130
 msgid "Affect of profit/deficit"
 msgstr "Affectation des bénéfices/pertes"
 
-#: system/default.py:165
+#: system/default.py:164
 #, python-format
 msgid ""
 "Do you want to begin '%s'? {[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your "
@@ -77,47 +77,47 @@ msgstr ""
 "Voulez-vous commencer '%s'? {[br/]}{[br/]}{[i]}{[u]}Attention:{[/u]} Votre "
 "report à nouveau doit être totalement fait.{[/i]}"
 
-#: system/default.py:248
+#: system/default.py:247
 msgid "Retained earnings - Balance sheet"
 msgstr "Report à nouveau - Bilan"
 
-#: system/default.py:263
+#: system/default.py:262
 msgid "Retained earnings - Third party debt"
 msgstr "Report à nouveau - Dette tiers"
 
-#: system/default.py:297
+#: system/default.py:296
 msgid "immobilizations & stock"
 msgstr "immobilisatons & stock"
 
-#: system/default.py:300 system/default.py:311 system/default.py:322
-#: system/default.py:334 system/default.py:345
+#: system/default.py:299 system/default.py:310 system/default.py:321
+#: system/default.py:333 system/default.py:344
 msgid "Sub-total"
 msgstr "Sous-total"
 
-#: system/default.py:308
+#: system/default.py:307
 msgid "receivables"
 msgstr "créances"
 
-#: system/default.py:319
+#: system/default.py:318
 msgid "values & availabilities"
 msgstr "Valeurs et disponibilités"
 
-#: system/default.py:331
+#: system/default.py:330
 msgid "capital"
 msgstr "capital"
 
-#: system/default.py:342
+#: system/default.py:341
 msgid "liabilities"
 msgstr "dettes"
 
-#: system/default.py:356 system/default.py:357
+#: system/default.py:355 system/default.py:356
 msgid "Total"
 msgstr "Total"
 
-#: system/default.py:374
+#: system/default.py:373
 msgid "result (deficit)"
 msgstr "résultat (déficit)"
 
-#: system/default.py:376
+#: system/default.py:375
 msgid "result (profit)"
 msgstr "résultat (bénéfice)"
