@@ -37,7 +37,8 @@ from diacamma.invoice.models import Article
 from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting
 from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel,\
     StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel
-from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch
+from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch,\
+    ArticlePrint, ArticleLabel
 
 
 class ConfigTest(LucteriosTest):
@@ -281,6 +282,16 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
         self.assert_count_equal('article', 0)
 
+        self.factory.xfer = ArticlePrint()
+        self.calljson('/diacamma.invoice/articlePrint', {"MODEL": 11, "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articlePrint')
+        self.save_pdf()
+
+        self.factory.xfer = ArticleLabel()
+        self.calljson('/diacamma.invoice/articleLabel', {"LABEL": 1, "FIRSTLABEL": 1, "MODEL": 12, "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articleLabel')
+        self.save_pdf()
+
     def test_article_with_cat(self):
         default_categories()
         self.factory.xfer = ArticleList()
@@ -406,6 +417,16 @@ class ConfigTest(LucteriosTest):
         self.assert_count_equal('', 7)
         self.assert_count_equal('article', 0)
 
+        self.factory.xfer = ArticlePrint()
+        self.calljson('/diacamma.invoice/articlePrint', {'show_filter': 1, 'stockable': 3, "MODEL": 11, "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articlePrint')
+        self.save_pdf(ident=1)
+
+        self.factory.xfer = ArticleLabel()
+        self.calljson('/diacamma.invoice/articleLabel', {'show_filter': 1, 'stockable': 3, "LABEL": 1, "FIRSTLABEL": 1, "MODEL": 12, "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articleLabel')
+        self.save_pdf(ident=2)
+
         self.factory.xfer = ArticleList()
         self.calljson('/diacamma.invoice/articleList', {'show_filter': 1, 'cat_filter': '2'}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
@@ -423,6 +444,16 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
         self.assert_count_equal('', 7)
         self.assert_count_equal('article', 1)
+
+        self.factory.xfer = ArticlePrint()
+        self.calljson('/diacamma.invoice/articlePrint', {'show_filter': 1, 'cat_filter': '1;2;3', "MODEL": 11, "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articlePrint')
+        self.save_pdf(ident=3)
+
+        self.factory.xfer = ArticleLabel()
+        self.calljson('/diacamma.invoice/articleLabel', {'show_filter': 1, 'cat_filter': '1;2;3', "LABEL": 1, "FIRSTLABEL": 1, "MODEL": 12, "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articleLabel')
+        self.save_pdf(ident=4)
 
     def test_article_import1(self):
         initial_thirds_fr()

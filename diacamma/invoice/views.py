@@ -725,6 +725,19 @@ class ArticleFilter(object):
             new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
         return new_filter
 
+    def filter_callback(self, items):
+        categories_filter = self.getparam('cat_filter', ())
+        show_stockable = self.getparam('stockable', -1)
+        show_storagearea = self.getparam('storagearea', 0)
+        return self.items_filtering(items, categories_filter, show_stockable, show_storagearea)
+
+    def get_filter(self):
+        show_filter = self.getparam('show_filter', 0)
+        show_stockable = self.getparam('stockable', -1)
+        ref_filter = self.getparam('ref_filter', '')
+        show_storagearea = self.getparam('storagearea', 0)
+        return self.get_search_filter(ref_filter, show_filter, show_stockable, show_storagearea)
+
 
 @MenuManage.describ('invoice.change_article', FORMTYPE_NOMODAL, 'invoice', _('Management of article list'))
 class ArticleList(XferListEditor, ArticleFilter):
@@ -798,59 +811,20 @@ class ArticleList(XferListEditor, ArticleFilter):
 
 @ActionsManage.affect_list(TITLE_PRINT, "images/print.png", close=CLOSE_NO)
 @MenuManage.describ('invoice.change_article')
-class ArticlePrint(XferPrintListing, ArticleFilter):
+class ArticlePrint(ArticleFilter, XferPrintListing):
     icon = "article.png"
     model = Article
     field_id = 'article'
     caption = _("Print articles")
 
-    def filter_callback(self, items):
-        categories_filter = self.getparam('cat_filter', ())
-        show_stockable = self.getparam('stockable', -1)
-        show_storagearea = self.getparam('storagearea', 0)
-        return self.items_filtering(items, categories_filter, show_stockable, show_storagearea)
-
-    def get_filter(self):
-        show_filter = self.getparam('show_filter', 0)
-        show_stockable = self.getparam('stockable', -1)
-        ref_filter = self.getparam('ref_filter', '')
-        show_storagearea = self.getparam('storagearea', 0)
-        return self.get_search_filter(ref_filter, show_filter, show_stockable, show_storagearea)
-
 
 @ActionsManage.affect_list(TITLE_LABEL, "images/print.png", close=CLOSE_NO)
 @MenuManage.describ('invoice.change_article')
-class ArticleLabel(XferPrintLabel):
+class ArticleLabel(ArticleFilter, XferPrintLabel):
     icon = "article.png"
     model = Article
     field_id = 'article'
     caption = _("Label articles")
-
-    def filter_callback(self, items):
-        categories_filter = self.getparam('cat_filter', ())
-        if len(categories_filter) > 0:
-            for cat_item in Category.objects.filter(id__in=categories_filter):
-                items = items.filter(categories__in=[cat_item])
-        return items.distinct()
-
-    def get_filter(self):
-        show_filter = self.getparam('show_filter', 0)
-        show_stockable = self.getparam('stockable', -1)
-        ref_filter = self.getparam('ref_filter', '')
-        show_storagearea = self.getparam('storagearea', 0)
-        new_filter = Q()
-        if ref_filter != '':
-            new_filter &= Q(reference__icontains=ref_filter) | Q(designation__icontains=ref_filter)
-        if show_filter == 0:
-            new_filter &= Q(isdisabled=False)
-        if show_stockable != -1:
-            if show_stockable != ArticleList.STOCKABLE_WITH_STOCK:
-                self.filter &= Q(stockable=show_stockable)
-            else:
-                self.filter &= ~Q(stockable=Article.STOCKABLE_NO)
-        if show_storagearea != 0:
-            new_filter &= Q(storagedetail__storagesheet__storagearea=show_storagearea)
-        return new_filter
 
 
 @MenuManage.describ('accounting.change_article')
