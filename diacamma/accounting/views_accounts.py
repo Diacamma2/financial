@@ -46,7 +46,7 @@ from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.xferprint import XferPrintListing
 from lucterios.CORE.views import ObjectMerge
 
-from diacamma.accounting.models import ChartsAccount, FiscalYear
+from diacamma.accounting.models import ChartsAccount, FiscalYear, EntryAccount
 from diacamma.accounting.views_entries import add_fiscalyear_result
 
 MenuManage.add_sub("bookkeeping", "financial", "diacamma.accounting/images/accounting.png", _("Bookkeeping"), _("Manage of Bookkeeping"), 30)
@@ -312,6 +312,7 @@ class FiscalYearClose(XferContainerAcknowledge):
             dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), modal=FORMTYPE_MODAL, close=CLOSE_YES, params={'CONFIRME': 'YES'})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
+            EntryAccount.clear_ghost()
             signal_and_lock.Signal.call_signal("finalize_year", self)
             current_year.set_context(self)
             current_year.closed()

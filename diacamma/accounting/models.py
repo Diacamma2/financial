@@ -942,6 +942,8 @@ class AccountLink(LucteriosModel):
     def check_validity(self):
         if not self.is_validity():
             self.delete()
+            return False
+        return True
 
     @classmethod
     def create_link(cls, entrylines):
@@ -1069,6 +1071,8 @@ class EntryAccount(LucteriosModel):
             for entry in cls.objects.filter(close=False):
                 if len(entry.entrylineaccount_set.all()) == 0:
                     entry.delete()
+            for account_link in AccountLink.objects.annotate(num_entryline=Count('entrylineaccount')).filter(num_entryline=1):
+                account_link.delete()
 
     def get_description(self):
         res = self.designation
@@ -1151,14 +1155,24 @@ class EntryAccount(LucteriosModel):
 
     def save_entrylineaccounts(self, serial_vals):
         if not self.close:
+            old_linkids = [line.link_id for line in self.entrylineaccount_set.all() if line.link_id is not None]
             self.entrylineaccount_set.all().delete()
             for line in self.get_entrylineaccounts(serial_vals):
                 if line.id < 0:
                     line.id = None
                 line.save()
+            has_link = False
             for line in self.entrylineaccount_set.all():
                 if line.link_id is not None:
-                    line.link.check_validity()
+                    if line.link.check_validity():
+                        has_link = True
+            if not has_link:
+                for old_linkid in old_linkids:
+                    try:
+                        link = AccountLink.objects.get(id=old_linkid)
+                        link.delete()
+                    except ObjectDoesNotExist:
+                        pass
 
     def remove_entrylineaccounts(self, serial_vals, entrylineid):
         lines = self.get_entrylineaccounts(serial_vals)
@@ -1969,6 +1983,7 @@ def accounting_convertdata():
     check_yearaccount()
     check_third()
     check_multilink()
+    EntryAccount.clear_ghost()
 
 
 @Signal.decorate('auditlog_register')
