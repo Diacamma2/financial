@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 
 from lucterios.framework.xferadvance import XferListEditor, XferDelete,\
-    TITLE_MODIFY, TITLE_ADD, TITLE_DELETE
+    TITLE_MODIFY, TITLE_ADD, TITLE_DELETE, add_auditlogs_button
 from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.tools import ActionsManage, MenuManage,\
     CLOSE_NO, SELECT_SINGLE, SELECT_MULTI, FORMTYPE_REFRESH, FORMTYPE_MODAL
@@ -55,6 +55,7 @@ class PayoffConf(XferListEditor):
 
         self.new_tab(_('Payment method'))
         self.fill_grid(0, PaymentMethod, "paymentmethod", PaymentMethod.objects.all())
+        add_auditlogs_button(self, PaymentMethod, 0, self.get_max_row() + 20)
         self.new_tab(_('Parameters'))
         fill_params(self)
 

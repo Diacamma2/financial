@@ -21,7 +21,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
-from os.path import dirname
 from json import dumps
 from base64 import b64encode
 from datetime import datetime
@@ -36,24 +35,35 @@ from lucterios.CORE.parameters import Params
 
 from lucterios.contacts.models import LegalEntity
 from diacamma.accounting.tools import get_amount_from_format_devise
+from lucterios.framework.xfercomponents import XferCompPassword
 
 
 class PaymentType(object):
     FIELDTYPE_EDIT = 0
     FIELDTYPE_MEMO = 1
     FIELDTYPE_CHECK = 2
+    FIELDTYPE_PWD = 3
     FIELDTYPE_EMAIL = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     FIELDTYPE_URL = r"^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$"
 
     name = ''
     num = -1
     logo_bank = ''
+    form_method = 'post'
+    help_content = ''
 
     def __init__(self, extra_data):
         self.extra_data = extra_data
 
     def get_extra_fields(self):
         return []
+
+    def get_help(self, root_url):
+        ret_content = str(self.help_content).strip()
+        if "%s" in ret_content:
+            return ret_content % root_url
+        else:
+            return ret_content
 
     def get_default_items(self):
         items = self.extra_data.split("\n")
@@ -73,6 +83,8 @@ class PaymentType(object):
             res += "{[b]}%s{[/b]}{[br/]}" % fieldtitle
             if fieldtype == PaymentType.FIELDTYPE_CHECK:
                 res += str(get_bool_textual((items[fieldid - 1] == 'o') or (items[fieldid - 1] == 'True')))
+            elif fieldtype == PaymentType.FIELDTYPE_PWD:
+                res += "*" * 10
             else:
                 res += items[fieldid - 1]
             res += "{[br/]}"
@@ -94,6 +106,8 @@ class PaymentType(object):
                 edt = XferCompMemo('item_%d' % fieldid)
             elif fieldtype == PaymentType.FIELDTYPE_CHECK:
                 edt = XferCompCheck('item_%d' % fieldid)
+            elif fieldtype == PaymentType.FIELDTYPE_PWD:
+                edt = XferCompPassword('item_%d' % fieldid)
             elif isinstance(fieldtype, str):
                 edt = XferCompEdit('item_%d' % fieldid)
                 edt.mask = fieldtype
@@ -101,20 +115,19 @@ class PaymentType(object):
             edt.description = fieldtitle
             yield edt
 
-    @classmethod
-    def get_url(cls, absolute_uri):
-        return dirname(dirname(absolute_uri))
+    def get_url(self, root_url, supporting=None):
+        return root_url
 
-    def _get_parameters_dict(self, absolute_uri, lang, supporting):
+    def _get_parameters_dict(self, root_url, lang, supporting):
         return {}
 
-    def get_redirect_url(self, absolute_uri, lang, supporting):
+    def get_redirect_url(self, root_url, lang, supporting):
         from urllib.parse import quote_plus
         args = ""
-        for key, val in self._get_parameters_dict(absolute_uri, lang, supporting).items():
+        for key, val in self._get_parameters_dict(root_url, lang, supporting).items():
             args += "&%s=%s" % (key, quote_plus(val))
         args = args[1:]
-        return "%s?%s" % (self.get_url(absolute_uri), args)
+        return "%s?%s" % (self.get_url(root_url, supporting), args)
 
     def get_html_link(self, root_url, link_url, supportingid=None):
         if supportingid is not None:
@@ -127,16 +140,15 @@ class PaymentType(object):
         formTxt += "{[/center]}"
         return formTxt
 
-    def get_form(self, absolute_uri, lang, supporting):
-        root_url = '/'.join(absolute_uri.split('/')[:-2])
+    def get_form(self, root_url, lang, supporting):
         formTxt = "{[h3]}%s{[/h3]}" % _('Payment')
         formTxt += '{[table border="0"]}\n'
         formTxt += "{[tr]}{[th]}%s{[/th]}{[td]}%s{[/td]}{[/tr]}\n" % (_('nature'), str(supporting))
         formTxt += "{[tr]}{[th]}%s{[/th]}{[td]}%s{[/td]}{[/tr]}\n" % (_('amount'), get_amount_from_format_devise(supporting.total_rest_topay, 5))
         formTxt += "{[/table]}\n"
         formTxt += "{[br/]}\n"
-        formTxt += '{[form method="post" id="payment" name="payment" action="%s"]}\n' % self.get_url(absolute_uri)
-        for key, value in self._get_parameters_dict(absolute_uri, lang, supporting).items():
+        formTxt += '{[form method="%s" id="payment" name="payment" action="%s"]}\n' % (self.form_method, self.get_url(root_url, supporting))
+        for key, value in self._get_parameters_dict(root_url, lang, supporting).items():
             formTxt += '{[input type="hidden" name="%s" value="%s" /]}\n' % (key, value)
         formTxt += '{[button type="submit"]}\n'
         formTxt += "{[img src='%s/static/diacamma.payoff/images/%s' title='%s' alt='%s' /]}\n" % (root_url, self.logo_bank, self.name, self.name)
@@ -145,18 +157,19 @@ class PaymentType(object):
         formTxt += '{[label class="info"]}{[br/]}%s{[/label]}\n' % _('Please wait, you will be logged into the payment platform.')
         return formTxt
 
-    def show_pay(self, absolute_uri, lang, supporting):
+    def show_pay(self, root_url, lang, supporting):
         return ""
 
 
 class PaymentTypeTransfer(PaymentType):
     name = _('transfer')
     num = 0
+    help_content = _("help_payoff_transfer")
 
     def get_extra_fields(self):
         return [(1, _('IBAN'), PaymentType.FIELDTYPE_EDIT), (2, _('BIC'), PaymentType.FIELDTYPE_EDIT)]
 
-    def show_pay(self, absolute_uri, lang, supporting):
+    def show_pay(self, root_url, lang, supporting):
         items = self.get_items()
         formTxt = "{[center]}"
         formTxt += "{[table width='100%']}{[tr]}"
@@ -173,6 +186,7 @@ class PaymentTypeTransfer(PaymentType):
 class PaymentTypeCheque(PaymentType):
     name = _('cheque')
     num = 1
+    help_content = _("help_payoff_cheque")
 
     def get_extra_fields(self):
         return [(1, _('payable to'), PaymentType.FIELDTYPE_EDIT), (2, _('address'), PaymentType.FIELDTYPE_MEMO)]
@@ -185,7 +199,7 @@ class PaymentTypeCheque(PaymentType):
             items = self.extra_data.split("\n")
         return items
 
-    def show_pay(self, absolute_uri, lang, supporting):
+    def show_pay(self, root_url, lang, supporting):
         items = self.get_items()
         formTxt = "{[center]}"
         formTxt += "{[table width='100%%']}"
@@ -206,26 +220,25 @@ class PaymentTypePayPal(PaymentType):
     name = _('PayPal')
     num = 2
     logo_bank = 'pp_cc_mark_74x46.jpg'
+    help_content = _("help_payoff_paypal")
 
     def get_extra_fields(self):
         return [(1, _('Paypal account'), PaymentType.FIELDTYPE_EMAIL), (2, _('With control'), PaymentType.FIELDTYPE_CHECK)]
 
-    @classmethod
-    def get_url(cls, absolute_uri):
+    def get_url(self, root_url, supporting=None):
         return getattr(settings, 'DIACAMMA_PAYOFF_PAYPAL_URL', 'https://www.paypal.com/cgi-bin/webscr')
 
-    def _get_parameters_dict(self, absolute_uri, lang, supporting):
+    def _get_parameters_dict(self, root_url, lang, supporting):
         if abs(supporting.get_payable_without_tax()) < 0.0001:
             raise LucteriosException(IMPORTANT, _("This item can't be validated!"))
-        abs_url = absolute_uri.split('/')
         items = self.get_items()
         parameters_dict = {}
         parameters_dict['business'] = items[0]
         parameters_dict['currency_code'] = Params.getvalue("accounting-devise-iso")
         parameters_dict['lc'] = lang
-        parameters_dict['return'] = '/'.join(abs_url[:-2])
-        parameters_dict['cancel_return'] = '/'.join(abs_url[:-2])
-        parameters_dict['notify_url'] = parameters_dict['return'] + '/diacamma.payoff/validationPaymentPaypal'
+        parameters_dict['return'] = root_url
+        parameters_dict['cancel_return'] = root_url
+        parameters_dict['notify_url'] = root_url + '/diacamma.payoff/validationPaymentPaypal'
         parameters_dict['item_name'] = remove_accent(supporting.get_payment_name())
         parameters_dict['custom'] = str(supporting.id)
         parameters_dict['tax'] = str(supporting.get_tax())
@@ -235,25 +248,24 @@ class PaymentTypePayPal(PaymentType):
         parameters_dict['no_shipping'] = '1'
         return parameters_dict
 
-    def show_pay(self, absolute_uri, lang, supporting):
+    def show_pay(self, root_url, lang, supporting):
         items = self.get_items()
-        abs_url = absolute_uri.split('/')
-        root_url = '/'.join(abs_url[:-2])
         if (items[1] == 'o') or (items[1] == 'True'):
             formTxt = self.get_html_link(root_url, 'diacamma.payoff/checkPaymentPaypal', supporting.id)
         else:
-            formTxt = self.get_html_link(root_url, self.get_redirect_url(absolute_uri, lang, supporting))
+            formTxt = self.get_html_link(root_url, self.get_redirect_url(root_url, lang, supporting))
         return formTxt
 
 
 class PaymentTypeOnline(PaymentType):
     name = _('online')
     num = 3
+    help_content = _("help_payoff_online")
 
     def get_extra_fields(self):
         return [(1, _('web address'), PaymentType.FIELDTYPE_URL), (2, _('info'), PaymentType.FIELDTYPE_MEMO)]
 
-    def show_pay(self, absolute_uri, lang, supporting):
+    def show_pay(self, root_url, lang, supporting):
         items = self.get_items()
         formTxt = "{[center]}"
         formTxt += "{[table width='100%%']}"
@@ -274,6 +286,7 @@ class PaymentTypeMoneticoPaiement(PaymentType):
     name = _('MoneticoPaiement')
     num = 4
     logo_bank = 'monetico_logo.png'
+    help_content = _("help_payoff_moneticopaiement")
 
     def compute_HMACSHA1(self, custumer_key, sData):
         import hashlib
@@ -319,14 +332,12 @@ class PaymentTypeMoneticoPaiement(PaymentType):
     def is_valid_mac(self, parameters):
         return self.get_mac(parameters) == parameters['MAC'].lower()
 
-    @classmethod
-    def get_url(cls, absolute_uri):
+    def get_url(self, root_url, supporting=None):
         return getattr(settings, 'DIACAMMA_MONETICO_PAIEMENT_URL', 'https://p.monetico-services.com/') + 'paiement.cgi'
 
-    def _get_parameters_dict(self, absolute_uri, lang, supporting):
+    def _get_parameters_dict(self, root_url, lang, supporting):
         if abs(supporting.get_payable_without_tax()) < 0.0001:
             raise LucteriosException(IMPORTANT, _("This item can't be validated!"))
-        root_url = '/'.join(absolute_uri.split('/')[:-2])
         parameters_dict = {}
         parameters_dict["version"] = "3.0"
         parameters_dict["TPE"] = self.get_items()[1]
@@ -345,10 +356,92 @@ class PaymentTypeMoneticoPaiement(PaymentType):
         parameters_dict["MAC"] = self.get_mac(parameters_dict)
         return parameters_dict
 
-    def show_pay(self, absolute_uri, lang, supporting):
-        root_url = '/'.join(absolute_uri.split('/')[:-2])
+    def show_pay(self, root_url, lang, supporting):
         formTxt = self.get_html_link(root_url, 'diacamma.payoff/checkPaymentMoneticoPaiement', supporting.id)
         return formTxt
 
 
-PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement)
+class PaymentTypeHelloAsso(PaymentType):
+    name = _('Hello-Asso')
+    num = 5
+    logo_bank = 'helloasso-logo.png'
+
+    form_method = 'get'
+    help_content = _("help_payoff_helloasso")
+
+    @staticmethod
+    def check_error(response, *args, **kwargs):
+        if response.status_code != 200:
+            raise LucteriosException(IMPORTANT, "[%d] %s" % (response.status_code, response.content.decode()))
+        value = response.json()
+        for key in args:
+            if isinstance(value, dict) and isinstance(key, str) and (key in value):
+                value = value[key]
+            elif isinstance(value, list) and isinstance(key, int) and (key < len(value)):
+                value = value[key]
+            else:
+                value = None
+                break
+        if kwargs:
+            new_value = []
+            for item in value:
+                add = True
+                for filter_item in kwargs.keys():
+                    if filter_item in item.keys():
+                        if item[filter_item] != kwargs[filter_item]:
+                            add = False
+                            break
+                if add:
+                    new_value.append(item)
+            if len(new_value) == 0:
+                value = None
+            else:
+                value = new_value[0]
+        return value
+
+    def get_url(self, root_url, supporting=None):
+        from oauthlib.oauth2 import BackendApplicationClient
+        from requests_oauthlib import OAuth2Session
+        client_id = self.get_items()[0]
+        client_secret = self.get_items()[1]
+        base_url = getattr(settings, 'DIACAMMA_HELLO_ASSO_URL', 'https://api.helloasso.com')
+        base_url = base_url[:-1] if base_url[-1] == '/' else base_url
+        api_session = OAuth2Session(client=BackendApplicationClient(client_id=client_id))
+        api_session.grant_type = "authorization_code"
+        api_session.fetch_token(token_url='%s/oauth2/token' % base_url, client_id=client_id, client_secret=client_secret)
+        try:
+            organization_slug = self.check_error(api_session.get("%s/v5/users/me/organizations" % base_url), 0, 'organizationSlug')
+            form_item = self.check_error(api_session.get("%s/v5/organizations/%s/forms?formTypes=PaymentForm" % (base_url, organization_slug)), 'data', title=str(supporting))
+            if form_item is not None:
+                form_slug = form_item['formSlug']
+            else:
+                print('form', self.check_error(api_session.get("%s/v5/organizations/%s/forms/PaymentForm/%s/public" % (base_url, organization_slug, 'facture-123'))))
+                new_payment_form = {
+                    'tiers': [{
+                        'tierType': 'Payment',
+                        'price': int(supporting.get_total_rest_topay() * 100),
+                        'vatRate': 0.0,
+                        'paymentFrequency': 'Single',
+                        'isEligibleTaxReceipt': False
+                    }],
+                    'currency': Params.getvalue("accounting-devise-iso"),
+                    'description': str(supporting),
+                    'state': 'Private',
+                    'title': str(supporting)
+                }
+                form_create = self.check_error(api_session.post("%s/v5/organizations/%s/forms/PaymentForm/action/quick-create" % (base_url, organization_slug), json=new_payment_form))
+                print('form_create', form_create)
+            form_url = self.check_error(api_session.get("%s/v5/organizations/%s/forms/PaymentForm/%s/public" % (base_url, organization_slug, form_slug)), 'url')
+            print('organization_slug', organization_slug, 'form_slug', form_slug, 'form_url', form_url)
+        finally:
+            api_session.get('%s/oauth2/disconnect' % base_url)
+        return form_url
+
+    def get_extra_fields(self):
+        return [(1, _('clientid'), PaymentType.FIELDTYPE_EDIT), (2, _('clientsecret'), PaymentType.FIELDTYPE_PWD)]
+
+    def show_pay(self, root_url, lang, supporting):
+        return self.get_html_link(root_url, 'diacamma.payoff/checkPaymentHelloAsso', supporting.id)
+
+
+PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement, PaymentTypeHelloAsso)

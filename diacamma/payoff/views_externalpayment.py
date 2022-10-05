@@ -25,6 +25,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import logging
+from json import dumps
 
 from django.utils import timezone
 from django.conf import settings
@@ -32,12 +33,13 @@ from django.utils.translation import ugettext_lazy as _
 from django.http.response import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 
-from lucterios.framework.tools import MenuManage, toHtml
+from lucterios.framework.tools import MenuManage, toHtml, get_url_from_request
 from lucterios.framework.xferbasic import XferContainerAbstract
 from lucterios.framework.error import LucteriosException, IMPORTANT
 
 from diacamma.payoff.models import BankTransaction, PaymentMethod, Supporting, Payoff
-from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement
+from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement,\
+    PaymentTypeHelloAsso
 
 
 class ValidationPaymentGeneric(XferContainerAbstract):
@@ -161,11 +163,11 @@ class CheckPaymentGeneric(XferContainerAbstract):
         dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
         dictionary['applogo'] = settings.APPLIS_LOGO.decode()
         self._initialize(request, *args, **kwargs)
-        absolute_uri = self.getparam("url", self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()))
+        root_uri = self.getparam("url", get_url_from_request(self.request))
         try:
             support = Supporting.objects.get(id=self.payid).get_final_child()
             dictionary['content1'] = ''
-            dictionary['content2'] = toHtml(self.payment_meth.paymentType.get_form(absolute_uri, self.language, support), withclean=False)
+            dictionary['content2'] = toHtml(self.payment_meth.paymentType.get_form(root_uri, self.language, support), withclean=False)
         except Exception:
             logging.getLogger('diacamma.payoff').exception("CheckPayment")
             dictionary['content1'] = _("It is not possible to pay-off this item with %s !") % self.payment_name
@@ -214,7 +216,7 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
     def confirm(self):
         from urllib.parse import quote_plus
         from requests import post
-        paypal_url = PaymentTypePayPal.get_url("")
+        paypal_url = PaymentTypePayPal({}).get_url("")
         fields = 'cmd=_notify-validate'
         try:
             for key, value in self.request.POST.items():
@@ -328,3 +330,23 @@ class ValidationPaymentMoneticoPaiement(ValidationPaymentGeneric):
     @property
     def bank_fee(self):
         return 0.0
+
+
+@MenuManage.describ('')
+class CheckPaymentHelloAsso(CheckPaymentGeneric):
+
+    payment_name = "Hello-Asso"
+
+    @property
+    def payment_meth(self):
+        return PaymentMethod.objects.filter(paytype=PaymentTypeHelloAsso.num).first()
+
+
+@MenuManage.describ('')
+class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
+    observer_name = 'HelloAsso'
+    caption = 'ValidationPaymentHelloAsso'
+
+    def fillresponse(self):
+        all_params = dumps(self.params, indent=2)
+        logging.getLogger('diacamma.payoff').info("Arguments from /diacamma.payoff/validationPaymentHelloAsso/ : " + all_params)

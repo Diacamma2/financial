@@ -34,7 +34,8 @@ from lucterios.framework.xferadvance import XferAddEditor, XferListEditor, \
     XferSave, TITLE_ADD, TITLE_MODIFY, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, TITLE_CLOSE
 from lucterios.framework.xferadvance import XferDelete
 from lucterios.framework.tools import ActionsManage, MenuManage, \
-    FORMTYPE_REFRESH, CLOSE_NO, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, WrapAction, SELECT_MULTI
+    FORMTYPE_REFRESH, CLOSE_NO, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, WrapAction, SELECT_MULTI,\
+    get_url_from_request
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
 from lucterios.framework.xfercomponents import XferCompLabelForm, \
     XferCompEdit, XferCompImage, XferCompMemo, XferCompSelect, XferCompCheck
@@ -226,7 +227,7 @@ class PayableEmail(XferContainerAcknowledge):
         html_message = "<html>"
         html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
         if self.item.payoff_have_payment() and (len(PaymentMethod.objects.all()) > 0):
-            html_message += get_html_payment(self.request.META.get('HTTP_REFERER', self.request.build_absolute_uri()), self.language, self.item)
+            html_message += get_html_payment(get_url_from_request(self.request), self.language, self.item)
         html_message += "</html>"
         self.item.send_email(subject, html_message, model)
 
@@ -344,7 +345,7 @@ def add_payment_methods(xfer, supporting, payments):
         max_row = xfer.get_max_row() + 1
         lbl = XferCompLabelForm('paymeth_%d' % paymeth.id)
         lbl.description = get_value_if_choices(paymeth.paytype, paymeth.get_field_by_name('paytype'))
-        lbl.set_value(paymeth.show_pay(xfer.request.META.get('HTTP_REFERER', xfer.request.build_absolute_uri()), xfer.language, supporting))
+        lbl.set_value(paymeth.show_pay(get_url_from_request(xfer.request), xfer.language, supporting))
         lbl.set_location(1, max_row, 3)
         xfer.add_component(lbl)
         lbl = XferCompLabelForm('sep_paymeth_%d' % paymeth.id)
@@ -380,14 +381,14 @@ class PayableShow(XferContainerCustom):
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
 
 
-def get_html_payment(absolute_uri, lang, supporting):
+def get_html_payment(root_uri, lang, supporting):
     html_message = "<hr/>"
     html_message += "<center><i><u>%s</u></i></center>" % _("Payement methods")
     html_message += "<table width='90%'>"
     for paymeth in PaymentMethod.objects.all():
         html_message += "<tr>"
         html_message += "<td><b>%s</b></td>" % get_value_if_choices(paymeth.paytype, paymeth.get_field_by_name('paytype'))
-        html_message += "<td>%s</td>" % paymeth.show_pay(absolute_uri, lang, supporting).replace('{[', '<').replace(']}', '>')
+        html_message += "<td>%s</td>" % paymeth.show_pay(root_uri, lang, supporting).replace('{[', '<').replace(']}', '>')
         html_message += "</tr>"
         html_message += "<tr></tr>"
     html_message += "</table>"

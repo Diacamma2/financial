@@ -28,7 +28,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, XferCompSelect, XferCompLinkLabel
-from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction
+from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction,\
+    get_url_from_request
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.models import Preference
@@ -304,3 +305,10 @@ class PaymentMethodEditor(LucteriosEditor):
             row = xfer.get_max_row() + 1
             edt.set_location(1, row)
             xfer.add_component(edt)
+        help_text = self.item.paymentType.get_help(get_url_from_request(xfer.request))
+        if help_text:
+            lbl = XferCompLabelForm('help_payoff')
+            lbl.set_value(help_text)
+            lbl.set_color("green")
+            lbl.set_location(1, 20, 2)
+            xfer.add_component(lbl)

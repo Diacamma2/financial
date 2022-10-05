@@ -833,6 +833,9 @@ class PaymentMethod(LucteriosModel):
 
     info = LucteriosVirtualField(verbose_name=_('parameters'), compute_from='get_info')
 
+    def __str__(self):
+        return str(self.paymentType.name)
+
     @property
     def paymentType(self):
         if not hasattr(self, "_paymentType"):
