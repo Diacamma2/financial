@@ -28,7 +28,7 @@ from shutil import rmtree
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
 
-from lucterios.contacts.tests_contacts import change_ourdetail
+from lucterios.contacts.test_tools import change_ourdetail
 
 from diacamma.payoff.views_conf import PayoffConf, BankAccountAddModify,\
     BankAccountDelete, PaymentMethodAddModify
