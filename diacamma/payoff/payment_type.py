@@ -108,6 +108,7 @@ class PaymentType(object):
                 edt = XferCompCheck('item_%d' % fieldid)
             elif fieldtype == PaymentType.FIELDTYPE_PWD:
                 edt = XferCompPassword('item_%d' % fieldid)
+                edt.security = 0
             elif isinstance(fieldtype, str):
                 edt = XferCompEdit('item_%d' % fieldid)
                 edt.mask = fieldtype
