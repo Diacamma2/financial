@@ -138,24 +138,7 @@ class ArticleCustomField(LucteriosModel):
     field = models.ForeignKey(CustomField, verbose_name=_('field'), null=False, on_delete=models.CASCADE)
     value = models.TextField(_('value'), default="")
 
-    data = LucteriosVirtualField(verbose_name=_('value'), compute_from='get_data')
-
-    def get_data(self):
-        data = None
-        if self.field.kind == 0:
-            data = str(self.value)
-        if self.value == '':
-            self.value = '0'
-        if self.field.kind == 1:
-            data = int(self.value)
-        if self.field.kind == 2:
-            data = float(self.value)
-        if self.field.kind == 3:
-            data = (self.value != 'False') and (self.value != '0') and (self.value != '') and (self.value != 'n')
-        if self.field.kind == 4:
-            data = int(self.value)
-        dep_field = CustomizeObject.get_virtualfield(self.field.get_fieldname())
-        return get_format_value(dep_field, data)
+    data = LucteriosVirtualField(verbose_name=_('value'), compute_from=lambda item: item.field.convert_data(item.value))
 
     def get_auditlog_object(self):
         return self.article.get_final_child()

@@ -30,7 +30,7 @@ from lucterios.CORE.models import Parameter
 from lucterios.CORE.parameters import Params
 
 from lucterios.contacts.models import Individual, LegalEntity, AbstractContact
-from lucterios.contacts.tests_contacts import change_ourdetail
+from lucterios.contacts.test_tools import change_ourdetail
 from lucterios.documents.models import DocumentContainer
 
 from diacamma.accounting.tools import clear_system_account

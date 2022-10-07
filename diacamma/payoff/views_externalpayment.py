@@ -349,4 +349,6 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
 
     def fillresponse(self):
         all_params = dumps(self.params, indent=2)
-        logging.getLogger('diacamma.payoff').info("Arguments from /diacamma.payoff/validationPaymentHelloAsso/ : " + all_params)
+        post_params = dumps(self.request.POST, indent=2)
+        get_params = dumps(self.request.GET, indent=2)
+        logging.getLogger('diacamma.payoff').info("Arguments from /diacamma.payoff/validationPaymentHelloAsso/ : " + all_params + post_params + get_params)
