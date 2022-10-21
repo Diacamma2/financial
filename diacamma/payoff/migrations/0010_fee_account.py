@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='paymentmethod',
             name='paytype',
-            field=models.IntegerField(choices=[(0, 'transfer'), (1, 'cheque'), (2, 'PayPal'), (3, 'online'), (4, 'MoneticoPaiement')], db_index=True, default=0, verbose_name='type'),
+            field=models.IntegerField(choices=[(0, 'transfer'), (1, 'cheque'), (2, 'PayPal'), (3, 'online'), (4, 'MoneticoPaiement'), (5, 'Hello-Asso')], db_index=True, default=0, verbose_name='type'),
         ),
     ]
