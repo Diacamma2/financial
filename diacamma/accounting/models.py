@@ -1951,10 +1951,10 @@ def check_multilink():
             if firstline and (firstline.multilink_id is not None):
                 try:
                     firstline.multilink.clean()
+                    print('* remove multilink for', link, firstline)
                 except ObjectDoesNotExist:
                     pass
                 firstline.multilink = None
-            print('* remove multilink for', link, [str(line) for line in lines])
     AccountLink.fill_emptydate()
 
 
