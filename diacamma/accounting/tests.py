@@ -961,7 +961,7 @@ class AdminTest(LucteriosTest):
         self.calljson('/diacamma.accounting/configuration', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
         self.assert_count_equal('custom_field', 0)
-        self.assert_count_equal('#custom_field/actions', 3)
+        self.assert_count_equal('#custom_field/actions', 4)
 
         self.factory.xfer = CustomFieldAddModify()
         self.calljson('/lucterios.contacts/customFieldAddModify', {"SAVE": "YES", 'name': 'aaa', 'modelname': 'accounting.Third', 'kind': '0', 'args_multi': 'n', 'args_min': '0', 'args_max': '0', 'args_prec': '0', 'args_list': ''}, False)

@@ -24,18 +24,20 @@ from __future__ import unicode_literals
 from json import dumps
 from base64 import b64encode
 from datetime import datetime
+import logging
 
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from lucterios.framework.tools import get_bool_textual
-from lucterios.framework.error import LucteriosException, IMPORTANT
+from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.filetools import remove_accent
+from lucterios.framework.xfercomponents import XferCompPassword
 from lucterios.CORE.parameters import Params
 
 from lucterios.contacts.models import LegalEntity
+
 from diacamma.accounting.tools import get_amount_from_format_devise
-from lucterios.framework.xfercomponents import XferCompPassword
 
 
 class PaymentType(object):
@@ -373,7 +375,9 @@ class PaymentTypeHelloAsso(PaymentType):
     @staticmethod
     def check_error(response, *args, **kwargs):
         if response.status_code != 200:
-            raise LucteriosException(IMPORTANT, "[%d] %s" % (response.status_code, response.content.decode()))
+            content_json = response.json()
+            message_txt = content_json['message'] if 'message' in content_json else response.content.decode()
+            raise LucteriosException(GRAVE, "[%d] %s" % (response.status_code, message_txt))
         value = response.json()
         for key in args:
             if isinstance(value, dict) and isinstance(key, str) and (key in value):
@@ -400,23 +404,59 @@ class PaymentTypeHelloAsso(PaymentType):
                 value = new_value[0]
         return value
 
-    def get_url(self, root_url, supporting=None):
+    def __init__(self, extra_data):
+        from requests_oauthlib.oauth2_session import log
+        PaymentType.__init__(self, extra_data)
+        payoff_logger = logging.getLogger('diacamma.payoff')
+        log.setLevel(payoff_logger.level)
+        for hdl in payoff_logger.handlers:
+            log.addHandler(hdl)
+        base_url = getattr(settings, 'DIACAMMA_HELLO_ASSO_URL', 'https://api.helloasso.com')
+        self.base_url = base_url[:-1] if base_url[-1] == '/' else base_url
+        self.api_session = None
+
+    def connect(self):
         from oauthlib.oauth2 import BackendApplicationClient
         from requests_oauthlib import OAuth2Session
         client_id = self.get_items()[0]
         client_secret = self.get_items()[1]
-        base_url = getattr(settings, 'DIACAMMA_HELLO_ASSO_URL', 'https://api.helloasso.com')
-        base_url = base_url[:-1] if base_url[-1] == '/' else base_url
-        api_session = OAuth2Session(client=BackendApplicationClient(client_id=client_id))
-        api_session.grant_type = "authorization_code"
-        api_session.fetch_token(token_url='%s/oauth2/token' % base_url, client_id=client_id, client_secret=client_secret)
+        oauth_client = BackendApplicationClient(client_id=client_id)
+        oauth_client.grant_type = "client_credentials"
+        self.api_session = OAuth2Session(client=oauth_client)
+        self.api_session.fetch_token(token_url='%s/oauth2/token' % self.base_url, client_id=client_id, client_secret=client_secret)
+
+    def get_api(self, suburl, *args, **kwargs):
+        return self.check_error(self.api_session.get(self.base_url + suburl), *args, **kwargs)
+
+    def get_post(self, suburl, json):
+        return self.api_session.post(self.base_url + suburl, json=json)
+
+    def disconnect(self):
+        self.get_api('/oauth2/disconnect')
+
+    def get_customid(self, helloasso_data):
+        self.connect()
         try:
-            organization_slug = self.check_error(api_session.get("%s/v5/users/me/organizations" % base_url), 0, 'organizationSlug')
-            form_item = self.check_error(api_session.get("%s/v5/organizations/%s/forms?formTypes=PaymentForm" % (base_url, organization_slug)), 'data', title=str(supporting))
+            form_slug = helloasso_data['order']['formSlug']
+            organization_slug = helloasso_data['order']['organizationSlug']
+            form_title = self.get_api("/v5/organizations/%s/forms/PaymentForm/%s/public" % (self.base_url, organization_slug, form_slug), 'title')
+            return int(form_title.split()[-1])
+        except Exception:
+            return 0
+        finally:
+            self.disconnect()
+
+    def get_url(self, root_url, supporting=None):
+        from requests_oauthlib.oauth2_session import log
+        self.connect()
+        try:
+            organization_slug = self.get_api("/v5/users/me/organizations", 0, 'organizationSlug')
+            form_item = self.get_api("/v5/organizations/%s/forms?formTypes=PaymentForm" % organization_slug, 'data', title=str(supporting))
             if form_item is not None:
                 form_slug = form_item['formSlug']
+                form_url = self.get_api("/v5/organizations/%s/forms/PaymentForm/%s/public" % (organization_slug, form_slug), 'url')
             else:
-                print('form', self.check_error(api_session.get("%s/v5/organizations/%s/forms/PaymentForm/%s/public" % (base_url, organization_slug, 'facture-123'))))
+                log.debug('form : %' % self.get_api("/v5/organizations/%s/forms/PaymentForm/%s/public" % (organization_slug, 'facture-123')))
                 new_payment_form = {
                     'tiers': [{
                         'tierType': 'Payment',
@@ -428,14 +468,15 @@ class PaymentTypeHelloAsso(PaymentType):
                     'currency': Params.getvalue("accounting-devise-iso"),
                     'description': str(supporting),
                     'state': 'Private',
-                    'title': str(supporting)
+                    'title': "vente %d" % supporting.id
                 }
-                form_create = self.check_error(api_session.post("%s/v5/organizations/%s/forms/PaymentForm/action/quick-create" % (base_url, organization_slug), json=new_payment_form))
-                print('form_create', form_create)
-            form_url = self.check_error(api_session.get("%s/v5/organizations/%s/forms/PaymentForm/%s/public" % (base_url, organization_slug, form_slug)), 'url')
-            print('organization_slug', organization_slug, 'form_slug', form_slug, 'form_url', form_url)
+                form_create = self.get_post("/v5/organizations/%s/forms/PaymentForm/action/quick-create" % organization_slug, new_payment_form)
+                log.debug('form_create : %s' % form_create)
+                form_slug = form_create['formSlug']
+                form_url = form_create['publicUrl']
+            log.debug('organization_slug : %s  form_slug : %s  form_url : %s' % (organization_slug, form_slug, form_url))
         finally:
-            api_session.get('%s/oauth2/disconnect' % base_url)
+            self.disconnect()
         return form_url
 
     def get_extra_fields(self):

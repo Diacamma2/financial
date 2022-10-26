@@ -25,7 +25,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import logging
-from json import dumps
 
 from django.utils import timezone
 from django.conf import settings
@@ -35,7 +34,7 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from lucterios.framework.tools import MenuManage, toHtml, get_url_from_request
 from lucterios.framework.xferbasic import XferContainerAbstract
-from lucterios.framework.error import LucteriosException, IMPORTANT
+from lucterios.framework.error import LucteriosException, IMPORTANT, MINOR
 
 from diacamma.payoff.models import BankTransaction, PaymentMethod, Supporting, Payoff
 from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement,\
@@ -129,12 +128,14 @@ class ValidationPaymentGeneric(XferContainerAbstract):
             dictionary['title'] = str(settings.APPLIS_NAME)
             dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
             dictionary['applogo'] = settings.APPLIS_LOGO.decode()
+            dictionary['content1'] = ''
+            dictionary['content2'] = ''
+            dictionary['error'] = ''
             if self.getparam('ret', 'none') == 'OK':
                 dictionary['content1'] = _("Payoff terminate.")
                 dictionary['content2'] = _("Thanks you.")
             else:
                 dictionary['content1'] = _("Payoff aborded.")
-                dictionary['content2'] = ''
             return render(self.request, 'info.html', context=dictionary)
         else:
             return HttpResponse(self.reponse_content)
@@ -162,16 +163,21 @@ class CheckPaymentGeneric(XferContainerAbstract):
         dictionary['title'] = str(settings.APPLIS_NAME)
         dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
         dictionary['applogo'] = settings.APPLIS_LOGO.decode()
+        dictionary['content1'] = ''
+        dictionary['content2'] = ''
+        dictionary['error'] = ''
         self._initialize(request, *args, **kwargs)
         root_uri = self.getparam("url", get_url_from_request(self.request))
         try:
             support = Supporting.objects.get(id=self.payid).get_final_child()
-            dictionary['content1'] = ''
             dictionary['content2'] = toHtml(self.payment_meth.paymentType.get_form(root_uri, self.language, support), withclean=False)
-        except Exception:
+        except Exception as err:
             logging.getLogger('diacamma.payoff').exception("CheckPayment")
             dictionary['content1'] = _("It is not possible to pay-off this item with %s !") % self.payment_name
-            dictionary['content2'] = _("This item is deleted, payed or disabled.")
+            if isinstance(err, ObjectDoesNotExist) or (isinstance(err, LucteriosException) and err.code in (IMPORTANT, MINOR)):
+                dictionary['content2'] = _("This item is deleted, payed or disabled.")
+            else:
+                dictionary['error'] = str(err)
         return render(request, 'info.html', context=dictionary)
 
 
@@ -347,8 +353,42 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
     observer_name = 'HelloAsso'
     caption = 'ValidationPaymentHelloAsso'
 
-    def fillresponse(self):
-        all_params = dumps(self.params, indent=2)
-        post_params = dumps(self.request.POST, indent=2)
-        get_params = dumps(self.request.GET, indent=2)
-        logging.getLogger('diacamma.payoff').info("Arguments from /diacamma.payoff/validationPaymentHelloAsso/ : " + all_params + post_params + get_params)
+    def __init__(self, **kwargs):
+        ValidationPaymentGeneric.__init__(self, **kwargs)
+        self.helloasso_data = {}
+        self.helloasso_eventtype = ""
+
+    @property
+    def payer(self):
+        return str("%(firstName)s %(lastName)s %(company)s" % self.helloasso_data['payer']).strip()
+
+    @property
+    def amount(self):
+        return self.helloasso_data['amount'] / 100.0
+
+    @property
+    def date(self):
+        try:
+            return datetime.fromisoformat(self.helloasso_data['date'])
+        except Exception:
+            logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.helloasso_data['date'])
+            return timezone.now()
+
+    @property
+    def customid(self):
+        if (self.helloasso_eventtype == 'Payment') and (self.helloasso_data['state'] == 'Authorized'):
+            return PaymentTypeHelloAsso().get_customid(self.helloasso_data)
+        else:
+            return 0
+
+    @property
+    def payment_meth(self):
+        return PaymentMethod.objects.filter(paytype=PaymentTypeHelloAsso.num).first()
+
+    def _initialize(self, request, *_, **kwargs):
+        from json import loads
+        return_content = loads(self.request.META['wsgi.input'].read().decode())
+        self.helloasso_data = return_content['data']
+        self.helloasso_eventtype = return_content['eventType']
+        logging.getLogger('diacamma.payoff').debug("eventType = %s / data = %s" % (self.helloasso_eventtype, self.helloasso_data))
+        ValidationPaymentGeneric._initialize(self, request, *_, **kwargs)
