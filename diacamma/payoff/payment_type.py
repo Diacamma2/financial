@@ -486,4 +486,4 @@ class PaymentTypeHelloAsso(PaymentType):
         return self.get_html_link(root_url, 'diacamma.payoff/checkPaymentHelloAsso', supporting.id)
 
 
-PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement, PaymentTypeHelloAsso)
+PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement)
