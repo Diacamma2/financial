@@ -135,7 +135,7 @@ class PaymentType(object):
     def get_html_link(self, root_url, link_url, supportingid=None):
         if supportingid is not None:
             import urllib.parse
-            link_url = '%s/%s?payid=%d&url=%s' % (root_url, link_url, supportingid, urllib.parse.quote(root_url + "/" + link_url))
+            link_url = '%s/%s?payid=%d&url=%s' % (root_url, link_url, supportingid, urllib.parse.quote(root_url))
         formTxt = "{[center]}"
         formTxt += "{[a href='%s' name='%s' target='_blank']}" % (link_url, self.name.lower())
         formTxt += "{[img src='%s/static/diacamma.payoff/images/%s' title='%s' alt='%s' /]}" % (root_url, self.logo_bank, self.name, self.name)
