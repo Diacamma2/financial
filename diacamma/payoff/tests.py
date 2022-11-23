@@ -129,7 +129,7 @@ class PayoffTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.payoff', 'paymentMethodAddModify')
         self.assert_count_equal('', 5)
         self.assert_select_equal('paytype', {0: "virement", 1: "chèque", 2: "PayPal",
-                                             3: "en ligne", 4: "MoneticoPaiement"})  # TODO : 5: "Hello-Asso"
+                                             3: "en ligne", 4: "MoneticoPaiement", 5: "Hello-Asso"})  # TODO : 5: "Hello-Asso"
         self.assert_select_equal('bank_account', 1)  # nb=1
         self.assert_attrib_equal('item_1', 'description', 'IBAN')
         self.assert_json_equal('EDIT', 'item_1', '')
@@ -187,18 +187,17 @@ class PayoffTest(LucteriosTest):
         self.assert_json_equal('LABELFORM', 'help_payoff', """Veuillez prendre contact avec votre agence bancaire pour faire ouvrir votre accès et obtenir les 3 champs à remplir.{[br/]}
 De plus, vous devez déclarer à la plateforme cet adresse de retour {[b]}http://testserver/diacamma.payoff/validationPaymentMoneticoPaiement{[/b]} pour que l'outil soit notifié des paiements.""")
 
-# TODO Hello-Asso
-#         self.factory.xfer = PaymentMethodAddModify()
-#         self.calljson('/diacamma.payoff/paymentMethodAddModify', {'paytype': 5}, False)
-#         self.assert_observer('core.custom', 'diacamma.payoff', 'paymentMethodAddModify')
-#         self.assert_count_equal('', 6)
-#         self.assert_attrib_equal('item_1', 'description', 'Mon clientId')
-#         self.assert_json_equal('EDIT', 'item_1', '')
-#         self.assert_attrib_equal('item_2', 'description', 'Mon clientSecret')
-#         self.assert_json_equal('PASSWD', 'item_2', '')
-#         self.assert_json_equal('LABELFORM', 'help_payoff', """Depuis le portail Hello-Asso, dans le menu "Mon compte > Intégration et API".{[br/]}
-# - Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}.{[br/]}
-# - Remplissez le champ {[b]}Mon URL de callback{[/b]} par l'adresse {[b]}http://testserver/diacamma.payoff/validationPaymentHelloAsso{[/b]} pour que l'outil soit notifié des paiements.""")
+        self.factory.xfer = PaymentMethodAddModify()
+        self.calljson('/diacamma.payoff/paymentMethodAddModify', {'paytype': 5}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'paymentMethodAddModify')
+        self.assert_count_equal('', 6)
+        self.assert_attrib_equal('item_1', 'description', 'Mon clientId')
+        self.assert_json_equal('EDIT', 'item_1', '')
+        self.assert_attrib_equal('item_2', 'description', 'Mon clientSecret')
+        self.assert_json_equal('PASSWD', 'item_2', '')
+        self.assert_json_equal('LABELFORM', 'help_payoff', """Depuis le portail Hello-Asso, dans le menu "Mon compte > Intégration et API".{[br/]}
+- Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}.{[br/]}
+- Remplissez le champ {[b]}Mon URL de callback{[/b]} par l'adresse {[b]}http://testserver/diacamma.payoff/validationPaymentHelloAsso{[/b]} pour que l'outil soit notifié des paiements.""")
 
         self.factory.xfer = PaymentMethodAddModify()
         self.calljson('/diacamma.payoff/paymentMethodAddModify',
@@ -225,19 +224,18 @@ De plus, vous devez déclarer à la plateforme cet adresse de retour {[b]}http:/
                       {'paytype': 4, 'bank_account': 1, 'item_1': '7979879878', 'item_2': 'ababab', 'item_3': '12345678901234567890', 'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
 
-# TODO Hello-Asso
-#         self.factory.xfer = PaymentMethodAddModify()
-#         self.calljson('/diacamma.payoff/paymentMethodAddModify',
-#                       {'paytype': 5, 'bank_account': 1, 'item_1': '44444444444444444', 'item_2': '22222222222', 'SAVE': 'YES'}, False)
-#         self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
+        self.factory.xfer = PaymentMethodAddModify()
+        self.calljson('/diacamma.payoff/paymentMethodAddModify',
+                      {'paytype': 5, 'bank_account': 1, 'item_1': '44444444444444444', 'item_2': '22222222222', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'paymentMethodAddModify')
 
         self.factory.xfer = PayoffConf()
         self.calljson('/diacamma.payoff/payoffConf', {}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payoffConf')
-        self.assert_count_equal('paymentmethod', 5)  # TODO Hello-Asso
+        self.assert_count_equal('paymentmethod', 6)
         self.assert_json_equal('', '#paymentmethod/headers/@0/@0', 'paytype')
         self.assert_json_equal('', '#paymentmethod/headers/@0/@1', 'type')
-        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '2': 'PayPal', '3': 'en ligne', '4': 'MoneticoPaiement'}) #TODO '5': 'Hello-Asso'
+        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '2': 'PayPal', '3': 'en ligne', '4': 'MoneticoPaiement', '5': 'Hello-Asso'})
         self.assert_json_equal('', '#paymentmethod/headers/@0/@4', "%s")
 
         self.assert_json_equal('', 'paymentmethod/@0/paytype', 0)
@@ -260,7 +258,6 @@ De plus, vous devez déclarer à la plateforme cet adresse de retour {[b]}http:/
         self.assert_json_equal('', 'paymentmethod/@4/bank_account', "My bank")
         self.assert_json_equal('', 'paymentmethod/@4/info', '{[b]}code d\'entreprise{[/b]}{[br/]}7979879878{[br/]}{[b]}code TPE{[/b]}{[br/]}ababab{[br/]}{[b]}clef de sécuritée{[/b]}{[br/]}12345678901234567890{[br/]}')
 
-# TODO Hello-Asso
-#         self.assert_json_equal('', 'paymentmethod/@5/paytype', 5)
-#         self.assert_json_equal('', 'paymentmethod/@5/bank_account', "My bank")
-#         self.assert_json_equal('', 'paymentmethod/@5/info', '{[b]}Mon clientId{[/b]}{[br/]}44444444444444444{[br/]}{[b]}Mon clientSecret{[/b]}{[br/]}**********{[br/]}')
+        self.assert_json_equal('', 'paymentmethod/@5/paytype', 5)
+        self.assert_json_equal('', 'paymentmethod/@5/bank_account', "My bank")
+        self.assert_json_equal('', 'paymentmethod/@5/info', '{[b]}Mon clientId{[/b]}{[br/]}44444444444444444{[br/]}{[b]}Mon clientSecret{[/b]}{[br/]}**********{[br/]}')

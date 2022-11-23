@@ -38,6 +38,7 @@ from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import LegalEntity
 
 from diacamma.accounting.tools import get_amount_from_format_devise
+from requests.exceptions import JSONDecodeError
 
 
 class PaymentType(object):
@@ -374,11 +375,13 @@ class PaymentTypeHelloAsso(PaymentType):
 
     @staticmethod
     def check_error(response, *args, **kwargs):
+        try:
+            value = response.json()
+        except JSONDecodeError:
+            value = {'message': response.content.decode()}
         if response.status_code != 200:
-            content_json = response.json()
-            message_txt = content_json['message'] if 'message' in content_json else response.content.decode()
+            message_txt = value['message'] if 'message' in value else response.content.decode()
             raise LucteriosException(GRAVE, "[%d] %s" % (response.status_code, message_txt))
-        value = response.json()
         for key in args:
             if isinstance(value, dict) and isinstance(key, str) and (key in value):
                 value = value[key]
@@ -434,13 +437,11 @@ class PaymentTypeHelloAsso(PaymentType):
     def disconnect(self):
         self.get_api('/oauth2/disconnect')
 
-    def get_customid(self, helloasso_data):
+    def get_customid(self, helloasso_data, helloasso_meta):
         self.connect()
         try:
-            form_slug = helloasso_data['order']['formSlug']
-            organization_slug = helloasso_data['order']['organizationSlug']
-            form_title = self.get_api("/v5/organizations/%s/forms/PaymentForm/%s/public" % (self.base_url, organization_slug, form_slug), 'title')
-            return int(form_title.split()[-1])
+            reference = helloasso_meta["reference"]
+            return int(reference)
         except Exception:
             return 0
         finally:
@@ -450,34 +451,30 @@ class PaymentTypeHelloAsso(PaymentType):
         from requests_oauthlib.oauth2_session import log
         self.connect()
         try:
+            if root_url == 'http://127.0.0.1:8000':
+                root_url = 'https://test.sleto.fr'
             organization_slug = self.get_api("/v5/users/me/organizations", 0, 'organizationSlug')
-            form_item = self.get_api("/v5/organizations/%s/forms?formTypes=PaymentForm" % organization_slug, 'data', title=str(supporting))
-            if form_item is not None:
-                form_slug = form_item['formSlug']
-                form_url = self.get_api("/v5/organizations/%s/forms/PaymentForm/%s/public" % (organization_slug, form_slug), 'url')
-            else:
-                log.debug('form : %' % self.get_api("/v5/organizations/%s/forms/PaymentForm/%s/public" % (organization_slug, 'facture-123')))
-                new_payment_form = {
-                    'tiers': [{
-                        'tierType': 'Payment',
-                        'price': int(supporting.get_total_rest_topay() * 100),
-                        'vatRate': 0.0,
-                        'paymentFrequency': 'Single',
-                        'isEligibleTaxReceipt': False
-                    }],
-                    'currency': Params.getvalue("accounting-devise-iso"),
-                    'description': str(supporting),
-                    'state': 'Private',
-                    'title': "vente %d" % supporting.id
+            new_checkout = {
+                "totalAmount": int(supporting.get_total_rest_topay() * 100),
+                "initialAmount": int(supporting.get_total_rest_topay() * 100),
+                "itemName": str(supporting),
+                "backUrl": "%s/%s" % (root_url, 'diacamma.payoff/checkPaymentHelloAsso'),
+                "errorUrl": "%s/%s" % (root_url, 'diacamma.payoff/checkPaymentHelloAsso'),
+                "returnUrl": root_url,
+                "containsDonation": False,
+                "metadata": {
+                    "reference": supporting.id
                 }
-                form_create = self.get_post("/v5/organizations/%s/forms/PaymentForm/action/quick-create" % organization_slug, new_payment_form)
-                log.debug('form_create : %s' % form_create)
-                form_slug = form_create['formSlug']
-                form_url = form_create['publicUrl']
-            log.debug('organization_slug : %s  form_slug : %s  form_url : %s' % (organization_slug, form_slug, form_url))
+            }
+            log.debug('new_checkout : %s' % new_checkout)
+            form_create = self.check_error(self.get_post("/v5/organizations/%s/checkout-intents" % organization_slug, new_checkout))
+            log.debug('form_create : %s' % form_create)
+            checkout_id = form_create['id']
+            checkout_url = form_create['redirectUrl']
+            log.debug('organization_slug : %s  form_slug : %s  form_url : %s' % (organization_slug, checkout_id, checkout_url))
         finally:
             self.disconnect()
-        return form_url
+        return checkout_url
 
     def get_extra_fields(self):
         return [(1, _('clientid'), PaymentType.FIELDTYPE_EDIT), (2, _('clientsecret'), PaymentType.FIELDTYPE_PWD)]
@@ -486,4 +483,4 @@ class PaymentTypeHelloAsso(PaymentType):
         return self.get_html_link(root_url, 'diacamma.payoff/checkPaymentHelloAsso', supporting.id)
 
 
-PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement)
+PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement, PaymentTypeHelloAsso)

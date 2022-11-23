@@ -377,7 +377,7 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
     @property
     def customid(self):
         if (self.helloasso_eventtype == 'Payment') and (self.helloasso_data['state'] == 'Authorized'):
-            return PaymentTypeHelloAsso().get_customid(self.helloasso_data)
+            return PaymentTypeHelloAsso({}).get_customid(self.helloasso_data, self.helloasso_meta)
         else:
             return 0
 
@@ -390,5 +390,6 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
         return_content = loads(self.request.META['wsgi.input'].read().decode())
         self.helloasso_data = return_content['data']
         self.helloasso_eventtype = return_content['eventType']
-        logging.getLogger('diacamma.payoff').debug("eventType = %s / data = %s" % (self.helloasso_eventtype, self.helloasso_data))
+        self.helloasso_meta = return_content['metadata']
+        logging.getLogger('diacamma.payoff').debug("eventType = %s / data = %s / metadata = %s" % (self.helloasso_eventtype, self.helloasso_data, self.helloasso_meta))
         ValidationPaymentGeneric._initialize(self, request, *_, **kwargs)
