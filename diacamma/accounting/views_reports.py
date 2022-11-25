@@ -473,41 +473,48 @@ class FiscalYearLedger(FiscalYearReport):
         self.grid.add_header('credit', _('credit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
         self.grid.add_action(self.request, FiscalYearLedgerShow.get_action(TITLE_EDIT, 'images/show.png'), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE, params={'gridname': grid_name})
 
-    def _add_total_account(self):
-        if self.last_account is not None:
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(30) + "{[i]}%s{[/i]}" % _('total'))
+    def _add_total_account(self, third=False):
+        current_total = self.last_third_total if third else self.last_total
+        if (self.last_account is not None and not third) or (self.last_third is not None and third):
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(40 if third else 30) + "{[i]}%s{[/i]}" % (_('sub-total') if third else _('total')))
             if self.last_account.credit_debit_way() == -1:
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', self.last_total[0], "{[i]}%s{[/i]}")
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', self.last_total[1], "{[i]}%s{[/i]}")
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', current_total[0], "{[i]}%s{[/i]}")
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', current_total[1], "{[i]}%s{[/i]}")
             else:
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', self.last_total[1], "{[i]}%s{[/i]}")
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', self.last_total[0], "{[i]}%s{[/i]}")
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', current_total[1], "{[i]}%s{[/i]}")
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', current_total[0], "{[i]}%s{[/i]}")
             self.line_idx += 1
-            last_total = self.last_total[0] - self.last_total[1]
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(30) + "{[u]}{[i]}%s{[/i]}{[/u]}" % _('balance'))
+            last_total = current_total[0] - current_total[1]
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(40 if third else 30) + "{[u]}{[i]}%s{[/i]}{[/u]}" % (_('sub-balance') if third else _('balance')))
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', max((0, -1 * self.last_account.credit_debit_way() * last_total)), "{[u]}{[i]}%s{[/i]}{[/u]}")
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', max((0, self.last_account.credit_debit_way() * last_total)), "{[u]}{[i]}%s{[/i]}{[/u]}")
             self.line_idx += 1
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', '{[br/]}')
-            self.line_idx += 1
-            self.last_total = [0.0, 0.0]
+            if not third:
+                self.line_idx += 1
+                self.last_total = [0.0, 0.0]
+            self.last_third_total = [0.0, 0.0]
 
     def calcul_table(self):
         self.line_idx = 1
         self.last_account = None
         self.last_third = None
         self.last_total = [0.0, 0.0]
+        self.last_third_total = [0.0, 0.0]
         for line in EntryLineAccount.objects.filter(self.filter).distinct().order_by('account__code', 'third', 'entry__date_value'):
             if self.last_account != line.account:
-                self._add_total_account()
+                self._add_total_account(True)
+                self._add_total_account(False)
                 self.last_account = line.account
                 self.last_third = None
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % str(self.last_account))
                 self.line_idx += 1
+                self.last_third = None
             if self.last_third != line.third:
+                self._add_total_account(True)
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(8) + "{[b]}%s{[/b]}" % str(line.entry_account))
                 self.line_idx += 1
-            self.last_third = line.third
+                self.last_third = line.third
             for header in self.grid.headers:
                 if hasattr(line, header.name):
                     value = getattr(line, header.name)
@@ -516,10 +523,13 @@ class FiscalYearLedger(FiscalYearReport):
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, header.name, value, line_ident=line.entry.id)
             if line.amount > 0:
                 self.last_total[0] += line.amount
+                self.last_third_total[0] += line.amount
             else:
                 self.last_total[1] -= line.amount
+                self.last_third_total[1] -= line.amount
             self.line_idx += 1
-        self._add_total_account()
+        self._add_total_account(True)
+        self._add_total_account(False)
 
 
 @MenuManage.describ('accounting.change_fiscalyear')

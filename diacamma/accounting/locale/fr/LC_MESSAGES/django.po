@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-07 18:20+0000\n"
-"PO-Revision-Date: 2021-12-23 12:11+0100\n"
+"POT-Creation-Date: 2022-11-23 14:27+0000\n"
+"PO-Revision-Date: 2022-11-23 15:27+0100\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
 "Language: fr\n"
@@ -107,13 +107,13 @@ msgstr "référence"
 
 #: editors.py:507 models.py:1303 models.py:1654
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:472
-#: views_reports.py:572
+#: views_reports.py:582
 msgid "debit"
 msgstr "débit"
 
 #: editors.py:513 models.py:1304 models.py:1655
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:473
-#: views_reports.py:573
+#: views_reports.py:583
 msgid "credit"
 msgstr "crédit"
 
@@ -175,8 +175,8 @@ msgid "status"
 msgstr "statut"
 
 #: models.py:86 models.py:193 models.py:1608 printmodel/Third_0001.py:39
-#: views.py:415 views_reports.py:206 views_reports.py:212 views_reports.py:478
-#: views_reports.py:603
+#: views.py:415 views_reports.py:206 views_reports.py:212 views_reports.py:479
+#: views_reports.py:613
 msgid "total"
 msgstr "total"
 
@@ -236,11 +236,11 @@ msgstr "en cours"
 msgid "finished year"
 msgstr "terminé"
 
-#: models.py:260 views_other.py:82 views_reports.py:781
+#: models.py:260 views_other.py:82 views_reports.py:791
 msgid "begin"
 msgstr "début"
 
-#: models.py:261 views_other.py:88 views_reports.py:782
+#: models.py:261 views_other.py:88 views_reports.py:792
 msgid "end"
 msgstr "fin"
 
@@ -332,7 +332,7 @@ msgstr "clôturé"
 #: models.py:582 models.py:685 models.py:835 models.py:996 models.py:1305
 #: models.py:1604 printmodel/ChartsAccount_0001.py:41
 #: printmodel/EntryLineAccount_0001.py:44 views_reports.py:470
-#: views_reports.py:569
+#: views_reports.py:579
 msgid "name"
 msgstr "nom"
 
@@ -1094,7 +1094,7 @@ msgstr "Suprimer une ligne de budget"
 
 #: views_budget.py:198 views_budget.py:204 views_budget.py:292
 #: views_budget.py:298 views_reports.py:347 views_reports.py:353
-#: views_reports.py:733 views_reports.py:739
+#: views_reports.py:743 views_reports.py:749
 msgid "Budget"
 msgstr "Budget"
 
@@ -1423,7 +1423,7 @@ msgstr "total avec annexe"
 msgid "Show ledger for current fiscal year"
 msgstr "Consulter le grand livre pour l'exercice courant"
 
-#: views_reports.py:431 views_reports.py:527 views_reports.py:902
+#: views_reports.py:431 views_reports.py:537 views_reports.py:912
 msgid "Ledger"
 msgstr "Grand livre"
 
@@ -1431,86 +1431,94 @@ msgstr "Grand livre"
 msgid "only entry without link"
 msgstr "seulement les écritures non-lettrées"
 
-#: views_reports.py:487
+#: views_reports.py:479
+msgid "sub-total"
+msgstr "sous-total"
+
+#: views_reports.py:488
+msgid "sub-balance"
+msgstr "sous-balance"
+
+#: views_reports.py:488
 msgid "balance"
 msgstr "balance"
 
-#: views_reports.py:541
+#: views_reports.py:551
 msgid "Show trial balance for current fiscal year"
 msgstr "Consulter la balance pour l'exercice courant"
 
-#: views_reports.py:543 views_reports.py:921
+#: views_reports.py:553 views_reports.py:931
 msgid "Trial balance"
 msgstr "Balance"
 
-#: views_reports.py:555
+#: views_reports.py:565
 msgid "only no null"
 msgstr "seulement les non-soldés"
 
-#: views_reports.py:563
+#: views_reports.py:573
 msgid "detail by third"
 msgstr "détail par tiers"
 
-#: views_reports.py:570
+#: views_reports.py:580
 msgid "debit sum"
 msgstr "total des débits"
 
-#: views_reports.py:571
+#: views_reports.py:581
 msgid "credit sum"
 msgstr "total des crédits"
 
-#: views_reports.py:634
+#: views_reports.py:644
 msgid "Print report fiscal year"
 msgstr "Impression du rapport de l'exercice"
 
-#: views_reports.py:681
+#: views_reports.py:691
 msgid "Print report cost accounting"
 msgstr "Impression du rapport de comptabilité analytique"
 
-#: views_reports.py:730
+#: views_reports.py:740
 msgid "Cost accounting"
 msgstr "Comptabilité analytique"
 
-#: views_reports.py:731
+#: views_reports.py:741
 msgid "Expenses"
 msgstr "Charges"
 
-#: views_reports.py:732 views_reports.py:738
+#: views_reports.py:742 views_reports.py:748
 msgid "Value"
 msgstr "Valeur"
 
-#: views_reports.py:735 views_reports.py:741
+#: views_reports.py:745 views_reports.py:751
 msgid "Last"
 msgstr "Précédente"
 
-#: views_reports.py:737
+#: views_reports.py:747
 msgid "Revenues"
 msgstr "Produits"
 
-#: views_reports.py:798
+#: views_reports.py:808
 msgid "Report"
 msgstr "Rapport"
 
-#: views_reports.py:801
+#: views_reports.py:811
 msgid "Income statement of cost accounting"
 msgstr "Compte de résultat analytique"
 
-#: views_reports.py:845
+#: views_reports.py:855
 msgid "general result (profit)"
 msgstr "résultat général (excédent)"
 
-#: views_reports.py:846
+#: views_reports.py:856
 msgid "general result (deficit)"
 msgstr "résultat général(déficit)"
 
-#: views_reports.py:862 views_reports.py:866
+#: views_reports.py:872 views_reports.py:876
 msgid "general total"
 msgstr "total général"
 
-#: views_reports.py:905
+#: views_reports.py:915
 msgid "Ledger of cost accounting"
 msgstr "Bilan de comptabilité analytique"
 
-#: views_reports.py:924
+#: views_reports.py:934
 msgid "Trial balance of cost accounting"
 msgstr "Compte de résultat analytique"
