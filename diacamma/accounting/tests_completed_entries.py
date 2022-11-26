@@ -1083,7 +1083,7 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/fiscalYearLedger', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearLedger')
         self._check_result()
-        self.assert_count_equal('report_1', 79)
+        self.assert_count_equal('report_1', 91)
         self.assert_json_equal('', 'report_1/@0/id', 'L0001-0')
         self.assert_json_equal('', 'report_1/@0/designation_ref', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[106] 106{[/b]}{[/u]}')
         self.assert_json_equal('', 'report_1/@1/id', 'L0002-1')
