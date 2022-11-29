@@ -38,7 +38,6 @@ from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import LegalEntity
 
 from diacamma.accounting.tools import get_amount_from_format_devise
-from requests.exceptions import JSONDecodeError
 
 
 class PaymentType(object):
@@ -377,7 +376,7 @@ class PaymentTypeHelloAsso(PaymentType):
     def check_error(response, *args, **kwargs):
         try:
             value = response.json()
-        except JSONDecodeError:
+        except Exception:
             value = {'message': response.content.decode()}
         if response.status_code != 200:
             message_txt = value['message'] if 'message' in value else response.content.decode()
