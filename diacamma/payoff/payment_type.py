@@ -420,6 +420,11 @@ class PaymentTypeHelloAsso(PaymentType):
     def connect(self):
         from oauthlib.oauth2 import BackendApplicationClient
         from requests_oauthlib import OAuth2Session
+        from requests_oauthlib.oauth2_session import log
+        paoff_log = logging.getLogger('diacamma.payoff')
+        log.setLevel(paoff_log.level)
+        for hdlr in paoff_log.handlers:
+            log.addHandler(hdlr)
         client_id = self.get_items()[0]
         client_secret = self.get_items()[1]
         oauth_client = BackendApplicationClient(client_id=client_id)
@@ -450,8 +455,6 @@ class PaymentTypeHelloAsso(PaymentType):
         from requests_oauthlib.oauth2_session import log
         self.connect()
         try:
-            if root_url == 'http://127.0.0.1:8000':
-                root_url = 'https://test.sleto.fr'
             organization_slug = self.get_api("/v5/users/me/organizations", 0, 'organizationSlug')
             new_checkout = {
                 "totalAmount": int(supporting.get_total_rest_topay() * 100),
