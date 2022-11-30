@@ -460,8 +460,8 @@ class PaymentTypeHelloAsso(PaymentType):
                 "totalAmount": int(supporting.get_total_rest_topay() * 100),
                 "initialAmount": int(supporting.get_total_rest_topay() * 100),
                 "itemName": str(supporting),
-                "backUrl": "%s/%s" % (root_url, 'diacamma.payoff/checkPaymentHelloAsso'),
-                "errorUrl": "%s/%s" % (root_url, 'diacamma.payoff/checkPaymentHelloAsso'),
+                "backUrl": "%s/%s" % (root_url, 'diacamma.payoff/validationPaymentHelloAsso'),
+                "errorUrl": "%s/%s" % (root_url, 'diacamma.payoff/validationPaymentHelloAsso'),
                 "returnUrl": root_url,
                 "containsDonation": False,
                 "metadata": {

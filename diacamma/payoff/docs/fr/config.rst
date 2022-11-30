@@ -25,7 +25,7 @@ Moyen de paiement
 
 Vous pouvez ici préciser les moyens de paiement que vous acceptez.
 
-Actuellement, 5 moyens de paiement sont possibles sous *Diacamma*, pour chacun d'entre eux, vous devez préciser les paramètres correspondants:
+Actuellement, 6 moyens de paiement sont possibles sous *Diacamma*, pour chacun d'entre eux, vous devez préciser les paramètres correspondants:
 
  - Le virement bancaire  
  - Le chèque  
@@ -38,6 +38,10 @@ Actuellement, 5 moyens de paiement sont possibles sous *Diacamma*, pour chacun d
  Pour MoneticoPaiement, la plateforme de paiement du Crédit Mutuel et du CIC (voir https://www.monetico-paiement.fr), veuillez prendre contact avec votre agence bancaire pour faire ouvrir votre accès.
  Et si vous *Diacamma* est accessible via le Net, vous devez déclarer à la plateforme une adresse de retour de type "https://mon.site.diacamma/diacamma.payoff/validationPaymentMoneticoPaiement" ("https://mon.site.diacamma" étant l'adresse d'accès à votre serveur *Diacamma*)
  
+  - Le paiement Hello-Asso
+Pour utiliser la plateforme Hello-Asso pour réaliser vos paiements, connectez vous sur le portail https://www.helloasso.com. 
+Sur votre compte de structure, dans le menu "Mon compte > Intégration et API", vous devez recopiez les champs *mon clientid* et *mon clientsecret* dans l'interface.
+Et si vous *Diacamma* est accessible via le Net, le paiement de votre débiteur vous est notifié sous votre application et le règlement correspondant généré directement dans votre logiciel.
 
 Ces moyens de paiement peuvent être utilisés par vos débiteurs, via précision en bas de couriel, pour régler ce qu'ils vous doivent.
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-23 14:27+0000\n"
+"POT-Creation-Date: 2022-11-30 11:23+0000\n"
 "PO-Revision-Date: 2022-10-05 16:40+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -126,11 +126,11 @@ msgstr "bank codes"
 msgid "cash"
 msgstr "cash"
 
-#: models.py:392 payment_type.py:191
+#: models.py:392 payment_type.py:190
 msgid "cheque"
 msgstr "cheque"
 
-#: models.py:392 payment_type.py:169
+#: models.py:392 payment_type.py:168
 msgid "transfer"
 msgstr "transfer"
 
@@ -162,7 +162,7 @@ msgstr "by date"
 msgid "date"
 msgstr "date"
 
-#: models.py:401 models.py:412 models.py:788 models.py:888 payment_type.py:151
+#: models.py:401 models.py:412 models.py:788 models.py:888 payment_type.py:150
 #: views_deposit.py:174
 msgid "amount"
 msgstr "amount"
@@ -352,111 +352,111 @@ msgstr "payoff > mode"
 msgid "payoff-bank_account"
 msgstr "payoff > bank account"
 
-#: payment_type.py:148 views.py:357 views.py:360 views_externalpayment.py:145
+#: payment_type.py:147 views.py:357 views.py:360 views_externalpayment.py:145
 msgid "Payment"
 msgstr "Payment"
 
-#: payment_type.py:150
+#: payment_type.py:149
 msgid "nature"
 msgstr "nature"
 
-#: payment_type.py:161
+#: payment_type.py:160
 msgid "Please wait, you will be logged into the payment platform."
 msgstr "Please wait, you will be logged into the payment platform."
 
-#: payment_type.py:171
+#: payment_type.py:170
 msgid "help_payoff_transfer"
 msgstr " "
 
-#: payment_type.py:174 payment_type.py:180
+#: payment_type.py:173 payment_type.py:179
 msgid "IBAN"
 msgstr "IBAN"
 
-#: payment_type.py:174 payment_type.py:183
+#: payment_type.py:173 payment_type.py:182
 msgid "BIC"
 msgstr "BIC"
 
-#: payment_type.py:193
+#: payment_type.py:192
 msgid "help_payoff_cheque"
 msgstr " "
 
-#: payment_type.py:196 payment_type.py:211
+#: payment_type.py:195 payment_type.py:210
 msgid "payable to"
 msgstr "payable to"
 
-#: payment_type.py:196 payment_type.py:215
+#: payment_type.py:195 payment_type.py:214
 msgid "address"
 msgstr "address"
 
-#: payment_type.py:224
+#: payment_type.py:223
 msgid "PayPal"
 msgstr "PayPal"
 
-#: payment_type.py:227
+#: payment_type.py:226
 msgid "help_payoff_paypal"
 msgstr " "
 
-#: payment_type.py:230
+#: payment_type.py:229
 msgid "Paypal account"
 msgstr "Paypal account"
 
-#: payment_type.py:230
+#: payment_type.py:229
 msgid "With control"
 msgstr "With control"
 
-#: payment_type.py:237 payment_type.py:344
+#: payment_type.py:236 payment_type.py:343
 msgid "This item can't be validated!"
 msgstr "This item can't be validated!"
 
-#: payment_type.py:265
+#: payment_type.py:264
 msgid "online"
 msgstr "online"
 
-#: payment_type.py:267
+#: payment_type.py:266
 msgid "help_payoff_online"
 msgstr " "
 
-#: payment_type.py:270 payment_type.py:277
+#: payment_type.py:269 payment_type.py:276
 msgid "web address"
 msgstr "web address"
 
-#: payment_type.py:270 payment_type.py:281
+#: payment_type.py:269 payment_type.py:280
 msgid "info"
 msgstr "info"
 
-#: payment_type.py:290
+#: payment_type.py:289
 msgid "MoneticoPaiement"
 msgstr "MoneticoPaiement"
 
-#: payment_type.py:293
+#: payment_type.py:292
 msgid "help_payoff_moneticopaiement"
 msgstr " "
 
-#: payment_type.py:315
+#: payment_type.py:314
 msgid "companie code"
 msgstr "companie code"
 
-#: payment_type.py:315
+#: payment_type.py:314
 msgid "TPE"
 msgstr "TPE"
 
-#: payment_type.py:315
+#: payment_type.py:314
 msgid "key"
 msgstr "key"
 
-#: payment_type.py:369
+#: payment_type.py:368
 msgid "Hello-Asso"
 msgstr "Hello-Asso"
 
-#: payment_type.py:374
+#: payment_type.py:373
 msgid "help_payoff_helloasso"
 msgstr " "
 
-#: payment_type.py:480
+#: payment_type.py:482
 msgid "clientid"
 msgstr "clientid"
 
-#: payment_type.py:480
+#: payment_type.py:482
 msgid "clientsecret"
 msgstr "clientsecret"
 

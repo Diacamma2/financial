@@ -360,6 +360,8 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
 
     @property
     def payer(self):
+        if 'company' not in self.helloasso_data['payer']:
+            self.helloasso_data['payer']['company'] = ''
         return str("%(firstName)s %(lastName)s %(company)s" % self.helloasso_data['payer']).strip()
 
     @property
@@ -369,7 +371,7 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
     @property
     def date(self):
         try:
-            return datetime.fromisoformat(self.helloasso_data['date'])
+            return datetime.fromisoformat(self.helloasso_data['date'][:23] + "+01:00")
         except Exception:
             logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.helloasso_data['date'])
             return timezone.now()
@@ -377,9 +379,20 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
     @property
     def customid(self):
         if (self.helloasso_eventtype == 'Payment') and (self.helloasso_data['state'] == 'Authorized'):
-            return PaymentTypeHelloAsso({}).get_customid(self.helloasso_data, self.helloasso_meta)
+            return self.payment_meth.paymentType.get_customid(self.helloasso_data, self.helloasso_meta)
         else:
             return 0
+
+    def confirm(self):
+        self.item.contains += "eventType = %s{[newline]}" % self.helloasso_eventtype
+        self.item.contains += "Meta = %s{[newline]}" % self.helloasso_meta
+        for key, value in self.helloasso_data.items():
+            self.item.contains += "%s = %s{[newline]}" % (key, value)
+        return True
+
+    @property
+    def reference(self):
+        return "N°%s" % self.helloasso_data['items'][0]['id']
 
     @property
     def payment_meth(self):
@@ -387,7 +400,9 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
 
     def _initialize(self, request, *_, **kwargs):
         from json import loads
-        return_content = loads(self.request.META['wsgi.input'].read().decode())
+        wsgi_input_content = self.request.META['wsgi.input'].read().decode()
+        logging.getLogger('diacamma.payoff').debug("wsgi_input_content = %s / META = %s" % (wsgi_input_content, self.request.META))
+        return_content = loads(wsgi_input_content)
         self.helloasso_data = return_content['data']
         self.helloasso_eventtype = return_content['eventType']
         self.helloasso_meta = return_content['metadata']
