@@ -196,8 +196,7 @@ De plus, vous devez déclarer à la plateforme cet adresse de retour {[b]}http:/
         self.assert_attrib_equal('item_2', 'description', 'Mon clientSecret')
         self.assert_json_equal('PASSWD', 'item_2', '')
         self.assert_json_equal('LABELFORM', 'help_payoff', """Depuis le portail Hello-Asso, dans le menu "Mon compte > Intégration et API".{[br/]}
-- Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}.{[br/]}
-- Remplissez le champ {[b]}Mon URL de callback{[/b]} par l'adresse {[b]}http://testserver/diacamma.payoff/validationPaymentHelloAsso{[/b]} pour que l'outil soit notifié des paiements.""")
+Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}.{[br/]}""")
 
         self.factory.xfer = PaymentMethodAddModify()
         self.calljson('/diacamma.payoff/paymentMethodAddModify',
