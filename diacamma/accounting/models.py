@@ -935,7 +935,7 @@ class AccountLink(LucteriosModel):
         years = []
         third_info = None
         sum_amount = 0.0
-        for entryline in entrylines:
+        for entryline in set(entrylines):
             entryline = EntryLineAccount.objects.get(id=entryline.id)
             if regex_third.match(entryline.account.code) is None:
                 raise LucteriosException(IMPORTANT, _("An entry line is not third!"))

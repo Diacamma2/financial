@@ -41,7 +41,7 @@ Actuellement, 6 moyens de paiement sont possibles sous *Diacamma*, pour chacun d
   - Le paiement Hello-Asso
 Pour utiliser la plateforme Hello-Asso pour réaliser vos paiements, connectez vous sur le portail https://www.helloasso.com. 
 Sur votre compte de structure, dans le menu "Mon compte > Intégration et API", vous devez recopiez les champs *mon clientid* et *mon clientsecret* dans l'interface.
-Et si vous *Diacamma* est accessible via le Net, le paiement de votre débiteur vous est notifié sous votre application et le règlement correspondant généré directement dans votre logiciel.
+Et si votre *Diacamma* est accessible via le Net, le paiement de votre débiteur vous est notifié sous votre application et le règlement correspondant généré directement dans votre logiciel.
 
 Ces moyens de paiement peuvent être utilisés par vos débiteurs, via précision en bas de couriel, pour régler ce qu'ils vous doivent.
 
