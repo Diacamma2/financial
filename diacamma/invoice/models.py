@@ -2029,6 +2029,8 @@ def invoice_checkparam():
                                args="{'Enum':2}", value='0', param_titles=(_("invoice-order-mode.0"), _("invoice-order-mode.1")))
     Parameter.check_and_create(name='invoice-asset-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-asset-mode"),
                                args="{'Enum':2}", value='0', param_titles=(_("invoice-asset-mode.0"), _("invoice-asset-mode.1")))
+    Parameter.check_and_create(name='invoice-default-nbpayoff', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-default-nbpayoff"),
+                               args='{"Min":0,"Max":5}', value='0')
 
     LucteriosGroup.redefine_generic(_("# invoice (administrator)"), Vat.get_permission(True, True, True), BankAccount.get_permission(True, True, True), BankTransaction.get_permission(True, True, True),
                                     Article.get_permission(True, True, True), Bill.get_permission(True, True, True),

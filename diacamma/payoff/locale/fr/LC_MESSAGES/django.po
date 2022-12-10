@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-30 11:23+0000\n"
+"POT-Creation-Date: 2022-12-10 16:20+0000\n"
 "PO-Revision-Date: 2022-11-30 12:22+0100\n"
 "Last-Translator: b'Paul ARULATEDA <paul531@orange.fr>'\n"
 "Language-Team: \n"
@@ -23,19 +23,19 @@ msgstr ""
 msgid "Diacamma payoff"
 msgstr "Règlement Diacamma"
 
-#: editors.py:150
+#: editors.py:151
 msgid "payoff null!"
 msgstr "règlement vide !"
 
-#: editors.py:171 models.py:559
+#: editors.py:173 models.py:559
 msgid "No-valid selection!"
 msgstr "Sélection non valide!"
 
-#: editors.py:202
+#: editors.py:213
 msgid "repartition mode"
 msgstr "répartition proportionnelle"
 
-#: editors.py:242
+#: editors.py:253
 msgid "linked"
 msgstr "associé"
 

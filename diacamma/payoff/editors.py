@@ -146,13 +146,14 @@ parent.get('temporary_journal').setEnabled(temporary_account_code!=='');
 class PayoffEditor(LucteriosEditor):
 
     def before_save(self, xfer):
+        prefix = getattr(xfer, "payoff_prefix", "")
         if abs(float(self.item.amount)) < 0.0001:
             raise LucteriosException(IMPORTANT, _("payoff null!"))
         info = self.item.supporting.check_date(self.item.date)
         if len(info) > 0:
             raise LucteriosException(IMPORTANT, info[0])
-        if (int(self.item.mode) == Payoff.MODE_INTERNAL) and (xfer.getparam('linked_supporting', 0) != 0):
-            self.item.linked_payoff = Payoff.objects.create(supporting_id=xfer.getparam('linked_supporting', 0), date=self.item.date,
+        if (int(self.item.mode) == Payoff.MODE_INTERNAL) and (xfer.getparam(prefix + 'linked_supporting', 0) != 0):
+            self.item.linked_payoff = Payoff.objects.create(supporting_id=xfer.getparam(prefix + 'linked_supporting', 0), date=self.item.date,
                                                             amount=self.item.amount, mode=self.item.mode, reference=str(self.item.supporting.get_final_child()))
             self.item.bank_account = None
             self.item.reference = str(self.item.linked_payoff.supporting.get_final_child())
@@ -162,6 +163,7 @@ class PayoffEditor(LucteriosEditor):
     def edit(self, xfer):
         currency_decimal = Params.getvalue("accounting-devise-prec")
         supportings = xfer.getparam('supportings', ())
+        prefix = getattr(xfer, "payoff_prefix", "")
         self.item.mode = int(self.item.mode)
         if len(supportings) > 0:
             supporting_list = Supporting.objects.filter(id__in=supportings, is_revenu=True).distinct().order_by('id')
@@ -172,100 +174,109 @@ class PayoffEditor(LucteriosEditor):
         else:
             supporting_list = [self.item.supporting]
         xfer.params['supportings'] = ";".join([str(supporting.id) for supporting in supporting_list])
-        amount_max = 0
-        amount_min = 0
-        amount_sum = xfer.getparam('amount', 0.0)
-        title = []
         if self.item.id is None:
             current_payoff = -1
         else:
             current_payoff = self.item.id
-        for supporting in supporting_list:
-            up_supporting = supporting.get_final_child()
-            title.append(str(up_supporting))
-            if xfer.getparam('amount') is None:
-                amount_sum += up_supporting.get_total_rest_topay()
-            amount_min += up_supporting.get_min_payoff(current_payoff)
-            amount_max += up_supporting.get_max_payoff(current_payoff)
-        xfer.move(0, 0, 1)
-        col = xfer.get_components("date").col
-        lbl = XferCompLabelForm('supportings')
-        lbl.set_value_center("{[br/]}".join(title))
-        lbl.set_location(1, 0, 2)
-        xfer.add_component(lbl)
+        if xfer.get_components('supportings') is None:
+            amount_max = 0
+            amount_min = 0
+            amount_sum = xfer.getparam(prefix + 'amount', 0.0)
+            title = []
+            for supporting in supporting_list:
+                up_supporting = supporting.get_final_child()
+                title.append(str(up_supporting))
+                if xfer.getparam(prefix + 'amount') is None:
+                    amount_sum += up_supporting.get_total_rest_topay()
+                amount_min += up_supporting.get_min_payoff(current_payoff)
+                amount_max += up_supporting.get_max_payoff(current_payoff)
+            xfer.move(0, 0, 1)
+            lbl = XferCompLabelForm('supportings')
+            lbl.set_value_center("{[br/]}".join(title))
+            lbl.set_location(1, 0, 2)
+            xfer.add_component(lbl)
+        else:
+            amount_max = 0
+            amount_min = 0
+            amount_sum = 0
+            for supporting in supporting_list:
+                up_supporting = supporting.get_final_child()
+                amount_min += up_supporting.get_min_payoff(current_payoff)
+                amount_max += up_supporting.get_max_payoff(current_payoff)
+        col = xfer.get_components(prefix + "date").col
         if (len(supporting_list) > 1) and (self.item.mode not in (Payoff.MODE_INTERNAL, )):
             row = xfer.get_max_row() + 1
-            sel = XferCompSelect('repartition')
-            sel.set_value(xfer.getparam('repartition', Payoff.REPARTITION_BYRATIO))
+            sel = XferCompSelect(prefix + 'repartition')
+            sel.set_value(xfer.getparam(prefix + 'repartition', Payoff.REPARTITION_BYRATIO))
             sel.set_select(Payoff.LIST_REPARTITIONS)
             sel.set_location(col, row)
             sel.description = _('repartition mode')
             xfer.add_component(sel)
             if xfer.getparam('NO_REPARTITION') is not None:
-                xfer.change_to_readonly('repartition')
-        amount = xfer.get_components("amount")
+                xfer.change_to_readonly(prefix + 'repartition')
+        amount = xfer.get_components(prefix + "amount")
         if self.item.id is None:
             amount.value = min(max(amount_min, amount_sum), amount_max)
-            xfer.get_components("payer").value = xfer.getparam('payer', str(supporting_list[0].third))
-            xfer.get_components("date").value = xfer.getparam('date', supporting_list[0].get_final_child().default_date())
+            xfer.get_components(prefix + "payer").value = xfer.getparam(prefix + 'payer', str(supporting_list[0].third))
+            xfer.get_components(prefix + "date").value = xfer.getparam(prefix + 'date', supporting_list[0].get_final_child().default_date())
         else:
-            amount.value = xfer.getparam('amount', amount_sum)
+            amount.value = xfer.getparam(prefix + 'amount', amount_sum)
         amount.prec = currency_decimal
         amount.min = float(amount_min)
         amount.max = float(amount_max)
-        mode = xfer.get_components("mode")
-        banks = xfer.get_components("bank_account")
+        mode = xfer.get_components(prefix + "mode")
+        banks = xfer.get_components(prefix + "bank_account")
         if banks.select_list[0][0] == 0:
             del banks.select_list[0]
         if len(banks.select_list) == 0:
             mode.select_list = [mode.select_list[0], mode.select_list[-1]]
-            xfer.remove_component("bank_account")
+            xfer.remove_component(prefix + "bank_account")
         else:
             # change order of payoff mode
             levy = mode.select_list[5]
             mode.select_list.insert(3, levy)
             del mode.select_list[6]
-            xfer.get_components("mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            xfer.get_components(prefix + "mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             if self.item.id is None:
-                self.item.mode = xfer.getparam('mode', Preference.get_value("payoff-mode", xfer.request.user))
-                xfer.get_components("mode").value = self.item.mode
-                xfer.get_components("bank_account").set_value(xfer.getparam('bank_account', Preference.get_value("payoff-bank_account", xfer.request.user)))
+                self.item.mode = xfer.getparam(prefix + 'mode', Preference.get_value("payoff-mode", xfer.request.user))
+                xfer.get_components(prefix + "mode").value = self.item.mode
+                xfer.get_components(prefix + "bank_account").set_value(xfer.getparam(prefix + 'bank_account', Preference.get_value("payoff-bank_account", xfer.request.user)))
         linked_supportings = supporting_list[0].get_final_child().get_linked_supportings() if len(supporting_list) == 1 else []
         if len(linked_supportings) == 0:
             mode.select_list = mode.select_list[:-1]
         elif self.item.mode == Payoff.MODE_INTERNAL:
             row = xfer.get_max_row() + 1
-            sel = XferCompSelect('linked_supporting')
-            sel.set_value(xfer.getparam('linked_supporting', 0))
+            sel = XferCompSelect(prefix + 'linked_supporting')
+            sel.set_value(xfer.getparam(prefix + 'linked_supporting', 0))
             sel.set_select([(item.id, str(item)) for item in linked_supportings])
             sel.set_location(col, row)
             sel.description = _('linked')
             sel.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             xfer.add_component(sel)
-            xfer.remove_component("reference")
+            xfer.remove_component(prefix + "reference")
             for linked_supporting in linked_supportings:
                 if linked_supporting.id == sel.value:
                     current_total_rest_topay = supporting_list[0].get_final_child().get_total_rest_topay()
                     linked_total_rest_topay = linked_supporting.get_total_rest_topay()
                     amount.value = min(current_total_rest_topay if current_total_rest_topay > 1e-3 else supporting_list[0].get_final_child().get_max_payoff(),
                                        linked_total_rest_topay if linked_total_rest_topay > 1e-3 else linked_supporting.get_max_payoff())
-                    xfer.params['amount'] = float(amount.value)
+                    xfer.params[prefix + 'amount'] = float(amount.value)
                     if abs(amount.value) > 0.001:
-                        xfer.change_to_readonly("amount")
+                        xfer.change_to_readonly(prefix + "amount")
                     break
         fee_code = ''
         if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
-            xfer.remove_component("bank_account")
-        elif xfer.get_components("bank_account") is not None:
-            xfer.get_components("bank_account").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-            bank_account = BankAccount.objects.get(id=xfer.get_components("bank_account").value)
+            xfer.remove_component(prefix + "bank_account")
+        elif xfer.get_components(prefix + "bank_account") is not None:
+            xfer.get_components(prefix + "bank_account").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            bank_account = BankAccount.objects.get(id=xfer.get_components(prefix + "bank_account").value)
             fee_code = bank_account.fee_account_code
         if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
-            xfer.remove_component("payer")
+            xfer.remove_component(prefix + "payer")
         if fee_code == '':
-            xfer.remove_component("bank_fee")
+            xfer.remove_component(prefix + "bank_fee")
         else:
-            bank_fee = xfer.get_components("bank_fee")
+            bank_fee = xfer.get_components(prefix + "bank_fee")
             bank_fee.prec = currency_decimal
             bank_fee.min = 0.0
             bank_fee.max = float(amount_max)

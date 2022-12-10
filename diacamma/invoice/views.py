@@ -36,7 +36,7 @@ from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELE
     TITLE_LABEL, TITLE_CREATE
 from lucterios.framework.xferadvance import XferListEditor, XferShowEditor, XferAddEditor, XferDelete, XferTransition
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompImage, XferCompGrid, XferCompCheck, XferCompEdit, XferCompCheckList, XferCompMemo,\
-    XferCompButton
+    XferCompButton, XferCompFloat
 from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, FORMTYPE_REFRESH, CLOSE_NO, SELECT_MULTI, WrapAction,\
     get_format_from_field
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
@@ -276,7 +276,9 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
     model = Bill
     field_id = 'bill'
 
-    def fill_dlg_payoff(self, withpayoff, sendemail, sendemail_quotation):
+    FORMAT_PREFIX = "payoff%02d_"
+
+    def fill_dlg_payoff(self, nbpayoff, sendemail, sendemail_quotation):
         dlg = self.create_custom(Payoff)
         dlg.caption = _("Confirmation")
         icon = XferCompImage('img')
@@ -288,32 +290,23 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
         lbl.set_location(1, 1, 2)
         dlg.add_component(lbl)
         if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and (abs(self.item.get_total_rest_topay()) > 0.0001):
-            check_payoff = XferCompCheck('withpayoff')
-            check_payoff.set_value(withpayoff)
-            check_payoff.set_location(1, 2)
-            check_payoff.java_script = """
-    var type=current.getValue();
-    parent.get('date_payoff').setEnabled(type);
-    parent.get('amount').setEnabled(type);
-    if (parent.get('payer')) {
-        parent.get('payer').setEnabled(type);
-    }
-    parent.get('mode').setEnabled(type);
-    if (parent.get('reference')) {
-        parent.get('reference').setEnabled(type);
-    }
-    if (parent.get('bank_account')) {
-        parent.get('bank_account').setEnabled(type);
-    }
-    """
-            check_payoff.description = _("Payment of deposit or cash")
-            dlg.add_component(check_payoff)
+            nb_payoff = XferCompFloat('nbpayoff', minval=0, maxval=5, precval=0)
+            nb_payoff.set_value(nbpayoff)
+            nb_payoff.set_location(1, 2)
+            nb_payoff.description = _("Number of payoff")
+            nb_payoff.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            dlg.add_component(nb_payoff)
             dlg.item.supporting = self.item
-            dlg.fill_from_model(2, 3, False)
-            if dlg.get_components("bank_fee") is not None:
-                check_payoff.java_script += "parent.get('bank_fee').setEnabled(type);\n"
-            dlg.get_components("date").name = "date_payoff"
-            dlg.get_components("mode").set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            for payoff_num in range(nbpayoff):
+                dlg.payoff_prefix = self.FORMAT_PREFIX % payoff_num
+                if payoff_num != 0:
+                    sep_payoff = XferCompLabelForm(dlg.payoff_prefix + "sep")
+                    sep_payoff.set_value("{[hr]}")
+                    sep_payoff.set_location(2, 3 + payoff_num * 10)
+                    dlg.add_component(sep_payoff)
+                dlg.fill_from_model(2, 4 + payoff_num * 10, False, prefix=dlg.payoff_prefix)
+                dlg.get_components(dlg.payoff_prefix + "date").name = dlg.payoff_prefix + "date_payoff"
+                dlg.get_components(dlg.payoff_prefix + "mode").set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         if (self.item.bill_type != Bill.BILLTYPE_ASSET) and can_send_email(dlg) and self.item.can_send_email():
             row = dlg.get_max_row()
             check_payoff = XferCompCheck('sendemail')
@@ -373,29 +366,34 @@ parent.get('print_sep').setEnabled(!is_persitent);
         dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
 
     def fill_confirm(self, transition, trans):
-        withpayoff = self.getparam('withpayoff', False)
+        nbpayoff = self.getparam('nbpayoff', Params.getvalue('invoice-default-nbpayoff'))
         sendemail = self.getparam('sendemail', False)
         sendemail_quotation = self.getparam('sendemail_quotation', False)
         if (transition != 'valid') or (len(self.items) > 1):
             XferTransition.fill_confirm(self, transition, trans)
         elif self.getparam("CONFIRME") is None:
-            self.fill_dlg_payoff(withpayoff, sendemail, sendemail_quotation)
+            self.fill_dlg_payoff(nbpayoff, sendemail, sendemail_quotation)
         else:
-            if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and withpayoff:
+            if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and (nbpayoff != 0):
                 self.item.affect_num()
                 self.item.save()
-                new_payoff = Payoff()
-                new_payoff.supporting = self.item
-                new_payoff.amount = self.getparam('amount', 0.0)
-                new_payoff.mode = self.getparam('mode', Payoff.MODE_CASH)
-                new_payoff.payer = self.getparam('payer')
-                new_payoff.reference = self.getparam('reference')
-                if self.getparam('bank_account', 0) != 0:
-                    new_payoff.bank_account_id = self.getparam('bank_account', 0)
-                new_payoff.date = self.getparam('date_payoff')
-                new_payoff.bank_fee = self.getparam('bank_fee', 0.0)
-                new_payoff.editor.before_save(self)
-                new_payoff.save()
+                for payoff_num in range(nbpayoff):
+                    self.payoff_prefix = self.FORMAT_PREFIX % payoff_num
+                    amount = self.getparam(self.payoff_prefix + 'amount', 0.0)
+                    if abs(amount) < 1e-3:
+                        continue
+                    new_payoff = Payoff()
+                    new_payoff.supporting = self.item
+                    new_payoff.amount = amount
+                    new_payoff.mode = self.getparam(self.payoff_prefix + 'mode', Payoff.MODE_CASH)
+                    new_payoff.payer = self.getparam(self.payoff_prefix + 'payer')
+                    new_payoff.reference = self.getparam(self.payoff_prefix + 'reference')
+                    if self.getparam(self.payoff_prefix + 'bank_account', 0) != 0:
+                        new_payoff.bank_account_id = self.getparam(self.payoff_prefix + 'bank_account', 0)
+                    new_payoff.date = self.getparam(self.payoff_prefix + 'date_payoff')
+                    new_payoff.bank_fee = self.getparam(self.payoff_prefix + 'bank_fee', 0.0)
+                    new_payoff.editor.before_save(self)
+                    new_payoff.save()
             XferTransition.fill_confirm(self, transition, trans)
             if sendemail_quotation:
                 self.send_email_to_user_quotation(self.item)
