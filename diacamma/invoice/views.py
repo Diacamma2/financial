@@ -45,6 +45,7 @@ from lucterios.framework import signal_and_lock
 from lucterios.framework.xfersearch import get_criteria_list, get_search_query_from_criteria
 from lucterios.framework.xferprinting import XferContainerPrint
 from lucterios.framework.model_fields import get_value_if_choices
+from lucterios.framework.models import LucteriosQuerySet
 
 from lucterios.CORE.xferprint import XferPrintAction, XferPrintListing, XferPrintLabel
 from lucterios.CORE.parameters import Params
@@ -138,9 +139,7 @@ class BillList(XferListEditor):
                 sort_bill_third = "+"
             self.params['GRID_ORDER%bill_third'] = sort_bill_third
             items = sorted(items, key=lambda t: str(t.third).lower(), reverse=sort_bill_third.startswith('-'))
-            res = QuerySet(model=Bill)
-            res._result_cache = items
-            return res
+            return LucteriosQuerySet(model=Bill, initial=items)
         else:
             self.params['GRID_ORDER%bill_third'] = ''
             return items
@@ -690,20 +689,24 @@ class DetailDel(XferDelete):
 
 class ArticleFilter(object):
 
+    FILTER_SHOW_ONLY_ACTIVATE = 0
+    FILTER_SHOW_ALL = 1
+
+    STOCKABLE_ALL = -1
     STOCKABLE_WITH_STOCK = 3
     STOCKABLE_WITH_STOCK_AVAILABLE = 4
 
-    def items_filtering(self, items, categories_filter, show_stockable, storagearea=0):
+    def items_filtering(self, items, categories_filter, show_stockable, show_storagearea):
         if len(categories_filter) > 0:
             for cat_item in Category.objects.filter(id__in=categories_filter):
                 items = items.filter(categories__in=[cat_item])
         if show_stockable == self.STOCKABLE_WITH_STOCK:
-            new_items = QuerySet(model=Article)
-            new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num(storagearea, default=0.0) > 0]
+            new_items = LucteriosQuerySet(model=Article)
+            new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num(show_storagearea, default=0.0) > 1e-2]
             return new_items
         elif show_stockable == self.STOCKABLE_WITH_STOCK_AVAILABLE:
-            new_items = QuerySet(model=Article)
-            new_items._result_cache = [item for item in items.distinct() if item.get_available_total_num(storagearea, default=0.0) > 0]
+            new_items = LucteriosQuerySet(model=Article)
+            new_items._result_cache = [item for item in items.distinct() if item.get_available_total_num(show_storagearea, default=0.0) > 1e-2]
             return new_items
         else:
             return items.distinct()
@@ -712,11 +715,11 @@ class ArticleFilter(object):
         new_filter = Q()
         if ref_filter != '':
             new_filter &= Q(reference__icontains=ref_filter) | Q(designation__icontains=ref_filter)
-        if show_filter == 0:
+        if show_filter == self.FILTER_SHOW_ONLY_ACTIVATE:
             new_filter &= Q(isdisabled=False)
-        if show_stockable != -1:
-            if (show_stockable == ArticleList.STOCKABLE_WITH_STOCK) or (show_stockable == ArticleList.STOCKABLE_WITH_STOCK_AVAILABLE):
-                new_filter &= ~Q(stockable=Article.STOCKABLE_NO)
+        if show_stockable != self.STOCKABLE_ALL:
+            if (show_stockable == self.STOCKABLE_WITH_STOCK) or (show_stockable == self.STOCKABLE_WITH_STOCK_AVAILABLE):
+                new_filter &= Q(stockable=Article.STOCKABLE_YES)
             else:
                 new_filter &= Q(stockable=show_stockable)
         if show_storagearea != 0:
@@ -725,13 +728,13 @@ class ArticleFilter(object):
 
     def filter_callback(self, items):
         categories_filter = self.getparam('cat_filter', ())
-        show_stockable = self.getparam('stockable', -1)
+        show_stockable = self.getparam('stockable', self.STOCKABLE_ALL)
         show_storagearea = self.getparam('storagearea', 0)
         return self.items_filtering(items, categories_filter, show_stockable, show_storagearea)
 
     def get_filter(self):
-        show_filter = self.getparam('show_filter', 0)
-        show_stockable = self.getparam('stockable', -1)
+        show_filter = self.getparam('show_filter', self.FILTER_SHOW_ONLY_ACTIVATE)
+        show_stockable = self.getparam('stockable', self.STOCKABLE_ALL)
         ref_filter = self.getparam('ref_filter', '')
         show_storagearea = self.getparam('storagearea', 0)
         return self.get_search_filter(ref_filter, show_filter, show_stockable, show_storagearea)
@@ -750,17 +753,21 @@ class ArticleList(XferListEditor, ArticleFilter):
         self.show_stockable = -1
 
     def get_items_from_filter(self):
-        return self.items_filtering(XferListEditor.get_items_from_filter(self), self.categories_filter, self.show_stockable, self.show_storagearea)
+        if isinstance(self.filter, Q) and (len(self.filter.children) > 0):
+            items = self.model.objects.filter(self.filter).distinct()
+        else:
+            items = self.model.objects.all()
+        return self.items_filtering(items, self.categories_filter, self.show_stockable, self.show_storagearea)
 
     def fillresponse_header(self):
-        show_filter = self.getparam('show_filter', 0)
-        self.show_stockable = self.getparam('stockable', -1)
+        show_filter = self.getparam('show_filter', self.FILTER_SHOW_ONLY_ACTIVATE)
+        self.show_stockable = self.getparam('stockable', self.STOCKABLE_ALL)
         ref_filter = self.getparam('ref_filter', '')
         self.categories_filter = self.getparam('cat_filter', ())
         self.show_storagearea = self.getparam('storagearea', 0)
 
         edt = XferCompSelect("show_filter")
-        edt.set_select([(0, _('Only activate')), (1, _('All'))])
+        edt.set_select([(self.FILTER_SHOW_ONLY_ACTIVATE, _('Only activate')), (self.FILTER_SHOW_ALL, _('All'))])
         edt.set_value(show_filter)
         edt.set_location(0, 3, 2)
         edt.description = _('Show articles')

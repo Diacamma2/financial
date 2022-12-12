@@ -39,6 +39,7 @@ from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompEdit, XferCompButton, XferCompSelect, XferCompImage, XferCompDate, XferCompGrid
 from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_REFRESH, CLOSE_NO, WrapAction, FORMTYPE_MODAL, SELECT_SINGLE, SELECT_MULTI, SELECT_NONE, CLOSE_YES
 from lucterios.framework.error import LucteriosException
+from lucterios.framework.models import LucteriosQuerySet
 from lucterios.CORE.xferprint import XferPrintListing
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
 from lucterios.contacts.tools import ContactSelection
@@ -74,9 +75,7 @@ class ThirdList(XferListEditor):
         items = sorted(items, key=lambda t: str(t).lower(), reverse=sort_thirdbis.startswith('-'))
         if self.getparam('show_filter', 0) == 2:
             items = [item for item in items if abs(item.get_total()) > 0.0001]
-        res = QuerySet(model=Third)
-        res._result_cache = items
-        return res
+        return LucteriosQuerySet(model=Third, initial=items)
 
     def fillresponse_header(self):
         contact_filter = self.getparam('filter', '')
@@ -270,9 +269,7 @@ class ThirdListing(XferPrintListing):
         items = sorted(items, key=lambda t: str(t))
         if (self.getparam('CRITERIA') is None) and (self.getparam('show_filter', 0) == 2):
             items = [item for item in items if abs(item.get_total()) > 0.0001]
-        res = QuerySet(model=Third)
-        res._result_cache = items
-        return res
+        return LucteriosQuerySet(model=Third, initial=items)
 
     def get_filter(self):
         if self.getparam('CRITERIA') is None:

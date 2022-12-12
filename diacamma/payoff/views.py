@@ -41,6 +41,7 @@ from lucterios.framework.xfercomponents import XferCompLabelForm, \
     XferCompEdit, XferCompImage, XferCompMemo, XferCompSelect, XferCompCheck
 from lucterios.framework.error import LucteriosException, MINOR, IMPORTANT
 from lucterios.framework.model_fields import get_value_if_choices
+from lucterios.framework.models import LucteriosQuerySet
 from lucterios.CORE.models import PrintModel
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.xferprint import XferPrintReporting
@@ -139,9 +140,7 @@ class SupportingThird(XferListEditor):
         items = sorted(items, key=lambda t: str(t).lower(), reverse=sort_thirdbis.startswith('-'))
         if self.getparam('show_filter', 0) == 2:
             items = [item for item in items if abs(item.get_total()) > 0.0001]
-        res = QuerySet(model=Third)
-        res._result_cache = items
-        return res
+        return LucteriosQuerySet(model=Third, initial=items)
 
     def fillresponse_header(self):
         if 'status_filter' in self.params:

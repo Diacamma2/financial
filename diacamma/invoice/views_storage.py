@@ -39,6 +39,7 @@ from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect
 from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.error import LucteriosException, GRAVE
+from lucterios.framework.models import LucteriosQuerySet
 from lucterios.CORE.xferprint import XferPrintAction, XferPrintListing
 from lucterios.CORE.views import ObjectImport
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
@@ -577,7 +578,7 @@ class InventorySheetShow(XferListEditor):
             for cat_item in Category.objects.filter(id__in=filter_cat).distinct():
                 items = items.filter(article__categories__in=[cat_item]).distinct()
         if (self.filter_entermode == 3):
-            res = QuerySet(model=InventoryDetail)
+            res = LucteriosQuerySet(model=InventoryDetail)
             res._result_cache = [item for item in items if item.real_quantity > 1e-3]
             return res
         else:

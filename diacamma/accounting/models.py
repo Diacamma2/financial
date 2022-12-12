@@ -43,7 +43,7 @@ from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel
 from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField
-from lucterios.framework.tools import get_date_formating, get_format_value, convert_date
+from lucterios.framework.tools import get_date_formating, convert_date
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.filetools import read_file, xml_validator, save_file, get_user_path
 from lucterios.framework.signal_and_lock import RecordLocker, Signal

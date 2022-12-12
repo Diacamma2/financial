@@ -47,7 +47,7 @@ from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirt
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
-from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, get_format_value
+from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string
 from lucterios.framework.auditlog import auditlog
 from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser
 from lucterios.CORE.parameters import Params
