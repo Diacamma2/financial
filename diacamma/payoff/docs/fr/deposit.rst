@@ -1,5 +1,5 @@
 Dépôts de chèques
-================
+=================
 
      Menu *Comptabilité/Dépôt de chèques*
      

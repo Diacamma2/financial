@@ -216,13 +216,13 @@ class PayoffEditor(LucteriosEditor):
                 xfer.change_to_readonly(prefix + 'repartition')
         amount = xfer.get_components(prefix + "amount")
         if self.item.id is None:
-            amount.value = min(max(amount_min, amount_sum), amount_max)
+            amount.value = min(max(amount_min, amount_sum), amount_max) if abs(amount_sum) > 1e-3 else amount_sum
             xfer.get_components(prefix + "payer").value = xfer.getparam(prefix + 'payer', str(supporting_list[0].third))
             xfer.get_components(prefix + "date").value = xfer.getparam(prefix + 'date', supporting_list[0].get_final_child().default_date())
         else:
             amount.value = xfer.getparam(prefix + 'amount', amount_sum)
         amount.prec = currency_decimal
-        amount.min = float(amount_min)
+        amount.min = float(amount_min) if abs(amount_sum) > 1e-3 else 0
         amount.max = float(amount_max)
         mode = xfer.get_components(prefix + "mode")
         banks = xfer.get_components(prefix + "bank_account")

@@ -44,7 +44,6 @@ Maintenant, vous devez fermer la fenêtre "Configuration comptable" et créer le
 
     .. image:: account_list.png
 
-
      **Premier exercice comptable** : Votre structure est juste créée, vous n’avez donc pas d'à-nouveaux.
 
 Avec le bouton "+ Initiaux", générez automatiquement votre propre plan comptable général à partir du plan de comptes type fourni par le logiciel.

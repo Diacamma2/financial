@@ -67,7 +67,7 @@ Paiement
 Si ceux-ci sont configurés (menu *Administration/Modules (conf.)/Configuration du règlement*), vous pouvez consulter les moyens de paiement d'une facture, d'un reçu ou d'un devis.
 Si vous l'envoyez par courriel, vous pouvez également les faire apparaitre dans votre message.
 
-Dans le cas d'un paiement via PayPal, si votre _Diacamma_ est accessible par internet, le logiciel sera automatiquement notifié du règlement.
+Dans le cas d'un paiement via PayPal, MoneticoPaiement ou Hello-Asso, si votre *Diacamma* est accessible par internet, le logiciel sera automatiquement notifié du règlement.
 Dans le cas d'un devis, celui-ci sera automatiquement archivé et une facture équivalente sera générée.
 Un nouveau réglement sera ajouté dans votre facture.
 
