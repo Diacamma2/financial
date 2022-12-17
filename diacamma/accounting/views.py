@@ -125,7 +125,7 @@ class ThirdList(XferListEditor):
             self.filter &= Q(entrylineaccount__link__isnull=True) & Q(num_entryline__gt=0)
 
 
-@ActionsManage.affect_list(_("Search"), "diacamma.accounting/images/thirds.png")
+@ActionsManage.affect_list(_("Search"), "diacamma.accounting/images/thirds.png", condition=lambda xfer: xfer.get_components('thirdtype'))
 @MenuManage.describ('accounting.change_third')
 class ThirdSearch(XferSavedCriteriaSearchEditor):
     icon = "thirds.png"
