@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 16:20+0000\n"
+"POT-Creation-Date: 2022-12-21 08:20+0000\n"
 "PO-Revision-Date: 2022-11-23 15:27+0100\n"
 "Last-Translator: Laurent Gay <l.gay@sd-libre.fr>\n"
 "Language-Team: français <>\n"
@@ -175,7 +175,7 @@ msgid "status"
 msgstr "statut"
 
 #: models.py:86 models.py:193 models.py:1608 printmodel/Third_0001.py:39
-#: views.py:415 views_reports.py:206 views_reports.py:212 views_reports.py:479
+#: views.py:412 views_reports.py:206 views_reports.py:212 views_reports.py:479
 #: views_reports.py:613
 msgid "total"
 msgstr "total"
@@ -184,7 +184,7 @@ msgstr "total"
 msgid "001@AccountThird information"
 msgstr "001@Infomation comptable tiers"
 
-#: models.py:163 views.py:166
+#: models.py:163 views.py:165
 msgid "Disabled"
 msgstr "Désactivé"
 
@@ -196,7 +196,7 @@ msgstr "Activé"
 msgid "third has not correct account"
 msgstr "Ce tiers n'a pas de compte correct !"
 
-#: models.py:186 views.py:384
+#: models.py:186 views.py:381
 msgid "thirds"
 msgstr "tiers"
 
@@ -540,7 +540,7 @@ msgstr "La comptabilité analytique est obligatoire !"
 msgid "payment of %s"
 msgstr "règlement de %s"
 
-#: models.py:1287 views.py:436
+#: models.py:1287 views.py:433
 msgid "entry of account"
 msgstr "écriture comptable"
 
@@ -673,11 +673,11 @@ msgstr "Crédit"
 msgid "Debit"
 msgstr "Débit"
 
-#: views.py:53 views.py:413 views_admin.py:49
+#: views.py:54 views.py:410 views_admin.py:49
 msgid "Financial"
 msgstr "Comptabilité"
 
-#: views.py:53
+#: views.py:54
 msgid "Financial tools"
 msgstr ""
 "Ensemble d'outils comptables permettant de :{[br/]}{[ul]}{[li]}Suivre vos "
@@ -686,143 +686,143 @@ msgstr ""
 "centres de coûts.{[/li]}{[li]}Éditer facilement vos rapports financiers.{[/"
 "li]}{[/ul]}"
 
-#: views.py:56
+#: views.py:57
 msgid "Management of third account"
 msgstr "Gestion des tiers comptables"
 
-#: views.py:61
+#: views.py:62
 msgid "Thirds"
 msgstr "Tiers"
 
-#: views.py:89 views.py:309
+#: views.py:88 views.py:306
 msgid "Filtrer by contact"
 msgstr "Filtrer par contact"
 
-#: views.py:94 views.py:310
+#: views.py:93 views.py:307
 msgid "Customer"
 msgstr "Client"
 
-#: views.py:94 views.py:310
+#: views.py:93 views.py:307
 msgid "Provider"
 msgstr "Fournisseur"
 
-#: views.py:94 views.py:310
+#: views.py:93 views.py:307
 msgid "Shareholder"
 msgstr "Sociétaire"
 
-#: views.py:94 views.py:310
+#: views.py:93 views.py:307
 msgid "Employee"
 msgstr "Salarié"
 
-#: views.py:97 views.py:312
+#: views.py:96 views.py:309
 msgid "Third type"
 msgstr "Type de tiers"
 
-#: views.py:102
+#: views.py:101
 msgid "Hide the account total of thirds"
 msgstr "Masquer les totaux des comptes de tiers"
 
-#: views.py:102
+#: views.py:101
 msgid "Show the account total of thirds"
 msgstr "Voir les totaux des comptes de tiers"
 
-#: views.py:103 views.py:314
+#: views.py:102 views.py:311
 msgid "Filter any thirds unbalanced"
 msgstr "Filtrer les tiers non-soldés"
 
-#: views.py:103 views.py:316
+#: views.py:102 views.py:313
 msgid "Filter any thirds with entries without link"
 msgstr "Filtrer les tiers avec des écritures non-lettrées"
 
-#: views.py:105 views.py:314 views.py:316
+#: views.py:104 views.py:311 views.py:313
 msgid "Accounts displayed"
 msgstr "Comptes affichés"
 
-#: views.py:129 views_entries.py:204
+#: views.py:128 views_entries.py:204
 msgid "Search"
 msgstr "Recherche"
 
-#: views.py:135
+#: views.py:134
 msgid "Search third"
 msgstr "Recherche de tiers"
 
-#: views.py:171
+#: views.py:170
 msgid "Disable third"
 msgstr "Désactiver des tiers"
 
-#: views.py:184
+#: views.py:183
 msgid "limit date"
 msgstr "date limite d'activation de tiers"
 
-#: views.py:200
+#: views.py:199
 msgid "Add third"
 msgstr "Ajout d'un tiers"
 
-#: views.py:231
+#: views.py:230
 msgid "Modify third"
 msgstr "Modifier un tiers"
 
-#: views.py:241
+#: views.py:240
 msgid "Show third"
 msgstr "Voir un tiers"
 
-#: views.py:258
+#: views.py:257
 msgid "Delete third"
 msgstr "Supprimer un tiers"
 
-#: views.py:261
+#: views.py:260
 msgid "Listing"
 msgstr "Listing"
 
-#: views.py:267 views.py:303
+#: views.py:266 views.py:300
 msgid "Listing third"
 msgstr "Liste de tiers"
 
-#: views.py:327
+#: views.py:324
 msgid "Add account"
 msgstr "Ajouter un compte"
 
-#: views.py:328
+#: views.py:325
 msgid "Modify account"
 msgstr "Modifier un compte"
 
-#: views.py:337
+#: views.py:334
 msgid "Delete account"
 msgstr "Supprimer un compte"
 
-#: views.py:347 views_accounts.py:52
+#: views.py:344 views_accounts.py:52
 msgid "Bookkeeping"
 msgstr "Gestion comptable"
 
-#: views.py:365
+#: views.py:362
 msgid "conf."
 msgstr "conf."
 
-#: views.py:386
+#: views.py:383
 msgid "models"
 msgstr "modèles"
 
-#: views.py:388
+#: views.py:385
 msgid "Accounting"
 msgstr "Comptabilité"
 
-#: views.py:438
+#: views.py:435
 msgid "Accounts filter"
 msgstr "Filtre sur les comptes"
 
-#: views.py:442
+#: views.py:439
 msgid "All entries of current fiscal year"
 msgstr "Toutes les écritures de l'exercice courant"
 
-#: views.py:442
+#: views.py:439
 msgid "Only no-closed entries of current fiscal year"
 msgstr "Seulement les écritures non-validées de l'exercice courant"
 
-#: views.py:443
+#: views.py:440
 msgid "All entries for all fiscal year"
 msgstr "Toutes les écritures de tous les exercices"
 
-#: views.py:443
+#: views.py:440
 msgid "Only entries without link"
 msgstr "Seulement les écritures non-lettrées"
 

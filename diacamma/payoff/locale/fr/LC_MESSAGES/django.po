@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-12-10 16:20+0000\n"
-"PO-Revision-Date: 2022-11-30 12:22+0100\n"
+"POT-Creation-Date: 2022-12-21 08:20+0000\n"
+"PO-Revision-Date: 2022-12-21 09:19+0100\n"
 "Last-Translator: b'Paul ARULATEDA <paul531@orange.fr>'\n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -356,7 +356,7 @@ msgstr "règlement > mode"
 msgid "payoff-bank_account"
 msgstr "règlement > compte bancaire"
 
-#: payment_type.py:147 views.py:357 views.py:360 views_externalpayment.py:145
+#: payment_type.py:147 views.py:356 views.py:359 views_externalpayment.py:145
 msgid "Payment"
 msgstr "Paiement"
 
@@ -464,8 +464,11 @@ msgid "help_payoff_helloasso"
 msgstr ""
 "Depuis le portail Hello-Asso, dans le menu \"Mon compte > Intégration et API"
 "\".{[br/]}\n"
-"Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}."
-"{[br/]}"
+"- Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}."
+"{[br/]}\n"
+"- Remplissez le champ {[b]}Mon URL de callback{[/b]} par l'adresse {[b]}%s/"
+"diacamma.payoff/validationPaymentHelloAsso{[/b]} pour que l'outil soit "
+"notifié des paiements."
 
 #: payment_type.py:482
 msgid "clientid"
@@ -475,71 +478,71 @@ msgstr "Mon clientId"
 msgid "clientsecret"
 msgstr "Mon clientSecret"
 
-#: views.py:60
+#: views.py:61
 msgid "Add payoff"
 msgstr "Ajouter un règlement"
 
-#: views.py:61
+#: views.py:62
 msgid "Modify payoff"
 msgstr "Modifier un règlement"
 
-#: views.py:91
+#: views.py:92
 msgid "Internal payoff not editable !"
 msgstr "Ce règlement interne n'est pas éditable !"
 
-#: views.py:110
+#: views.py:111
 msgid "Delete payoff"
 msgstr "Supprimer un règlement"
 
-#: views.py:113
+#: views.py:114
 msgid "change"
 msgstr "changer"
 
-#: views.py:119 views.py:188
+#: views.py:120 views.py:187
 msgid "Select third"
 msgstr "Sélection d'un tiers"
 
-#: views.py:155
+#: views.py:154
 msgid "Filtrer by contact"
 msgstr "Filtrer sur contact"
 
-#: views.py:176 views_deposit.py:186
+#: views.py:175 views_deposit.py:186
 msgid "select"
 msgstr "sélectionner"
 
-#: views.py:218
+#: views.py:217
 msgid "Send"
 msgstr "Envoyer"
 
-#: views.py:221
+#: views.py:220
 msgid "Send by email"
 msgstr "Envoyer par courriel"
 
-#: views.py:257
+#: views.py:256
 msgid "No send item !"
 msgstr "Élément non envoyé !"
 
-#: views.py:277
+#: views.py:276
 msgid "nb of sending"
 msgstr "nombre à envoyer"
 
-#: views.py:286
+#: views.py:285
 msgid "subject"
 msgstr "sujet"
 
-#: views.py:289
+#: views.py:288
 msgid "message"
 msgstr "message"
 
-#: views.py:299
+#: views.py:298
 msgid "Send saved report"
 msgstr "Envoyer le rapport sauvegardé"
 
-#: views.py:341 views.py:386
+#: views.py:340 views.py:385
 msgid "Payement methods"
 msgstr "Moyens de paiement"
 
-#: views.py:373
+#: views.py:372
 msgid "No payment for this document."
 msgstr "Pas de paiement pour ce document"
 

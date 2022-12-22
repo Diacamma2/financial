@@ -421,7 +421,7 @@ class Payoff(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return ["date", "amount", "payer", "mode", "bank_account", "reference", "bank_fee"]
+        return ["amount", "mode", "bank_account", "date", "reference", "payer", "bank_fee"]
 
     @classmethod
     def get_search_fields(cls):

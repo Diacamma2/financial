@@ -42,6 +42,7 @@ class PayoffTest(LucteriosTest):
         rmtree(get_user_dir(), True)
         change_ourdetail()
         default_compta_fr()
+        self.maxDiff = 2000
 
     def test_bank(self):
         self.factory.xfer = PayoffConf()
@@ -196,7 +197,8 @@ De plus, vous devez déclarer à la plateforme cet adresse de retour {[b]}http:/
         self.assert_attrib_equal('item_2', 'description', 'Mon clientSecret')
         self.assert_json_equal('PASSWD', 'item_2', '')
         self.assert_json_equal('LABELFORM', 'help_payoff', """Depuis le portail Hello-Asso, dans le menu "Mon compte > Intégration et API".{[br/]}
-Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}.{[br/]}""")
+- Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}.{[br/]}
+- Remplissez le champ {[b]}Mon URL de callback{[/b]} par l'adresse {[b]}http://testserver/diacamma.payoff/validationPaymentHelloAsso{[/b]} pour que l'outil soit notifié des paiements.""")
 
         self.factory.xfer = PaymentMethodAddModify()
         self.calljson('/diacamma.payoff/paymentMethodAddModify',
