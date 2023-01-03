@@ -957,7 +957,7 @@ def check_accountlink_from_supporting():
         link_created = supporting.generate_accountlink()
         nb_link_created += link_created
         if link_created > 0:
-            print(' + Add entry link from %s' % supporting)
+            getLogger("diacamma.payoff").info(' + Add entry link from %s', supporting)
     return nb_link_created
 
 

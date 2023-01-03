@@ -1983,7 +1983,7 @@ def correct_quotation_asset_account():
             if corrected:
                 nb_asset_correct += 1
     if (nb_quotation_correct > 0) or (nb_asset_correct > 0):
-        print(" * account correction assert = %d / quotation = %s" % (nb_asset_correct, nb_quotation_correct))
+        getLogger("diacamma.invoice").info(" * account correction assert = %d / quotation = %s", nb_asset_correct, nb_quotation_correct)
 
 
 @Signal.decorate('delete_fiscalyear')
@@ -2007,7 +2007,7 @@ def convert_asset_and_revenue():
         bill.save()
         nb_correct += 1
     if nb_correct > 0:
-        print(" * asset & revenue correction = %d" % nb_correct)
+        getLogger("diacamma.invoice").info(" * asset & revenue correction = %d", nb_correct)
         correct_quotation_asset_account()
 
 

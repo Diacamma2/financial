@@ -1830,7 +1830,7 @@ def check_accountingcost():
         entryline.save()
         entryline_cmp += 1
     if entryline_cmp > 0:
-        print(' * convert costaccounting: nb=%d' % entryline_cmp)
+        getLogger("diacamma.accounting").info(' * convert costaccounting: nb=%d', entryline_cmp)
 
 
 def check_accountlink():
@@ -1850,7 +1850,7 @@ def check_accountlink():
                 AccountLink.create_link(set(entrylines))
                 new_link += 1
             except LucteriosException as lct_ext:
-                print('!!! check_accountlink Error:', lct_ext, ' - lines:', entrylines)
+                getLogger("diacamma.accounting").error('!!! check_accountlink Error: %s  - lines: %s', lct_ext, entrylines)
         old_link += 1
         account_link.delete()
     if old_link > 0:
@@ -1864,7 +1864,7 @@ def check_accountlink():
             addon_linked = payoff_model.check_accountlink_from_supporting()
         else:
             addon_linked = 0
-        print(' * convert AccountLink: old= %d / new= %d + %d' % (old_link, new_link, addon_linked))
+        getLogger("diacamma.accounting").info(' * convert AccountLink: old= %d / new= %d + %d', old_link, new_link, addon_linked)
 
 
 def pre_save_datadb(sender, **kwargs):
@@ -1951,7 +1951,7 @@ def check_multilink():
             if firstline and (firstline.multilink_id is not None):
                 try:
                     firstline.multilink.clean()
-                    print('* remove multilink for', link, firstline)
+                    getLogger("diacamma.accounting").info('* remove multilink for %s - %s', link, firstline)
                 except ObjectDoesNotExist:
                     pass
                 firstline.multilink = None
