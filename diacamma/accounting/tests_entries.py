@@ -80,7 +80,7 @@ class EntryTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountEdit')
         self.assert_count_equal('', 4)
         self.assert_json_equal('SELECT', 'journal', '2')
-        self.assert_json_equal('DATE', 'date_value', '2015-12-31')
+        self.assert_json_equal('DATE', 'date_value', None)
         self.assert_json_equal('EDIT', 'designation', '')
         self.assertEqual(len(self.json_actions), 2)
 

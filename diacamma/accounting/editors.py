@@ -33,14 +33,14 @@ from django.db.models import Q
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.editors import LucteriosEditor
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompButton, XferCompGrid, XferCompEdit, XferCompFloat,\
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompButton, XferCompGrid, XferCompEdit, XferCompFloat, \
     XferCompCheck
-from lucterios.framework.tools import FORMTYPE_REFRESH, CLOSE_NO, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES,\
+from lucterios.framework.tools import FORMTYPE_REFRESH, CLOSE_NO, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES, \
     FORMTYPE_MODAL
 from lucterios.framework.xferadvance import TITLE_MODIFY
 from lucterios.CORE.parameters import Params
 
-from diacamma.accounting.models import current_system_account, FiscalYear, EntryLineAccount, EntryAccount, Third, CostAccounting,\
+from diacamma.accounting.models import current_system_account, FiscalYear, EntryLineAccount, EntryAccount, Third, CostAccounting, \
     ChartsAccount
 from lucterios.framework import signal_and_lock
 from lucterios.contacts.models import CustomField
@@ -357,7 +357,7 @@ class EntryAccountEditor(LucteriosEditor):
         return nb_lines
 
     def _remove_lastyear_notbuilding(self, xfer):
-        if self.item.year.status != 0:
+        if self.item.year.status != FiscalYear.STATUS_BUILDING:
             cmp_journal = xfer.get_components('journal')
             select_list = cmp_journal.select_list
             for item_idx in range(len(select_list)):
@@ -368,6 +368,9 @@ class EntryAccountEditor(LucteriosEditor):
 
     def edit(self, xfer):
         self._remove_lastyear_notbuilding(xfer)
+        if self.item.id is None:
+            date_cmp = xfer.get_components('date_value')
+            date_cmp.value = None
         serial_vals = xfer.getparam('serial_entry')
         if serial_vals is None:
             xfer.params['serial_entry'] = self.item.get_serial()
