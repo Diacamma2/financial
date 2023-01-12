@@ -368,7 +368,7 @@ class EntryAccountEditor(LucteriosEditor):
 
     def edit(self, xfer):
         self._remove_lastyear_notbuilding(xfer)
-        if self.item.id is None:
+        if (self.item.id is None) and not Params.getvalue('accounting-datecurrent'):
             date_cmp = xfer.get_components('date_value')
             date_cmp.value = None
         serial_vals = xfer.getparam('serial_entry')

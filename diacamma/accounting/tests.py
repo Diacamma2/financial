@@ -33,14 +33,14 @@ from lucterios.CORE.views import StatusMenu, ParamEdit, ObjectMerge
 from lucterios.contacts.views import CustomFieldAddModify
 
 from diacamma.accounting.views import ThirdList, ThirdAdd, ThirdSave, ThirdShow, AccountThirdAddModify, AccountThirdDel, ThirdListing, ThirdDisable, ThirdEdit, ThirdSearch
-from diacamma.accounting.views_admin import Configuration, ConfigurationAccountingSystem, JournalAddModify, JournalDel, FiscalYearAddModify, FiscalYearActive, FiscalYearDel,\
+from diacamma.accounting.views_admin import Configuration, ConfigurationAccountingSystem, JournalAddModify, JournalDel, FiscalYearAddModify, FiscalYearActive, FiscalYearDel, \
     JournalDefault
-from diacamma.accounting.views_other import ModelEntryList, ModelEntryAddModify, ModelLineEntryAddModify,\
+from diacamma.accounting.views_other import ModelEntryList, ModelEntryAddModify, ModelLineEntryAddModify, \
     ModelEntryShow
 from diacamma.accounting.test_tools import initial_contacts, fill_entries_fr, initial_thirds_fr, create_third, fill_accounts_fr, fill_thirds_fr, default_compta_fr, set_accounting_system, add_models
 from diacamma.accounting.models import FiscalYear, Third
 from diacamma.accounting.system import get_accounting_system, accounting_system_ident
-from diacamma.accounting.tools import current_system_account, clear_system_account,\
+from diacamma.accounting.tools import current_system_account, clear_system_account, \
     format_with_devise
 from diacamma.accounting.views_entries import EntryAccountModelSelector
 from lucterios.CORE.parameters import Params
@@ -686,7 +686,7 @@ class AdminTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
         self.assertTrue('__tab_4' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_5' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 4 + 5 + 2 + 6)
+        self.assert_count_equal('', 4 + 5 + 2 + 7)
         self.assert_grid_equal('fiscalyear', {"begin": "début", "end": "fin", "status": "statut", "is_actif": "actif"}, 0)  # nb=4
 
         self.assert_grid_equal('journal', {'name': "nom", "is_default": "défaut"}, 5)  # nb=1
