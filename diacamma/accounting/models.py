@@ -1281,6 +1281,8 @@ class EntryAccount(LucteriosModel):
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if (self.costaccounting is not None) and (self.costaccounting.year_id is not None) and (self.costaccounting.year_id != self.year_id):
             self.costaccounting_id = None
+        if ((self.id is None) or not self.close) and (self.year.status == FiscalYear.STATUS_FINISHED):
+            raise LucteriosException(IMPORTANT, _('Can not save entry account on finished fiscal year !'))
         return LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     class Meta(object):
