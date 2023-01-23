@@ -1,5 +1,5 @@
-Facturier Diacamma
-==================
+Diacamma facturation
+====================
 
 Aide relative aux fonctionnalités de gestion de factures.
 
