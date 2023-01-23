@@ -72,6 +72,7 @@ def fill_params(xfer, is_mini=False):
         xfer.params['params'].append('accounting-sizecode')
     xfer.params['params'].append('accounting-needcost')
     xfer.params['params'].append('accounting-code-report-filter')
+    xfer.params['params'].append('accounting-datecurrent')
     Params.fill(xfer, xfer.params['params'], 1, xfer.get_max_row() + 1)
     btn = XferCompButton('editparam')
     btn.set_is_mini(is_mini)

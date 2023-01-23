@@ -29,6 +29,7 @@ from _io import StringIO
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
+from lucterios.CORE.parameters import Params
 
 from diacamma.accounting.views_entries import EntryAccountList, \
     EntryAccountEdit, EntryAccountAfterSave, EntryLineAccountAdd, \
@@ -36,12 +37,12 @@ from diacamma.accounting.views_entries import EntryAccountList, \
     EntryAccountReverse, EntryAccountCreateLinked, EntryAccountLink, \
     EntryAccountDel, EntryAccountOpenFromLine, EntryAccountShow, \
     EntryLineAccountDel, EntryAccountUnlock, EntryAccountImport
-from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr,\
+from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr, \
     fill_entries_fr, default_costaccounting, fill_thirds_fr, fill_accounts_fr
 from diacamma.accounting.models import EntryAccount, CostAccounting, FiscalYear
 from diacamma.accounting.views_other import CostAccountingAddModify
 from diacamma.accounting.views import ThirdShow
-from diacamma.accounting.views_accounts import FiscalYearBegin, FiscalYearClose,\
+from diacamma.accounting.views_accounts import FiscalYearBegin, FiscalYearClose, \
     FiscalYearReportLastYear, ChartsAccountList
 
 
@@ -75,12 +76,13 @@ class EntryTest(LucteriosTest):
         self.assert_json_equal('LABELFORM', 'result', [0.00, 0.00, 0.00, 0.00, 0.00])
 
     def test_add_entry(self):
+        Params.setvalue('accounting-datecurrent', False)
         self.factory.xfer = EntryAccountEdit()
         self.calljson('/diacamma.accounting/entryAccountEdit', {'year': '1', 'journal': '2'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountEdit')
         self.assert_count_equal('', 4)
         self.assert_json_equal('SELECT', 'journal', '2')
-        self.assert_json_equal('DATE', 'date_value', '2015-12-31')
+        self.assert_json_equal('DATE', 'date_value', None)
         self.assert_json_equal('EDIT', 'designation', '')
         self.assertEqual(len(self.json_actions), 2)
 
@@ -389,7 +391,7 @@ class EntryTest(LucteriosTest):
 
         self.factory.xfer = EntryLineAccountEdit()
         self.calljson('/diacamma.accounting/entryLineAccountEdit', {'year': 1, 'debit_val': 0, 'date_value': '2015-02-13', 'num_cpt_txt': '', 'credit_val': 0,
-                                                                    'entrylineaccount_serial': -2,
+                                                                    'entrylineaccount_serial':-2,
                                                                     'serial_entry': '-1|4|2|87.230000|0|0|None|\n-2|11|0|87.230000|2|0|None|',
                                                                     'journal': 2, 'designation': 'un plein cadie', 'entryaccount': '1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryLineAccountEdit')

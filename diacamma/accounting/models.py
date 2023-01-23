@@ -1902,15 +1902,16 @@ def check_report_accounting(year):
 
 @Signal.decorate('checkparam')
 def accounting_checkparam():
-    Parameter.check_and_create(name='accounting-devise-iso', typeparam=0, title=_("accounting-devise-iso"), args="{'Multi':False}",
+    Parameter.check_and_create(name='accounting-devise-iso', typeparam=Parameter.TYPE_STRING, title=_("accounting-devise-iso"), args="{'Multi':False}",
                                value='EUR', meta=get_meta_currency_iso())
-    Parameter.check_and_create(name='accounting-devise-prec', typeparam=1, title=_("accounting-devise-prec"), args="{'Min':0, 'Max':4}", value='2')
-    Parameter.check_and_create(name='accounting-system', typeparam=0, title=_("accounting-system"), args="{'Multi':False}", value='')
-    Parameter.check_and_create(name='accounting-sizecode', typeparam=1, title=_("accounting-sizecode"), args="{'Min':3, 'Max':50}", value='3')
-    Parameter.check_and_create(name='accounting-needcost', typeparam=3, title=_("accounting-needcost"), args="{}", value='False')
-    Parameter.check_and_create(name='accounting-code-report-filter', typeparam=0, title=_("accounting-code-report-filter"), args="{'Multi':False}", value='')
-    Parameter.check_and_create(name="accounting-lettering-check", typeparam=0, title=_("accounting-lettering-check"), args="{'Multi':True}", value='',
+    Parameter.check_and_create(name='accounting-devise-prec', typeparam=Parameter.TYPE_INTEGER, title=_("accounting-devise-prec"), args="{'Min':0, 'Max':4}", value='2')
+    Parameter.check_and_create(name='accounting-system', typeparam=Parameter.TYPE_STRING, title=_("accounting-system"), args="{'Multi':False}", value='')
+    Parameter.check_and_create(name='accounting-sizecode', typeparam=Parameter.TYPE_INTEGER, title=_("accounting-sizecode"), args="{'Min':3, 'Max':50}", value='3')
+    Parameter.check_and_create(name='accounting-needcost', typeparam=Parameter.TYPE_BOOL, title=_("accounting-needcost"), args="{}", value='False')
+    Parameter.check_and_create(name='accounting-code-report-filter', typeparam=Parameter.TYPE_STRING, title=_("accounting-code-report-filter"), args="{'Multi':False}", value='')
+    Parameter.check_and_create(name="accounting-lettering-check", typeparam=Parameter.TYPE_STRING, title=_("accounting-lettering-check"), args="{'Multi':True}", value='',
                                meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_third_mask()) & django.db.models.Q(year__is_actif=True)", "code", False)')
+    Parameter.check_and_create(name='accounting-datecurrent', typeparam=Parameter.TYPE_BOOL, title=_("accounting-datecurrent"), args="{}", value='True')
 
     LucteriosGroup.redefine_generic(_("# accounting (administrator)"), FiscalYear.get_permission(True, True, True),
                                     ChartsAccount.get_permission(True, True, True), Budget.get_permission(True, True, True),
