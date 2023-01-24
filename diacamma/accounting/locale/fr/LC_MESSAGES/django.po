@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-23 14:44+0000\n"
+"POT-Creation-Date: 2023-01-24 11:09+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -37,7 +37,7 @@ msgstr "Initiaux"
 #: editors.py:126 views_accounts.py:141 views_budget.py:213
 #: views_entries.py:310
 msgid "Import"
-msgstr "Importer"
+msgstr "Import"
 
 #: editors.py:128 views_accounts.py:55 views_accounts.py:61
 msgid "Charts of account"
