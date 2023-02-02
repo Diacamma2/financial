@@ -46,7 +46,7 @@ from diacamma.payoff.views import PayoffAddModify, PayoffDel, SupportingThird, S
 from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport
 from diacamma.invoice.models import Bill, AccountPosting
 from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_categories, default_customize,\
-    default_area
+    default_area, default_categorybill
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillToBill, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch,\
@@ -2488,11 +2488,11 @@ class BillTest(InvoiceTest):
             self.assertEqual(self.response_json['action']['id'], "diacamma.payoff/payableEmail")
             self.assertEqual(len(self.response_json['action']['params']), 2)
             self.assertEqual(self.response_json['action']['params']['item_name'], 'bill')
-            self.assertEqual(self.response_json['action']['params']['modelname'], '')
+            self.assertEqual(self.response_json['action']['params']['modelname'], 'invoice.Bill')
 
             self.factory.xfer = PayableEmail()
             self.calljson('/diacamma.payoff/payableEmail',
-                          {'item_name': 'bill', 'bill': "1;2;3;4", 'modelname': ''}, False)
+                          {'item_name': 'bill', 'bill': "1;2;3;4", 'modelname': 'invoice.Bill'}, False)
             self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
             self.assert_count_equal('', 7)
             self.assert_json_equal('LABELFORM', "nb_item", '4')
@@ -3309,3 +3309,142 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billList', {'status_filter': -2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 5)
+
+    def test_with_categorybill(self):
+        default_articles()
+        default_categorybill()
+
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billAddModify')
+        self.assert_count_equal('', 6)
+        self.assert_select_equal('categoryBill', {0: None, 1: '1st type', 2: '2nd type'})
+        self.assert_json_equal('SELECT', 'categoryBill', 0)
+        self.assert_select_equal('bill_type', {0: 'devis', 1: 'facture', 2: 'avoir', 3: 'reçu'})
+
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify', {'categoryBill': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billAddModify')
+        self.assert_count_equal('', 6)
+        self.assert_json_equal('SELECT', 'categoryBill', 2)
+        self.assert_select_equal('bill_type', {0: 'Type Q', 1: 'Type B', 2: 'Type A', 3: 'Type R'})
+
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify', {'categoryBill': 2, 'bill_type': 0, 'date': '2015-06-20', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+
+        self.factory.xfer = SupportingThirdValid()
+        self.calljson('/diacamma.payoff/supportingThirdValid', {'supporting': 1, 'third': 6}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'supportingThirdValid')
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify',
+                      {'SAVE': 'YES', 'bill': 1, 'article': 1, 'designation': 'My article', 'price': '50.00', 'quantity': 2}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'detailAddModify')
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition',
+                      {'CONFIRME': 'YES', 'bill': 1, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_grid_equal('bill', {"bill_type": "type de facture", 'billtype': 'titre du type', "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total", "status": "statut"}, 1)
+        self.assert_json_equal('', 'bill/@0/bill_type', 0)
+        self.assert_json_equal('', 'bill/@0/billtype', 'Type Q')
+        self.assert_json_equal('', 'bill/@0/third', "Dalton Jack")
+        self.assert_json_equal('', 'bill/@0/date', '2015-06-20')
+        self.assert_json_equal('', 'bill/@0/total', 100.00)
+        self.assert_json_equal('', 'bill/@0/status', 1)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 12)
+        self.assert_json_equal('LABELFORM', 'title', "Type Q")
+        self.assert_json_equal('LABELFORM', 'num_txt', "A-1")
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_json_equal('LABELFORM', 'date', "2015-06-20")
+        self.assert_json_equal('LABELFORM', 'categoryBill', '2nd type')
+        self.assert_json_equal('LABELFORM', 'bill_type', 0)
+        self.assert_count_equal('detail', 1)
+
+        self.factory.xfer = BillToBill()
+        self.calljson('/diacamma.invoice/billToBill',
+                      {'CONFIRME': 'YES', 'bill': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToBill')
+
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify', {'bill': 2, 'date': '2015-06-24', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 2)
+        self.assert_json_equal('', 'bill/@0/bill_type', 1)
+        self.assert_json_equal('', 'bill/@0/billtype', 'Type B')
+        self.assert_json_equal('', 'bill/@0/third', "Dalton Jack")
+        self.assert_json_equal('', 'bill/@0/date', '2015-06-24')
+        self.assert_json_equal('', 'bill/@0/total', 100.00)
+        self.assert_json_equal('', 'bill/@0/status', 0)
+        self.assert_json_equal('', 'bill/@1/bill_type', 0)
+        self.assert_json_equal('', 'bill/@1/billtype', 'Type Q')
+        self.assert_json_equal('', 'bill/@1/third', "Dalton Jack")
+        self.assert_json_equal('', 'bill/@1/date', '2015-06-20')
+        self.assert_json_equal('', 'bill/@1/total', 100.00)
+        self.assert_json_equal('', 'bill/@1/status', 3)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 15)
+        self.assert_json_equal('LABELFORM', 'title', "Type B")
+        self.assert_json_equal('LABELFORM', 'num_txt', None)
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'date', "2015-06-24")
+        self.assert_json_equal('LABELFORM', 'categoryBill', '2nd type')
+        self.assert_json_equal('LABELFORM', 'bill_type', 1)
+        self.assert_count_equal('detail', 1)
+
+        configSMTP('localhost', 2125)
+        server = TestReceiver()
+        server.start(2125)
+        try:
+            self.assertEqual(0, server.count())
+            self.factory.xfer = PayableEmail()
+            self.calljson('/diacamma.payoff/payableEmail',
+                          {'item_name': 'bill', 'bill': 1}, False)
+            self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
+            self.assert_count_equal('', 4)
+            self.assert_json_equal('SELECT', 'model', 9)
+            self.assert_json_equal('EDIT', 'subject', 'Warning: Type q A-1')
+            self.assert_json_equal('MEMO', 'message', 'Hello{[br/]}name=Jack Dalton{[br/]}doc=Type Q A-1 - 20 juin 2015{[br/]}{[br/]}Kiss')
+
+            self.factory.xfer = PayableEmail()
+            self.calljson('/diacamma.payoff/payableEmail',
+                          {'bill': 1, 'OK': 'YES', 'item_name': 'bill', 'subject': 'Warning: Type q A-1', 'message': 'this is a bill.', 'model': 9}, False)
+            self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
+            self.assertEqual(1, server.count())
+            self.assertEqual('mr-sylvestre@worldcompany.com', server.get(0)[1])
+            self.assertEqual(['Jack.Dalton@worldcompany.com', 'mr-sylvestre@worldcompany.com'], server.get(0)[2])
+            msg_txt, msg, msg_file = server.check_first_message('Warning: Type q A-1', 3, {'To': 'Jack.Dalton@worldcompany.com'})
+            self.assertEqual('text/plain', msg_txt.get_content_type())
+            self.assertEqual('text/html', msg.get_content_type())
+            self.assertEqual('base64', msg.get('Content-Transfer-Encoding', ''))
+            self.assertEqual('<html>this is a bill.</html>', decode_b64(msg.get_payload()))
+            self.assertTrue('Type Q_A-1_Dalton Jack.pdf' in msg_file.get('Content-Type', ''), msg_file.get('Content-Type', ''))
+            self.save_pdf(base64_content=msg_file.get_payload())
+        finally:
+            server.stop()
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition', {'bill': 2, 'TRANSITION': 'valid', 'nbpayoff': 0}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
+        self.assert_count_equal('', 3 + 0 + 6 + 0)
+        self.assert_json_equal('', 'nbpayoff', 0)
+        self.assert_json_equal('', 'sendemail', False)
+        self.assert_json_equal('', 'subject', 'Warning: Type b')
+        self.assert_json_equal('', 'message', 'Hello{[br/]}name=Jack Dalton{[br/]}doc=Type B - 24 juin 2015{[br/]}{[br/]}Kiss')
+        self.assert_json_equal('', 'model', 9)

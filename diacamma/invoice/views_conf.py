@@ -37,7 +37,7 @@ from lucterios.CORE.models import Parameter
 
 from diacamma.accounting.tools import correct_accounting_code
 from diacamma.invoice.models import Vat, Article, Category, StorageArea,\
-    AccountPosting, AutomaticReduce
+    AccountPosting, AutomaticReduce, CategoryBill
 from diacamma.accounting.system import accounting_system_ident
 from lucterios.contacts.models import CustomField
 
@@ -95,6 +95,8 @@ class InvoiceConfCommercial(XferListEditor):
         grid_custom.delete_header('model_title')
         self.new_tab(_('Storage area'))
         self.fill_grid(self.get_max_row(), StorageArea, 'storagearea', StorageArea.objects.all())
+        self.new_tab(_('Category bill'))
+        self.fill_grid(self.get_max_row(), CategoryBill, 'categoryBill', CategoryBill.objects.all())
         self.new_tab(_('Automatic reduce'))
 
 
@@ -195,6 +197,31 @@ class CategoryDel(XferDelete):
     icon = "invoice_conf.png"
     model = Category
     field_id = 'category'
+    caption = _("Delete Category")
+
+
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@MenuManage.describ('invoice.add_vat')
+class CategoryBillAddModify(XferAddEditor):
+    icon = "invoice_conf.png"
+    model = CategoryBill
+    field_id = 'categoryBill'
+    caption_add = _("Add category")
+    caption_modify = _("Modify category")
+
+    def fillresponse(self):
+        if self.item.id is None:
+            self.item.fill_default()
+        XferAddEditor.fillresponse(self)
+
+
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@MenuManage.describ('invoice.delete_vat')
+class CategoryBillDel(XferDelete):
+    icon = "invoice_conf.png"
+    model = CategoryBill
+    field_id = 'categoryBill'
     caption = _("Delete Category")
 
 

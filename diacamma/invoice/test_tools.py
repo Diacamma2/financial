@@ -31,7 +31,7 @@ from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.test_tools import create_account, default_costaccounting
 
 from diacamma.invoice.models import Article, Vat, Category, Provider,\
-    StorageArea, StorageSheet, StorageDetail, AccountPosting
+    StorageArea, StorageSheet, StorageDetail, AccountPosting, CategoryBill
 from diacamma.invoice.views import BillTransition, DetailAddModify, BillAddModify
 
 
@@ -114,6 +114,13 @@ def default_area():
     StorageArea.objects.create(name='Lieu 1', designation="AAA")
     StorageArea.objects.create(name='Lieu 2', designation="BBB")
     StorageArea.objects.create(name='Lieu 3', designation="CCC")
+
+
+def default_categorybill():
+    CategoryBill.objects.create(name="1st type", designation='First', emailsubject="#reference", emailmessage="Hello", printmodel_id=8, titles='{}')
+    CategoryBill.objects.create(name="2nd type", designation='Second',
+                                emailsubject="Warning: #reference", emailmessage="Hello{[br/]}name=#name{[br/]}doc=#doc{[br/]}{[br/]}Kiss", printmodel_id=9,
+                                titles='{"0": "Type Q", "1": "Type B", "2": "Type A", "3": "Type R", "4": "Type O"}')
 
 
 def insert_storage(complet=False):

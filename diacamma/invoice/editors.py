@@ -182,6 +182,28 @@ class ArticleEditor(LucteriosEditor):
             xfer.del_tab(_('002@Provider'))
 
 
+class CategoryBillEditor(SupportingEditor):
+
+    def edit(self, xfer):
+        comp_emailmessage = xfer.get_components('emailmessage')
+        comp_emailmessage.with_hypertext = True
+        for type_num, type_description, type_value in xfer.item.get_title_info():
+            comp_title = XferCompEdit('title_%d' % type_num)
+            comp_title.description = type_description
+            comp_title.value = type_value
+            comp_title.set_location(comp_emailmessage.col, xfer.get_max_row() + 1)
+            xfer.add_component(comp_title)
+        xfer.move_components('printmodel', 0, 20)
+        xfer.move_components('emailsubject', 0, 20)
+        xfer.move_components('emailmessage', 0, 20)
+
+    def before_save(self, xfer):
+        for param_key, param_val in xfer.params.items():
+            if param_key.startswith('title_'):
+                type_num = int(param_key[6:])
+                xfer.item.set_title(type_num, param_val)
+
+
 class BillEditor(SupportingEditor):
 
     def edit(self, xfer):
@@ -194,8 +216,13 @@ class BillEditor(SupportingEditor):
         comp_comment.with_hypertext = True
         comp_comment.set_size(100, 375)
         com_type = xfer.get_components('bill_type')
+        com_type.set_select(xfer.item.bill_type_list)
         com_type.remove_select(Bill.BILLTYPE_ORDER)
         com_type.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+
+        com_cat = xfer.get_components('categoryBill')
+        if com_cat is not None:
+            com_cat.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def show(self, xfer):
         try:
@@ -207,8 +234,7 @@ class BillEditor(SupportingEditor):
         xfer.move(0, 0, 1)
         lbl = XferCompLabelForm('title')
         lbl.set_location(1, 0, 4)
-        lbl.set_value_as_title(get_value_if_choices(
-            self.item.bill_type, self.item.get_field_by_name('bill_type')))
+        lbl.set_value_as_title(self.item.billtype)
         xfer.add_component(lbl)
         details = xfer.get_components('detail')
         if Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT:

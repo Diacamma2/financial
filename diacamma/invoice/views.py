@@ -278,6 +278,12 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
     FORMAT_PREFIX = "payoff%02d_"
 
     def fill_dlg_payoff(self, nbpayoff, sendemail, sendemail_quotation):
+        def replace_tag(contact, text):
+            text = text.replace('#name', contact.get_final_child().get_presentation() if contact is not None else '???')
+            text = text.replace('#doc', str(self.item.get_docname()))
+            text = text.replace('#reference', str(self.item.reference))
+            return text
+
         dlg = self.create_custom(Payoff)
         dlg.caption = _("Confirmation")
         icon = XferCompImage('img')
@@ -319,20 +325,18 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
     """
             check_payoff.description = _("Send email with PDF")
             dlg.add_component(check_payoff)
+
+            contact = self.item.third.contact.get_final_child()
             edt = XferCompEdit('subject')
-            edt.set_value(str(self.item))
+            email_subject = self.item.get_email_subject()
+            edt.set_value(replace_tag(contact, email_subject))
             edt.set_location(2, row + 2)
             edt.description = _('subject')
             dlg.add_component(edt)
-            contact = self.item.third.contact.get_final_child()
             memo = XferCompMemo('message')
             memo.description = _('message')
-            email_message = Params.getvalue('payoff-email-message')
-            email_message = email_message.replace('%(name)s', '#name')
-            email_message = email_message.replace('%(doc)s', '#doc')
-            email_message = email_message.replace('#name', contact.get_presentation())
-            email_message = email_message.replace('#doc', self.item.get_docname())
-            memo.set_value(email_message)
+            email_message = self.item.get_email_message()
+            memo.set_value(replace_tag(contact, email_message))
             memo.with_hypertext = True
             memo.set_size(130, 450)
             memo.set_location(2, row + 3)
@@ -356,6 +360,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
             selectors = PrintModel.get_print_selector(2, self.item.__class__)[0]
             sel = XferCompSelect('model')
             sel.set_select(selectors[2])
+            sel.set_value(self.item.get_default_print_model())
             sel.set_location(2, row + 6)
             sel.description = selectors[1]
             dlg.add_component(sel)
@@ -638,7 +643,7 @@ class BillPayableEmail(XferContainerAcknowledge):
 
     def fillresponse(self):
         self.redirect_action(ActionsManage.get_action_url('payoff.Supporting', 'Email', self),
-                             close=CLOSE_NO, params={'item_name': self.field_id, "modelname": ""})
+                             close=CLOSE_NO, params={'item_name': self.field_id, "modelname": Bill.get_long_name()})
 
 
 @ActionsManage.affect_grid(_("Print"), "images/print.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=can_printing)

@@ -207,7 +207,11 @@ class Supporting(LucteriosModel):
         return self.fiscal_year.folder.add_pdf_document(title, user, metadata, pdf_content)
 
     def generate_pdfreport(self):
-        model_value = PrintModel.objects.filter(kind=2, modelname=self.get_long_name()).order_by('-is_default', 'id').first()
+        model_id = self.get_default_print_model()
+        if model_id is None:
+            model_value = PrintModel.objects.filter(kind=PrintModel.KIND_REPORT, modelname=self.get_long_name()).order_by('-is_default', 'id').first()
+        else:
+            model_value = PrintModel.objects.get(id=model_id)
         if model_value is not None:
             try:
                 last_user = getattr(self, 'last_user', None)
@@ -321,6 +325,22 @@ class Supporting(LucteriosModel):
 
     def delete_linked_supporting(self, payoff):
         return
+
+    def get_email_subject(self):
+        return Params.getvalue('payoff-email-subject')
+
+    def get_email_message(self):
+        message = Params.getvalue('payoff-email-message')
+        message = message.replace('%(name)s', '#name')
+        message = message.replace('%(doc)s', '#doc')
+        return message
+
+    def get_default_print_model(self):
+        model = PrintModel.objects.filter(kind=PrintModel.KIND_REPORT, modelname=self.get_long_name(), is_default=True).first()
+        if model is None:
+            return None
+        else:
+            return model.id
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.is_revenu = self.get_final_child().payoff_is_revenu()

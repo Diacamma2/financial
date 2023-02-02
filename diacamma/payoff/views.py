@@ -265,10 +265,8 @@ class PayableEmail(XferContainerAcknowledge):
             icon.set_value(self.icon_path())
             dlg.add_component(icon)
 
-            subject = Params.getvalue('payoff-email-subject')
-            message = Params.getvalue('payoff-email-message')
-            message = message.replace('%(name)s', '#name')
-            message = message.replace('%(doc)s', '#doc')
+            subject = self.item.get_email_subject()
+            message = self.item.get_email_message()
             if len(self.items) > 1:
                 edt = XferCompLabelForm('nb_item')
                 edt.set_value(len(self.items))
@@ -311,10 +309,11 @@ parent.get('print_sep').setEnabled(!is_persitent);
                 sep.set_value_center(XferContainerPrint.PRINT_WARNING_SAVING_MSG)
                 sep.set_location(1, 5)
                 dlg.add_component(sep)
-            selectors = PrintModel.get_print_selector(2, self.model)[0]
+            selectors = PrintModel.get_print_selector(PrintModel.KIND_REPORT, self.model)[0]
             sel = XferCompSelect('model')
             sel.set_select(selectors[2])
             sel.set_location(1, 6)
+            sel.set_value(self.item.get_default_print_model())
             sel.description = selectors[1]
             dlg.add_component(sel)
             dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"OK": "YES"})

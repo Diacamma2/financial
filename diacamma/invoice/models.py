@@ -49,7 +49,8 @@ from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
 from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string
 from lucterios.framework.auditlog import auditlog
-from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser
+from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser,\
+    PrintModel
 from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact
 
@@ -58,6 +59,8 @@ from diacamma.accounting.tools import current_system_account, currency_round, co
     format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip
 from django.db.models.query import QuerySet
+from json import dumps, loads
+from json.decoder import JSONDecodeError
 
 
 class Vat(LucteriosModel):
@@ -508,6 +511,78 @@ class Provider(LucteriosModel):
         default_permissions = []
 
 
+class CategoryBill(LucteriosModel):
+    name = models.CharField(_('name'), max_length=100)
+    designation = models.TextField(_('designation'))
+    titles = models.TextField(_('titles'))
+
+    printmodel = models.ForeignKey(PrintModel, verbose_name=_('print patern'), null=True, default=None, db_index=True, on_delete=models.SET_NULL)
+    emailsubject = models.CharField(_('email subject'), max_length=100)
+    emailmessage = models.TextField(_('email message'))
+
+    titles_txt = LucteriosVirtualField(verbose_name=_('titles'), compute_from='get_titles_txt')
+
+    def __str__(self):
+        return str(self.name)
+
+    @classmethod
+    def get_default_fields(cls):
+        return ["name", "designation", "titles_txt"]
+
+    @classmethod
+    def get_edit_fields(cls):
+        return ["name", "designation", 'printmodel', 'emailsubject', 'emailmessage']
+
+    @classmethod
+    def get_show_fields(cls):
+        return ["name", "designation", 'printmodel', 'emailsubject', 'emailmessage']
+
+    @property
+    def printmodel_query(self):
+        return PrintModel.objects.filter(kind=PrintModel.KIND_REPORT, modelname=Bill.get_long_name())
+
+    def fill_default(self):
+        if self.emailsubject == '':
+            self.emailsubject = Params.getvalue('payoff-email-subject')
+        if self.emailmessage == '':
+            self.emailmessage = Params.getvalue('payoff-email-message')
+        if self.titles == '':
+            self.titles = dumps({item[0]: str(item[1]) for item in Bill.LIST_BILLTYPES})
+
+    def get_title(self, type_num):
+        try:
+            titles = loads(self.titles)
+        except JSONDecodeError:
+            titles = {}
+        if str(type_num) in titles:
+            return titles[str(type_num)]
+        else:
+            return dict(Bill.LIST_BILLTYPES)[type_num]
+
+    def set_title(self, type_num, newtitle):
+        try:
+            titles = loads(self.titles)
+        except JSONDecodeError:
+            titles = {}
+        titles[type_num] = newtitle
+        self.titles = dumps(titles)
+
+    def get_title_info(self):
+        for type_num, type_title in Bill.LIST_BILLTYPES:
+            yield type_num, _("title of '%s'") % type_title, self.get_title(type_num)
+
+    def get_titles_txt(self):
+        result = []
+        for _num, type_description, type_value in self.get_title_info():
+            result.append("%s = %s" % (type_description, type_value))
+        return result
+
+    class Meta(object):
+        verbose_name = _('Category')
+        verbose_name_plural = _('Categories')
+        default_permissions = []
+
+
 class Bill(Supporting):
     BILLTYPE_ALL = -1
     BILLTYPE_QUOTATION = 0
@@ -536,6 +611,7 @@ class Bill(Supporting):
     entry = models.ForeignKey(EntryAccount, verbose_name=_('entry'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
     cost_accounting = models.ForeignKey(CostAccounting, verbose_name=_('cost accounting'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
     parentbill = models.ForeignKey("invoice.Bill", verbose_name=_('parent'), null=True, default=None, on_delete=models.SET_NULL)
+    categoryBill = models.ForeignKey(CategoryBill, verbose_name=_('category'), null=True, default=None, on_delete=models.SET_NULL)
 
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total_ex', format_string=lambda: format_with_devise(5))
     num_txt = LucteriosVirtualField(verbose_name=_('numeros'), compute_from='get_num_txt')
@@ -549,16 +625,17 @@ class Bill(Supporting):
     origin = LucteriosVirtualField(verbose_name=_('origin'), compute_from='get_origin')
     description = LucteriosVirtualField(verbose_name='', compute_from='get_description')
 
+    billtype = LucteriosVirtualField(verbose_name=_('type title'), compute_from='get_billtype')
+
     def __str__(self):
-        billtype = get_value_if_choices(self.bill_type, self.get_field_by_name('bill_type'))
         if self.num is None:
-            return "%s - %s" % (billtype, get_date_formating(self.date))
+            return "%s - %s" % (self.billtype, get_date_formating(self.date))
         else:
-            return "%s %s - %s" % (billtype, self.num_txt, get_date_formating(self.date))
+            return "%s %s - %s" % (self.billtype, self.num_txt, get_date_formating(self.date))
 
     @property
     def reference(self):
-        billtype = get_value_if_choices(self.bill_type, self.get_field_by_name('bill_type'))
+        billtype = self.billtype
         billtype = billtype[0].upper() + billtype[1:].lower()
         if self.num is None:
             return "%s" % billtype
@@ -572,18 +649,23 @@ class Bill(Supporting):
             fields.append("status")
         elif status == 1:
             fields.append(Supporting.get_payoff_fields()[-1][-1])
+        if CategoryBill.objects.count() > 0:
+            fields.insert(1, 'billtype')
         return fields
 
     @classmethod
     def get_payment_fields(cls):
-        return ["third", ("bill_type", "num_txt",), ("date", 'total',)]
+        return ["third", ("billtype", "num_txt",), ("date", 'total',)]
 
     def get_third_mask(self):
         return current_system_account().get_customer_mask()
 
     @classmethod
     def get_edit_fields(cls):
-        return ["bill_type", "date", "comment"]
+        fields = ["bill_type", "date", "comment"]
+        if CategoryBill.objects.count() > 0:
+            fields.insert(0, 'categoryBill')
+        return fields
 
     @classmethod
     def get_search_fields(cls):
@@ -598,7 +680,10 @@ class Bill(Supporting):
 
     @classmethod
     def get_show_fields(cls):
-        return [("num_txt", "date"), "third", "detail_set", "comment", ("status", 'total_excltax')]
+        fields = [("num_txt", "date"), "third", "detail_set", "comment", ("status", 'total_excltax')]
+        if CategoryBill.objects.count() > 0:
+            fields.append(('categoryBill', "bill_type"))
+        return fields
 
     @classmethod
     def get_print_fields(cls):
@@ -610,8 +695,21 @@ class Bill(Supporting):
         return print_fields
 
     @property
+    def bill_type_list(self):
+        if self.categoryBill_id is None:
+            return Bill.LIST_BILLTYPES
+        else:
+            return [(info[0], info[2])for info in self.categoryBill.get_title_info()]
+
+    def get_billtype(self):
+        if self.categoryBill_id is None:
+            return get_value_if_choices(self.bill_type, self.get_field_by_name("bill_type"))
+        else:
+            return self.categoryBill.get_title(self.bill_type)
+
+    @property
     def type_bill(self):
-        return get_value_if_choices(self.bill_type, self.get_field_by_name("bill_type")).upper()
+        return self.get_billtype().upper()
 
     def get_total_ex(self):
         if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
@@ -950,7 +1048,9 @@ class Bill(Supporting):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
-            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_BILL, date=timezone.now(), third=self.third, status=Bill.STATUS_BUILDING, comment=self.comment, parentbill=self)
+            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_BILL, date=timezone.now(),
+                                           third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
+                                           comment=self.comment, parentbill=self)
             for detail in self.detail_set.all():
                 detail.id = None
                 detail.bill = new_bill
@@ -967,7 +1067,9 @@ class Bill(Supporting):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
-            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_ORDER, date=timezone.now(), third=self.third, status=Bill.STATUS_VALID, comment=self.comment, parentbill=self)
+            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_ORDER, date=timezone.now(),
+                                           third=self.third, status=Bill.STATUS_VALID, categoryBill=self.categoryBill,
+                                           comment=self.comment, parentbill=self)
             new_bill.affect_num()
             new_bill.save()
             for detail in self.detail_set.all():
@@ -1139,8 +1241,7 @@ class Bill(Supporting):
         return (self.bill_type != Bill.BILLTYPE_ASSET) and (self.status == Bill.STATUS_VALID) and (self.get_total_rest_topay() > 0.001)
 
     def get_document_filename(self):
-        billtype = get_value_if_choices(self.bill_type, self.get_field_by_name('bill_type'))
-        return remove_accent("%s_%s_%s" % (billtype, self.num_txt, str(self.third)))
+        return remove_accent("%s_%s_%s" % (self.billtype, self.num_txt, str(self.third)))
 
     def get_linked_supportings(self):
         other_bill_inverses = Bill.objects.filter(third=self.third, is_revenu=not self.is_revenu, status=Bill.STATUS_VALID).exclude(bill_type=Bill.BILLTYPE_QUOTATION)
@@ -1169,6 +1270,27 @@ class Bill(Supporting):
             if create_log is not None:
                 return LucteriosUser.objects.filter(username=create_log.username).first()
         return None
+
+    def get_email_subject(self):
+        if self.categoryBill_id is None:
+            return Supporting.get_email_subject(self)
+        else:
+            return self.categoryBill.emailsubject
+
+    def get_email_message(self):
+        if self.categoryBill_id is None:
+            return Supporting.get_email_message(self)
+        else:
+            return self.categoryBill.emailmessage
+
+    def get_default_print_model(self):
+        model = None
+        if self.categoryBill_id is not None:
+            model = self.categoryBill.printmodel_id
+        if model is None:
+            return Supporting.get_default_print_model(self)
+        else:
+            return model
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.bill_type = int(self.bill_type)
