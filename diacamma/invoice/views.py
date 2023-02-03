@@ -30,7 +30,6 @@ from django.utils import formats
 from django.db.models.functions import Concat
 from django.db.models import Q, Value
 from django.db.models.aggregates import Sum, Count
-from django.db.models.query import QuerySet
 
 from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELETE, TITLE_MODIFY, TITLE_ADD, TITLE_CANCEL, TITLE_OK, TITLE_EDIT,\
     TITLE_LABEL, TITLE_CREATE
@@ -278,12 +277,6 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
     FORMAT_PREFIX = "payoff%02d_"
 
     def fill_dlg_payoff(self, nbpayoff, sendemail, sendemail_quotation):
-        def replace_tag(contact, text):
-            text = text.replace('#name', contact.get_final_child().get_presentation() if contact is not None else '???')
-            text = text.replace('#doc', str(self.item.get_docname()))
-            text = text.replace('#reference', str(self.item.reference))
-            return text
-
         dlg = self.create_custom(Payoff)
         dlg.caption = _("Confirmation")
         icon = XferCompImage('img')
@@ -328,15 +321,13 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
 
             contact = self.item.third.contact.get_final_child()
             edt = XferCompEdit('subject')
-            email_subject = self.item.get_email_subject()
-            edt.set_value(replace_tag(contact, email_subject))
+            edt.set_value(self.item.get_email_subject().replace('#name', contact.get_presentation() if contact is not None else '???'))
             edt.set_location(2, row + 2)
             edt.description = _('subject')
             dlg.add_component(edt)
             memo = XferCompMemo('message')
             memo.description = _('message')
-            email_message = self.item.get_email_message()
-            memo.set_value(replace_tag(contact, email_message))
+            memo.set_value(self.item.get_email_message().replace('#name', contact.get_presentation() if contact is not None else '???'))
             memo.with_hypertext = True
             memo.set_size(130, 450)
             memo.set_location(2, row + 3)
@@ -370,6 +361,10 @@ parent.get('print_sep').setEnabled(!is_persitent);
         dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
 
     def fill_confirm(self, transition, trans):
+        def replace_tag(text):
+            text = text.replace('#doc', str(self.item.get_docname()))
+            text = text.replace('#reference', str(self.item.reference))
+            return text
         nbpayoff = self.getparam('nbpayoff', Params.getvalue('invoice-default-nbpayoff'))
         sendemail = self.getparam('sendemail', False)
         sendemail_quotation = self.getparam('sendemail_quotation', False)
@@ -402,7 +397,14 @@ parent.get('print_sep').setEnabled(!is_persitent);
             if sendemail_quotation:
                 self.send_email_to_user_quotation(self.item)
             if sendemail:
-                self.redirect_action(PayableEmail.get_action("", ""), params={"item_name": self.field_id, "modelname": "", "OK": "YES"})
+                email_subject = replace_tag(self.getparam('subject', ''))
+                email_message = replace_tag(self.getparam('message', ''))
+                self.redirect_action(PayableEmail.get_action("", ""),
+                                     params={"item_name": self.field_id,
+                                             "modelname": Bill.get_long_name(),
+                                             'subject': email_subject,
+                                             'message': email_message,
+                                             "OK": "YES"})
 
 
 @ActionsManage.affect_transition("status", multi_list=('valid',), ignore_all=('archive', 'unarchive'))

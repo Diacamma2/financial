@@ -44,7 +44,7 @@ from diacamma.accounting.views import ThirdShow
 from diacamma.accounting.views_entries import EntryAccountList
 from diacamma.payoff.views import PayoffAddModify, PayoffDel, SupportingThird, SupportingThirdValid, PayableEmail
 from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport
-from diacamma.invoice.models import Bill, AccountPosting
+from diacamma.invoice.models import Bill, AccountPosting, CategoryBill
 from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_categories, default_customize,\
     default_area, default_categorybill
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
@@ -3322,8 +3322,11 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('SELECT', 'categoryBill', 0)
         self.assert_select_equal('bill_type', {0: 'devis', 1: 'facture', 2: 'avoir', 3: 'reçu'})
 
+        cat2 = CategoryBill.objects.get(id=2)
+        cat2.change_has_default()
+
         self.factory.xfer = BillAddModify()
-        self.calljson('/diacamma.invoice/billAddModify', {'categoryBill': 2}, False)
+        self.calljson('/diacamma.invoice/billAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billAddModify')
         self.assert_count_equal('', 6)
         self.assert_json_equal('SELECT', 'categoryBill', 2)
@@ -3435,16 +3438,53 @@ class BillTest(InvoiceTest):
             self.assertEqual('base64', msg.get('Content-Transfer-Encoding', ''))
             self.assertEqual('<html>this is a bill.</html>', decode_b64(msg.get_payload()))
             self.assertTrue('Type Q_A-1_Dalton Jack.pdf' in msg_file.get('Content-Type', ''), msg_file.get('Content-Type', ''))
-            self.save_pdf(base64_content=msg_file.get_payload())
+            self.save_pdf(base64_content=msg_file.get_payload(), ident=1)
         finally:
             server.stop()
 
-        self.factory.xfer = BillTransition()
-        self.calljson('/diacamma.invoice/billTransition', {'bill': 2, 'TRANSITION': 'valid', 'nbpayoff': 0}, False)
-        self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
-        self.assert_count_equal('', 3 + 0 + 6 + 0)
-        self.assert_json_equal('', 'nbpayoff', 0)
-        self.assert_json_equal('', 'sendemail', False)
-        self.assert_json_equal('', 'subject', 'Warning: Type b')
-        self.assert_json_equal('', 'message', 'Hello{[br/]}name=Jack Dalton{[br/]}doc=Type B - 24 juin 2015{[br/]}{[br/]}Kiss')
-        self.assert_json_equal('', 'model', 9)
+        server = TestReceiver()
+        server.start(2125)
+        try:
+            self.assertEqual(0, server.count())
+            self.factory.xfer = BillTransition()
+            self.calljson('/diacamma.invoice/billTransition', {'bill': 2, 'TRANSITION': 'valid', 'nbpayoff': 0}, False)
+            self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
+            self.assert_count_equal('', 3 + 0 + 6 + 0)
+            self.assert_json_equal('', 'nbpayoff', 0)
+            self.assert_json_equal('', 'sendemail', False)
+            self.assert_json_equal('', 'subject', 'Warning: #reference')
+            self.assert_json_equal('', 'message', 'Hello{[br/]}name=Jack Dalton{[br/]}doc=#doc{[br/]}{[br/]}Kiss')
+            self.assert_json_equal('', 'model', 9)
+
+            self.factory.xfer = BillTransition()
+            self.calljson('/diacamma.invoice/billTransition', {'bill': 2, 'TRANSITION': 'valid', 'nbpayoff': 0, 'sendemail': True, 'CONFIRME': 'YES',
+                                                               'subject': 'Warning: #reference',
+                                                               'message': 'Hello{[br/]}name=Jack Dalton{[br/]}doc=#doc{[br/]}{[br/]}Kiss',
+                                                               'model': 9
+                                                               }, False)
+            self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+            self.assertEqual(self.response_json['action']['id'], "diacamma.payoff/payableEmail")
+            self.assertEqual(self.response_json['action']['params'], {"item_name": 'bill',
+                                                                      "modelname": 'invoice.Bill',
+                                                                      'subject': 'Warning: Type b A-1',
+                                                                      'message': 'Hello{[br/]}name=Jack Dalton{[br/]}doc=Type B A-1 - 24 juin 2015{[br/]}{[br/]}Kiss',
+                                                                      "OK": "YES"})
+
+            self.factory.xfer = PayableEmail()
+            self.calljson('/diacamma.payoff/payableEmail',
+                          {'bill': 2, 'OK': 'YES', 'item_name': 'bill', "modelname": 'invoice.Bill',
+                           'subject': 'Warning: Type b A-1', 'message': 'Hello{[br/]}name=Jack Dalton{[br/]}doc=Type B A-1 - 24 juin 2015{[br/]}{[br/]}Kiss',
+                           'model': 9}, False)
+            self.assertEqual(1, server.count())
+            self.assertEqual('mr-sylvestre@worldcompany.com', server.get(0)[1])
+            self.assertEqual(['Jack.Dalton@worldcompany.com', 'mr-sylvestre@worldcompany.com'], server.get(0)[2])
+            msg_txt, msg, msg_file = server.check_first_message('Warning: Type b A-1', 3, {'To': 'Jack.Dalton@worldcompany.com'})
+            self.assertEqual('text/plain', msg_txt.get_content_type())
+            self.assertEqual('text/html', msg.get_content_type())
+            self.assertEqual('base64', msg.get('Content-Transfer-Encoding', ''))
+            self.assertEqual('<html>Hello<br/>name=Jack Dalton<br/>doc=Type B A-1 - 24 juin 2015<br/><br/>Kiss</html>', decode_b64(msg.get_payload()))
+            self.assertTrue('Type B_A-1_Dalton Jack.pdf' in msg_file.get('Content-Type', ''), msg_file.get('Content-Type', ''))
+            self.save_pdf(base64_content=msg_file.get_payload(), ident=2)
+            check_pdfreport(self, 'Bill', 2, False, msg_file.get_payload())
+        finally:
+            server.stop()

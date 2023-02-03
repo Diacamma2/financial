@@ -30,6 +30,7 @@ from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.xferadvance import XferDelete
 from lucterios.framework.tools import ActionsManage, MenuManage, CLOSE_NO, SELECT_MULTI, SELECT_SINGLE, FORMTYPE_MODAL
 from lucterios.framework.xfercomponents import XferCompButton
+from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework import signal_and_lock
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.views import ParamEdit, ObjectImport
@@ -223,6 +224,18 @@ class CategoryBillDel(XferDelete):
     model = CategoryBill
     field_id = 'categoryBill'
     caption = _("Delete Category")
+
+
+@ActionsManage.affect_grid(_("Default"), "images/default.png", unique=SELECT_SINGLE)
+@MenuManage.describ('invoice.add_vat')
+class CategoryBillDefault(XferContainerAcknowledge):
+    caption = _("Set default category")
+    icon = "invoice_conf.png"
+    model = CategoryBill
+    field_id = 'categoryBill'
+
+    def fillresponse(self):
+        self.item.change_has_default()
 
 
 @MenuManage.describ('contacts.add_article', FORMTYPE_MODAL, 'financial.conf', _('Tool to import articles from CSV file.'))

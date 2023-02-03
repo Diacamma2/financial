@@ -34,7 +34,6 @@ from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheckList, XferCompGrid, XferCompButton, XferCompEdit,\
     XferCompUpLoad, XferCompImage
 from lucterios.framework.tools import CLOSE_NO, FORMTYPE_REFRESH, ActionsManage, FORMTYPE_MODAL, format_to_string
-from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.framework.filetools import save_from_base64, open_image_resize, get_user_path
 from lucterios.CORE.parameters import Params
 
@@ -42,7 +41,7 @@ from diacamma.accounting.tools import current_system_account, format_with_devise
 from diacamma.accounting.models import CostAccounting, FiscalYear, Third
 from diacamma.payoff.editors import SupportingEditor
 from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail,\
-    Bill, Vat, StorageSheet, StorageArea, AccountPosting
+    Bill, Vat, StorageSheet, StorageArea, AccountPosting, CategoryBill
 from lucterios.framework.xferbasic import NULL_VALUE
 
 
@@ -215,14 +214,19 @@ class BillEditor(SupportingEditor):
         comp_comment = xfer.get_components('comment')
         comp_comment.with_hypertext = True
         comp_comment.set_size(100, 375)
+
+        com_cat = xfer.get_components('categoryBill')
+        if com_cat is not None:
+            default_cat = CategoryBill.objects.filter(is_default=True).first()
+            if default_cat is not None:
+                com_cat.set_value(default_cat.id)
+                xfer.item.categoryBill_id = default_cat.id
+            com_cat.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+
         com_type = xfer.get_components('bill_type')
         com_type.set_select(xfer.item.bill_type_list)
         com_type.remove_select(Bill.BILLTYPE_ORDER)
         com_type.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-
-        com_cat = xfer.get_components('categoryBill')
-        if com_cat is not None:
-            com_cat.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def show(self, xfer):
         try:

@@ -519,6 +519,7 @@ class CategoryBill(LucteriosModel):
     printmodel = models.ForeignKey(PrintModel, verbose_name=_('print patern'), null=True, default=None, db_index=True, on_delete=models.SET_NULL)
     emailsubject = models.CharField(_('email subject'), max_length=100)
     emailmessage = models.TextField(_('email message'))
+    is_default = models.BooleanField(verbose_name=_('default'), default=False)
 
     titles_txt = LucteriosVirtualField(verbose_name=_('titles'), compute_from='get_titles_txt')
 
@@ -527,7 +528,7 @@ class CategoryBill(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        return ["name", "designation", "titles_txt"]
+        return ["name", "designation", "titles_txt", "is_default"]
 
     @classmethod
     def get_edit_fields(cls):
@@ -536,6 +537,14 @@ class CategoryBill(LucteriosModel):
     @classmethod
     def get_show_fields(cls):
         return ["name", "designation", 'printmodel', 'emailsubject', 'emailmessage']
+
+    def change_has_default(self):
+        all_cat = CategoryBill.objects.exclude(id=self.id)
+        for cat_item in all_cat:
+            cat_item.is_default = False
+            cat_item.save()
+        self.is_default = not self.is_default
+        self.save()
 
     @property
     def printmodel_query(self):

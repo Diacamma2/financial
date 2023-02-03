@@ -22,6 +22,7 @@ class Migration(migrations.Migration):
                 ('emailsubject', models.CharField(max_length=100, verbose_name='email subject')),
                 ('emailmessage', models.TextField(verbose_name='email message')),
                 ('printmodel', models.ForeignKey(default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, to='CORE.printmodel', verbose_name='print patern')),
+                ('is_default', models.BooleanField(default=False, verbose_name='default')),
             ],
             options={
                 'verbose_name': 'Category',

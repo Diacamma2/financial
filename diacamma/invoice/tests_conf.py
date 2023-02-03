@@ -37,7 +37,7 @@ from diacamma.invoice.models import Article
 from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting
 from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel,\
     StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel,\
-    CategoryBillAddModify, CategoryBillDel
+    CategoryBillAddModify, CategoryBillDel, CategoryBillDefault
 from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch,\
     ArticlePrint, ArticleLabel
 
@@ -243,7 +243,7 @@ class ConfigTest(LucteriosTest):
         self.assertFalse('__tab_7' in self.json_data.keys(), self.json_data.keys())
         self.assert_count_equal('', 2 + 7 + 2 + 2 + 2 + 2 + 2)
 
-        self.assert_grid_equal('categoryBill', {'name': "nom", 'designation': "désignation", "titles_txt": "titres"}, 0)
+        self.assert_grid_equal('categoryBill', {'name': "nom", 'designation': "désignation", "titles_txt": "titres", "is_default": "défaut"}, 0)
 
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {}, False)
@@ -267,12 +267,58 @@ class ConfigTest(LucteriosTest):
                        'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillAddModify')
 
+        self.factory.xfer = CategoryBillAddModify()
+        self.calljson('/diacamma.invoice/categoryBillAddModify',
+                      {'name': 'cat2', 'designation': "Machin",
+                       'title_0': 'ZZZ', 'title_1': 'YYY', 'title_2': 'XXX', 'title_3': 'WWW', 'title_4': 'VVV',
+                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 9,
+                       'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillAddModify')
+
         self.factory.xfer = InvoiceConfCommercial()
         self.calljson('/diacamma.invoice/invoiceConfCommercial', {}, False)
-        self.assert_count_equal('categoryBill', 1)
+        self.assert_count_equal('categoryBill', 2)
         self.assert_json_equal('', 'categoryBill/@0/name', 'cat1')
         self.assert_json_equal('', 'categoryBill/@0/designation', 'Truc')
         self.assert_json_equal('', 'categoryBill/@0/titles_txt', ["titre pour 'devis' = AAA", "titre pour 'facture' = BBB", "titre pour 'avoir' = CCC", "titre pour 'reçu' = DDD", "titre pour 'commande' = EEE"])
+        self.assert_json_equal('', 'categoryBill/@0/is_default', False)
+        self.assert_json_equal('', 'categoryBill/@1/name', 'cat2')
+        self.assert_json_equal('', 'categoryBill/@1/designation', 'Machin')
+        self.assert_json_equal('', 'categoryBill/@1/titles_txt', ["titre pour 'devis' = ZZZ", "titre pour 'facture' = YYY", "titre pour 'avoir' = XXX", "titre pour 'reçu' = WWW", "titre pour 'commande' = VVV"])
+        self.assert_json_equal('', 'categoryBill/@1/is_default', False)
+
+        self.factory.xfer = CategoryBillDefault()
+        self.calljson('/diacamma.invoice/categoryBillDefault', {'categoryBill': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillDefault')
+        self.factory.xfer = InvoiceConfCommercial()
+        self.calljson('/diacamma.invoice/invoiceConfCommercial', {}, False)
+        self.assert_count_equal('categoryBill', 2)
+        self.assert_json_equal('', 'categoryBill/@0/name', 'cat1')
+        self.assert_json_equal('', 'categoryBill/@0/is_default', True)
+        self.assert_json_equal('', 'categoryBill/@1/name', 'cat2')
+        self.assert_json_equal('', 'categoryBill/@1/is_default', False)
+
+        self.factory.xfer = CategoryBillDefault()
+        self.calljson('/diacamma.invoice/categoryBillDefault', {'categoryBill': 2}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillDefault')
+        self.factory.xfer = InvoiceConfCommercial()
+        self.calljson('/diacamma.invoice/invoiceConfCommercial', {}, False)
+        self.assert_count_equal('categoryBill', 2)
+        self.assert_json_equal('', 'categoryBill/@0/name', 'cat1')
+        self.assert_json_equal('', 'categoryBill/@0/is_default', False)
+        self.assert_json_equal('', 'categoryBill/@1/name', 'cat2')
+        self.assert_json_equal('', 'categoryBill/@1/is_default', True)
+
+        self.factory.xfer = CategoryBillDefault()
+        self.calljson('/diacamma.invoice/categoryBillDefault', {'categoryBill': 2}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillDefault')
+        self.factory.xfer = InvoiceConfCommercial()
+        self.calljson('/diacamma.invoice/invoiceConfCommercial', {}, False)
+        self.assert_count_equal('categoryBill', 2)
+        self.assert_json_equal('', 'categoryBill/@0/name', 'cat1')
+        self.assert_json_equal('', 'categoryBill/@0/is_default', False)
+        self.assert_json_equal('', 'categoryBill/@1/name', 'cat2')
+        self.assert_json_equal('', 'categoryBill/@1/is_default', False)
 
         self.factory.xfer = CategoryBillDel()
         self.calljson('/diacamma.invoice/categoryBillDel', {'categoryBill': 1, 'CONFIRME': 'YES'}, False)
@@ -280,7 +326,7 @@ class ConfigTest(LucteriosTest):
 
         self.factory.xfer = InvoiceConfCommercial()
         self.calljson('/diacamma.invoice/invoiceConfCommercial', {}, False)
-        self.assert_count_equal('categoryBill', 0)
+        self.assert_count_equal('categoryBill', 1)
 
     def test_article(self):
         default_accountPosting()
