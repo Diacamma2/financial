@@ -1036,6 +1036,7 @@ class Bill(Supporting):
                                        date=timezone.now(),
                                        third=self.third,
                                        status=Bill.STATUS_BUILDING,
+                                       categoryBill=self.categoryBill,
                                        parentbill=self)
         for detail in self.detail_set.all():
             detail.id = None
