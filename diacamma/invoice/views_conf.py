@@ -29,7 +29,7 @@ from lucterios.framework.xferadvance import XferListEditor, TITLE_MODIFY, TITLE_
 from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.xferadvance import XferDelete
 from lucterios.framework.tools import ActionsManage, MenuManage, CLOSE_NO, SELECT_MULTI, SELECT_SINGLE, FORMTYPE_MODAL
-from lucterios.framework.xfercomponents import XferCompButton
+from lucterios.framework.xfercomponents import XferCompButton, XferCompLabelForm
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework import signal_and_lock
 from lucterios.CORE.parameters import Params
@@ -215,6 +215,11 @@ class CategoryBillAddModify(XferAddEditor):
         if self.item.id is None:
             self.item.fill_default()
         XferAddEditor.fillresponse(self)
+        comment = XferCompLabelForm('comment')
+        comment.set_value(_('Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}name of documentation sended{[br/]}'))
+        comment.set_color("green")
+        comment.set_location(1, self.get_max_row() + 1)
+        self.add_component(comment)
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)

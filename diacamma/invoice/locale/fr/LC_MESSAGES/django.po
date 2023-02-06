@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-03 10:37+0000\n"
+"POT-Creation-Date: 2023-02-06 14:16+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.3\n"
 
-#: __init__.py:42 views_conf.py:302 views_conf.py:305
+#: __init__.py:42 views_conf.py:307 views_conf.py:310
 msgid "Diacamma invoice"
 msgstr "Facturier Diacamma"
 
@@ -128,7 +128,7 @@ msgstr "actif ?"
 msgid "vat account"
 msgstr "compte de TVA"
 
-#: models.py:85 views_conf.py:70 views_conf.py:259 views_conf.py:305
+#: models.py:85 views_conf.py:70 views_conf.py:264 views_conf.py:310
 msgid "VAT"
 msgstr "TVA"
 
@@ -269,7 +269,7 @@ msgstr "Total"
 msgid "article reference is not unique !"
 msgstr "la référence de cet article n'est pas unique !"
 
-#: models.py:479 views_conf.py:257
+#: models.py:479 views_conf.py:262
 msgid "articles"
 msgstr "articles"
 
@@ -772,7 +772,7 @@ msgstr "règlement"
 msgid "payoffs"
 msgstr "règlements"
 
-#: views.py:66 views.py:1240 views.py:1265 views.py:1294 views_conf.py:263
+#: views.py:66 views.py:1240 views.py:1265 views.py:1294 views_conf.py:268
 msgid "Invoice"
 msgstr "Facturier"
 
@@ -1225,7 +1225,7 @@ msgstr "Gestion des paramètres et configuration financière du facturier"
 msgid "Invoice financial configuration"
 msgstr "Configuration financière du facturier"
 
-#: views_conf.py:66 views_conf.py:81 views_conf.py:302
+#: views_conf.py:66 views_conf.py:81 views_conf.py:307
 msgid "Parameters"
 msgstr "Paramètres"
 
@@ -1309,35 +1309,45 @@ msgstr "Ajouter une catégorie"
 msgid "Modify category"
 msgstr "Modifier une catégorie"
 
-#: views_conf.py:201 views_conf.py:226
+#: views_conf.py:201 views_conf.py:231
 msgid "Delete Category"
 msgstr "Supprimer une catégorie"
 
-#: views_conf.py:229
+#: views_conf.py:219
+msgid ""
+"Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of "
+"proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}"
+"name of documentation sended{[br/]}"
+msgstr ""
+"Utiliser les variables dans le courriel :{[br/]} - {[b]}#reference:{[/b]} "
+"identifiant du justificatif{[br/]} - {[b]}#name:{[/b]} nom du "
+"destinataire{[br/]} - {[b]}#doc:{[/b]}nom du document envoyé{[br/]}"
+
+#: views_conf.py:234
 msgid "Default"
 msgstr "Défaut"
 
-#: views_conf.py:232
+#: views_conf.py:237
 msgid "Set default category"
 msgstr "Mettre à défaut une catégorie"
 
-#: views_conf.py:241
+#: views_conf.py:246
 msgid "Tool to import articles from CSV file."
 msgstr "Outil d'import d'articles depuis un fichier CSV."
 
-#: views_conf.py:243
+#: views_conf.py:248
 msgid "Article import"
 msgstr "Import d'articles"
 
-#: views_conf.py:261
+#: views_conf.py:266
 msgid "parameters"
 msgstr "paramètres"
 
-#: views_conf.py:302
+#: views_conf.py:307
 msgid "Configuration of parameters"
 msgstr "Définissez les paramètres du facturier."
 
-#: views_conf.py:305
+#: views_conf.py:310
 msgid "Configuration of vat"
 msgstr "Configurez votre gestion de la TVA."
 

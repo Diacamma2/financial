@@ -248,7 +248,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'categoryBillAddModify')
-        self.assert_count_equal('', 11)
+        self.assert_count_equal('', 12)
         self.assert_json_equal('EDIT', 'title_0', "devis")
         self.assert_json_equal('EDIT', 'title_1', "facture")
         self.assert_json_equal('EDIT', 'title_2', "avoir")

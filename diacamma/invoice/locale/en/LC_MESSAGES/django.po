@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-03 10:37+0000\n"
+"POT-Creation-Date: 2023-02-06 14:16+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.3\n"
 
-#: __init__.py:42 views_conf.py:302 views_conf.py:305
+#: __init__.py:42 views_conf.py:307 views_conf.py:310
 msgid "Diacamma invoice"
 msgstr "Diacamma invoice"
 
@@ -128,7 +128,7 @@ msgstr "is actif"
 msgid "vat account"
 msgstr "vat account"
 
-#: models.py:85 views_conf.py:70 views_conf.py:259 views_conf.py:305
+#: models.py:85 views_conf.py:70 views_conf.py:264 views_conf.py:310
 msgid "VAT"
 msgstr "VAT"
 
@@ -269,7 +269,7 @@ msgstr "Total"
 msgid "article reference is not unique !"
 msgstr "refrence of this article is not unique !"
 
-#: models.py:479 views_conf.py:257
+#: models.py:479 views_conf.py:262
 msgid "articles"
 msgstr "articles"
 
@@ -772,7 +772,7 @@ msgstr "payoff"
 msgid "payoffs"
 msgstr "payoffs"
 
-#: views.py:66 views.py:1240 views.py:1265 views.py:1294 views_conf.py:263
+#: views.py:66 views.py:1240 views.py:1265 views.py:1294 views_conf.py:268
 msgid "Invoice"
 msgstr "Invoice"
 
@@ -1221,7 +1221,7 @@ msgstr "Management of parameters and financial configuration of invoice"
 msgid "Invoice financial configuration"
 msgstr "Invoice financial configuration"
 
-#: views_conf.py:66 views_conf.py:81 views_conf.py:302
+#: views_conf.py:66 views_conf.py:81 views_conf.py:307
 msgid "Parameters"
 msgstr "Parameters"
 
@@ -1305,35 +1305,45 @@ msgstr "Add category"
 msgid "Modify category"
 msgstr "Modify category"
 
-#: views_conf.py:201 views_conf.py:226
+#: views_conf.py:201 views_conf.py:231
 msgid "Delete Category"
 msgstr "Delete Category"
 
-#: views_conf.py:229
+#: views_conf.py:219
+msgid ""
+"Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of "
+"proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}"
+"name of documentation sended{[br/]}"
+msgstr ""
+"Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of "
+"proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}"
+"name of documentation sended{[br/]}"
+
+#: views_conf.py:234
 msgid "Default"
 msgstr "Default"
 
-#: views_conf.py:232
+#: views_conf.py:237
 msgid "Set default category"
 msgstr "Set default category"
 
-#: views_conf.py:241
+#: views_conf.py:246
 msgid "Tool to import articles from CSV file."
 msgstr "Tool to import articles from CSV file."
 
-#: views_conf.py:243
+#: views_conf.py:248
 msgid "Article import"
 msgstr "Article import"
 
-#: views_conf.py:261
+#: views_conf.py:266
 msgid "parameters"
 msgstr "parameters"
 
-#: views_conf.py:302
+#: views_conf.py:307
 msgid "Configuration of parameters"
 msgstr "Define parameters for invoice"
 
-#: views_conf.py:305
+#: views_conf.py:310
 msgid "Configuration of vat"
 msgstr "Configuration of vat"
 
