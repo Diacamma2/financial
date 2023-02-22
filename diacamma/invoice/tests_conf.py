@@ -26,7 +26,6 @@ from __future__ import unicode_literals
 from shutil import rmtree
 from _io import StringIO
 
-
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
 from lucterios.CORE.models import SavedCriteria
@@ -35,10 +34,10 @@ from lucterios.CORE.views import ObjectMerge
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, default_costaccounting
 from diacamma.invoice.models import Article
 from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting
-from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel,\
-    StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel,\
+from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel, \
+    StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel, \
     CategoryBillAddModify, CategoryBillDel, CategoryBillDefault
-from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch,\
+from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch, \
     ArticlePrint, ArticleLabel
 
 
@@ -248,13 +247,14 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'categoryBillAddModify')
-        self.assert_count_equal('', 12)
+        self.assert_count_equal('', 13)
         self.assert_json_equal('EDIT', 'title_0', "devis")
         self.assert_json_equal('EDIT', 'title_1', "facture")
         self.assert_json_equal('EDIT', 'title_2', "avoir")
         self.assert_json_equal('EDIT', 'title_3', "reçu")
         self.assert_json_equal('EDIT', 'title_4', "commande")
         self.assert_json_equal('SELECT', 'printmodel', 0)
+        self.assert_json_equal('CHECK', 'special_numbering', False)
         self.assert_select_equal('printmodel', {0: None, 8: 'facture', 9: 'règlement'})
         self.assert_json_equal('EDIT', 'emailsubject', "#reference")
         self.assert_json_equal('MEMO', 'emailmessage', "#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations")

@@ -42,20 +42,20 @@ from django.utils import timezone
 from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field, LucteriosLogEntry
-from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField,\
+from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField, \
     get_obj_contains
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
 from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string
 from lucterios.framework.auditlog import auditlog
-from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser,\
+from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser, \
     PrintModel
 from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact
 
 from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAccounting, Journal, EntryLineAccount, ChartsAccount, AccountThird
-from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code,\
+from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code, \
     format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip
 from django.db.models.query import QuerySet
@@ -248,7 +248,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_edit_fields(cls):
-        fields = {_('001@Description'): ["reference", "designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting", )]}
+        fields = {_('001@Description'): ["reference", "designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting",)]}
         if len(Category.objects.all()) > 0:
             fields[_('002@Extra')] = ['categories']
         return fields
@@ -256,7 +256,7 @@ class Article(LucteriosModel, CustomizeObject):
     @classmethod
     def get_show_fields(cls):
         fields = {'': ["reference"]}
-        fields_desc = ["designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting", )]
+        fields_desc = ["designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting",)]
         fields_desc.extend(cls.get_fields_to_show())
         if len(Category.objects.all()) > 0:
             fields_desc.append('categories')
@@ -520,6 +520,7 @@ class CategoryBill(LucteriosModel):
     emailsubject = models.CharField(_('email subject'), max_length=100)
     emailmessage = models.TextField(_('email message'))
     is_default = models.BooleanField(verbose_name=_('default'), default=False)
+    special_numbering = models.BooleanField(verbose_name=_('special_numbering'), default=False)
 
     titles_txt = LucteriosVirtualField(verbose_name=_('titles'), compute_from='get_titles_txt')
 
@@ -532,7 +533,7 @@ class CategoryBill(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return ["name", "designation", 'printmodel', 'emailsubject', 'emailmessage']
+        return ["name", "designation", 'special_numbering', 'printmodel', 'emailsubject', 'emailmessage']
 
     @classmethod
     def get_show_fields(cls):
@@ -991,7 +992,10 @@ class Bill(Supporting):
     def affect_num(self):
         if self.num is None:
             self.fiscal_year = FiscalYear.get_current()
-            bill_list = Bill.objects.filter(Q(bill_type=self.bill_type) & Q(fiscal_year=self.fiscal_year)).exclude(status=0)
+            num_filter = Q(bill_type=self.bill_type) & Q(fiscal_year=self.fiscal_year)
+            if (self.categoryBill is not None) and self.categoryBill.special_numbering:
+                num_filter &= Q(categoryBill=self.categoryBill) 
+            bill_list = Bill.objects.filter(num_filter).exclude(status=0)
             val = bill_list.aggregate(Max('num'))
             if val['num__max'] is None:
                 self.num = 1
@@ -1576,11 +1580,11 @@ class StorageSheet(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return [("sheet_type", ), ("date", "storagearea"), ("provider", "bill_date"), ("bill_reference"), ("comment", )]
+        return [("sheet_type",), ("date", "storagearea"), ("provider", "bill_date"), ("bill_reference"), ("comment",)]
 
     @classmethod
     def get_show_fields(cls):
-        return [("sheet_type", "status"), ("date", "storagearea"), ("provider", "bill_date"), ("bill_reference"), ("comment", ), ("storagedetail_set", ), ('total',)]
+        return [("sheet_type", "status"), ("date", "storagearea"), ("provider", "bill_date"), ("bill_reference"), ("comment",), ("storagedetail_set",), ('total',)]
 
     @classmethod
     def get_search_fields(cls):
@@ -1894,7 +1898,7 @@ class AutomaticReduce(LucteriosModel):
             reduce_query &= (Q(bill__bill_type__in=(Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET)) & Q(bill__status__in=(Bill.STATUS_BUILDING, Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))) | (Q(bill__bill_type=Bill.BILLTYPE_QUOTATION) & Q(bill__status__in=(Bill.STATUS_BUILDING, Bill.STATUS_VALID)))
             reduce_query &= Q(bill__date__gte=current_year.begin) & Q(bill__date__lte=current_year.end)
             if detail.id is not None:
-                reduce_query &= ~ Q(id=detail.id)
+                reduce_query &= ~Q(id=detail.id)
             nb_sold = self._get_nb_sold(reduce_query)
             if detail.bill.bill_type != Bill.BILLTYPE_ASSET:
                 nb_sold += float(detail.quantity)
@@ -1944,11 +1948,11 @@ class InventorySheet(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return [("date", "storagearea"), ("comment", )]
+        return [("date", "storagearea"), ("comment",)]
 
     @classmethod
     def get_show_fields(cls):
-        return [("date", "status"), ("storagearea", ), ("comment", )]
+        return [("date", "status"), ("storagearea",), ("comment",)]
 
     def can_delete(self):
         if self.status > 0:

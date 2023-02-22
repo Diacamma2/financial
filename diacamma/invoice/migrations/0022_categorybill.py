@@ -23,6 +23,7 @@ class Migration(migrations.Migration):
                 ('emailmessage', models.TextField(verbose_name='email message')),
                 ('printmodel', models.ForeignKey(default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, to='CORE.printmodel', verbose_name='print patern')),
                 ('is_default', models.BooleanField(default=False, verbose_name='default')),
+                ('special_numbering', models.BooleanField(default=False, verbose_name='special_numbering')),
             ],
             options={
                 'verbose_name': 'Category',
