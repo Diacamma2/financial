@@ -23,9 +23,6 @@ class Migration(migrations.Migration):
                 ('emailmessage', models.TextField(verbose_name='email message')),
                 ('printmodel', models.ForeignKey(default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, to='CORE.printmodel', verbose_name='print patern')),
                 ('is_default', models.BooleanField(default=False, verbose_name='default')),
-                ('special_numbering', models.BooleanField(default=False, verbose_name='special_numbering')),
-                ('prefix_numbering', models.CharField(verbose_name='prefix numbering', max_length=20, blank=True)),
-                ('workflow_order', models.IntegerField(verbose_name='workflow_order', choices=((0, 'on choice'), (1, 'always order'), (2, 'never order')), null=False, default=0, db_index=True)),
             ],
             options={
                 'verbose_name': 'Category',
