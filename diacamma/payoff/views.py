@@ -356,7 +356,7 @@ def add_payment_methods(xfer, supporting, payments):
 @MenuManage.describ('')
 class PayableShow(XferContainerCustom):
     caption = _("Payment")
-    icon = "payments.png"
+    icon = "diacamma.payoff/images/payments.png"
     model = Supporting
     field_id = 'supporting'
     readonly = True

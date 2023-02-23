@@ -38,7 +38,7 @@ from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferS
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompEdit, XferCompButton, XferCompSelect, XferCompImage, XferCompDate, XferCompGrid
 from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_REFRESH, CLOSE_NO, WrapAction, FORMTYPE_MODAL, SELECT_SINGLE, SELECT_MULTI, SELECT_NONE, CLOSE_YES
-from lucterios.framework.error import LucteriosException
+from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.models import LucteriosQuerySet
 from lucterios.CORE.xferprint import XferPrintListing
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
@@ -108,7 +108,7 @@ class ThirdList(XferListEditor):
         if show_filter != 0:
             self.fieldnames = Third.get_other_fields()
 
-        self.filter = Q(status=0)
+        self.filter = Q(status=0) & ~Q(id=1)
         if contact_filter != "":
             q_legalentity = Q(contact__legalentity__name__icontains=contact_filter)
             q_individual = Q(completename__icontains=contact_filter)
@@ -142,6 +142,8 @@ class ThirdSave(XferContainerAcknowledge):
 
     def fillresponse(self, pkname='', new_account=[]):
         contact_id = self.getparam(pkname)
+        if contact_id == 1:
+            raise LucteriosException(IMPORTANT, _("Current structure can't be third !"))
         last_thirds = Third.objects.filter(contact__pk=contact_id)
         if len(last_thirds) > 0:
             self.item = last_thirds[0]

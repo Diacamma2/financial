@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='bill',
             name='bill_type',
-            field=models.IntegerField(choices=[(0, 'quotation'), (1, 'bill'), (2, 'asset'), (3, 'receipt'), (4, 'order')], db_index=True, default=0, verbose_name='bill type'),
+            field=models.IntegerField(choices=[(0, 'quotation'), (4, 'order'), (1, 'bill'), (2, 'asset'), (3, 'receipt')], db_index=True, default=0, verbose_name='bill type'),
         ),
     ]

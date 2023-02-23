@@ -512,6 +512,11 @@ class Provider(LucteriosModel):
 
 
 class CategoryBill(LucteriosModel):
+    WORKFLOWS_BOTH = 0
+    WORKFLOWS_ALWAYS_ORDER = 1
+    WORKFLOWS_NEVER_ORDER = 2
+    LIST_WORKFLOWS = ((WORKFLOWS_BOTH, _('on choice')), (WORKFLOWS_ALWAYS_ORDER, _('always order')), (WORKFLOWS_NEVER_ORDER, _('never order')))
+
     name = models.CharField(_('name'), max_length=100)
     designation = models.TextField(_('designation'))
     titles = models.TextField(_('titles'))
@@ -521,6 +526,8 @@ class CategoryBill(LucteriosModel):
     emailmessage = models.TextField(_('email message'))
     is_default = models.BooleanField(verbose_name=_('default'), default=False)
     special_numbering = models.BooleanField(verbose_name=_('special_numbering'), default=False)
+    prefix_numbering = models.CharField(_('prefix numbering'), max_length=20, blank=True)
+    workflow_order = models.IntegerField(verbose_name=_('workflow_order'), choices=LIST_WORKFLOWS, null=False, default=WORKFLOWS_BOTH, db_index=True)
 
     titles_txt = LucteriosVirtualField(verbose_name=_('titles'), compute_from='get_titles_txt')
 
@@ -533,7 +540,11 @@ class CategoryBill(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return ["name", "designation", 'special_numbering', 'printmodel', 'emailsubject', 'emailmessage']
+        fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
+        if Params.getvalue('invoice-order-mode') != 0:
+            fields.append('workflow_order')
+        fields.extend(['printmodel', 'emailsubject', 'emailmessage'])
+        return fields
 
     @classmethod
     def get_show_fields(cls):
@@ -578,7 +589,10 @@ class CategoryBill(LucteriosModel):
         self.titles = dumps(titles)
 
     def get_title_info(self):
-        for type_num, type_title in Bill.LIST_BILLTYPES:
+        list_types = [type_item for type_item in Bill.LIST_BILLTYPES if type_item[0] != Bill.BILLTYPE_RECEIPT]
+        if (Params.getvalue('invoice-order-mode') == 0) or (self.workflow_order == self.WORKFLOWS_NEVER_ORDER):
+            list_types = [type_item for type_item in list_types if type_item[0] != Bill.BILLTYPE_ORDER]
+        for type_num, type_title in list_types:
             yield type_num, _("title of '%s'") % type_title, self.get_title(type_num)
 
     def get_titles_txt(self):
@@ -600,7 +614,7 @@ class Bill(Supporting):
     BILLTYPE_ASSET = 2
     BILLTYPE_RECEIPT = 3
     BILLTYPE_ORDER = 4
-    LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')), (BILLTYPE_ORDER, _('order')))
+    LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_ORDER, _('order')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')))
     SELECTION_BILLTYPES = ((BILLTYPE_ALL, None),) + LIST_BILLTYPES
 
     STATUS_ALL = -2
@@ -783,6 +797,8 @@ class Bill(Supporting):
     def get_num_txt(self):
         if (self.fiscal_year is None) or (self.num is None):
             return None
+        elif (self.categoryBill is not None) and self.categoryBill.special_numbering and (self.categoryBill.prefix_numbering != ''):
+            return "%s-%s-%d" % (self.fiscal_year.letter, self.categoryBill.prefix_numbering, self.num)
         else:
             return "%s-%d" % (self.fiscal_year.letter, self.num)
 
@@ -994,7 +1010,7 @@ class Bill(Supporting):
             self.fiscal_year = FiscalYear.get_current()
             num_filter = Q(bill_type=self.bill_type) & Q(fiscal_year=self.fiscal_year)
             if (self.categoryBill is not None) and self.categoryBill.special_numbering:
-                num_filter &= Q(categoryBill=self.categoryBill) 
+                num_filter &= Q(categoryBill=self.categoryBill)
             bill_list = Bill.objects.filter(num_filter).exclude(status=0)
             val = bill_list.aggregate(Max('num'))
             if val['num__max'] is None:
@@ -1062,7 +1078,8 @@ class Bill(Supporting):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
-            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_BILL, date=timezone.now(),
+            new_type = Bill.BILLTYPE_BILL
+            new_bill = Bill.objects.create(bill_type=new_type, date=timezone.now(),
                                            third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
                                            comment=self.comment, parentbill=self)
             for detail in self.detail_set.all():
@@ -1229,7 +1246,10 @@ class Bill(Supporting):
             raise LucteriosException(
                 IMPORTANT, _("This item can't be validated!"))
         if (self.bill_type == Bill.BILLTYPE_QUOTATION):
-            new_bill = self.convert_to_bill()
+            if (Params.getvalue('invoice-order-mode') != 0) and (self.categoryBill is not None) and (self.categoryBill.workflow_order != CategoryBill.WORKFLOWS_NEVER_ORDER):
+                new_bill = self.convert_to_order()()
+            else:
+                new_bill = self.convert_to_bill()
             new_bill.date = validate_date
             new_bill.save()
             if (new_bill is None) or (new_bill.get_info_state() != []):
@@ -2068,6 +2088,8 @@ class InventoryDetail(LucteriosModel):
 
 
 def get_or_create_customer(contact_id):
+    if contact_id == 1:
+        raise LucteriosException(GRAVE, "Current structure can't be third !")
     try:
         third = Third.objects.get(contact_id=contact_id)
     except ObjectDoesNotExist:

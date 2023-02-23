@@ -186,6 +186,7 @@ class CategoryBillEditor(SupportingEditor):
     def edit(self, xfer):
         comp_emailmessage = xfer.get_components('emailmessage')
         comp_emailmessage.with_hypertext = True
+        xfer.item.workflow_order = int(xfer.item.workflow_order)
         for type_num, type_description, type_value in xfer.item.get_title_info():
             comp_title = XferCompEdit('title_%d' % type_num)
             comp_title.description = type_description
@@ -195,6 +196,14 @@ class CategoryBillEditor(SupportingEditor):
         xfer.move_components('printmodel', 0, 20)
         xfer.move_components('emailsubject', 0, 20)
         xfer.move_components('emailmessage', 0, 20)
+        comp_special = xfer.get_components('special_numbering')
+        comp_special.java_script = """
+var with_special=current.getValue();
+parent.get('prefix_numbering').setEnabled(with_special);
+"""
+        comp_workflow = xfer.get_components('workflow_order')
+        if comp_workflow is not None:
+            comp_workflow.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def before_save(self, xfer):
         for param_key, param_val in xfer.params.items():

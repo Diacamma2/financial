@@ -55,7 +55,8 @@ from lucterios.CORE.views import ObjectMerge
 from lucterios.contacts.views_contacts import AbstractContactFindDouble
 from lucterios.contacts.models import Individual, LegalEntity
 
-from diacamma.invoice.models import Article, Bill, Detail, Category, Provider, StorageArea, AutomaticReduce
+from diacamma.invoice.models import Article, Bill, Detail, Category, Provider, StorageArea, AutomaticReduce,\
+    CategoryBill
 from diacamma.payoff.views import PayoffAddModify, PayableEmail, can_send_email, SupportingPrint
 from diacamma.payoff.models import Payoff, DepositSlip
 from diacamma.accounting.models import FiscalYear, Third, EntryLineAccount, EntryAccount
@@ -447,7 +448,13 @@ class BillMultiPay(XferContainerAcknowledge):
             self.redirect_action(PayoffAddModify.get_action("", ""), params={"supportings": ";".join([str(bill_id) for bill_id in bill_ids])})
 
 
-@ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)))
+def condition_bill2bill(xfer):
+    if (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.categoryBill is not None) and (xfer.item.categoryBill.workflow_order == CategoryBill.WORKFLOWS_ALWAYS_ORDER) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION):
+        return False
+    return (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER))
+
+
+@ActionsManage.affect_show(_("=> Bill"), "images/ok.png", close=CLOSE_YES, condition=condition_bill2bill)
 @MenuManage.describ('invoice.add_bill')
 class BillToBill(XferContainerAcknowledge):
     caption = _("Convert to bill")
@@ -462,7 +469,13 @@ class BillToBill(XferContainerAcknowledge):
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 
 
-@ActionsManage.affect_show(_("=> Order"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
+def condition_bill2order(xfer):
+    if (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.categoryBill is not None) and (xfer.item.categoryBill.workflow_order == CategoryBill.WORKFLOWS_NEVER_ORDER) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION):
+        return False
+    return (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION)
+
+
+@ActionsManage.affect_show(_("=> Order"), "images/ok.png", close=CLOSE_YES, condition=condition_bill2order)
 @MenuManage.describ('invoice.add_bill')
 class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
     caption = _("Convert to order")
