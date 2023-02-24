@@ -20,7 +20,8 @@ from lucterios.CORE.xferprint import XferPrintAction
 from diacamma.payoff.models import DepositSlip, DepositDetail, BankTransaction, PaymentMethod
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.tools import format_with_devise
-from diacamma.payoff.payment_type import PaymentTypePayPal
+from diacamma.payoff.payment_type import PaymentTypePayPal,\
+    PaymentTypeMoneticoPaiement, PaymentTypeHelloAsso
 
 
 @MenuManage.describ('payoff.change_depositslip', FORMTYPE_NOMODAL, 'financial', _('Manage deposit of cheque'))
@@ -211,7 +212,7 @@ class DepositDetailDel(XferDelete):
 
 def right_banktransaction(request):
     if BankTransactionShow.get_action().check_permission(request):
-        return len(PaymentMethod.objects.filter(paytype__in=(PaymentTypePayPal.num, ))) > 0
+        return len(PaymentMethod.objects.filter(paytype__in=(PaymentTypePayPal.num, PaymentTypeMoneticoPaiement.num, PaymentTypeHelloAsso.num))) > 0
     else:
         return False
 

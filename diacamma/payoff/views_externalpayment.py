@@ -372,7 +372,7 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
     @property
     def date(self):
         try:
-            return datetime.fromisoformat(self.helloasso_data['date'][:23] + "+01:00")
+            return datetime.strptime(self.helloasso_data['date'][:19], '%Y-%m-%dT%H:%M:%S')
         except Exception:
             logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.helloasso_data['date'])
             return timezone.now()

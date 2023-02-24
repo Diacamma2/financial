@@ -249,7 +249,7 @@ class PaymentTest(LucteriosTest):
                 'state': 'Authorized',
                 'amount': int(amount * 100),
                 'payer': {'firstName': '', 'lastName': '', 'company': payer},
-                'date': '2015-04-03T21:52:23.456891345678',
+                'date': '2015-04-03T20:52:23.456891345678',
                 'items': [{"id": 357}],
             },
             'eventType': "Payment",
