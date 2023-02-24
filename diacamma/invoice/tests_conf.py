@@ -249,13 +249,15 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'categoryBillAddModify')
-        self.assert_count_equal('', 14)
+        self.assert_count_equal('', 15)
         self.assert_json_equal('EDIT', 'title_0', "devis")
         self.assert_json_equal('EDIT', 'title_4', "commande")
         self.assert_json_equal('EDIT', 'title_1', "facture")
         self.assert_json_equal('EDIT', 'title_2', "avoir")
         self.assert_json_equal('SELECT', 'printmodel', 0)
         self.assert_select_equal('printmodel', {0: None, 8: 'facture', 9: 'règlement'})
+        self.assert_json_equal('SELECT', 'printmodel_sold', 0)
+        self.assert_select_equal('printmodel_sold', {0: None, 8: 'facture', 9: 'règlement'})
         self.assert_json_equal('CHECK', 'special_numbering', False)
         self.assert_json_equal('EDIT', 'prefix_numbering', '')
         self.assert_json_equal('SELECT', 'workflow_order', 0)
@@ -266,12 +268,14 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {'workflow_order': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'categoryBillAddModify')
-        self.assert_count_equal('', 13)
+        self.assert_count_equal('', 14)
         self.assert_json_equal('EDIT', 'title_0', "devis")
         self.assert_json_equal('EDIT', 'title_1', "facture")
         self.assert_json_equal('EDIT', 'title_2', "avoir")
         self.assert_json_equal('SELECT', 'printmodel', 0)
         self.assert_select_equal('printmodel', {0: None, 8: 'facture', 9: 'règlement'})
+        self.assert_json_equal('SELECT', 'printmodel_sold', 0)
+        self.assert_select_equal('printmodel_sold', {0: None, 8: 'facture', 9: 'règlement'})
         self.assert_json_equal('CHECK', 'special_numbering', False)
         self.assert_json_equal('EDIT', 'prefix_numbering', '')
         self.assert_json_equal('SELECT', 'workflow_order', 2)
@@ -282,7 +286,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/categoryBillAddModify',
                       {'name': 'cat1', 'designation': "Truc", 'special_numbering': False, 'prefix_numbering': '', 'workflow_order': 2,
                        'title_0': 'AAA', 'title_1': 'BBB', 'title_2': 'CCC', 
-                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 8,
+                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 8, 'printmodel_sold': 9,
                        'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillAddModify')
 
@@ -290,7 +294,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/categoryBillAddModify',
                       {'name': 'cat2', 'designation': "Machin", 'special_numbering': True, 'prefix_numbering': 'Mc', 'workflow_order': 0,
                        'title_0': 'ZZZ', 'title_1': 'YYY', 'title_2': 'XXX', 'title_4': 'VVV',
-                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 9,
+                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 9, 'printmodel_sold': 8,
                        'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillAddModify')
 

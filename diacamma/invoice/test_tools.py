@@ -117,10 +117,10 @@ def default_area():
 
 
 def default_categorybill():
-    CategoryBill.objects.create(name="1st type", designation='First', emailsubject="#reference", emailmessage="Hello", printmodel_id=8,
+    CategoryBill.objects.create(name="1st type", designation='First', emailsubject="#reference", emailmessage="Hello", printmodel_id=8, printmodel_sold_id=9,
                                 titles='{"0": "QQQ", "1": "BBB", "2": "AAA", "3": "RRR", "4": "OOO"}')
     CategoryBill.objects.create(name="2nd type", designation='Second',
-                                emailsubject="Warning: #reference", emailmessage="Hello{[br/]}name=#name{[br/]}doc=#doc{[br/]}{[br/]}Kiss", printmodel_id=9,
+                                emailsubject="Warning: #reference", emailmessage="Hello{[br/]}name=#name{[br/]}doc=#doc{[br/]}{[br/]}Kiss", printmodel_id=9, printmodel_sold_id=8,
                                 titles='{"0": "Type Q", "1": "Type B", "2": "Type A", "3": "Type R", "4": "Type O"}')
 
 

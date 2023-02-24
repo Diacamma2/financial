@@ -521,7 +521,10 @@ class CategoryBill(LucteriosModel):
     designation = models.TextField(_('designation'))
     titles = models.TextField(_('titles'))
 
-    printmodel = models.ForeignKey(PrintModel, verbose_name=_('print patern'), null=True, default=None, db_index=True, on_delete=models.SET_NULL)
+    printmodel = models.ForeignKey(PrintModel, verbose_name=_('print patern pre-sale'), related_name='categorybill_presale',
+                                   null=True, default=None, db_index=True, on_delete=models.SET_NULL)
+    printmodel_sold = models.ForeignKey(PrintModel, verbose_name=_('print patern sold'), related_name='categorybill_sold',
+                                        null=True, default=None, db_index=True, on_delete=models.SET_NULL)
     emailsubject = models.CharField(_('email subject'), max_length=100)
     emailmessage = models.TextField(_('email message'))
     is_default = models.BooleanField(verbose_name=_('default'), default=False)
@@ -543,12 +546,16 @@ class CategoryBill(LucteriosModel):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
         if Params.getvalue('invoice-order-mode') != 0:
             fields.append('workflow_order')
-        fields.extend(['printmodel', 'emailsubject', 'emailmessage'])
+        fields.extend([('printmodel', 'printmodel_sold'), 'emailsubject', 'emailmessage'])
         return fields
 
     @classmethod
     def get_show_fields(cls):
-        return ["name", "designation", 'printmodel', 'emailsubject', 'emailmessage']
+        fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
+        if Params.getvalue('invoice-order-mode') != 0:
+            fields.append('workflow_order')
+        fields.extend([('printmodel', 'printmodel_sold'), 'emailsubject', 'emailmessage'])
+        return fields
 
     def change_has_default(self):
         all_cat = CategoryBill.objects.exclude(id=self.id)
@@ -561,6 +568,10 @@ class CategoryBill(LucteriosModel):
     @property
     def printmodel_query(self):
         return PrintModel.objects.filter(kind=PrintModel.KIND_REPORT, modelname=Bill.get_long_name())
+
+    @property
+    def printmodel_sold_query(self):
+        return self.printmodel_query
 
     def fill_default(self):
         if self.emailsubject == '':
@@ -1320,7 +1331,10 @@ class Bill(Supporting):
     def get_default_print_model(self):
         model = None
         if self.categoryBill_id is not None:
-            model = self.categoryBill.printmodel_id
+            if self.bill_type == Bill.BILLTYPE_QUOTATION:
+                model = self.categoryBill.printmodel_id
+            else:
+                model = self.categoryBill.printmodel_sold_id
         if model is None:
             return Supporting.get_default_print_model(self)
         else:

@@ -198,6 +198,11 @@ def can_send_email(xfer):
 
 class SupportingPrint(XferPrintReporting):
 
+    def __init__(self):
+        XferPrintReporting.__init__(self)
+        self.default_model = self.params['MODEL']
+        del self.params['MODEL']
+
     def _get_persistent_pdfreport(self):
         if len(self.items) == 1:
             doc = self.item.get_final_child().get_saved_pdfreport()
@@ -212,6 +217,12 @@ class SupportingPrint(XferPrintReporting):
             if len(docs) > 0:
                 return docs
         return None
+
+    def fillresponse(self):
+        if (self.item is None) and (len(self.items) > 0):
+            self.item = self.items[0]
+        self.params['MODEL'] = self.getparam('MODEL', self.item.get_default_print_model() if self.item is not None else self.default_model)
+        XferPrintReporting.fillresponse(self)
 
 
 @ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", condition=can_send_email)

@@ -39,7 +39,12 @@ from diacamma.accounting.test_tools import create_account
 from diacamma.accounting.models import FiscalYear, ChartsAccount
 from diacamma.payoff.models import BankAccount, PaymentMethod
 from diacamma.payoff.views_deposit import BankTransactionList, BankTransactionShow
-from diacamma.payoff.payment_type import PaymentTypeMoneticoPaiement
+from diacamma.payoff.payment_type import PaymentTypeMoneticoPaiement,\
+    PaymentTypeHelloAsso
+from datetime import datetime
+from json import dumps
+from django.test.client import FakePayload
+from unittest.mock import Mock
 
 
 def default_bankaccount_fr():
@@ -62,6 +67,7 @@ def default_paymentmethod():
     PaymentMethod.objects.create(paytype=2, bank_account_id=2, extra_data='monney@truc.org')
     PaymentMethod.objects.create(paytype=3, bank_account_id=1, extra_data='http://payement.online.com\nPrécisez le N° de devis ou de facture')
     PaymentMethod.objects.create(paytype=4, bank_account_id=2, extra_data='7979879878\nababab\n12345678901234567890')
+    PaymentMethod.objects.create(paytype=5, bank_account_id=2, extra_data='0123456789\n0123456789')
 
 
 class PaymentTest(LucteriosTest):
@@ -72,6 +78,8 @@ class PaymentTest(LucteriosTest):
         LucteriosTest.setUp(self)
         if hasattr(settings, "DIACAMMA_PAYOFF_PAYPAL_URL"):
             del settings.DIACAMMA_PAYOFF_PAYPAL_URL
+        if hasattr(settings, "DIACAMMA_HELLO_ASSO_URL"):
+            del settings.DIACAMMA_HELLO_ASSO_URL
 
     def check_account(self, year_id, code, value, name=""):
         try:
@@ -231,6 +239,38 @@ class PaymentTest(LucteriosTest):
         self.assert_json_equal('', 'banktransaction/@0/payer', payer)
         self.assert_json_equal('', 'banktransaction/@0/amount', amount)
         self.assert_json_equal('', 'banktransaction/@0/date', '2018-07-20T18:24', True)
+
+    def check_payment_helloasso(self, itemid, success=True, amount=100.0, payer="Minimum"):
+        PaymentTypeHelloAsso.connect = Mock()
+        PaymentTypeHelloAsso.get_api = Mock()
+        setattr(settings, "DIACAMMA_HELLO_ASSO_URL", "http://localhost:%d" % PaymentTest.server_port)
+        helloasso_fields = {
+            'data': {
+                'state': 'Authorized',
+                'amount': int(amount * 100),
+                'payer': {'firstName': '', 'lastName': '', 'company': payer},
+                'date': '2015-04-03T21:52:23.456891345678',
+                'items': [{"id": 357}],
+            },
+            'eventType': "Payment",
+            'metadata': {
+                'reference': itemid,
+            },
+        }
+        self.call_ex('/diacamma.payoff/validationPaymentHelloAsso', {}, True, **{"wsgi.input": FakePayload(dumps(helloasso_fields).encode('ascii'))})
+        self.assertEqual(self.content, "", 'validationPaymentHelloAsso')
+
+        self.factory.xfer = BankTransactionList()
+        self.calljson('/diacamma.payoff/bankTransactionList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'bankTransactionList')
+        self.assert_count_equal('banktransaction', 1)
+        if success:
+            self.assert_json_equal('', 'banktransaction/@0/status', 1)
+        else:
+            self.assert_json_equal('', 'banktransaction/@0/status', 0)
+        self.assert_json_equal('', 'banktransaction/@0/payer', payer)
+        self.assert_json_equal('', 'banktransaction/@0/amount', amount)
+        self.assert_json_equal('', 'banktransaction/@0/date', '2015-04-03T20:52', True)
 
 
 class TestHTTPServer(HTTPServer, BaseHTTPRequestHandler, Thread):

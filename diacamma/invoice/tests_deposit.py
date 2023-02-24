@@ -39,7 +39,7 @@ from diacamma.payoff.views_conf import BankAccountAddModify
 from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod, PaymentTest
 
 from diacamma.invoice.test_tools import default_articles, InvoiceTest
-from diacamma.invoice.views import BillShow
+from diacamma.invoice.views import BillShow, BillPrint
 from diacamma.invoice.models import Bill
 
 
@@ -465,7 +465,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 1, 'item_name': 'bill'}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payableShow')
-        self.assert_count_equal('', 18)
+        self.assert_count_equal('', 20)
         self.assert_json_equal('LABELFORM', 'num_txt', 'A-1')
         self.check_payment(1, 'devis A-1 - 1 avril 2015')
 
@@ -482,7 +482,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 2, 'item_name': 'bill'}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payableShow')
-        self.assert_count_equal('', 18)
+        self.assert_count_equal('', 20)
         self.assert_json_equal('LABELFORM', 'num_txt', 'A-1')
         self.check_payment(2, 'facture A-1 - 1 avril 2015')
 
@@ -610,6 +610,11 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 0.0)
         self.assertEqual(len(self.json_actions), 4)
 
+        self.factory.xfer = BillPrint()
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '6', 'PRINT_MODE': 3, 'MODEL': 8, 'PRINT_PERSITENT': True}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'billPrint')
+        self.save_pdf()
+
     def test_payment_paypal_recip(self):
         self.check_payment_paypal(4, "recu A-1 - 1 avril 2015")
         self.factory.xfer = BillShow()
@@ -709,3 +714,26 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
         self.assert_count_equal('payoff', 0)
         self.assertEqual(len(self.json_actions), 5)
+
+    def test_payment_helloasso_cotation(self):
+        self.check_payment_helloasso(1, success=True, payer="Dalton Joe")
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'title', "devis")
+        self.assert_json_equal('LABELFORM', 'date', "2015-04-01")
+        self.assert_json_equal('LABELFORM', 'status', 3)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 6}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'title', "facture")
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_json_equal('LABELFORM', 'date', "2015-04-03")
+        self.assert_json_equal('LABELFORM', 'total_rest_topay', 0.0)
+        self.assertEqual(len(self.json_actions), 4)
+
+        self.factory.xfer = BillPrint()
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '6', 'PRINT_MODE': 3, 'MODEL': 8, 'PRINT_PERSITENT': True}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'billPrint')
+        self.save_pdf()

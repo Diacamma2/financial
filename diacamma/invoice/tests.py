@@ -539,6 +539,21 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'entryline/@9/designation_ref', 'règlement de Facture A-1{[br/]}chèque : uvw987')
         self.assert_json_equal('', 'entryline/@9/debit', -67.00)
 
+        server = TestReceiver()
+        server.start(2025)
+        try:
+            self.assertEqual(0, server.count())
+            self.factory.xfer = PayableEmail()
+            self.calljson('/diacamma.payoff/payableEmail',
+                          {'bill': 1, 'OK': 'YES', 'item_name': 'bill', 'subject': 'my bill', 'message': 'this is a bill.', 'model': 8}, False)
+            self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
+            self.assertEqual(1, server.count())
+            _msg_txt, _msg, msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
+            self.save_pdf(base64_content=msg_file.get_payload())
+            check_pdfreport(self, 'Bill', 1, False, msg_file.get_payload())
+        finally:
+            server.stop()
+
     def test_compta_valid_with_pay_fee_cost(self):
         default_articles()
         cost = CostAccounting.objects.get(name='open')
@@ -3360,6 +3375,11 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'bill/@0/total', 100.00)
         self.assert_json_equal('', 'bill/@0/status', 1)
 
+        self.factory.xfer = BillPrint()
+        self.calljson('/diacamma.invoice/billPrint', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billPrint')
+        self.assert_json_equal('SELECT', 'MODEL', 9)
+
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
@@ -3397,6 +3417,11 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'bill/@1/date', '2015-06-20')
         self.assert_json_equal('', 'bill/@1/total', 100.00)
         self.assert_json_equal('', 'bill/@1/status', 3)
+
+        self.factory.xfer = BillPrint()
+        self.calljson('/diacamma.invoice/billPrint', {'bill': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billPrint')
+        self.assert_json_equal('SELECT', 'MODEL', 8)
 
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
@@ -3453,7 +3478,7 @@ class BillTest(InvoiceTest):
             self.assert_json_equal('', 'sendemail', False)
             self.assert_json_equal('', 'subject', 'Warning: #reference')
             self.assert_json_equal('', 'message', 'Hello{[br/]}name=Jack Dalton{[br/]}doc=#doc{[br/]}{[br/]}Kiss')
-            self.assert_json_equal('', 'model', 9)
+            self.assert_json_equal('', 'model', 8)
 
             self.factory.xfer = BillTransition()
             self.calljson('/diacamma.invoice/billTransition', {'bill': 2, 'TRANSITION': 'valid', 'nbpayoff': 0, 'sendemail': True, 'CONFIRME': 'YES',

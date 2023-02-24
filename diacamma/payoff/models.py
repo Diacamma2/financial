@@ -225,6 +225,13 @@ class Supporting(LucteriosModel):
                 getLogger("diacamma.payoff").exception("Failure to create '%s' report" % self.get_document_filename())
         return None
 
+    def renew_generate_pdfreport(self):
+        metadata = '%s-%d' % (self.__class__.__name__, self.id)
+        doc = DocumentContainer.objects.filter(metadata=metadata).first()
+        if doc is not None:
+            doc.delete()
+        self.generate_pdfreport()
+
     def get_pdfreport(self, printmodel):
         doc = self.get_saved_pdfreport()
         if printmodel == 0:

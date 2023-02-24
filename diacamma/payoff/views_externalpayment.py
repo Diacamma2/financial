@@ -113,6 +113,7 @@ class ValidationPaymentGeneric(XferContainerAbstract):
                 new_payoff.reference = self.reference
                 new_payoff.bank_fee = self.bank_fee
                 new_payoff.save()
+                new_payoff.supporting.renew_generate_pdfreport()
                 self.item.status = BankTransaction.STATUS_SUCCESS
                 self.success = True
         except Exception as err:

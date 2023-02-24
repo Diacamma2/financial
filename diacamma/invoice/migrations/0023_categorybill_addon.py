@@ -12,6 +12,12 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='categorybill',
+            name='printmodel_sold',
+            field=models.ForeignKey(default=None, null=True, on_delete=models.deletion.SET_NULL, 
+                                    related_name='categorybill_sold', to='CORE.printmodel', verbose_name='print patern sold'),
+        ),
+        migrations.AddField(
+            model_name='categorybill',
             name='prefix_numbering',
             field=models.CharField(blank=True, max_length=20, verbose_name='prefix numbering'),
         ),
