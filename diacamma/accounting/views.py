@@ -26,7 +26,6 @@ from __future__ import unicode_literals
 from datetime import timedelta, date
 
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models import Q, Value
 from django.utils import formats
@@ -108,7 +107,7 @@ class ThirdList(XferListEditor):
         if show_filter != 0:
             self.fieldnames = Third.get_other_fields()
 
-        self.filter = Q(status=0) & ~Q(id=1)
+        self.filter = Q(status=0)
         if contact_filter != "":
             q_legalentity = Q(contact__legalentity__name__icontains=contact_filter)
             q_individual = Q(completename__icontains=contact_filter)
@@ -141,7 +140,7 @@ class ThirdSave(XferContainerAcknowledge):
     field_id = ''
 
     def fillresponse(self, pkname='', new_account=[]):
-        contact_id = self.getparam(pkname)
+        contact_id = self.getparam(pkname, 0)
         if contact_id == 1:
             raise LucteriosException(IMPORTANT, _("Current structure can't be third !"))
         last_thirds = Third.objects.filter(contact__pk=contact_id)
