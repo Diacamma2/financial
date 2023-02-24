@@ -194,6 +194,7 @@ class CategoryBillEditor(SupportingEditor):
             comp_title.set_location(comp_emailmessage.col, xfer.get_max_row() + 1)
             xfer.add_component(comp_title)
         xfer.move_components('printmodel', 0, 20)
+        xfer.move_components('printmodel_sold', 0, 20)
         xfer.move_components('emailsubject', 0, 20)
         xfer.move_components('emailmessage', 0, 20)
         comp_special = xfer.get_components('special_numbering')
