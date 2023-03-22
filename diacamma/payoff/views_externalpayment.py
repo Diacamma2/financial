@@ -104,7 +104,7 @@ class ValidationPaymentGeneric(XferContainerAbstract):
                 if bank_account is None:
                     raise LucteriosException(IMPORTANT, "No account!")
                 new_payoff = Payoff()
-                new_payoff.supporting = self.supporting.support_validated(self.item.date)
+                new_payoff.supporting = self.supporting.support_validated(self.item.date, with_valid=False)
                 new_payoff.date = self.item.date
                 new_payoff.amount = self.item.amount
                 new_payoff.payer = self.item.payer

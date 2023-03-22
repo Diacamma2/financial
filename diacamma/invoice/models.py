@@ -1047,6 +1047,12 @@ class Bill(Supporting):
             return Supporting.generate_pdfreport(self)
         return None
 
+    def renew_generate_pdfreport(self):
+        if self.status == self.STATUS_BUILDING:
+            self.valid()
+        else:
+            Supporting.renew_generate_pdfreport(self)
+
     transitionname__archive = _("Archive")
 
     @transition(field=status, source=STATUS_VALID, target=STATUS_ARCHIVE)
@@ -1252,7 +1258,7 @@ class Bill(Supporting):
                                 {'format': "{[b]}{0}{[/b]}", 'value': total_amount}, {'format': "{[b]}{0}{[/b]}", 'value': 100.0}))
         return payoff_list
 
-    def support_validated(self, validate_date):
+    def support_validated(self, validate_date, with_valid=True):
         if (self.bill_type == Bill.BILLTYPE_ASSET) or (self.status != Bill.STATUS_VALID):
             raise LucteriosException(
                 IMPORTANT, _("This item can't be validated!"))
@@ -1265,7 +1271,8 @@ class Bill(Supporting):
             new_bill.save()
             if (new_bill is None) or (new_bill.get_info_state() != []):
                 raise LucteriosException(IMPORTANT, _("This item can't be validated!"))
-            new_bill.valid()
+            if with_valid:
+                new_bill.valid()
         else:
             new_bill = self
         return new_bill

@@ -256,7 +256,7 @@ class Supporting(LucteriosModel):
     def get_payment_fields(cls):
         raise Exception('no implemented!')
 
-    def support_validated(self, validate_date):
+    def support_validated(self, validate_date, with_valid=True):
         raise Exception('no implemented!')
 
     def get_tax(self):
