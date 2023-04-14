@@ -83,6 +83,11 @@ class DepositSlipShow(XferShowEditor):
     field_id = 'depositslip'
     caption = _("Show deposit slip")
 
+    def fillresponse(self):
+        XferShowEditor.fillresponse(self)
+        if self.getparam("PRINTING", False) is True:
+            self.remove_component("img")
+
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
 @MenuManage.describ('payoff.delete_depositslip')
@@ -111,6 +116,7 @@ class DepositSlipPrint(XferPrintAction):
     action_class = DepositSlipShow
 
     def get_report_generator(self):
+        self.params['PRINTING'] = True
         report_generator = XferPrintAction.get_report_generator(self)
         if self.item.status == DepositSlip.STATUS_BUILDING:
             report_generator.watermark = _('*** NO VALIDATED ***')
