@@ -57,7 +57,7 @@ from lucterios.contacts.models import CustomField, CustomizeObject, AbstractCont
 from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAccounting, Journal, EntryLineAccount, ChartsAccount, AccountThird
 from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code, \
     format_with_devise, get_amount_from_format_devise
-from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip
+from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip, PaymentMethod
 from django.db.models.query import QuerySet
 from json import dumps, loads
 from json.decoder import JSONDecodeError
@@ -531,6 +531,7 @@ class CategoryBill(LucteriosModel):
     special_numbering = models.BooleanField(verbose_name=_('special_numbering'), default=False)
     prefix_numbering = models.CharField(_('prefix numbering'), max_length=20, blank=True)
     workflow_order = models.IntegerField(verbose_name=_('workflow_order'), choices=LIST_WORKFLOWS, null=False, default=WORKFLOWS_BOTH, db_index=True)
+    payment_method = models.ManyToManyField(PaymentMethod, verbose_name=_('payment method'), blank=True)
 
     titles_txt = LucteriosVirtualField(verbose_name=_('titles'), compute_from='get_titles_txt')
 
@@ -546,7 +547,7 @@ class CategoryBill(LucteriosModel):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
         if Params.getvalue('invoice-order-mode') != 0:
             fields.append('workflow_order')
-        fields.extend([('printmodel', 'printmodel_sold'), 'emailsubject', 'emailmessage'])
+        fields.extend([('printmodel', 'printmodel_sold'), 'payment_method', 'emailsubject', 'emailmessage'])
         return fields
 
     @classmethod
@@ -554,7 +555,7 @@ class CategoryBill(LucteriosModel):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
         if Params.getvalue('invoice-order-mode') != 0:
             fields.append('workflow_order')
-        fields.extend([('printmodel', 'printmodel_sold'), 'emailsubject', 'emailmessage'])
+        fields.extend([('printmodel', 'printmodel_sold'), 'payment_method', 'emailsubject', 'emailmessage'])
         return fields
 
     def change_has_default(self):
@@ -1346,6 +1347,12 @@ class Bill(Supporting):
             return Supporting.get_default_print_model(self)
         else:
             return model
+
+    def get_payment_method(self):
+        if self.categoryBill_id is None:
+            return Supporting.get_payment_method(self)
+        else:
+            return list(self.categoryBill.payment_method.all())
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.bill_type = int(self.bill_type)
@@ -2221,8 +2228,8 @@ def invoice_checkparam():
 
     Preference.check_and_create(name="invoice-status", typeparam=Preference.TYPE_INTEGER, title=_("invoice-status"),
                                 args="{'Multi':False}", value=Bill.STATUS_BUILDING_VALID, meta='("","","%s","",False)' % (Bill.SELECTION_STATUS,))
-    Preference.check_and_create(name="invoice-billtype", typeparam=Preference.TYPE_INTEGER, title=_("invoice-billtype"),
-                                args="{'Multi':False}", value=Bill.BILLTYPE_ALL, meta='("","","%s","",False)' % (Bill.SELECTION_BILLTYPES,))
+    Preference.check_and_create(name="invoice-billtype", typeparam=Preference.TYPE_STRING, title=_("invoice-billtype"),
+                                args="{'Multi':False}", value=Bill.BILLTYPE_ALL, meta='("","","import diacamma.invoice.models;[(str(bill_type), title) for bill_type, title in diacamma.invoice.models.Bill.SELECTION_BILLTYPES]+[(\'%d|%d\' % (cat_bill.id, type_num), \'[%s]%s\' % (cat_bill.name, type_value)) for cat_bill in diacamma.invoice.models.CategoryBill.objects.all() for type_num, _description, type_value in cat_bill.get_title_info()]","",False)')
 
 
 @Signal.decorate('convertdata')

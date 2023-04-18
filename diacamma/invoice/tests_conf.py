@@ -33,13 +33,13 @@ from lucterios.CORE.views import ObjectMerge
 from lucterios.CORE.parameters import Params
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, default_costaccounting
+from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod
 from diacamma.invoice.models import Article
 from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting
 from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel, \
     StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel, \
     CategoryBillAddModify, CategoryBillDel, CategoryBillDefault
-from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch, \
-    ArticlePrint, ArticleLabel
+from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch, ArticlePrint, ArticleLabel
 
 
 class ConfigTest(LucteriosTest):
@@ -47,6 +47,8 @@ class ConfigTest(LucteriosTest):
     def setUp(self):
         LucteriosTest.setUp(self)
         default_compta_fr()
+        default_bankaccount_fr()
+        default_paymentmethod()
         rmtree(get_user_dir(), True)
 
     def test_vat(self):
@@ -249,7 +251,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'categoryBillAddModify')
-        self.assert_count_equal('', 15)
+        self.assert_count_equal('', 16)
         self.assert_json_equal('EDIT', 'title_0', "devis")
         self.assert_json_equal('EDIT', 'title_4', "commande")
         self.assert_json_equal('EDIT', 'title_1', "facture")
@@ -262,13 +264,15 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('EDIT', 'prefix_numbering', '')
         self.assert_json_equal('SELECT', 'workflow_order', 0)
         self.assert_select_equal('workflow_order', {0: 'avec ou sans commande', 1: 'toujours avec commande', 2: 'jamais avec commande'})
+        self.assert_json_equal('CHECKLIST', 'payment_method', [])
+        self.assert_select_equal('payment_method', 6, checked=True)
         self.assert_json_equal('EDIT', 'emailsubject', "#reference")
         self.assert_json_equal('MEMO', 'emailmessage', "#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations")
 
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {'workflow_order': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'categoryBillAddModify')
-        self.assert_count_equal('', 14)
+        self.assert_count_equal('', 15)
         self.assert_json_equal('EDIT', 'title_0', "devis")
         self.assert_json_equal('EDIT', 'title_1', "facture")
         self.assert_json_equal('EDIT', 'title_2', "avoir")
@@ -279,14 +283,15 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('CHECK', 'special_numbering', False)
         self.assert_json_equal('EDIT', 'prefix_numbering', '')
         self.assert_json_equal('SELECT', 'workflow_order', 2)
+        self.assert_json_equal('CHECKLIST', 'payment_method', [])
         self.assert_json_equal('EDIT', 'emailsubject', "#reference")
         self.assert_json_equal('MEMO', 'emailmessage', "#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations")
 
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify',
                       {'name': 'cat1', 'designation': "Truc", 'special_numbering': False, 'prefix_numbering': '', 'workflow_order': 2,
-                       'title_0': 'AAA', 'title_1': 'BBB', 'title_2': 'CCC', 
-                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 8, 'printmodel_sold': 9,
+                       'title_0': 'AAA', 'title_1': 'BBB', 'title_2': 'CCC',
+                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 8, 'printmodel_sold': 9, 'payment_method': '1;2;3;4',
                        'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillAddModify')
 
@@ -294,7 +299,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/categoryBillAddModify',
                       {'name': 'cat2', 'designation': "Machin", 'special_numbering': True, 'prefix_numbering': 'Mc', 'workflow_order': 0,
                        'title_0': 'ZZZ', 'title_1': 'YYY', 'title_2': 'XXX', 'title_4': 'VVV',
-                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 9, 'printmodel_sold': 8,
+                       'emailsubject': "#reference", 'emailmessage': "Hello", 'printmodel': 9, 'printmodel_sold': 8, 'payment_method': '1;2;3;5;6',
                        'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'categoryBillAddModify')
 

@@ -94,10 +94,23 @@ def _add_bill_filter(xfer, row, with_third=False):
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     xfer.add_component(edt)
 
-    type_filter = xfer.getparam('type_filter', Preference.get_value("invoice-billtype", xfer.request.user))
+    type_filter = xfer.getparam('type_filter', str(Preference.get_value("invoice-billtype", xfer.request.user)))
     xfer.params['type_filter'] = type_filter
+    if '|' in type_filter:
+        category, bill_type = type_filter.split('|')[:2]
+        category = int(category)
+        bill_type = int(bill_type)
+    else:
+        category = None
+        bill_type = int(type_filter)
+    type_select = [(str(bill_type), title) for bill_type, title in Bill.SELECTION_BILLTYPES]
+    for cat_bill in CategoryBill.objects.all():
+        type_pos = 1
+        for type_num, _description, type_value in cat_bill.get_title_info():
+            type_select.insert(type_pos, ("%d|%d" % (cat_bill.id, type_num), "[%s]%s" % (cat_bill.name, type_value)))
+            type_pos += 1
     edt = XferCompSelect("type_filter")
-    edt.set_select(Bill.SELECTION_BILLTYPES)
+    edt.set_select(type_select)
     edt.description = _('Filter by type')
     edt.set_value(type_filter)
     edt.set_location(0, row + 1)
@@ -110,8 +123,8 @@ def _add_bill_filter(xfer, row, with_third=False):
         current_filter &= Q(status=Bill.STATUS_BUILDING) | Q(status=Bill.STATUS_VALID)
     elif status_filter != Bill.STATUS_ALL:
         current_filter &= Q(status=status_filter)
-    if type_filter != Bill.BILLTYPE_ALL:
-        current_filter &= Q(bill_type=type_filter)
+    if bill_type != Bill.BILLTYPE_ALL:
+        current_filter &= Q(bill_type=bill_type) & Q(categoryBill_id=category)
     return current_filter, status_filter
 
 

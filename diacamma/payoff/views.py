@@ -26,7 +26,6 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.functions import Concat
-from django.db.models.query import QuerySet
 from django.db.models import Q, Value
 from django.apps.registry import apps
 
@@ -43,11 +42,10 @@ from lucterios.framework.error import LucteriosException, MINOR, IMPORTANT
 from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.framework.models import LucteriosQuerySet
 from lucterios.CORE.models import PrintModel
-from lucterios.CORE.parameters import Params
 from lucterios.CORE.xferprint import XferPrintReporting
 from lucterios.framework.xferprinting import XferContainerPrint
 
-from diacamma.payoff.models import Payoff, Supporting, PaymentMethod, BankAccount
+from diacamma.payoff.models import Payoff, Supporting, BankAccount
 from diacamma.accounting.models import Third
 
 
@@ -236,7 +234,7 @@ class PayableEmail(XferContainerAcknowledge):
     def fillresponse_send1message(self, subject, message, model):
         html_message = "<html>"
         html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
-        if self.item.payoff_have_payment() and (len(PaymentMethod.objects.all()) > 0):
+        if self.item.payoff_have_payment() and (len(self.item.get_payment_method()) > 0):
             html_message += get_html_payment(get_url_from_request(self.request), self.language, self.item)
         html_message += "</html>"
         self.item.send_email(subject, html_message, model)
@@ -363,7 +361,7 @@ def add_payment_methods(xfer, supporting, payments):
         xfer.add_component(lbl)
 
 
-@ActionsManage.affect_show(_("Payment"), "diacamma.payoff/images/payments.png", condition=lambda xfer: xfer.item.payoff_have_payment() and (len(PaymentMethod.objects.all()) > 0))
+@ActionsManage.affect_show(_("Payment"), "diacamma.payoff/images/payments.png", condition=lambda xfer: xfer.item.payoff_have_payment() and (len(xfer.item.get_payment_method()) > 0))
 @MenuManage.describ('')
 class PayableShow(XferContainerCustom):
     caption = _("Payment")
@@ -377,7 +375,7 @@ class PayableShow(XferContainerCustom):
         if item_name != '':
             self.item = Supporting.objects.get(id=self.getparam(item_name, 0))
         self.item = self.item.get_final_child()
-        payments = PaymentMethod.objects.all()
+        payments = self.item.get_payment_method()
         if not self.item.payoff_have_payment() or (len(payments) == 0):
             raise LucteriosException(MINOR, _('No payment for this document.'))
         max_row = self.get_max_row() + 1
@@ -394,7 +392,7 @@ def get_html_payment(root_uri, lang, supporting):
     html_message = "<hr/>"
     html_message += "<center><i><u>%s</u></i></center>" % _("Payement methods")
     html_message += "<table width='90%'>"
-    for paymeth in PaymentMethod.objects.all():
+    for paymeth in supporting.get_payment_method():
         html_message += "<tr>"
         html_message += "<td><b>%s</b></td>" % get_value_if_choices(paymeth.paytype, paymeth.get_field_by_name('paytype'))
         html_message += "<td>%s</td>" % paymeth.show_pay(root_uri, lang, supporting).replace('{[', '<').replace(']}', '>')
