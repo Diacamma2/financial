@@ -880,7 +880,14 @@ class BillTest(InvoiceTest):
 
         self.factory.xfer = BillToBill()
         self.calljson('/diacamma.invoice/billToBill',
-                      {'CONFIRME': 'YES', 'bill': 1}, False)
+                      {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billToBill')
+        self.assert_count_equal('', 3)
+        self.assert_json_equal('DATE', 'billdate', '')
+
+        self.factory.xfer = BillToBill()
+        self.calljson('/diacamma.invoice/billToBill',
+                      {'CONFIRME': 'YES', 'bill': 1, 'billdate': '2015-04-10'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToBill')
         self.assertEqual(self.response_json['action']['id'], "diacamma.invoice/billShow")
         self.assertEqual(len(self.response_json['action']['params']), 1)
@@ -915,7 +922,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'title', "facture")
-        self.assert_json_equal('LABELFORM', 'date', date.today().isoformat(), True)
+        self.assert_json_equal('LABELFORM', 'date', '2015-04-10')
         self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
 

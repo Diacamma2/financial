@@ -35,7 +35,7 @@ from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELE
     TITLE_LABEL, TITLE_CREATE
 from lucterios.framework.xferadvance import XferListEditor, XferShowEditor, XferAddEditor, XferDelete, XferTransition
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompImage, XferCompGrid, XferCompCheck, XferCompEdit, XferCompCheckList, XferCompMemo,\
-    XferCompButton, XferCompFloat
+    XferCompButton, XferCompFloat, XferCompDate
 from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, FORMTYPE_REFRESH, CLOSE_NO, SELECT_MULTI, WrapAction,\
     get_format_from_field
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
@@ -387,6 +387,7 @@ parent.get('print_sep').setEnabled(!is_persitent);
         elif self.getparam("CONFIRME") is None:
             self.fill_dlg_payoff(nbpayoff, sendemail, sendemail_quotation)
         else:
+            new_payoff = None
             if (self.item.bill_type != Bill.BILLTYPE_QUOTATION) and (nbpayoff != 0):
                 self.item.affect_num()
                 self.item.save()
@@ -408,6 +409,8 @@ parent.get('print_sep').setEnabled(!is_persitent);
                     new_payoff.editor.before_save(self)
                     new_payoff.save()
             XferTransition.fill_confirm(self, transition, trans)
+            if new_payoff is not None:
+                new_payoff.editor.saving(self)
             if sendemail_quotation:
                 self.send_email_to_user_quotation(self.item)
             if sendemail:
@@ -475,9 +478,32 @@ class BillToBill(XferContainerAcknowledge):
     model = Bill
     field_id = 'bill'
 
+    def confirme_with_date(self):
+        if self.getparam("CONFIRME") is not None:
+            return self.params["CONFIRME"] != ""
+        else:
+            dlg = self.create_custom(Bill)
+            dlg.caption = _("Confirmation")
+            icon = XferCompImage('img')
+            icon.set_location(0, 0, 1, 6)
+            icon.set_value(self.icon_path("images/confirm.png"))
+            dlg.add_component(icon)
+            lbl = XferCompLabelForm('lb_title')
+            lbl.set_value_as_headername(_("Do you want convert '%s' to bill?") % self.item)
+            lbl.set_location(1, 0)
+            dlg.add_component(lbl)
+            datecmp = XferCompDate('billdate')
+            datecmp.description = _('date')
+            datecmp.set_location(1, 1)
+            datecmp.set_needed(True)
+            dlg.add_component(datecmp)
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
+            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+            return False
+
     def fillresponse(self):
-        if (self.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)) and (self.item.status == Bill.STATUS_VALID) and self.confirme(_("Do you want convert '%s' to bill?") % self.item):
-            new_bill = self.item.convert_to_bill()
+        if (self.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)) and (self.item.status == Bill.STATUS_VALID) and self.confirme_with_date():
+            new_bill = self.item.convert_to_bill(self.getparam("billdate"))
             if new_bill is not None:
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 

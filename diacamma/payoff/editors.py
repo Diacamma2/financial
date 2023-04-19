@@ -152,6 +152,8 @@ class PayoffEditor(LucteriosEditor):
         info = self.item.supporting.check_date(self.item.date)
         if len(info) > 0:
             raise LucteriosException(IMPORTANT, info[0])
+        if int(self.item.mode) == Payoff.MODE_CASH:
+            self.item.bank_account = None
         if (int(self.item.mode) == Payoff.MODE_INTERNAL) and (xfer.getparam(prefix + 'linked_supporting', 0) != 0):
             self.item.linked_payoff = Payoff.objects.create(supporting_id=xfer.getparam(prefix + 'linked_supporting', 0), date=self.item.date,
                                                             amount=self.item.amount, mode=self.item.mode, reference=str(self.item.supporting.get_final_child()))
@@ -159,6 +161,10 @@ class PayoffEditor(LucteriosEditor):
             self.item.reference = str(self.item.linked_payoff.supporting.get_final_child())
             self.item.payer = ""
         return
+
+    def saving(self, xfer):
+        final_support = self.item.supporting.get_final_child()
+        final_support.adding_payoff(self.item)
 
     def edit(self, xfer):
         currency_decimal = Params.getvalue("accounting-devise-prec")

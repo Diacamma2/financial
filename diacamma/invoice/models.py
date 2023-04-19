@@ -25,10 +25,13 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from re import match
 from os.path import exists, join, dirname
-from datetime import timedelta
+from datetime import timedelta, date
 from logging import getLogger
+from json import dumps, loads
+from json.decoder import JSONDecodeError
 
 from django.db import models
+from django.db.models.query import QuerySet
 from django.db.models.aggregates import Max, Sum, Count
 from django.db.models.functions import Concat
 from django.db.models.expressions import Case, When
@@ -47,7 +50,8 @@ from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirt
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
-from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string
+from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string,\
+    convert_date
 from lucterios.framework.auditlog import auditlog
 from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser, \
     PrintModel
@@ -58,9 +62,6 @@ from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAcco
 from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code, \
     format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip, PaymentMethod
-from django.db.models.query import QuerySet
-from json import dumps, loads
-from json.decoder import JSONDecodeError
 
 
 class Vat(LucteriosModel):
@@ -1030,6 +1031,29 @@ class Bill(Supporting):
             else:
                 self.num = val['num__max'] + 1
 
+    @property
+    def associate_bill_asset(self):
+        if (self.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)) and (self.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET)) and \
+                (abs(self.total_rest_topay) < 1e-3) and (self.payoff_set.count() == 1):
+            payoff = self.payoff_set.first()
+            if (payoff.mode == Payoff.MODE_INTERNAL) and (payoff.linked_payoff is not None):
+                other_support = payoff.linked_payoff.supporting.get_final_child()
+                if isinstance(other_support, Bill) and (other_support.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)) and \
+                        (other_support.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET)) and \
+                        (abs(other_support.total_rest_topay) < 1e-3) and (other_support.payoff_set.count() == 1):
+                    return other_support
+        return None
+
+    def adding_payoff(self, payoff):
+        if payoff.mode == Payoff.MODE_INTERNAL:
+            bill_asset = self.associate_bill_asset
+            if (bill_asset is not None) and (bill_asset.status != self.status):
+                if bill_asset.status == Bill.STATUS_VALID:
+                    bill_asset.archive()
+                elif self.status == Bill.STATUS_VALID:
+                    self.archive()
+        return
+
     transitionname__valid = _("Validate")
 
     @transition(field=status, source=STATUS_BUILDING, target=STATUS_VALID, conditions=[lambda item:item.get_info_state() == []])
@@ -1061,6 +1085,9 @@ class Bill(Supporting):
         self.status = self.STATUS_ARCHIVE
         self.save()
         Signal.call_signal("change_bill", 'archive', self, None)
+        bill_asset = self.associate_bill_asset
+        if (bill_asset is not None) and (bill_asset.status == Bill.STATUS_VALID):
+            bill_asset.archive()
 
     transitionname__unarchive = _("Unarchive")
 
@@ -1068,6 +1095,9 @@ class Bill(Supporting):
     def unarchive(self):
         self.status = self.STATUS_VALID
         self.save()
+        bill_asset = self.associate_bill_asset
+        if (bill_asset is not None) and (bill_asset.status == Bill.STATUS_ARCHIVE):
+            bill_asset.unarchive()
 
     def undo(self):
         new_undo = Bill.objects.create(bill_type=Bill.BILLTYPE_ASSET if self.bill_type != Bill.BILLTYPE_ASSET else Bill.BILLTYPE_BILL,
@@ -1092,12 +1122,12 @@ class Bill(Supporting):
     def cancel(self):
         return None
 
-    def convert_to_bill(self):
+    def convert_to_bill(self, billdate=None):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
             new_type = Bill.BILLTYPE_BILL
-            new_bill = Bill.objects.create(bill_type=new_type, date=timezone.now(),
+            new_bill = Bill.objects.create(bill_type=new_type, date=timezone.now().date() if (billdate is None) else convert_date(billdate),
                                            third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
                                            comment=self.comment, parentbill=self)
             for detail in self.detail_set.all():
@@ -1297,7 +1327,7 @@ class Bill(Supporting):
         return remove_accent("%s_%s_%s" % (self.billtype, self.num_txt, str(self.third)))
 
     def get_linked_supportings(self):
-        other_bill_inverses = Bill.objects.filter(third=self.third, is_revenu=not self.is_revenu, status=Bill.STATUS_VALID).exclude(bill_type=Bill.BILLTYPE_QUOTATION)
+        other_bill_inverses = Bill.objects.filter(third=self.third, is_revenu=not self.is_revenu, status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)).exclude(bill_type=Bill.BILLTYPE_QUOTATION)
         return [item for item in other_bill_inverses if item.get_total_rest_topay() > 0.001]
 
     def accounting_of_linked_supportings(self, source_payoff, target_payoff):

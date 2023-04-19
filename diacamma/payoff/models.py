@@ -352,6 +352,9 @@ class Supporting(LucteriosModel):
     def get_payment_method(self):
         return list(PaymentMethod.objects.all())
 
+    def adding_payoff(self, payoff):
+        return
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.is_revenu = self.get_final_child().payoff_is_revenu()
         if not force_insert:
