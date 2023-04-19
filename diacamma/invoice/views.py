@@ -1363,13 +1363,6 @@ def show_contact_invoice(contact, xfer):
         if third is not None:
             accounts = third.accountthird_set.filter(Q(code__regex=current_system_account().get_customer_mask()))
             if len(accounts) > 0:
-                xfer.new_tab(_("Financial"))
-                nb_build = len(Bill.objects.filter(third=third, status=Bill.STATUS_BUILDING))
-                nb_valid = len(Bill.objects.filter(third=third, status=Bill.STATUS_VALID))
-                lab = XferCompLabelForm('invoiceinfo')
-                lab.set_value_as_header(_("There are %(build)d bills in building and %(valid)d validated") % {'build': nb_build, 'valid': nb_valid})
-                lab.set_location(0, 5, 2)
-                xfer.add_component(lab)
                 xfer.params['third'] = third.id
                 xfer.with_individual = True
                 thirdaddon_invoice(third, xfer)

@@ -410,9 +410,11 @@ def show_contact_accounting(contact, xfer):
         if main_third is not None:
             xfer.new_tab(_("Financial"))
             xfer.item = main_third
-            xfer.filltab_from_model(0, 0, True, ["status", ((_('total'), 'total'),)])
+            xfer.filltab_from_model(0, 0, True, ["status", 'total'])
+            xfer.account_row_offset = 5
+            thirdaddon_accounting(main_third, xfer)
             btn = XferCompButton('show_third')
-            btn.set_location(0, 50, 2)
+            btn.set_location(1, 50)
             btn.set_action(xfer.request, ActionsManage.get_action_url('accounting.Third', 'Show', xfer),
                            modal=FORMTYPE_MODAL, close=CLOSE_NO, params={"third": str(main_third.id)})
             xfer.add_component(btn)
@@ -431,23 +433,24 @@ def thirdaddon_accounting(item, xfer):
                 entry_lines_filter &= Q(entry__year=FiscalYear.get_current()) & Q(entry__close=False)
             elif lines_filter == 3:
                 entry_lines_filter &= Q(link__isnull=True)
-            xfer.new_tab(_('entry of account'))
-            lbl = XferCompLabelForm('lbl_lines_filter')
-            lbl.set_value_as_name(_('Accounts filter'))
-            lbl.set_location(0, 1)
-            xfer.add_component(lbl)
+            if not hasattr(xfer, 'account_row_offset'):
+                xfer.new_tab(_('Entry of account'))
+                account_row_offset = 0
+            else:
+                account_row_offset = xfer.account_row_offset
             edt = XferCompSelect("lines_filter")
             edt.set_select([(0, _('All entries of current fiscal year')), (1, _('Only no-closed entries of current fiscal year')),
                             (2, _('All entries for all fiscal year')), (3, _('Only entries without link'))])
             edt.set_value(lines_filter)
-            edt.set_location(1, 1)
+            edt.set_location(0, account_row_offset + 1)
+            edt.description = _('Accounts filter')
             edt.set_action(xfer.request, xfer.return_action(),
                            modal=FORMTYPE_REFRESH, close=CLOSE_NO)
             xfer.add_component(edt)
             entrulines = EntryLineAccount.objects.filter(entry_lines_filter).distinct()
             link_grid_lines = XferCompGrid('entryline')
             link_grid_lines.set_model(entrulines, EntryLineAccount.get_default_fields(), xfer)
-            link_grid_lines.set_location(0, 2, 2)
+            link_grid_lines.set_location(0, account_row_offset + 2, 2)
             link_grid_lines.add_action(xfer.request, ActionsManage.get_action_url('accounting.EntryAccount', 'OpenFromLine', xfer),
                                        modal=FORMTYPE_MODAL, unique=SELECT_SINGLE, close=CLOSE_NO)
             link_grid_lines.add_action(xfer.request, ActionsManage.get_action_url('accounting.EntryAccount', 'Close', xfer),

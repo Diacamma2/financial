@@ -235,7 +235,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdShow', {"third": 4}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
         self.assertTrue('__tab_3' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 9 + 4 + 4 + 4)
+        self.assert_count_equal('', 9 + 4 + 3 + 4)
         self.assert_json_equal('LABELFORM', 'contact', 'Minimum')
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_grid_equal('accountthird', {'code': "code", 'total_txt': "total"}, 2)  # nb=2
@@ -283,7 +283,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdShow', {"third": 4, 'lines_filter': 0}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
         self.assertTrue('__tab_3' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 9 + 4 + 4 + 4)
+        self.assert_count_equal('', 9 + 4 + 3 + 4)
         self.assert_json_equal('SELECT', 'lines_filter', '0')
         self.assert_select_equal('lines_filter', 4)  # nb=4
         self.assert_grid_equal('entryline', {"entry.num": "N°", "entry.date_entry": "date d'écriture", "entry.date_value": "date de pièce", "designation_ref": "nom",
@@ -293,7 +293,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdShow', {"third": 4, 'lines_filter': 1}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
         self.assertTrue('__tab_3' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 9 + 4 + 4 + 4)
+        self.assert_count_equal('', 9 + 4 + 3 + 4)
         self.assert_json_equal('SELECT', 'lines_filter', '1')
         self.assert_select_equal('lines_filter', 4)  # nb=4
         self.assert_count_equal('entryline', 1)
@@ -304,7 +304,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdShow', {"third": 4, 'lines_filter': 0}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
         self.assertTrue('__tab_3' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 9 + 4 + 4 + 4)
+        self.assert_count_equal('', 9 + 4 + 3 + 4)
         self.assert_json_equal('SELECT', 'lines_filter', '0')
         self.assert_select_equal('lines_filter', 4)  # nb=4
         self.assert_count_equal('entryline', 0)
@@ -313,7 +313,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdShow', {"third": 4, 'lines_filter': 2}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
         self.assertTrue('__tab_3' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 9 + 4 + 4 + 4)
+        self.assert_count_equal('', 9 + 4 + 3 + 4)
         self.assert_json_equal('SELECT', 'lines_filter', '2')
         self.assert_select_equal('lines_filter', 4)  # nb=4
         self.assert_count_equal('entryline', 3)
@@ -322,7 +322,7 @@ class ThirdTest(LucteriosTest):
         self.calljson('/diacamma.accounting/thirdShow', {"third": 4, 'lines_filter': 3}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'thirdShow')
         self.assertTrue('__tab_3' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 9 + 4 + 4 + 4)
+        self.assert_count_equal('', 9 + 4 + 3 + 4)
         self.assert_json_equal('SELECT', 'lines_filter', '3')
         self.assert_select_equal('lines_filter', 4)  # nb=4
         self.assert_count_equal('entryline', 1)

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-24 12:05+0000\n"
+"POT-Creation-Date: 2023-04-19 14:36+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -173,7 +173,7 @@ msgid "status"
 msgstr "statut"
 
 #: models.py:86 models.py:193 models.py:1610 printmodel/Third_0001.py:39
-#: views.py:413 views_reports.py:206 views_reports.py:212 views_reports.py:479
+#: views_reports.py:206 views_reports.py:212 views_reports.py:479
 #: views_reports.py:613
 msgid "total"
 msgstr "total"
@@ -542,7 +542,7 @@ msgstr "règlement de %s"
 msgid "Can not save entry account on finished fiscal year !"
 msgstr "Impossible de sauver une écriture sur un exercice terminé !"
 
-#: models.py:1289 views.py:434
+#: models.py:1289
 msgid "entry of account"
 msgstr "écriture comptable"
 
@@ -816,25 +816,29 @@ msgstr "modèles"
 msgid "Accounting"
 msgstr "Comptabilité"
 
-#: views.py:436
-msgid "Accounts filter"
-msgstr "Filtre sur les comptes"
+#: views.py:437
+msgid "Entry of account"
+msgstr "Écriture comptable"
 
-#: views.py:440
+#: views.py:442
 msgid "All entries of current fiscal year"
 msgstr "Toutes les écritures de l'exercice courant"
 
-#: views.py:440
+#: views.py:442
 msgid "Only no-closed entries of current fiscal year"
 msgstr "Seulement les écritures non-validées de l'exercice courant"
 
-#: views.py:441
+#: views.py:443
 msgid "All entries for all fiscal year"
 msgstr "Toutes les écritures de tous les exercices"
 
-#: views.py:441
+#: views.py:443
 msgid "Only entries without link"
 msgstr "Seulement les écritures non-lettrées"
+
+#: views.py:446
+msgid "Accounts filter"
+msgstr "Filtre sur les comptes"
 
 #: views_accounts.py:52
 msgid "Manage of Bookkeeping"
