@@ -497,8 +497,8 @@ class BillToBill(XferContainerAcknowledge):
             datecmp.set_location(1, 1)
             datecmp.set_needed(True)
             dlg.add_component(datecmp)
-            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+            dlg.add_action(self.return_action(_('Yes'), 'images/ok.png'), params={"CONFIRME": "YES"})
+            dlg.add_action(WrapAction(_('No'), 'images/cancel.png'))
             return False
 
     def fillresponse(self):

@@ -25,7 +25,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from re import match
 from os.path import exists, join, dirname
-from datetime import timedelta, date
+from datetime import timedelta
 from logging import getLogger
 from json import dumps, loads
 from json.decoder import JSONDecodeError
