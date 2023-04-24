@@ -228,7 +228,7 @@ class BillEditor(SupportingEditor):
         com_cat = xfer.get_components('categoryBill')
         if com_cat is not None:
             default_cat = CategoryBill.objects.filter(is_default=True).first()
-            if default_cat is not None:
+            if (xfer.item.id is None) and not ('categoryBill' in xfer.params) and (default_cat is not None):
                 com_cat.set_value(default_cat.id)
                 xfer.item.categoryBill_id = default_cat.id
             com_cat.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)

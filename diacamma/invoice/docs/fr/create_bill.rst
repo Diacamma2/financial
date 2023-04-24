@@ -49,6 +49,9 @@ Une fois qu'une facture (ou un avoir) est considéré comme terminée (c'est à 
 
 Depuis une facture « fini », il vous est possible de créer un avoir correspondant à l'état « en cours ». Cette fonctionnalité vous sera utile si vous êtes amené à rembourser un client d'un bien ou un service précédemment facturé.
 
+Vous pouvez également archiver des justificatifs (devis, facture, avoir) quand ceux-ci ont été gérés.
+Notez que si un avoir et un facture sont totalement lié, c'est à dire qu'ils n'ont qu'un règlement interne de l'un vers l'autre, leurs états sont forcés à l'identique entre "validé" et "archivé".
+
 Si une facture contiens des articles *stockable*, un bordereau de sortie est automatiquement générer pour correspondre à cette vente.
 La situation du stock est alors mise à jour automatiquement.
 
@@ -71,8 +74,6 @@ Dans le cas d'un paiement via PayPal, MoneticoPaiement ou Hello-Asso, si votre *
 Dans le cas d'un devis, celui-ci sera automatiquement archivé et une facture équivalente sera générée.
 Un nouveau réglement sera ajouté dans votre facture.
 
-Dans l'écran *Comptabilité/Transactions bancaires*, vous pouvez consulté précisement la notification reçu de PayPal.
-En cas d'état "échec", la raison est alors précisé: il vous faudra manuellement vérifier votre compte PayPal et rétablir l'éventuellement paiment erroné manuellement.
-
- 
+Dans l'écran *Comptabilité/Transactions bancaires*, vous pouvez consulté précisement la notification reçu de PayPal, MoneticoPaiement ou Hello-Asso.
+En cas d'état "échec", la raison est alors précisé: il vous faudra manuellement vérifier votre compte (PayPal, MoneticoPaiement ou Hello-Asso) et rétablir l'éventuellement paiment erroné manuellement.
  

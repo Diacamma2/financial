@@ -42,6 +42,17 @@ Un article peut se retrouver vendu gratuitement, mais jamais négativement (qui 
 Ce mécanisme sera également appliqué lors de la création automatique des factures (cotisation, participation à un événement)
 Ce mécanisme vérifie le critère que pour des opérations réalisés sur l'exercice financier courant de l'association (les réductions ne se cumule pas d'une année à l'autre)
 
+Catégorie de facturation
+------------------------
+
+Le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, onglet *Catégorie de facturation*
+
+Vous pouvez définir des catégories de facturation afin de modifier le nom du type de vos justificatif ou personnaliser vos patrons d'impression.
+Il vous est également possible de préciser que les devis/factures de cette catégorie auront une numérotation propre (avec un éventuelle préfixe de spécification.
+Les moyens de paiement proposés ainsi que le message par défaut lors de l'envoie par courriel peuvent également être personnalisé.
+
+Notez que si vous définissez des catégories de facturation, la liste des facture (menu *Facturier/Facture*) vous proposera un filtrage par type spécifique de chaque catégorie.
+
 Codes d'imputations comptable
 -----------------------------
 
