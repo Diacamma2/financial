@@ -263,6 +263,7 @@ class BillForUserQuotation(object):
             selectors = PrintModel.get_print_selector(2, self.item.__class__)[0]
             sel = XferCompSelect('model_quotation')
             sel.set_select(selectors[2])
+            sel.set_value(self.item.get_default_print_model())
             sel.set_location(2, row + 6)
             sel.description = selectors[1]
             dlg.add_component(sel)
@@ -380,8 +381,8 @@ parent.get('print_sep').setEnabled(!is_persitent);
             text = text.replace('#reference', str(self.item.reference))
             return text
         nbpayoff = self.getparam('nbpayoff', Params.getvalue('invoice-default-nbpayoff'))
-        sendemail = self.getparam('sendemail', False)
-        sendemail_quotation = self.getparam('sendemail_quotation', False)
+        sendemail = self.getparam('sendemail', Params.getvalue('invoice-default-send-pdf'))
+        sendemail_quotation = self.getparam('sendemail_quotation', Params.getvalue('invoice-default-send-pdf'))
         if (transition != 'valid') or (len(self.items) > 1):
             XferTransition.fill_confirm(self, transition, trans)
         elif self.getparam("CONFIRME") is None:

@@ -1042,6 +1042,7 @@ class BillTest(InvoiceTest):
     def test_valid_bill_with_user(self):
         Params.setvalue('invoice-order-mode', 1)
         Params.setvalue('invoice-default-nbpayoff', 2)
+        Params.setvalue('invoice-default-send-pdf', True)
         default_articles()
         quotation_id = self._create_bill([{'article': 1, 'designation': 'article 1',
                                            'price': '22.50', 'quantity': 3, 'reduce': '5.0'}], 0, '2015-04-01', 6, True)
@@ -1092,7 +1093,7 @@ class BillTest(InvoiceTest):
             self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
             self.assert_count_equal('', 3 + 6 * 2 + 6 + 0)
             self.assert_json_equal('', 'nbpayoff', 2)
-            self.assert_json_equal('', 'sendemail', False)
+            self.assert_json_equal('', 'sendemail', True)
 
             default_area()
             self.assertEqual(0, server.count())
@@ -1102,8 +1103,8 @@ class BillTest(InvoiceTest):
             self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
             self.assert_count_equal('', 3 + 6 * 2 + 6 + 5)
             self.assert_json_equal('', 'nbpayoff', 2)
-            self.assert_json_equal('', 'sendemail', False)
-            self.assert_json_equal('', 'sendemail_quotation', False)
+            self.assert_json_equal('', 'sendemail', True)
+            self.assert_json_equal('', 'sendemail_quotation', True)
 
             self.factory.xfer = BillTransition()
             self.calljson('/diacamma.invoice/billTransition', {'bill': bill_id, 'TRANSITION': 'valid', 'CONFIRME': 'YES',
