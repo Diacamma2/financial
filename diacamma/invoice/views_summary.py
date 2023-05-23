@@ -26,16 +26,26 @@ from __future__ import unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
+from django.utils import timezone
 
-from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE, CLOSE_NO
-from lucterios.framework.xferadvance import XferListEditor
+from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE, CLOSE_NO,\
+    WrapAction, FORMTYPE_REFRESH
+from lucterios.framework.xferadvance import XferListEditor, TITLE_CLOSE
 
 from lucterios.contacts.models import Individual, LegalEntity
 
-from diacamma.invoice.models import Bill
-from diacamma.invoice.views import BillPrint
+from diacamma.invoice.models import Bill, Category, get_or_create_customer,\
+    Article, Detail, CategoryBill
+from diacamma.invoice.views import BillPrint, BillShow
 from diacamma.payoff.models import PaymentMethod
 from diacamma.payoff.views import PayableShow
+from lucterios.framework.xfergraphic import XferContainerCustom,\
+    XferContainerAcknowledge
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton,\
+    XferCompGrid, XferCompFloat, XferCompImage
+from diacamma.accounting.tools import get_amount_from_format_devise,\
+    format_with_devise
+from django.db import models
 
 
 def current_bill_right(request):
@@ -78,3 +88,198 @@ class CurrentBillPrint(BillPrint):
 @MenuManage.describ(current_bill_right)
 class CurrentPayableShow(PayableShow):
     pass
+
+
+def current_cart_right(request):
+    if not request.user.is_anonymous:
+        contacts = Individual.objects.filter(user=request.user).first()
+    else:
+        contacts = None
+    if (contacts is not None) and WrapAction(caption='', icon_path='', is_view_right='invoice.cart_bill').check_permission(request):
+        return True
+    else:
+        return False
+
+
+@MenuManage.describ(current_cart_right)
+class CurrentCartShow(BillShow):
+    icon = "storage.png"
+    caption = _("Cart")
+
+
+@MenuManage.describ(current_cart_right, FORMTYPE_MODAL, 'core.general', _('To fill your shopping cart'))
+class CurrentCart(XferContainerCustom):
+    icon = "storage.png"
+    model = Bill
+    field_id = 'bill'
+    caption = _("Purchasing center")
+
+    size_by_page = 5
+
+    def show_cart(self):
+        contacts = Individual.objects.filter(user=self.request.user).first()
+        third = get_or_create_customer(contacts.id)
+        self.item = Bill.objects.filter(bill_type=Bill.BILLTYPE_CART, status=Bill.STATUS_BUILDING, third=third).first()
+        if self.item is None:
+            self.item = Bill.objects.create(bill_type=Bill.BILLTYPE_CART, status=Bill.STATUS_BUILDING,
+                                            third=third, date=timezone.now(), categoryBill=CategoryBill.objects.all().order_by("-is_default").first())
+        cart_info = _("%d article(s){[br/]}{[i]}%s{[/i]}") % (self.item.detail_set.count(), get_amount_from_format_devise(self.item.total, 5))
+
+        lbl = XferCompLabelForm('cart_title')
+        lbl.set_location(5, 2, 2)
+        lbl.set_value_as_infocenter(_('Cart'))
+        self.add_component(lbl)
+        lbl = XferCompLabelForm('cart_info')
+        lbl.set_location(5, 3, 0, 2)
+        lbl.set_value(cart_info)
+        self.add_component(lbl)
+        btn = XferCompButton('cart_btn')
+        btn.set_location(6, 3, 0, 2)
+        btn.set_is_mini(True)
+        btn.set_action(self.request, CurrentCartShow.get_action(), params={'bill': self.item.id})
+        self.add_component(btn)
+        lbl = XferCompLabelForm('cart_sep')
+        lbl.set_location(0, 4, 10)
+        lbl.set_value("{[hr/]}")
+        self.add_component(lbl)
+
+    def filter_selector(self):
+        cat_list = Category.objects.all()
+        if len(cat_list) > 0:
+            filter_cat = self.getparam('cat_filter', 0)
+            edt = XferCompSelect("cat_filter")
+            edt.set_select_query(cat_list)
+            edt.set_value(filter_cat)
+            edt.set_location(0, 5, 5)
+            edt.set_needed(False)
+            edt.description = _('categories')
+            edt.set_action(self.request, self.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            self.add_component(edt)
+        ref_filter = self.getparam('ref_filter', '')
+        edt = XferCompEdit("ref_filter")
+        edt.set_value(ref_filter)
+        edt.set_location(0, 6, 5)
+        edt.set_needed(False)
+        edt.description = _('keyword')
+        edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        self.add_component(edt)
+
+    def show_article(self, article, row):
+        lbl = XferCompLabelForm('sep_article_%d' % article.id)
+        lbl.set_location(0, row, 7)
+        lbl.set_value("{[hr/]}")
+        self.add_component(lbl)
+        img = XferCompImage('img_article_%d' % article.id)
+        img.type = 'jpg'
+        img.set_value(article.image)
+        img.set_location(0, row + 1, 1, 3)
+        self.add_component(img)
+        lbl = XferCompLabelForm('ref_article_%d' % article.id)
+        lbl.set_location(1, row + 1)
+        lbl.set_value(article.reference)
+        lbl.description = _('reference')
+        self.add_component(lbl)
+        lbl = XferCompLabelForm('design_article_%d' % article.id)
+        lbl.set_location(1, row + 2)
+        lbl.set_value(article.designation)
+        lbl.description = _('designation')
+        self.add_component(lbl)
+        lbl = XferCompLabelForm('price_article_%d' % article.id)
+        lbl.set_location(2, row + 1)
+        lbl.set_value(article.price)
+        lbl.set_format(format_with_devise(5))
+        lbl.description = _('price')
+        self.add_component(lbl)
+
+        if article.stockable != Article.STOCKABLE_NO:
+            max_qty = 0
+            for val in article.get_stockage_values():
+                max_qty = max(max_qty, val[2])
+        else:
+            max_qty = 100_000_000
+        ed_page = XferCompFloat('qty_article_%d' % article.id, 0, max_qty if max_qty is not None else 0, article.qtyDecimal)
+        ed_page.set_location(2, row + 2)
+        ed_page.set_value(self.getparam('qty_article_%d' % article.id, 0))
+        ed_page.description = _('quantity')
+        self.add_component(ed_page)
+
+        btn = XferCompButton('add_article_%d' % article.id)
+        btn.set_is_mini(True)
+        btn.set_location(3, row + 1, 0, 2)
+        btn.set_action(self.request, CurrentCartAddArticle.get_action("+", "images/add.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'article': article.id, "bill": self.item.id})
+        self.add_component(btn)
+
+    def search_articles(self):
+        art_filter = models.Q()
+        filter_cat = self.getparam('cat_filter', 0)
+        if filter_cat != 0:
+            art_filter &= models.Q(categories__in=[Category.objects.get(id=filter_cat)])
+        for ref_filter in self.getparam('ref_filter', '').split(' '):
+            art_filter &= models.Q(designation__icontains=ref_filter) | models.Q(reference__icontains=ref_filter)
+        return Article.objects.filter(art_filter)
+
+    def show_articles(self):
+        articles = self.search_articles()
+
+        nb_lines = len(articles)
+        page_max = int(nb_lines / self.size_by_page) + 1
+        num_page = max(1, min(self.getparam('num_page', 0), page_max))
+        record_min = int(num_page * self.size_by_page)
+        record_max = int((num_page + 1) * self.size_by_page)
+
+        btn = XferCompButton('before')
+        btn.set_is_mini(True)
+        btn.set_location(0, 9)
+        btn.set_action(self.request, self.return_action("<", "images/left.png"), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'num_page': max(1, num_page - 1)})
+        self.add_component(btn)
+        ed_page = XferCompFloat('num_page', 1, page_max, 0)
+        ed_page.set_location(1, 9)
+        ed_page.set_value(num_page)
+        ed_page.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        ed_page.description = _("page")
+        self.add_component(ed_page)
+        lbl = XferCompLabelForm('article_range')
+        lbl.set_location(2, 9)
+        lbl.set_value_as_name("/ %s" % page_max)
+        self.add_component(lbl)
+        btn = XferCompButton('after')
+        btn.set_is_mini(True)
+        btn.set_location(3, 9)
+        btn.set_action(self.request, self.return_action(">", "images/right.png"), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'num_page': min(num_page + 1, page_max)})
+        self.add_component(btn)
+        row = self.get_max_row() + 1
+        for article in articles[record_min: record_max]:
+            self.show_article(article, row)
+            row += 5
+
+    def fillresponse(self):
+        lbl = XferCompLabelForm('title')
+        lbl.set_value_as_title(_("Add your articles in your cart"))
+        lbl.set_location(0, 0, 5, 4)
+        self.add_component(lbl)
+        self.show_cart()
+        self.filter_selector()
+        self.show_articles()
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+
+
+@MenuManage.describ(current_cart_right)
+class CurrentCartAddArticle(XferContainerAcknowledge):
+    icon = "storage.png"
+    caption = _("Add article")
+    model = Bill
+    field_id = 'bill'
+
+    def fillresponse(self, article):
+        article = Article.objects.get(id=article)
+        quantity = self.getparam('qty_article_%d' % article.id, 0.0)
+        storagearea_id = None
+        if article.stockable != Article.STOCKABLE_NO:
+            for val in article.get_stockage_values():
+                if quantity < val[2]:
+                    storagearea_id = val[0]
+                    break
+        Detail.objects.create(bill=self.item, article=article, designation=article.designation,
+                              price=article.price, unit=article.unit,
+                              quantity=quantity,
+                              storagearea_id=storagearea_id)

@@ -119,11 +119,11 @@ def default_area():
 
 def default_categorybill():
     cat_bill1 = CategoryBill.objects.create(name="1st type", designation='First', emailsubject="#reference", emailmessage="Hello", printmodel_id=8, printmodel_sold_id=9,
-                                            titles='{"0": "QQQ", "1": "BBB", "2": "AAA", "3": "RRR", "4": "OOO"}')
+                                            titles='{"0": "QQQ", "1": "BBB", "2": "AAA", "3": "RRR", "4": "OOO", "5": "CCC"}')
     cat_bill1.payment_method.set(PaymentMethod.objects.filter(id__in=(1, 2, 3, 4)))
     cat_bill2 = CategoryBill.objects.create(name="2nd type", designation='Second',
                                             emailsubject="Warning: #reference", emailmessage="Hello{[br/]}name=#name{[br/]}doc=#doc{[br/]}{[br/]}Kiss", printmodel_id=9, printmodel_sold_id=8,
-                                            titles='{"0": "Type Q", "1": "Type B", "2": "Type A", "3": "Type R", "4": "Type O"}')
+                                            titles='{"0": "Type Q", "1": "Type B", "2": "Type A", "3": "Type R", "4": "Type O", "5": "Type C"}')
     cat_bill2.payment_method.set(PaymentMethod.objects.filter(id__in=(1, 2, 3, 5, 6)))
 
 

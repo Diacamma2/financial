@@ -627,7 +627,8 @@ class Bill(Supporting):
     BILLTYPE_ASSET = 2
     BILLTYPE_RECEIPT = 3
     BILLTYPE_ORDER = 4
-    LIST_BILLTYPES = ((BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_ORDER, _('order')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')))
+    BILLTYPE_CART = 5
+    LIST_BILLTYPES = ((BILLTYPE_CART, _('cart')), (BILLTYPE_QUOTATION, _('quotation')), (BILLTYPE_ORDER, _('order')), (BILLTYPE_BILL, _('bill')), (BILLTYPE_ASSET, _('asset')), (BILLTYPE_RECEIPT, _('receipt')))
     SELECTION_BILLTYPES = ((BILLTYPE_ALL, None),) + LIST_BILLTYPES
 
     STATUS_ALL = -2
@@ -1395,7 +1396,7 @@ class Bill(Supporting):
         verbose_name = _('bill')
         verbose_name_plural = _('bills')
         ordering = ['-date', 'status']
-        default_permissions = ['add', 'change', 'delete', 'archive', 'asset']
+        default_permissions = ['add', 'change', 'delete', 'archive', 'asset', 'cart']
 
 
 class Detail(LucteriosModel):

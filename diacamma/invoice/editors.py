@@ -236,6 +236,7 @@ class BillEditor(SupportingEditor):
         com_type = xfer.get_components('bill_type')
         com_type.set_select(xfer.item.bill_type_list)
         com_type.remove_select(Bill.BILLTYPE_ORDER)
+        com_type.remove_select(Bill.BILLTYPE_CART)
         com_type.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
 
     def show(self, xfer):

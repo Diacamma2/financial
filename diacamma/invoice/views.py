@@ -272,6 +272,8 @@ class BillForUserQuotation(object):
 
     def send_email_to_user_quotation(self, new_bill):
         from django.utils.module_loading import import_module
+        if self.getparam('sendemail_quotation', False) is False:
+            return
         user = self.item.user_quotation_creator()
         if user:
             subject = self.getparam('subject_quotation', '')

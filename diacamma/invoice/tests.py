@@ -941,7 +941,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': 4}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
-        self.assert_select_equal('type_filter', {'-1': None, '0': "devis", '1': "facture", '2': "avoir", '3': "reçu", '4': "commande"})
+        self.assert_select_equal('type_filter', {'-1': None, '0': "devis", '1': "facture", '2': "avoir", '3': "reçu", '4': "commande", '5': "panier"})
         self.assert_count_equal('bill', 0)
 
         self.factory.xfer = BillShow()
@@ -3379,9 +3379,9 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billList', {'status_filter': -2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_select_equal('type_filter', {'-1': None,
-                                                 '0': "devis", '4': "commande", '1': "facture", '2': "avoir", '3': "reçu",
-                                                 '2|0': "[2nd type]Type Q", '2|1': "[2nd type]Type B", '2|2': "[2nd type]Type A",
-                                                 '1|0': "[1st type]QQQ", '1|1': "[1st type]BBB", '1|2': "[1st type]AAA",
+                                                 '5': "panier", '0': "devis", '4': "commande", '1': "facture", '2': "avoir", '3': "reçu",
+                                                 '2|5': "[2nd type]Type C", '2|0': "[2nd type]Type Q", '2|1': "[2nd type]Type B", '2|2': "[2nd type]Type A",
+                                                 '1|5': "[1st type]CCC", '1|0': "[1st type]QQQ", '1|1': "[1st type]BBB", '1|2': "[1st type]AAA",
                                                  })
         self.assert_grid_equal('bill', {"bill_type": "type de facture", 'billtype': 'titre du type', "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total", "status": "statut"}, 1)
         self.assert_json_equal('', 'bill/@0/bill_type', 0)
