@@ -35,6 +35,7 @@ from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect
     XferCompUpLoad, XferCompImage
 from lucterios.framework.tools import CLOSE_NO, FORMTYPE_REFRESH, ActionsManage, FORMTYPE_MODAL, format_to_string
 from lucterios.framework.filetools import save_from_base64, open_image_resize, get_user_path
+from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.CORE.parameters import Params
 
 from diacamma.accounting.tools import current_system_account, format_with_devise
@@ -42,7 +43,6 @@ from diacamma.accounting.models import CostAccounting, FiscalYear, Third
 from diacamma.payoff.editors import SupportingEditor
 from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail,\
     Bill, Vat, StorageSheet, StorageArea, AccountPosting, CategoryBill
-from lucterios.framework.xferbasic import NULL_VALUE
 
 
 class VatEditor(LucteriosEditor):
@@ -271,7 +271,7 @@ class BillEditor(SupportingEditor):
         else:
             SupportingEditor.show_third_ex(self, xfer)
             details.actions = []
-            if self.item.bill_type != Bill.BILLTYPE_QUOTATION:
+            if self.item.bill_type not in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART):
                 SupportingEditor.show(self, xfer)
         return
 

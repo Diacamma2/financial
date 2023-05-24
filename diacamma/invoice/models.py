@@ -387,7 +387,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_booking_values(self):
         booking_list = []
-        detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER))
+        detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART, Bill.BILLTYPE_ORDER))
         if self.show_storagearea != 0:
             detail_filter &= Q(storagearea=self.show_storagearea)
         if self.stockable != self.STOCKABLE_NO:
@@ -857,7 +857,7 @@ class Bill(Supporting):
         return list(self.get_vta_detail_list().values())
 
     def payoff_is_revenu(self):
-        return (self.bill_type != self.BILLTYPE_QUOTATION) and (self.bill_type != self.BILLTYPE_ASSET)
+        return self.bill_type not in (self.BILLTYPE_QUOTATION, self.BILLTYPE_CART, self.BILLTYPE_ASSET)
 
     def entry_links(self):
         if self.entry_id is not None:
@@ -910,7 +910,7 @@ class Bill(Supporting):
                 if detail_account is None:
                     info.append(str(_("article has code account unknown!")))
                     break
-        if self.bill_type != self.BILLTYPE_QUOTATION:
+        if self.bill_type not in (self.BILLTYPE_QUOTATION, self.BILLTYPE_CART, self.BILLTYPE_ORDER):
             try:
                 info.extend(self.check_date(self.date.isoformat()))
             except LucteriosException:
@@ -1061,7 +1061,7 @@ class Bill(Supporting):
     def valid(self):
         self.affect_num()
         self.status = self.STATUS_VALID
-        if not (self.bill_type in (self.BILLTYPE_QUOTATION, self.BILLTYPE_ORDER)):
+        if not (self.bill_type in (self.BILLTYPE_QUOTATION, self.BILLTYPE_CART, self.BILLTYPE_ORDER)):
             self.generate_entry()
             self.generate_storage()
         self.generate_pdfreport()
@@ -1069,7 +1069,7 @@ class Bill(Supporting):
         Signal.call_signal("change_bill", 'valid', self, None)
 
     def generate_pdfreport(self):
-        if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and not (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
+        if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and not (self.bill_type in (Bill.BILLTYPE_QUOTATION, self.BILLTYPE_CART, Bill.BILLTYPE_ORDER)):
             return Supporting.generate_pdfreport(self)
         return None
 
@@ -1119,7 +1119,7 @@ class Bill(Supporting):
 
     transitionname__cancel = _("Cancel")
 
-    @transition(field=status, source=STATUS_VALID, target=STATUS_CANCEL, conditions=[lambda item:item.bill_type == Bill.BILLTYPE_QUOTATION])
+    @transition(field=status, source=STATUS_VALID, target=STATUS_CANCEL, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART)])
     def cancel(self):
         return None
 
@@ -1197,7 +1197,7 @@ class Bill(Supporting):
             total_art = 0
             articles = {}
             if for_quotation:
-                bill_filter = Q(bill__bill_type=Bill.BILLTYPE_QUOTATION) & Q(bill__status=Bill.STATUS_VALID)
+                bill_filter = Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)) & Q(bill__status=Bill.STATUS_VALID)
             else:
                 bill_filter = Q(bill__bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT)) & Q(bill__status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))
             for det in Detail.objects.filter(Q(bill__fiscal_year=self.fiscal_year) & bill_filter):
@@ -1370,7 +1370,7 @@ class Bill(Supporting):
     def get_default_print_model(self):
         model = None
         if self.categoryBill_id is not None:
-            if self.bill_type == Bill.BILLTYPE_QUOTATION:
+            if self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART):
                 model = self.categoryBill.printmodel_id
             else:
                 model = self.categoryBill.printmodel_sold_id

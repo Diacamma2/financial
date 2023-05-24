@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-23 16:05+0000\n"
+"POT-Creation-Date: 2023-05-24 11:29+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -94,7 +94,7 @@ msgstr "fournisseur"
 
 #: editors.py:311 models.py:204 printmodel/ArticleSituation_0002.py:45
 #: printmodel/Article_0001.py:41 views.py:861 views_storage.py:309
-#: views_storage.py:321 views_storage.py:460 views_summary.py:154
+#: views_storage.py:321 views_storage.py:460 views_summary.py:157
 msgid "categories"
 msgstr "catégories"
 
@@ -140,7 +140,7 @@ msgstr "TVAs"
 #: models.py:1405 models.py:1868 printmodel/ArticleSituation_0001.py:42
 #: printmodel/ArticleSituation_0002.py:45 printmodel/Article_0001.py:41
 #: printmodel/Article_0002.py:41 printmodel/Bill_0001.py:131
-#: printmodel/Bill_0002.py:148 views_summary.py:184
+#: printmodel/Bill_0002.py:148 views_summary.py:188
 msgid "designation"
 msgstr "désignation"
 
@@ -213,13 +213,13 @@ msgid "stockable & no marketable"
 msgstr "stockable & non vendable"
 
 #: models.py:195 printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0002.py:159 views.py:1200 views_summary.py:179
+#: printmodel/Bill_0002.py:159 views.py:1200 views_summary.py:183
 msgid "reference"
 msgstr "référence"
 
 #: models.py:197 models.py:211 models.py:827 models.py:1406 models.py:1417
 #: printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0001.py:132 printmodel/Bill_0002.py:149 views_summary.py:190
+#: printmodel/Bill_0001.py:132 printmodel/Bill_0002.py:149 views_summary.py:194
 msgid "price"
 msgstr "prix"
 
@@ -443,7 +443,7 @@ msgid "origin : %s"
 msgstr "origine : %s"
 
 #: models.py:827 models.py:1409 models.py:1734 models.py:1736 models.py:1864
-#: models.py:1866 views_summary.py:202
+#: models.py:1866 views_summary.py:216
 msgid "quantity"
 msgstr "quantité"
 
@@ -992,7 +992,7 @@ msgstr "Envoyer"
 msgid "Send by email"
 msgstr "Envoyer un courriel avec le PDF"
 
-#: views.py:706 views.py:707 views_summary.py:77
+#: views.py:706 views.py:707 views_summary.py:80
 msgid "Print"
 msgstr "Imprimer"
 
@@ -1072,7 +1072,7 @@ msgstr "doublon"
 msgid "Show article"
 msgstr "Voir un article"
 
-#: views.py:929 views_summary.py:268
+#: views.py:929 views_summary.py:299
 msgid "Add article"
 msgstr "Ajouter un article"
 
@@ -1563,46 +1563,66 @@ msgstr ""
 msgid "%d articles are reported."
 msgstr "%d articles ont été reportés."
 
-#: views_summary.py:59
+#: views_summary.py:62
 msgid "View your invoices."
 msgstr "Voir vos factures."
 
-#: views_summary.py:64
+#: views_summary.py:67
 msgid "Your invoices"
 msgstr "Vos factures"
 
-#: views_summary.py:79
+#: views_summary.py:82
 msgid "Payment"
 msgstr "Paiement"
 
-#: views_summary.py:107 views_summary.py:129
-msgid "Cart"
-msgstr "Panier"
-
-#: views_summary.py:110
+#: views_summary.py:107
 msgid "To fill your shopping cart"
 msgstr "Pour remplir votre panier"
 
-#: views_summary.py:115
+#: views_summary.py:112
 msgid "Purchasing center"
 msgstr "Centrale d'achat"
 
-#: views_summary.py:125
+#: views_summary.py:123
 #, python-format
-msgid "%d article(s){[br/]}{[i]}%s{[/i]}"
-msgstr "%d article(s){[br/]}{[i]}%s{[/i]}"
+msgid "{[center]}%d article(s){[center]}{[i]}%s{[/i]}"
+msgstr "{[center]}%d article(s){[center]}{[i]}%s{[/i]}"
 
-#: views_summary.py:162
+#: views_summary.py:128 views_summary.py:329
+msgid "Cart"
+msgstr "Panier"
+
+#: views_summary.py:165
 msgid "keyword"
 msgstr "mots clefs"
 
-#: views_summary.py:238
+#: views_summary.py:210
+msgid "sold out"
+msgstr "épuisé"
+
+#: views_summary.py:224
+msgid "add in cart"
+msgstr "ajouter dans le panier"
+
+#: views_summary.py:255
 msgid "page"
 msgstr "page"
 
-#: views_summary.py:256
+#: views_summary.py:279
 msgid "Add your articles in your cart"
 msgstr "Ajoutez vos articles dans votre panier"
+
+#: views_summary.py:290
+msgid "Clear"
+msgstr "Effacer"
+
+#: views_summary.py:341
+msgid "Return"
+msgstr "Retour"
+
+#: views_summary.py:357
+msgid "Do you want to validate this cart ?"
+msgstr "Voulez-vous valider ce panier ?"
 
 #~ msgid "Financial"
 #~ msgstr "Financier"

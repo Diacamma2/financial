@@ -27,20 +27,26 @@ from shutil import rmtree
 from _io import StringIO
 
 from lucterios.framework.filetools import get_user_dir
-from lucterios.framework.test import LucteriosTest
+from lucterios.framework.test import LucteriosTest, add_empty_user
+from lucterios.contacts.test_tools import initial_contact
 
 from diacamma.invoice.test_tools import InvoiceTest, default_area, default_articles, insert_storage,\
     default_categories
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr
 from diacamma.payoff.test_tools import default_bankaccount_fr
 from diacamma.payoff.views import SupportingThirdValid
-from diacamma.invoice.views import ArticleShow, BillAddModify, DetailAddModify, BillShow, BillTransition, ArticleList
+from diacamma.invoice.views import ArticleShow, BillAddModify, DetailAddModify, BillShow, BillTransition, ArticleList,\
+    BillList
 from diacamma.invoice.views_storage import StorageSheetList, StorageSheetAddModify, StorageSheetShow, StorageDetailAddModify,\
     StorageSheetTransition, StorageDetailImport, StorageDetailDel,\
     StorageSituation, StorageHistoric, InventorySheetList,\
     InventorySheetAddModify, InventorySheetShow, InventoryDetailCopy,\
     InventorySheetTransition, InventoryDetailModify, InventoryDetailFinalize
-from diacamma.invoice.models import Article
+from diacamma.invoice.models import Article, StorageSheet, StorageDetail
+from lucterios.CORE.models import LucteriosUser
+from diacamma.invoice.views_summary import CurrentCart, CurrentCartAddArticle,\
+    CurrentCartDel
+from django.contrib.auth.models import Permission
 
 
 class StorageTest(InvoiceTest):
@@ -54,6 +60,7 @@ class StorageTest(InvoiceTest):
         default_area()
         default_categories()
         default_articles(with_storage=True)
+        initial_contact(add_empty_user())
 
     def test_receipt(self):
         self.factory.xfer = ArticleShow()
@@ -1460,3 +1467,116 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'inventorydetail/@3/real_quantity_txt', "0")
         self.assert_json_equal('', 'inventorydetail/@3/quantity_txt', "0")
         self.assertEqual(len(self.json_actions), 4)
+
+    def test_cart(self):
+        sheet = StorageSheet.objects.create(sheet_type=0, date='2014-01-01', storagearea_id=1, comment="A")
+        StorageDetail.objects.create(storagesheet=sheet, article_id=1, price=5.00, quantity=10.0)
+        StorageDetail.objects.create(storagesheet=sheet, article_id=2, price=4.00, quantity=15.0)
+        sheet.valid()
+
+        self.factory.user = LucteriosUser.objects.get(username='empty')
+        self.factory.user.user_permissions.set(Permission.objects.all())
+        self.factory.user.save()
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 0)
+
+        self.factory.xfer = CurrentCart()
+        self.calljson('/diacamma.invoice/currentCart', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'currentCart')
+        self.assert_count_equal('', 43)
+        self.assert_json_equal('LABELFORM', "cart_info", "{[center]}0 article(s){[center]}{[i]}{[p align='right']}0,00 €{[/p]}{[/i]}")
+        self.assert_select_equal('cat_filter', 4)
+        self.assert_json_equal('LABELFORM', 'ref_article_1', "ABC1")
+        self.assert_json_equal('LABELFORM', 'price_article_1', 12.34)
+        self.assert_json_equal('FLOAT', 'qty_article_1', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_2', "ABC2")
+        self.assert_json_equal('LABELFORM', 'price_article_2', 56.78)
+        self.assert_json_equal('FLOAT', 'qty_article_2', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_3', "ABC3")
+        self.assert_json_equal('LABELFORM', 'price_article_3', 324.97)
+        self.assert_json_equal('FLOAT', 'qty_article_3', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_4', "ABC4")
+        self.assert_json_equal('LABELFORM', 'price_article_4', 1.31)
+        self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 1)
+        self.assert_json_equal('', 'bill/@0/id', 1)
+        self.assert_json_equal('', 'bill/@0/bill_type', 5)
+        self.assert_json_equal('', 'bill/@0/third', "MISTER jack")
+        self.assert_json_equal('', 'bill/@0/total', 0.00)
+        self.assert_json_equal('', 'bill/@0/status', 0)
+
+        self.factory.xfer = CurrentCartAddArticle()
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 1, "qty_article_1": 10}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
+        self.factory.xfer = CurrentCartAddArticle()
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 2, "bill": 1, "qty_article_2": 10}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
+        self.factory.xfer = CurrentCartAddArticle()
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 3, "bill": 1, "qty_article_3": 10}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
+        self.factory.xfer = CurrentCartAddArticle()
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 4, "bill": 1, "qty_article_4": 10}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 1)
+        self.assert_json_equal('', 'bill/@0/id', 1)
+        self.assert_json_equal('', 'bill/@0/bill_type', 5)
+        self.assert_json_equal('', 'bill/@0/third', "MISTER jack")
+        self.assert_json_equal('', 'bill/@0/total', 3940.9)  # 12.34 * 10 + 56.78 * 10 + 324.97 * 10
+        self.assert_json_equal('', 'bill/@0/status', 0)
+
+        self.factory.xfer = CurrentCart()
+        self.calljson('/diacamma.invoice/currentCart', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'currentCart')
+        self.assert_json_equal('LABELFORM', "cart_info", "{[center]}3 article(s){[center]}{[i]}{[p align='right']}3 940,90 €{[/p]}{[/i]}")
+        self.assert_select_equal('cat_filter', 4)
+        self.assert_json_equal('LABELFORM', 'ref_article_1', "ABC1")
+        self.assert_json_equal('LABELFORM', 'price_article_1', 12.34)
+        self.assert_json_equal('LABELFORM', 'no_article_1', "épuisé")
+        self.assert_json_equal('LABELFORM', 'ref_article_2', "ABC2")
+        self.assert_json_equal('LABELFORM', 'price_article_2', 56.78)
+        self.assert_json_equal('FLOAT', 'qty_article_2', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_3', "ABC3")
+        self.assert_json_equal('LABELFORM', 'price_article_3', 324.97)
+        self.assert_json_equal('FLOAT', 'qty_article_3', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_4', "ABC4")
+        self.assert_json_equal('LABELFORM', 'price_article_4', 1.31)
+        self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
+
+        self.factory.xfer = CurrentCartDel()
+        self.calljson('/diacamma.invoice/currentCartDel', {"bill": 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartDel')
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 0)
+
+        self.factory.xfer = CurrentCart()
+        self.calljson('/diacamma.invoice/currentCart', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'currentCart')
+        self.assert_count_equal('', 43)
+        self.assert_json_equal('LABELFORM', "cart_info", "{[center]}0 article(s){[center]}{[i]}{[p align='right']}0,00 €{[/p]}{[/i]}")
+        self.assert_select_equal('cat_filter', 4)
+        self.assert_json_equal('LABELFORM', 'ref_article_1', "ABC1")
+        self.assert_json_equal('LABELFORM', 'price_article_1', 12.34)
+        self.assert_json_equal('FLOAT', 'qty_article_1', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_2', "ABC2")
+        self.assert_json_equal('LABELFORM', 'price_article_2', 56.78)
+        self.assert_json_equal('FLOAT', 'qty_article_2', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_3', "ABC3")
+        self.assert_json_equal('LABELFORM', 'price_article_3', 324.97)
+        self.assert_json_equal('FLOAT', 'qty_article_3', 0)
+        self.assert_json_equal('LABELFORM', 'ref_article_4', "ABC4")
+        self.assert_json_equal('LABELFORM', 'price_article_4', 1.31)
+        self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
