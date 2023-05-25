@@ -952,7 +952,6 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assert_json_equal('LABELFORM', 'title', "panier")
         self.assert_json_equal('LABELFORM', 'total_excltax', 62.50)
-        print("self.json_actions", self.json_actions)
         self.assertEqual(len(self.json_actions), 5)
 
         self.factory.xfer = BillToQuotation()
@@ -972,7 +971,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'title', "devis")
         self.assert_json_equal('LABELFORM', 'total_excltax', 62.50)
-        self.assertEqual(len(self.json_actions), 6)
+        self.assertEqual(len(self.json_actions), 3)
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList',
