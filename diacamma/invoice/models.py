@@ -1161,6 +1161,23 @@ class Bill(Supporting):
         else:
             return None
 
+    def convert_to_quotation(self):
+        if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_CART):
+            self.status = Bill.STATUS_ARCHIVE
+            self.save()
+            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_QUOTATION, date=timezone.now(),
+                                           third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
+                                           comment=self.comment, parentbill=self)
+            new_bill.save()
+            for detail in self.detail_set.all():
+                detail.id = None
+                detail.bill = new_bill
+                detail.save(check_autoreduce=False)
+            Signal.call_signal("change_bill", 'convert', self, new_bill)
+            return new_bill
+        else:
+            return None
+
     def get_statistics_customer(self, without_reduct):
         cust_list = []
         if self.fiscal_year is not None:
@@ -1322,7 +1339,7 @@ class Bill(Supporting):
             return self.get_total_rest_topay() - self.get_tax()
 
     def payoff_have_payment(self):
-        return (self.bill_type != Bill.BILLTYPE_ASSET) and (self.status == Bill.STATUS_VALID) and (self.get_total_rest_topay() > 0.001)
+        return (self.bill_type not in (Bill.BILLTYPE_CART, Bill.BILLTYPE_ASSET)) and (self.status == Bill.STATUS_VALID) and (self.get_total_rest_topay() > 0.001)
 
     def get_document_filename(self):
         return remove_accent("%s_%s_%s" % (self.billtype, self.num_txt, str(self.third)))

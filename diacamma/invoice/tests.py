@@ -50,7 +50,8 @@ from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_c
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillToBill, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch, \
-    BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo
+    BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo,\
+    BillToQuotation
 from lucterios.framework.auditlog import log_create
 
 
@@ -925,6 +926,59 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'date', '2015-04-10')
         self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
+
+    def test_cart_to_quotation(self):
+        Params.setvalue('invoice-order-mode', 1)
+        default_articles()
+        default_paymentmethod()
+        self._create_bill([{'article': 1, 'designation': 'article 1',
+                            'price': '22.50', 'quantity': 3, 'reduce': '5.0'}], 5, '2015-04-01', 6, True)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '0', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 0)
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': 0}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_select_equal('type_filter', {'-1': None, '0': "devis", '1': "facture", '2': "avoir", '3': "reçu", '4': "commande", '5': "panier"})
+        self.assert_count_equal('bill', 0)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_json_equal('LABELFORM', 'title', "panier")
+        self.assert_json_equal('LABELFORM', 'total_excltax', 62.50)
+        print("self.json_actions", self.json_actions)
+        self.assertEqual(len(self.json_actions), 5)
+
+        self.factory.xfer = BillToQuotation()
+        self.calljson('/diacamma.invoice/billToQuotation', {'bill': 1}, False)
+        self.assert_observer('core.dialogbox', 'diacamma.invoice', 'billToQuotation')
+
+        self.factory.xfer = BillToQuotation()
+        self.calljson('/diacamma.invoice/billToQuotation', {'bill': 1, 'CONFIRME': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToQuotation')
+        self.assertEqual(self.response_json['action']['id'], "diacamma.invoice/billShow")
+        self.assertEqual(len(self.response_json['action']['params']), 1)
+        self.assertEqual(self.response_json['action']['params']['bill'], 2)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'title', "devis")
+        self.assert_json_equal('LABELFORM', 'total_excltax', 62.50)
+        self.assertEqual(len(self.json_actions), 6)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '0', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 0)
 
     def test_quotation_to_order(self):
         Params.setvalue('invoice-order-mode', 1)

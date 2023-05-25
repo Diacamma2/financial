@@ -598,6 +598,21 @@ class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
                     self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_order.id})
 
 
+@ActionsManage.affect_show(_("=> Quotation"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_CART))
+@MenuManage.describ('invoice.add_bill')
+class BillToQuotation(XferContainerAcknowledge):
+    caption = _("Convert to quotation")
+    icon = "bill.png"
+    model = Bill
+    field_id = 'bill'
+
+    def fillresponse(self):
+        if self.confirme(_("Do you want convert this cart to quotation ?")):
+            new_bill = self.item.convert_to_quotation()
+            if new_bill is not None:
+                self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
+
+
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @MenuManage.describ('invoice.delete_bill')
 class BillDel(XferDelete):

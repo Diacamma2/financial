@@ -28,7 +28,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.utils import timezone
 
-from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE, CLOSE_NO, WrapAction, FORMTYPE_REFRESH, CLOSE_YES, ActionsManage
+from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE, CLOSE_NO, WrapAction, FORMTYPE_REFRESH, CLOSE_YES
 from lucterios.framework.xferadvance import XferListEditor, TITLE_CLOSE, TITLE_DELETE, XferTransition
 
 from lucterios.contacts.models import Individual, LegalEntity
@@ -112,7 +112,8 @@ class CurrentCart(XferContainerCustom):
         if self.item is None:
             self.item = Bill.objects.create(bill_type=Bill.BILLTYPE_CART, status=Bill.STATUS_BUILDING,
                                             third=third, date=timezone.now(), categoryBill=CategoryBill.objects.all().order_by("-is_default").first())
-        cart_info = _("{[center]}%d article(s){[center]}{[i]}%s{[/i]}") % (self.item.detail_set.count(), get_amount_from_format_devise(self.item.total, 5))
+        cart_info = _("{[center]}%(nb_art)d article(s){[center]}{[i]}%(amount)s{[/i]}") % {"nb_art": self.item.detail_set.count(),
+                                                                                           "amount": get_amount_from_format_devise(self.item.total, 5)}
 
         row = self.get_max_row() + 1
         lbl = XferCompLabelForm('cart_title')
@@ -194,13 +195,17 @@ class CurrentCart(XferContainerCustom):
         if article.stockable != Article.STOCKABLE_NO:
             max_qty = 0
             for val in article.get_stockage_values():
-                max_qty = max(max_qty, val[2])
-            det = Detail.objects.filter(bill=self.item, article=article).first()
-            if det is not None:
-                max_qty = max(0.0, max_qty - float(det.quantity))
+                if val[0] == 0:
+                    continue
+                area_qty = val[2]
+                det = Detail.objects.filter(bill=self.item, article=article, storagearea_id=val[0]).first()
+                if det is not None:
+                    area_qty = max(0.0, area_qty - float(det.quantity))
+                max_qty += area_qty
         else:
             max_qty = 100_000_000
-        if max_qty == 0:
+        epsilone = 0.1**(article.qtyDecimal + 1)
+        if abs(max_qty) < epsilone:
             lbl = XferCompLabelForm('no_article_%d' % article.id)
             lbl.set_location(2, row + 2, 6)
             lbl.set_color('red')
@@ -287,7 +292,8 @@ class CurrentCartDel(XferContainerAcknowledge):
     caption = _("Clear")
 
     def fillresponse(self):
-        self.item.delete()
+        if (self.item.status == Bill.STATUS_BUILDING) and (self.item.bill_type == Bill.BILLTYPE_CART):
+            self.item.delete()
 
 
 @MenuManage.describ(current_cart_right)
@@ -303,23 +309,34 @@ class CurrentCartAddArticle(XferContainerAcknowledge):
         quantity = self.getparam('qty_article_%d' % article.id, 0.0)
         if abs(quantity) < epsilone:
             return
-        storagearea_id = None
+        storagearea_qty = {}
         if article.stockable != Article.STOCKABLE_NO:
             for val in article.get_stockage_values():
-                if (val[2] - quantity) > -1 * epsilone:
-                    storagearea_id = val[0]
+                if val[0] == 0:
+                    continue
+                area_qty = val[2]
+                det = Detail.objects.filter(bill=self.item, article=article, storagearea_id=val[0]).first()
+                if det is not None:
+                    area_qty = area_qty - float(det.quantity)
+                if abs(area_qty) > epsilone:
+                    storagearea_qty[val[0]] = min(area_qty, quantity)
+                    quantity -= storagearea_qty[val[0]]
+                if abs(quantity) < epsilone:
                     break
-            if storagearea_id is None:
+            if len(storagearea_qty) == 0:
                 return
-        det = Detail.objects.filter(bill=self.item, article=article, storagearea_id=storagearea_id).first()
-        if det is None:
-            Detail.objects.create(bill=self.item, article=article, designation=article.designation,
-                                  price=article.price, unit=article.unit,
-                                  quantity=quantity,
-                                  storagearea_id=storagearea_id)
         else:
-            det.quantity = float(det.quantity) + quantity
-            det.save()
+            storagearea_qty[0] = quantity
+        for storagearea_id, qty in storagearea_qty.items():
+            det = Detail.objects.filter(bill=self.item, article=article, storagearea_id=storagearea_id).first()
+            if det is None:
+                Detail.objects.create(bill=self.item, article=article, designation=article.designation,
+                                      price=article.price, unit=article.unit,
+                                      quantity=qty,
+                                      storagearea_id=storagearea_id)
+            else:
+                det.quantity = float(det.quantity) + qty
+                det.save()
 
 
 @MenuManage.describ(current_cart_right)
@@ -355,7 +372,10 @@ class CurrentCartValid(XferTransition):
     model = Bill
     field_id = 'bill'
 
-    def fill_confirm(self, transition, trans):
+    def fillresponse(self):
+        self.fill_confirm()
+
+    def fill_confirm(self):
         if self.confirme(_("Do you want to validate this cart ?")):
             self.item.date = timezone.now()
-            self._confirmed(transition)
+            self._confirmed("valid")
