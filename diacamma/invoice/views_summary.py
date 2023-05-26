@@ -28,18 +28,21 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models import Q
 from django.utils import timezone
 
-from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE, CLOSE_NO, WrapAction, FORMTYPE_REFRESH, CLOSE_YES
+from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE, CLOSE_NO, WrapAction, FORMTYPE_REFRESH, CLOSE_YES,\
+    get_date_formating
 from lucterios.framework.xferadvance import XferListEditor, TITLE_CLOSE, TITLE_DELETE, XferTransition
+from lucterios.framework.xferprinting import PRINT_PDF_FILE
+from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton, XferCompFloat, XferCompImage
 
 from lucterios.contacts.models import Individual, LegalEntity
 from lucterios.CORE.parameters import Params
+from lucterios.CORE.xferprint import XferPrintListing
 
 from diacamma.invoice.models import Bill, Category, get_or_create_customer, Article, Detail, CategoryBill
 from diacamma.invoice.views import BillPrint, BillShow, DetailDel
 from diacamma.payoff.models import PaymentMethod
 from diacamma.payoff.views import PayableShow
-from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton, XferCompFloat, XferCompImage
 from diacamma.accounting.tools import get_amount_from_format_devise, format_with_devise
 
 
@@ -101,7 +104,7 @@ class CurrentCart(XferContainerCustom):
     icon = "storage.png"
     model = Bill
     field_id = 'bill'
-    caption = _("Purchasing center")
+    caption = _("Shopping cart")
 
     size_by_page = 5
 
@@ -157,6 +160,7 @@ class CurrentCart(XferContainerCustom):
         edt.set_needed(False)
         edt.description = _('keyword')
         edt.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+
         self.add_component(edt)
 
     def show_article(self, article, row):
@@ -214,7 +218,7 @@ class CurrentCart(XferContainerCustom):
         else:
             ed_page = XferCompFloat('qty_article_%d' % article.id, 0, max_qty, article.qtyDecimal)
             ed_page.set_location(2, row + 2)
-            ed_page.set_value(self.getparam('qty_article_%d' % article.id, 0))
+            ed_page.set_value(self.getparam('qty_article_%d' % article.id, 1))
             ed_page.description = _('quantity')
             self.add_component(ed_page)
             lbl = XferCompLabelForm('unit_article_%d' % article.id)
@@ -243,6 +247,11 @@ class CurrentCart(XferContainerCustom):
         num_page = max(1, min(self.getparam('num_page', 0), page_max))
         record_min = int((num_page - 1) * self.size_by_page)
         record_max = int(num_page * self.size_by_page)
+
+        lbl = XferCompLabelForm('search_result')
+        lbl.set_location(5, self.get_max_row() - 1, 3, 2)
+        lbl.set_value_as_header(_("%s items match your search") % nb_lines)
+        self.add_component(lbl)
 
         row = self.get_max_row() + 1
         btn = XferCompButton('before')
@@ -279,8 +288,12 @@ class CurrentCart(XferContainerCustom):
         self.add_component(img)
         lbl = XferCompLabelForm('title')
         lbl.set_value_as_title(_("Add your articles in your cart"))
-        lbl.set_location(1, 1, 4, 3)
+        lbl.set_location(1, 1, 4)
         self.add_component(lbl)
+        btn = XferCompButton('catalog')
+        btn.set_location(1, 2, 4)
+        btn.set_action(self.request, CurrentCartCatalog.get_action(_("Print full catalog"), "images/print.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO)
+        self.add_component(btn)
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
 
 
@@ -359,6 +372,23 @@ class CurrentCartShow(BillShow):
             self.add_action(CurrentCartValid.get_action(Bill.transitionname__valid, "images/transition.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={"TRANSITION": "valid"})
         self.add_action(CurrentCart.get_action(caption=_("Return")), modal=FORMTYPE_MODAL, close=CLOSE_YES)
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+
+
+@MenuManage.describ(current_cart_right)
+class CurrentCartCatalog(XferPrintListing):
+    icon = "article.png"
+    model = Article
+    field_id = 'article'
+    caption = _("Full catalog")
+
+    def filter_callback(self, items):
+        return items.filter(Q(isdisabled=False))
+
+    def _initialize(self, request, *args, **kwargs):
+        XferPrintListing._initialize(self, request, *args, **kwargs)
+        self.params["PRINT_MODE"] = PRINT_PDF_FILE
+        self.params['WITHNUM'] = False
+        self.params['INFO'] = _("{[b]}Catalog dated{[/b]} %s") % get_date_formating(timezone.now().date())
 
 
 @MenuManage.describ(current_cart_right)
