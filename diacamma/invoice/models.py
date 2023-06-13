@@ -45,22 +45,18 @@ from django.utils import timezone
 from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field, LucteriosLogEntry
-from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField, \
-    get_obj_contains
+from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField, get_obj_contains
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
-from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string,\
-    convert_date
+from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, convert_date
 from lucterios.framework.auditlog import auditlog
-from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser, \
-    PrintModel
+from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser, PrintModel
 from lucterios.CORE.parameters import Params
-from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact
+from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact, Individual
 
 from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAccounting, Journal, EntryLineAccount, ChartsAccount, AccountThird
-from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code, \
-    format_with_devise, get_amount_from_format_devise
+from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code, format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip, PaymentMethod
 
 
@@ -115,13 +111,14 @@ class Category(LucteriosModel):
 class StorageArea(LucteriosModel):
     name = models.CharField(_('name'), max_length=50)
     designation = models.TextField(_('designation'))
+    contact = models.ForeignKey(Individual, verbose_name=_('manager'), null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return str(self.name)
 
     @classmethod
     def get_default_fields(cls):
-        return ["name", "designation"]
+        return ["name", "contact", "designation"]
 
     @classmethod
     def get_edit_fields(cls):
@@ -129,7 +126,7 @@ class StorageArea(LucteriosModel):
 
     @classmethod
     def get_show_fields(cls):
-        return ["name", "designation"]
+        return ["name", "contact", "designation"]
 
     class Meta(object):
         verbose_name = _('Storage area')
@@ -602,7 +599,8 @@ class CategoryBill(LucteriosModel):
         self.titles = dumps(titles)
 
     def get_title_info(self):
-        list_types = [type_item for type_item in Bill.LIST_BILLTYPES if type_item[0] != Bill.BILLTYPE_RECEIPT]
+        list_types = [type_item for type_item in Bill.LIST_BILLTYPES if (type_item[0] != Bill.BILLTYPE_RECEIPT) and ((Params.getvalue('invoice-cart-active') and self.is_default) or
+                                                                                                                     (type_item[0] != Bill.BILLTYPE_CART))]
         if (Params.getvalue('invoice-order-mode') == 0) or (self.workflow_order == self.WORKFLOWS_NEVER_ORDER):
             list_types = [type_item for type_item in list_types if type_item[0] != Bill.BILLTYPE_ORDER]
         for type_num, type_title in list_types:
@@ -1055,9 +1053,49 @@ class Bill(Supporting):
                     self.archive()
         return
 
+    def get_bcclist(self):
+        if self.bill_type != self.BILLTYPE_CART:
+            return Supporting.get_bcclist(self)
+        bcclist = []
+        for area in self.get_nb_area():
+            if (area is not None) and (area.contact is not None):
+                bcclist.extend(area.contact.email.replace(',', ';').split(";"))
+        bcclist = list(set(bcclist))
+        bcclist.sort()
+        if '' in bcclist:
+            bcclist.remove('')
+        if len(bcclist) > 0:
+            return bcclist
+        return None
+
+    def get_nb_area(self):
+        area_set = set()
+        for detail in self.detail_set.all():
+            area_set.add(detail.storagearea)
+        return area_set
+
+    def send_card_email(self):
+        from diacamma.payoff.views import can_send_email
+
+        def replace_tag(contact, text):
+            text = text.replace('#name', contact.get_presentation() if contact is not None else '???')
+            text = text.replace('#doc', str(self.get_docname()))
+            text = text.replace('#reference', str(self.reference))
+            text = text.replace('#nb', str(len(self.get_nb_area())))
+            return text
+        if (self.bill_type != self.BILLTYPE_CART) or not can_send_email(None):
+            return
+        subject = Params.getvalue('invoice-cart-email-subject')
+        message = Params.getvalue('invoice-cart-email-body')
+        contact = self.third.contact.get_final_child()
+        html_message = "<html>"
+        html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
+        html_message += "</html>"
+        self.send_email(replace_tag(contact, subject), replace_tag(contact, html_message), self.get_default_print_model())
+
     transitionname__valid = _("Validate")
 
-    @transition(field=status, source=STATUS_BUILDING, target=STATUS_VALID, conditions=[lambda item:item.get_info_state() == []])
+    @transition(field=status, source=STATUS_BUILDING, target=None, conditions=[lambda item:item.get_info_state() == []])
     def valid(self):
         self.affect_num()
         self.status = self.STATUS_VALID
@@ -1067,6 +1105,9 @@ class Bill(Supporting):
         self.generate_pdfreport()
         self.save()
         Signal.call_signal("change_bill", 'valid', self, None)
+        if self.bill_type == self.BILLTYPE_CART:
+            self.send_card_email()
+            self.convert_to_quotation()
 
     def generate_pdfreport(self):
         if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and not (self.bill_type in (Bill.BILLTYPE_QUOTATION, self.BILLTYPE_CART, Bill.BILLTYPE_ORDER)):
@@ -1165,15 +1206,16 @@ class Bill(Supporting):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_CART):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
-            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_QUOTATION, date=timezone.now(),
-                                           third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
-                                           comment=self.comment, parentbill=self)
-            new_bill.save()
-            for detail in self.detail_set.all():
-                detail.id = None
-                detail.bill = new_bill
-                detail.save(check_autoreduce=False)
-            Signal.call_signal("change_bill", 'convert', self, new_bill)
+            for area in self.get_nb_area():
+                new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_QUOTATION, date=timezone.now(),
+                                               third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
+                                               comment=self.comment, parentbill=self)
+                new_bill.save()
+                for detail in self.detail_set.filter(storagearea=area):
+                    detail.id = None
+                    detail.bill = new_bill
+                    detail.save(check_autoreduce=False)
+                Signal.call_signal("change_bill", 'convert', self, new_bill)
             return new_bill
         else:
             return None
@@ -2266,6 +2308,13 @@ def invoice_checkparam():
     Parameter.check_and_create(name='invoice-default-nbpayoff', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-default-nbpayoff"),
                                args='{"Min":0,"Max":5}', value='0')
     Parameter.check_and_create(name='invoice-default-send-pdf', typeparam=Parameter.TYPE_BOOL, title=_("invoice-default-send-pdf"), args='{}', value='False')
+
+    Parameter.check_and_create(name='invoice-cart-active', typeparam=Parameter.TYPE_BOOL, title=_("invoice-cart-active"), args='{}', value='False')
+    Parameter.check_and_create(name='invoice-cart-article-filter', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-cart-article-filter"), args="{}", value='',
+                               meta='("CORE","SavedCriteria","django.db.models.Q(modelname=\'%s\')", "id", False)' % Article.get_long_name())
+    Parameter.check_and_create(name='invoice-cart-email-subject', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-subject"), args='{}', value=_('new validated cart'))
+    Parameter.check_and_create(name='invoice-cart-email-body', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-body"), args="{'Multi':True, 'HyperText': True}",
+                               value=_('#name{[br/]}{[br/]}Joint in this email #doc.{[br/]}#nb quotation is created, each storage area manager will return you them soon.{[br/]}{[br/]}Regards'))
 
     LucteriosGroup.redefine_generic(_("# invoice (administrator)"), Vat.get_permission(True, True, True), BankAccount.get_permission(True, True, True), BankTransaction.get_permission(True, True, True),
                                     Article.get_permission(True, True, True), Bill.get_permission(True, True, True),

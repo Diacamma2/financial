@@ -31,6 +31,7 @@ from os.path import isfile, join
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
 from lucterios.framework.model_fields import LucteriosScheduler
+from lucterios.framework.auditlog import log_create
 from lucterios.CORE.models import SavedCriteria, LucteriosUser
 from lucterios.CORE.parameters import Params
 from lucterios.mailing.tests import configSMTP, TestReceiver, decode_b64
@@ -52,7 +53,6 @@ from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddM
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch, \
     BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo,\
     BillToQuotation
-from lucterios.framework.auditlog import log_create
 
 
 class BillTest(InvoiceTest):
@@ -928,11 +928,15 @@ class BillTest(InvoiceTest):
                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
 
     def test_cart_to_quotation(self):
+        Params.setvalue('invoice-cart-active', True)
         Params.setvalue('invoice-order-mode', 1)
         default_articles()
         default_paymentmethod()
         self._create_bill([{'article': 1, 'designation': 'article 1',
-                            'price': '22.50', 'quantity': 3, 'reduce': '5.0'}], 5, '2015-04-01', 6, True)
+                            'price': '22.50', 'quantity': 3, 'reduce': '5.0'}], 5, '2015-04-01', 6, False)
+        cart_bill = Bill.objects.get(id=1)
+        cart_bill.status = 1
+        cart_bill.save()
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList',
@@ -994,7 +998,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': 4}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
-        self.assert_select_equal('type_filter', {'-1': None, '0': "devis", '1': "facture", '2': "avoir", '3': "reçu", '4': "commande", '5': "panier"})
+        self.assert_select_equal('type_filter', {'-1': None, '0': "devis", '1': "facture", '2': "avoir", '3': "reçu", '4': "commande"})
         self.assert_count_equal('bill', 0)
 
         self.factory.xfer = BillShow()
@@ -3388,6 +3392,7 @@ class BillTest(InvoiceTest):
         self.assert_count_equal('bill', 5)
 
     def test_with_categorybill(self):
+        Params.setvalue('invoice-cart-active', True)
         default_paymentmethod()
         default_articles()
         default_categorybill()
@@ -3432,9 +3437,9 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billList', {'status_filter': -2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_select_equal('type_filter', {'-1': None,
-                                                 '5': "panier", '0': "devis", '4': "commande", '1': "facture", '2': "avoir", '3': "reçu",
+                                                 '0': "devis", '4': "commande", '1': "facture", '2': "avoir", '3': "reçu",
                                                  '2|5': "[2nd type]Type C", '2|0': "[2nd type]Type Q", '2|1': "[2nd type]Type B", '2|2': "[2nd type]Type A",
-                                                 '1|5': "[1st type]CCC", '1|0': "[1st type]QQQ", '1|1': "[1st type]BBB", '1|2': "[1st type]AAA",
+                                                 '1|0': "[1st type]QQQ", '1|1': "[1st type]BBB", '1|2': "[1st type]AAA",
                                                  })
         self.assert_grid_equal('bill', {"bill_type": "type de facture", 'billtype': 'titre du type', "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total", "status": "statut"}, 1)
         self.assert_json_equal('', 'bill/@0/bill_type', 0)

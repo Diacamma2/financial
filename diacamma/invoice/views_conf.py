@@ -36,11 +36,13 @@ from lucterios.CORE.parameters import Params
 from lucterios.CORE.views import ParamEdit, ObjectImport
 from lucterios.CORE.models import Parameter
 
+from lucterios.contacts.models import CustomField, Individual
+from lucterios.contacts.tools import ContactSelection
+
 from diacamma.accounting.tools import correct_accounting_code
 from diacamma.invoice.models import Vat, Article, Category, StorageArea,\
     AccountPosting, AutomaticReduce, CategoryBill
 from diacamma.accounting.system import accounting_system_ident
-from lucterios.contacts.models import CustomField
 
 
 def fill_params(xfer, param_lists=None, is_mini=False):
@@ -77,8 +79,7 @@ class InvoiceConfCommercial(XferListEditor):
     field_id = 'automaticreduce'
     caption = _("Invoice commercial configuration")
 
-    def fillresponse_header(self):
-        self.new_tab(_('Parameters'))
+    def add_general_params(self):
         param_lists = ['invoice-article-with-picture', 'invoice-reduce-with-ratio', 'invoice-order-mode',
                        'invoice-asset-mode', 'invoice-default-nbpayoff', 'invoice-default-send-pdf']
         row = self.get_max_row() + 1
@@ -89,6 +90,22 @@ class InvoiceConfCommercial(XferListEditor):
         btn.set_action(self.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png'), close=CLOSE_NO, params={'params': param_lists})
         self.add_component(btn)
         self.params['basic_model'] = 'invoice.Article'
+
+    def add_cart_params(self):
+        param_lists = ['invoice-cart-active']
+        if Params.getvalue('invoice-cart-active'):
+            param_lists.extend(['invoice-cart-article-filter', 'invoice-cart-email-subject', 'invoice-cart-email-body'])
+        row = self.get_max_row() + 1
+        Params.fill(self, param_lists, 1, row)
+        btn = XferCompButton('editcartparam')
+        btn.set_is_mini(False)
+        btn.set_location(1, row + 10)
+        btn.set_action(self.request, ParamEditCart.get_action(TITLE_MODIFY, 'images/edit.png'), close=CLOSE_NO, params={'params': param_lists})
+        self.add_component(btn)
+
+    def fillresponse_header(self):
+        self.new_tab(_('Parameters'))
+        self.add_general_params()
         self.new_tab(_('Categories'))
         self.fill_grid(self.get_max_row(), Category, 'category', Category.objects.all())
         self.new_tab(_("Custom field"))
@@ -99,7 +116,21 @@ class InvoiceConfCommercial(XferListEditor):
         self.fill_grid(self.get_max_row(), StorageArea, 'storagearea', StorageArea.objects.all())
         self.new_tab(_('Category bill'))
         self.fill_grid(self.get_max_row(), CategoryBill, 'categoryBill', CategoryBill.objects.all())
+        self.new_tab(_('Cart'))
+        self.add_cart_params()
         self.new_tab(_('Automatic reduce'))
+
+
+@MenuManage.describ('CORE.add_parameter')
+class ParamEditCart(ParamEdit):
+
+    def fillresponse(self, params=(), nb_col=1):
+        ParamEdit.fillresponse(self, params=params, nb_col=nb_col)
+        comment = XferCompLabelForm('comment')
+        comment.set_value(_('Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}name of documentation sended{[br/]} - {[b]}#nb:{[/b]}number of quotation created{[br/]}'))
+        comment.set_color("green")
+        comment.set_location(1, self.get_max_row() + 1)
+        self.add_component(comment)
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
@@ -142,6 +173,30 @@ class AutomaticReduceDel(XferDelete):
     caption = _("Delete automatic reduce")
 
 
+@MenuManage.describ('invoice.add_vat')
+class StorageAreaSaveContact(XferContainerAcknowledge):
+    icon = "invoice_conf.png"
+    model = StorageArea
+    field_id = 'storagearea'
+    methods_allowed = ('PUT',)
+
+    def fillresponse(self, individual=0):
+        self.item.contact = Individual.objects.get(id=individual)
+        self.item.save()
+
+
+@MenuManage.describ('invoice.add_vat')
+class StorageAreaChangeContact(ContactSelection):
+    icon = "thirds.png"
+    caption = _("Change manager")
+    select_class = StorageAreaSaveContact
+    inital_model = Individual
+    field_id = 'individual'
+    model = Individual
+    readonly = False
+    methods_allowed = ('POST', 'PUT')
+
+
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
 @ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
@@ -151,6 +206,19 @@ class StorageAreaAddModify(XferAddEditor):
     field_id = 'storagearea'
     caption_add = _("Add storage area")
     caption_modify = _("Modify storage area")
+
+    def fillresponse(self):
+        XferAddEditor.fillresponse(self)
+        comp_designation = self.get_components("designation")
+        comp_designation.colspan = 2
+        self.get_components("name").colspan = 2
+        self.filltab_from_model(comp_designation.col, comp_designation.row, True, ['contact'])
+        btn = XferCompButton('change_contact')
+        btn.set_is_mini(True)
+        btn.set_location(comp_designation.col + 1, comp_designation.row)
+        btn.set_action(self.request, StorageAreaChangeContact.get_action(_("change"), "images/edit.png"), close=CLOSE_NO)
+        self.add_component(btn)
+        self.move_components("designation", 0, 1)
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
@@ -215,6 +283,9 @@ class CategoryBillAddModify(XferAddEditor):
     def fillresponse(self):
         if self.item.id is None:
             self.item.fill_default()
+            if self.getparam('is_default') is None:
+                self.item.is_default = (CategoryBill.objects.filter(is_default=True).count() == 0)
+                self.params['is_default'] = 1 if self.item.is_default else 0
         XferAddEditor.fillresponse(self)
         comment = XferCompLabelForm('comment')
         comment.set_value(_('Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}name of documentation sended{[br/]}'))

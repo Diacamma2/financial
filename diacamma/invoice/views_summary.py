@@ -34,6 +34,7 @@ from lucterios.framework.xferadvance import XferListEditor, TITLE_CLOSE, TITLE_D
 from lucterios.framework.xferprinting import PRINT_PDF_FILE
 from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton, XferCompFloat, XferCompImage
+from lucterios.framework.xfersearch import get_search_query_from_criteria
 
 from lucterios.contacts.models import Individual, LegalEntity
 from lucterios.CORE.parameters import Params
@@ -89,6 +90,8 @@ class CurrentPayableShow(PayableShow):
 
 
 def current_cart_right(request):
+    if not Params.getvalue('invoice-cart-active'):
+        return False
     if not request.user.is_anonymous:
         contacts = Individual.objects.filter(user=request.user).first()
     else:
@@ -232,6 +235,10 @@ class CurrentCart(XferContainerCustom):
 
     def search_articles(self):
         art_filter = Q(isdisabled=False)
+        savecritera_article = Params.getobject("invoice-cart-article-filter")
+        if savecritera_article is not None:
+            filter_result, _desc = get_search_query_from_criteria(savecritera_article.criteria, Article)
+            art_filter &= filter_result
         filter_cat = self.getparam('cat_filter', 0)
         if filter_cat != 0:
             art_filter &= Q(categories__in=[Category.objects.get(id=filter_cat)])
@@ -324,7 +331,9 @@ class CurrentCartAddArticle(XferContainerAcknowledge):
             return
         storagearea_qty = {}
         if article.stockable != Article.STOCKABLE_NO:
-            for val in article.get_stockage_values():
+            stockage_values = article.get_stockage_values()
+            stockage_values.sort(key=lambda item: item[2], reverse=True)
+            for val in stockage_values:
                 if val[0] == 0:
                     continue
                 area_qty = val[2]
@@ -382,7 +391,12 @@ class CurrentCartCatalog(XferPrintListing):
     caption = _("Full catalog")
 
     def filter_callback(self, items):
-        return items.filter(Q(isdisabled=False))
+        art_filter = Q(isdisabled=False)
+        savecritera_article = Params.getobject("invoice-cart-article-filter")
+        if savecritera_article is not None:
+            filter_result, _desc = get_search_query_from_criteria(savecritera_article.criteria, Article)
+            art_filter &= filter_result
+        return items.filter(art_filter)
 
     def _initialize(self, request, *args, **kwargs):
         XferPrintListing._initialize(self, request, *args, **kwargs)

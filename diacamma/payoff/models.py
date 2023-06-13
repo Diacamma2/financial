@@ -193,6 +193,9 @@ class Supporting(LucteriosModel):
             cclist = None
         return cclist
 
+    def get_bcclist(self):
+        return None
+
     def set_context(self, xfer):
         setattr(self, 'last_user', xfer.request.user)
 
@@ -247,7 +250,8 @@ class Supporting(LucteriosModel):
 
     def send_email(self, subject, message, model):
         fct_mailing_mod = import_module('lucterios.mailing.email_functions')
-        fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)], cclist=self.get_cclist(), withcopy=True)
+        fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)],
+                                   cclist=self.get_cclist(), bcclist=self.get_bcclist(), withcopy=True)
 
     def get_document_filename(self):
         return remove_accent(self.get_payment_name(), True)

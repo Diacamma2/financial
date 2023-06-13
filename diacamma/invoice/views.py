@@ -103,12 +103,19 @@ def _add_bill_filter(xfer, row, with_third=False):
     else:
         category = None
         bill_type = int(type_filter)
-    type_select = [(str(bill_type), title) for bill_type, title in Bill.SELECTION_BILLTYPES]
-    for cat_bill in CategoryBill.objects.all():
+    has_allready_cart = False
+    type_select = [(str(bill_type), title) for bill_type, title in Bill.SELECTION_BILLTYPES if Params.getvalue('invoice-cart-active') or (bill_type != Bill.BILLTYPE_CART)]
+    for cat_bill in CategoryBill.objects.all().order_by('is_default'):
         type_pos = 1
         for type_num, _description, type_value in cat_bill.get_title_info():
             type_select.insert(type_pos, ("%d|%d" % (cat_bill.id, type_num), "[%s]%s" % (cat_bill.name, type_value)))
+            has_allready_cart = has_allready_cart or (type_num == Bill.BILLTYPE_CART)
             type_pos += 1
+    if has_allready_cart:
+        for type_index, type_val in enumerate(type_select):
+            if type_val[0] == str(Bill.BILLTYPE_CART):
+                del type_select[type_index]
+                break
     edt = XferCompSelect("type_filter")
     edt.set_select(type_select)
     edt.description = _('Filter by type')

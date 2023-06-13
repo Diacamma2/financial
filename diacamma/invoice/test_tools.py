@@ -112,9 +112,9 @@ def default_customize():
 
 
 def default_area():
-    StorageArea.objects.create(name='Lieu 1', designation="AAA")
-    StorageArea.objects.create(name='Lieu 2', designation="BBB")
-    StorageArea.objects.create(name='Lieu 3', designation="CCC")
+    StorageArea.objects.create(name='Lieu 1', designation="AAA", contact_id=2)
+    StorageArea.objects.create(name='Lieu 2', designation="BBB", contact_id=3)
+    StorageArea.objects.create(name='Lieu 3', designation="CCC", contact_id=4)
 
 
 def default_categorybill():
