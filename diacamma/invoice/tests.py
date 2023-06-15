@@ -104,12 +104,13 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assertEqual(len(self.json_actions), 2)
-        self.assert_count_equal('', 11)
+        self.assert_count_equal('', 12)
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'date', "2014-04-01")
         self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse dans l'exercice"])
+        self.assert_json_equal('LABELFORM', 'warning', [])
 
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify',
@@ -170,7 +171,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
-        self.assert_count_equal('', 12)
+        self.assert_count_equal('', 13)
         self.assert_json_equal('LABELFORM', 'date', "2015-04-01")
         self.assert_json_equal('LINK', 'third', "Dalton Jack")
         self.assert_json_equal('', '#third/link', "mailto:Jack.Dalton@worldcompany.com")
@@ -185,6 +186,7 @@ class BillTest(InvoiceTest):
 
         self.assert_json_equal('LABELFORM', 'total_excltax', 87.44)
         self.assert_json_equal('LABELFORM', 'info', [])
+        self.assert_json_equal('LABELFORM', 'warning', [])
         self.assert_json_equal('', '#total_excltax/formatnum', "C2EUR")
 
         self.assertEqual(len(self.json_actions), 3)
@@ -218,12 +220,13 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assertEqual(len(self.json_actions), 2)
-        self.assert_count_equal('', 11)
+        self.assert_count_equal('', 12)
         self.assert_json_equal('LABELFORM', 'title', "avoir")
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'date', "2014-04-01")
         self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse dans l'exercice"])
+        self.assert_json_equal('LABELFORM', 'warning', [])
 
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify',
@@ -242,8 +245,9 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
-        self.assert_count_equal('', 12)
+        self.assert_count_equal('', 13)
         self.assert_json_equal('LABELFORM', 'info', [])
+        self.assert_json_equal('LABELFORM', 'warning', [])
         self.assertEqual(len(self.json_actions), 3)
 
         bill_item = Bill.objects.get(id=1)
@@ -776,7 +780,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
-        self.assert_count_equal('', 13)
+        self.assert_count_equal('', 14)
         self.assert_json_equal('LABELFORM', 'total_excltax', 107.45)
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
@@ -794,6 +798,7 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assert_json_equal('LABELFORM', 'date', "2015-04-01")
         self.assert_json_equal('LABELFORM', 'info', [])
+        self.assert_json_equal('LABELFORM', 'warning', [])
 
         self.factory.xfer = BillTransition()
         self.calljson('/diacamma.invoice/billTransition',
@@ -918,7 +923,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
-        self.assert_count_equal('', 13)
+        self.assert_count_equal('', 14)
         self.assert_json_equal('LABELFORM', 'total_excltax', 62.50)
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
@@ -3521,7 +3526,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
-        self.assert_count_equal('', 15)
+        self.assert_count_equal('', 16)
         self.assert_json_equal('LABELFORM', 'title', "Type B")
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)

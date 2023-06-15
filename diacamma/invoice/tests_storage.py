@@ -36,11 +36,13 @@ from lucterios.mailing.test_tools import TestReceiver, configSMTP, decode_b64
 
 from diacamma.invoice.test_tools import InvoiceTest, default_area, default_articles, insert_storage,\
     default_categories
-from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr
+from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr,\
+    create_account
+from diacamma.accounting.views_entries import EntryAccountList
 from diacamma.payoff.test_tools import default_bankaccount_fr
-from diacamma.payoff.views import SupportingThirdValid
+from diacamma.payoff.views import SupportingThirdValid, PayoffAddModify
 from diacamma.invoice.views import ArticleShow, BillAddModify, DetailAddModify, BillShow, BillTransition, ArticleList,\
-    BillList
+    BillList, ArticleAddModify, BillToBill
 from diacamma.invoice.views_storage import StorageSheetList, StorageSheetAddModify, StorageSheetShow, StorageDetailAddModify,\
     StorageSheetTransition, StorageDetailImport, StorageDetailDel,\
     StorageSituation, StorageHistoric, InventorySheetList,\
@@ -1636,7 +1638,7 @@ class StorageTest(InvoiceTest):
         self.factory.xfer = CurrentCartShow()
         self.calljson('/diacamma.invoice/currentCartShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'currentCartShow')
-        self.assert_count_equal('', 10)
+        self.assert_count_equal('', 11)
         self.assert_json_equal('LINK', 'third', "MISTER jack")
         self.assert_count_equal('detail', 2)
         self.assert_json_equal('', 'detail/@0/article', 'ABC1')
@@ -1666,7 +1668,7 @@ class StorageTest(InvoiceTest):
         self.factory.xfer = CurrentCartShow()
         self.calljson('/diacamma.invoice/currentCartShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'currentCartShow')
-        self.assert_count_equal('', 10)
+        self.assert_count_equal('', 11)
         self.assert_json_equal('LINK', 'third', "MISTER jack")
         self.assert_count_equal('detail', 3)
         self.assert_json_equal('', 'detail/@2/article', 'ABC1')
@@ -1757,3 +1759,285 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'bill/@2/third', "MISTER jack")
         self.assert_json_equal('', 'bill/@2/status', 3)
         self.assert_json_equal('', 'bill/@2/total', 752.9)
+
+    def test_quotation_subscription(self):
+        create_account(['4191'], 1, None)
+        self.factory.xfer = ArticleShow()
+        self.calljson('/diacamma.invoice/articleShow', {'article': '1'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
+        self.assert_json_equal('LABELFORM', 'reference', "ABC1")
+        self.assert_json_equal('LABELFORM', 'accountposting', "code1")
+
+        self.factory.xfer = ArticleAddModify()
+        self.calljson('/diacamma.invoice/articleAddModify',
+                      {'article': 1, 'accountposting': 5, 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'articleAddModify')
+
+        self.factory.xfer = ArticleShow()
+        self.calljson('/diacamma.invoice/articleShow', {'article': '1'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
+        self.assert_json_equal('LABELFORM', 'reference', "ABC1")
+        self.assert_json_equal('LABELFORM', 'accountposting', "code_sub")
+
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify',
+                      {'bill_type': 0, 'date': '2015-04-01', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+        self.factory.xfer = SupportingThirdValid()
+        self.calljson('/diacamma.payoff/supportingThirdValid',
+                      {'supporting': 1, 'third': 6}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'supportingThirdValid')
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify',
+                      {'SAVE': 'YES', 'bill': 1, 'article': 1, 'designation': 'article A', 'price': '1.11', 'quantity': 5}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'detailAddModify')
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify',
+                      {'SAVE': 'YES', 'bill': 1, 'article': 5, 'designation': 'article E', 'price': '10', 'quantity': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'detailAddModify')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 13)
+        self.assert_json_equal('LABELFORM', 'title', 'devis')
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_count_equal('detail', 2)
+        self.assert_json_equal('', 'detail/@0/article', 'ABC1')
+        self.assert_json_equal('', 'detail/@0/price', 1.11)
+        self.assert_json_equal('', 'detail/@0/quantity', '5.000')
+        self.assert_json_equal('', 'detail/@0/storagearea', None)
+        self.assert_json_equal('', 'detail/@0/total', 5.55)
+        self.assert_json_equal('', 'detail/@1/article', 'ABC5')
+        self.assert_json_equal('', 'detail/@1/total', 10.0)
+        self.assert_json_equal('LABELFORM', 'info', [])
+        self.assert_json_equal('LABELFORM', 'warning', ["L'article ABC1 est en quantité insuffisante"])
+        self.assert_json_equal('', '#warning/formatstr', "{[font color=\"orange\"]}%s{[/font]}")
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition',
+                      {'CONFIRME': 'YES', 'bill': 1, 'withpayoff': False, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 11)
+        self.assert_json_equal('LABELFORM', 'title', 'devis')
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_count_equal('detail', 2)
+        self.assert_json_equal('', 'detail/@0/article', 'ABC1')
+        self.assert_json_equal('', 'detail/@0/price', 1.11)
+        self.assert_json_equal('', 'detail/@0/quantity', '5.000')
+        self.assert_json_equal('', 'detail/@0/storagearea', None)
+        self.assert_json_equal('', 'detail/@0/total', 5.55)
+        self.assert_json_equal('', 'detail/@1/article', 'ABC5')
+        self.assert_json_equal('', 'detail/@1/total', 10.0)
+        self.assert_json_equal('LABELFORM', 'warning', ["L'article ABC1 est en quantité insuffisante"])
+
+    def test_order_subscription(self):
+        create_account(['4191'], 1, None)
+        self.factory.xfer = ArticleAddModify()
+        self.calljson('/diacamma.invoice/articleAddModify',
+                      {'article': 1, 'accountposting': 5, 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'articleAddModify')
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '0', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 0)
+
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify',
+                      {'bill_type': 4, 'date': '2015-04-01', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+        self.factory.xfer = SupportingThirdValid()
+        self.calljson('/diacamma.payoff/supportingThirdValid',
+                      {'supporting': 1, 'third': 6}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'supportingThirdValid')
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify',
+                      {'SAVE': 'YES', 'bill': 1, 'article': 1, 'designation': 'article A', 'price': '1.11', 'quantity': 5}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'detailAddModify')
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify',
+                      {'SAVE': 'YES', 'bill': 1, 'article': 5, 'designation': 'article E', 'price': '10', 'quantity': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'detailAddModify')
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition',
+                      {'CONFIRME': 'YES', 'bill': 1, 'nbpayoff': 1,
+                       'payoff00_amount': '15.55', 'payoff00_payer': "Ma'a Dalton", 'payoff00_date_payoff': '2015-04-07', 'payoff00_mode': 0, 'payoff00_reference': 'abc', 'payoff00_bank_account': 0, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 14)
+        self.assert_json_equal('LABELFORM', 'title', 'commande')
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_count_equal('detail', 2)
+        self.assert_json_equal('', 'detail/@0/article', 'ABC1')
+        self.assert_json_equal('', 'detail/@0/price', 1.11)
+        self.assert_json_equal('', 'detail/@0/quantity', '5.000')
+        self.assert_json_equal('', 'detail/@0/storagearea', None)
+        self.assert_json_equal('', 'detail/@0/total', 5.55)
+        self.assert_json_equal('', 'detail/@1/article', 'ABC5')
+        self.assert_json_equal('', 'detail/@1/total', 10.0)
+        self.assert_count_equal('payoff', 1)
+        self.assert_json_equal('', 'payoff/@0/date', "2015-04-07")
+        self.assert_json_equal('', 'payoff/@0/mode', 0)
+        self.assert_json_equal('', 'payoff/@0/amount', 15.55)
+        self.assert_json_equal('', 'payoff/@0/payer', "Ma'a Dalton")
+        self.assert_json_equal('LABELFORM', 'warning', ["L'article ABC1 est en quantité insuffisante"])
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '4', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 3)
+        self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@0/entry.date_entry', None)
+        self.assert_json_equal('', 'entryline/@0/entry.date_value', '2015-04-07')
+        self.assert_json_equal('', 'entryline/@0/designation_ref', 'règlement de Commande A-1')
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/credit', 10.0)
+        self.assert_json_equal('', 'entryline/@0/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@0/link', None)
+        self.assert_json_equal('', 'entryline/@1/entry.num', None)
+        self.assert_json_equal('', 'entryline/@1/entry.date_entry', None)
+        self.assert_json_equal('', 'entryline/@1/entry.date_value', '2015-04-07')
+        self.assert_json_equal('', 'entryline/@1/designation_ref', 'règlement de Commande A-1')
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[4191 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@1/credit', 5.55)
+        self.assert_json_equal('', 'entryline/@1/costaccounting', None)
+        self.assert_json_equal('', 'entryline/@1/link', None)
+        self.assert_json_equal('', 'entryline/@2/entry_account', '[531] 531')
+        self.assert_json_equal('', 'entryline/@2/debit', -15.55)
+
+        self.factory.xfer = BillToBill()
+        self.calljson('/diacamma.invoice/billToBill', {'CONFIRME': 'YES', 'bill': 1, 'billdate': '2015-06-14'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToBill')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'title', 'commande')
+        self.assert_json_equal('LABELFORM', 'status', 3)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'title', 'facture')
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'info', ["L'article ABC1 est en quantité insuffisante"])
+        self.assert_count_equal('detail', 2)
+        self.assert_json_equal('', 'detail/@0/id', 3)
+        self.assert_json_equal('', 'detail/@0/article', 'ABC1')
+        self.assert_json_equal('', 'detail/@0/price', 1.11)
+        self.assert_json_equal('', 'detail/@0/quantity', '5.000')
+        self.assert_json_equal('', 'detail/@0/storagearea', None)
+        self.assert_json_equal('', 'detail/@0/total', 5.55)
+        self.assert_json_equal('', 'detail/@1/article', 'ABC5')
+        self.assert_json_equal('', 'detail/@1/total', 10.0)
+        self.assert_count_equal('payoff', 1)
+        self.assert_json_equal('', 'payoff/@0/date', "2015-06-14")
+        self.assert_json_equal('', 'payoff/@0/mode', 6)
+        self.assert_json_equal('', 'payoff/@0/amount', 15.55)
+        self.assert_json_equal('', 'payoff/@0/payer', "Dalton Jack")
+        self.assert_json_equal('', 'payoff/@0/reference', "Transfert de provision de commande A-1 - 1 avril 2015")
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '5', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 2)
+        self.assert_json_equal('', 'entryline/@0/entry.num', None)
+        self.assert_json_equal('', 'entryline/@0/entry.date_entry', None)
+        self.assert_json_equal('', 'entryline/@0/entry.date_value', '2015-06-14')
+        self.assert_json_equal('', 'entryline/@0/designation_ref', 'Transfert de provision de commande A-1 - 1 avril 2015')
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/credit', 5.55)
+        self.assert_json_equal('', 'entryline/@0/link', None)
+        self.assert_json_equal('', 'entryline/@1/entry.num', None)
+        self.assert_json_equal('', 'entryline/@1/entry.date_entry', None)
+        self.assert_json_equal('', 'entryline/@1/entry.date_value', '2015-06-14')
+        self.assert_json_equal('', 'entryline/@1/designation_ref', 'Transfert de provision de commande A-1 - 1 avril 2015')
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[4191 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@1/debit', -5.55)
+        self.assert_json_equal('', 'entryline/@1/link', 'A')
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '4', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 3)
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/credit', 10.0)
+        self.assert_json_equal('', 'entryline/@0/link', None)
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[4191 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@1/credit', 5.55)
+        self.assert_json_equal('', 'entryline/@1/link', 'A')
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition', {'CONFIRME': 'YES', 'bill': 2, 'nbpayoff': 0, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.exception', 'diacamma.invoice', 'billTransition')
+
+        insert_storage()
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify',
+                      {'SAVE': 'YES', 'bill': 2, 'detail': 3, 'article': 1, 'designation': 'article A', 'price': '1.11', 'quantity': 5, 'storagearea': 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'detailAddModify')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 2}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LABELFORM', 'title', 'facture')
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'info', [])
+        self.assert_count_equal('detail', 2)
+        self.assert_count_equal('payoff', 1)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition', {'CONFIRME': 'YES', 'bill': 2, 'nbpayoff': 0, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '3', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 2)
+        self.assert_json_equal('', 'entryline/@0/designation_ref', 'Facture A-1')
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/debit', -15.55)
+        self.assert_json_equal('', 'entryline/@0/link', 'C')
+        self.assert_json_equal('', 'entryline/@1/designation_ref', 'Facture A-1')
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[701] 701')
+        self.assert_json_equal('', 'entryline/@1/credit', 15.55)
+        self.assert_json_equal('', 'entryline/@1/link', None)
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '4', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 3)
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/credit', 10.0)
+        self.assert_json_equal('', 'entryline/@0/link', 'C')
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[4191 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@1/credit', 5.55)
+        self.assert_json_equal('', 'entryline/@1/link', 'A')
+
+        self.factory.xfer = EntryAccountList()
+        self.calljson('/diacamma.accounting/entryAccountList',
+                      {'year': '1', 'journal': '5', 'filter': '0'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
+        self.assert_count_equal('entryline', 2)
+        self.assert_json_equal('', 'entryline/@0/entry_account', '[411 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@0/credit', 5.55)
+        self.assert_json_equal('', 'entryline/@0/link', 'C')
+        self.assert_json_equal('', 'entryline/@1/entry_account', '[4191 Dalton Jack]')
+        self.assert_json_equal('', 'entryline/@1/debit', -5.55)
+        self.assert_json_equal('', 'entryline/@1/link', 'A')

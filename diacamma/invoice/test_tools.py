@@ -47,10 +47,11 @@ def get_letters(number):
 
 
 def default_accountPosting():
-    AccountPosting.objects.create(name="code1", sell_account="701")
-    AccountPosting.objects.create(name="code2", sell_account="707")
-    AccountPosting.objects.create(name="code3", sell_account="601")
-    AccountPosting.objects.create(name="code4", sell_account="708")
+    AccountPosting.objects.create(name="code1", sell_account="701", provision_third_account="")
+    AccountPosting.objects.create(name="code2", sell_account="707", provision_third_account="")
+    AccountPosting.objects.create(name="code3", sell_account="601", provision_third_account="")
+    AccountPosting.objects.create(name="code4", sell_account="708", provision_third_account="")
+    AccountPosting.objects.create(name="code_sub", sell_account="701", provision_third_account="4191")
 
 
 def default_articles(with_provider=False, with_storage=False, lotof=False):

@@ -55,7 +55,8 @@ from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Pref
 from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import CustomField, CustomizeObject, AbstractContact, Individual
 
-from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAccounting, Journal, EntryLineAccount, ChartsAccount, AccountThird
+from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAccounting, Journal, EntryLineAccount, ChartsAccount, AccountThird,\
+    AccountLink
 from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code, format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip, PaymentMethod
 
@@ -154,6 +155,7 @@ class AccountPosting(LucteriosModel):
     name = models.CharField(_('name'), max_length=100, blank=False)
     sell_account = models.CharField(_('sell account'), max_length=50, blank=True)
     cost_accounting = models.ForeignKey(CostAccounting, verbose_name=_('cost accounting'), null=True, default=None, on_delete=models.PROTECT)
+    provision_third_account = models.CharField(_('provision third account'), max_length=50, blank=True)
 
     def __str__(self):
         return self.name
@@ -164,14 +166,15 @@ class AccountPosting(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return ["name", "sell_account", ("cost_accounting", None)]
+        return ["name", "sell_account", ("cost_accounting", None), "provision_third_account"]
 
     @classmethod
     def get_show_fields(cls):
-        return ["name", "sell_account", "cost_accounting"]
+        return ["name", "sell_account", "cost_accounting", "provision_third_account"]
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.sell_account = correct_accounting_code(self.sell_account)
+        self.provision_third_account = correct_accounting_code(self.provision_third_account) if self.provision_third_account != '' else ''
         return LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     class Meta(object):
@@ -760,7 +763,20 @@ class Bill(Supporting):
         if self.bill_type == 0:
             return []
         else:
-            return Supporting.get_third_masks_by_amount(self, amount)
+            masks = {}
+            total = self.get_total()
+            for detail in self.detail_set.all():
+                mask = self.get_third_mask()
+                if (detail.article_id is not None) and (detail.article.accountposting is not None) and (detail.article.accountposting.provision_third_account != ''):
+                    mask = correct_accounting_code(detail.article.accountposting.provision_third_account)
+                    AccountThird.objects.get_or_create(third=self.third, code=mask)
+                if mask not in masks:
+                    masks[mask] = 0
+                masks[mask] += detail.get_total() * amount / total
+            if len(masks) == 1 and (self.get_third_mask() in masks):
+                return Supporting.get_third_masks_by_amount(self, amount)
+            else:
+                return list(masks.items())
 
     def get_min_payoff(self, ignore_payoff=-1):
         min_payoff = min(0, self.get_total_rest_topay(ignore_payoff) * 1.5)
@@ -879,6 +895,15 @@ class Bill(Supporting):
                 default_cost = detail_cost
         return default_cost
 
+    def get_warning_state(self):
+        warning = []
+        if self.bill_type in (self.BILLTYPE_QUOTATION, self.BILLTYPE_ORDER):
+            for detail in self.detail_set.all():
+                if (detail.article_id is not None) and not detail.article.has_sufficiently(detail.storagearea_id, detail.quantity):
+                    if (detail.article.accountposting is not None) and (detail.article.accountposting.provision_third_account != ''):
+                        warning.append(_("Article %s is not sufficiently stocked") % str(detail.article))
+        return warning
+
     def get_info_state(self):
         info = []
         if self.status == self.STATUS_BUILDING:
@@ -890,7 +915,8 @@ class Bill(Supporting):
             if self.bill_type != self.BILLTYPE_ASSET:
                 for detail in details:
                     if (detail.article_id is not None) and not detail.article.has_sufficiently(detail.storagearea_id, detail.quantity):
-                        info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
+                        if (detail.article.accountposting is None) or (detail.article.accountposting.provision_third_account == '') or (self.bill_type not in (self.BILLTYPE_QUOTATION, self.BILLTYPE_ORDER)):
+                            info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
             for detail in details:
                 if detail.article is not None:
                     if detail.article.accountposting is None:
@@ -994,7 +1020,7 @@ class Bill(Supporting):
             is_bill = 1
         third_account = self.get_third_account(current_system_account().get_customer_mask(), self.fiscal_year)
         self.entry = EntryAccount.objects.create(year=self.fiscal_year, date_value=self.date, designation=self.reference,
-                                                 journal=Journal.objects.get(id=3))
+                                                 journal=Journal.objects.get(id=Journal.DEFAULT_SELLING))
         if abs(self.get_total_incltax()) > 0.0001:
             EntryLineAccount.objects.create(account=third_account, amount=is_bill * self.get_total_incltax(), third=self.third, entry=self.entry)
         detail_list = self._get_detail_for_entry()
@@ -1164,6 +1190,70 @@ class Bill(Supporting):
     def cancel(self):
         return None
 
+    def generate_accountlink(self):
+        nb_link_created = Supporting.generate_accountlink(self)
+        if (abs(self.get_total_rest_topay()) < 0.0001) and (self.entry is not None) and (self.parentbill is not None) and (self.parentbill.bill_type == Bill.BILLTYPE_ORDER):
+            for account in ChartsAccount.objects.filter(entrylineaccount__entry=self.entry, code__regex=current_system_account().get_third_mask()).distinct():
+                if self.entry.entrylineaccount_set.filter(account=account, link__isnull=True) == 0:
+                    break
+                try:
+                    entrylines_to_link = []
+                    entrylines_to_link.extend(list(self.entry.entrylineaccount_set.filter(account=account)))
+                    for payoff in self.payoff_set.all():
+                        for third_line in payoff.entry.entrylineaccount_set.filter(account=account):
+                            entrylines_to_link.append(third_line)
+                    if self.parentbill is not None:
+                        for payoff in self.parentbill.payoff_set.all():
+                            for third_line in payoff.entry.entrylineaccount_set.filter(account=account):
+                                entrylines_to_link.append(third_line)
+                    if len(entrylines_to_link) > 0:
+                        AccountLink.create_link(entrylines_to_link)
+                    nb_link_created += 1
+                except LucteriosException as err:
+                    getLogger("diacamma.invoice").debug("Link failed for %s : %s", entrylines_to_link, err)
+        return nb_link_created
+
+    def convert_payoff(self, new_bill):
+        serial_vals = []
+        amount = 0.0
+        third_account = self.get_third_account(current_system_account().get_customer_mask(), self.fiscal_year)
+        for payoff in self.payoff_set.all():
+            for third_line in payoff.entry.entrylineaccount_set.filter(account__code__regex=current_system_account().get_third_mask()):
+                if third_line.account != third_account:
+                    amount += third_line.amount
+                    third_line.amount = -1 * third_line.amount
+                    third_line.id = 0
+                    serial_vals.append(third_line.get_serial())
+        if len(serial_vals) > 0:
+            serial_vals.append(EntryLineAccount.add_serial(third_account.id, amount if amount < -0.001 else 0, amount if amount > 0.001 else 0, self.third.id))
+            new_entry = EntryAccount.objects.create(year=FiscalYear.get_current(new_bill.date), date_value=new_bill.date, designation=_('%s supply transfer') % self, journal=Journal.objects.get(id=Journal.DEFAULT_OTHER))
+            serial_vals = "\n".join(serial_vals)
+            _no_change, debit_rest, credit_rest = new_entry.serial_control(serial_vals)
+            if abs(debit_rest - credit_rest) >= 0.001:
+                raise LucteriosException(GRAVE, _("Account entry not balanced{[br/]}total credit=%(credit)s - total debit=%(debit)s%(info)s") % {'credit': get_amount_from_format_devise(debit_rest, 7),
+                                                                                                                                                 'debit': get_amount_from_format_devise(credit_rest, 7),
+                                                                                                                                                 'info': self})
+            new_entry.save_entrylineaccounts(serial_vals)
+            new_entry.save()
+            Payoff.objects.create(supporting=new_bill, date=new_entry.date_value,
+                                  amount=abs(sum([payoff.amount for payoff in self.payoff_set.all()])),
+                                  mode=Payoff.MODE_INTERNAL, payer=str(self.third), reference=new_entry.designation, entry=new_entry, bank_account=None)
+            for account in ChartsAccount.objects.filter(entrylineaccount__entry=new_entry, code__regex=current_system_account().get_third_mask()).distinct():
+                try:
+                    entrylines_to_link = []
+                    for payoff in self.payoff_set.all():
+                        for third_line in payoff.entry.entrylineaccount_set.filter(account=account):
+                            entrylines_to_link.append(third_line)
+                    entrylines_to_link.extend(list(new_entry.entrylineaccount_set.filter(account=account)))
+                    if len(entrylines_to_link) > 0:
+                        AccountLink.create_link(entrylines_to_link)
+                except LucteriosException as err:
+                    getLogger("diacamma.invoice").debug("Link failed for %s : %s", entrylines_to_link, err)
+        else:
+            for payoff in self.payoff_set.all():
+                payoff.supporting = new_bill
+                payoff.save(do_generate=False, do_linking=False, do_internal=False)
+
     def convert_to_bill(self, billdate=None):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
             self.status = Bill.STATUS_ARCHIVE
@@ -1176,9 +1266,7 @@ class Bill(Supporting):
                 detail.id = None
                 detail.bill = new_bill
                 detail.save(check_autoreduce=False)
-            for payoff in self.payoff_set.all():
-                payoff.supporting = new_bill
-                payoff.save(do_generate=False, do_linking=False, do_internal=False)
+            self.convert_payoff(new_bill)
             Signal.call_signal("change_bill", 'convert', self, new_bill)
             return new_bill
         else:

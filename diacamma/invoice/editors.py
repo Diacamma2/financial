@@ -63,16 +63,20 @@ class VatEditor(LucteriosEditor):
 class AccountPostingEditor(LucteriosEditor):
 
     def edit(self, xfer):
-        old_account = xfer.get_components("sell_account")
-        xfer.tab = old_account.tab
-        xfer.remove_component("sell_account")
-        sel_code = XferCompSelect("sell_account")
-        sel_code.description = old_account.description
-        sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
-        for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_revenue_mask()).order_by('code'):
-            sel_code.select_list.append((item.code, str(item)))
-        sel_code.set_value(self.item.sell_account)
-        xfer.add_component(sel_code)
+        for account_name, account_filter, account_needed in [("sell_account", current_system_account().get_revenue_mask(), True),
+                                                             ("provision_third_account", current_system_account().get_customer_mask(), False)]:
+            old_account = xfer.get_components(account_name)
+            xfer.tab = old_account.tab
+            xfer.remove_component(account_name)
+            sel_code = XferCompSelect(account_name)
+            sel_code.description = old_account.description
+            sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
+            if not account_needed:
+                sel_code.select_list.append(('', None))
+            for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=account_filter).order_by('code'):
+                sel_code.select_list.append((item.code, str(item)))
+            sel_code.set_value(getattr(self.item, account_name))
+            xfer.add_component(sel_code)
         comp = xfer.get_components("cost_accounting")
         comp.set_needed(False)
         comp.set_select_query(CostAccounting.objects.filter(Q(status=0) & (Q(year=None) | Q(year=FiscalYear.get_current()))).distinct())
@@ -424,7 +428,9 @@ class DetailEditor(LucteriosEditor, DetailFilter):
         else:
             xfer.get_components('quantity').prec = self.item.article.qtyDecimal
 
-        if (self.item.article_id is None) or (self.item.article.stockable == 0):
+        if (self.item.article_id is None) or \
+            (self.item.article.stockable == 0) or \
+                ((self.item.article.accountposting is not None) and (self.item.article.accountposting.provision_third_account != '')):
             xfer.remove_component("storagearea")
             xfer.params['storagearea'] = 0
         else:

@@ -127,6 +127,10 @@ class Supporting(LucteriosModel):
                 val += currency_round(payoff.amount)
         return val
 
+    def get_warning_state(self):
+        warning = []
+        return warning
+
     def get_info_state(self, third_mask=None):
         info = []
         if third_mask is None:

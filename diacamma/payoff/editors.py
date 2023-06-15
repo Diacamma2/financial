@@ -80,6 +80,11 @@ class SupportingEditor(LucteriosEditor):
         lbl.set_location(1, xfer.get_max_row() + 1, 4)
         lbl.set_value(self.item.get_info_state())
         xfer.add_component(lbl)
+        lbl = XferCompLabelForm('warning')
+        lbl.set_color('orange')
+        lbl.set_location(1, xfer.get_max_row() + 1, 4)
+        lbl.set_value(self.item.get_warning_state())
+        xfer.add_component(lbl)
 
     def show_third_ex(self, xfer):
         xfer.params['supporting'] = self.item.id
@@ -105,6 +110,13 @@ class SupportingEditor(LucteriosEditor):
             btn.set_action(xfer.request, ActionsManage.get_action_url('accounting.Third', 'Show', xfer),
                            modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'third': self.item.third.id})
             xfer.add_component(btn)
+        warning = self.item.get_warning_state()
+        if len(warning) > 0:
+            lbl = XferCompLabelForm('warning')
+            lbl.set_color('orange')
+            lbl.set_location(1, xfer.get_max_row() + 1, 4)
+            lbl.set_value(warning)
+            xfer.add_component(lbl)
 
     def show(self, xfer, readonly=False):
         xfer.params['supporting'] = self.item.id

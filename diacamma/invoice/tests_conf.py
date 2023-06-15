@@ -33,7 +33,7 @@ from lucterios.CORE.views import ObjectMerge
 from lucterios.CORE.parameters import Params
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, default_costaccounting,\
-    initial_contacts
+    initial_contacts, create_account
 from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod
 from diacamma.invoice.models import Article
 from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting
@@ -125,6 +125,7 @@ class ConfigTest(LucteriosTest):
 
     def test_accountposting(self):
         default_costaccounting()
+        create_account(['4191a', '4191b'], 1, None)
         self.factory.xfer = InvoiceConfFinancial()
         self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')
@@ -133,12 +134,13 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = AccountPostingAddModify()
         self.calljson('/diacamma.invoice/accountPostingAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'accountPostingAddModify')
-        self.assert_count_equal('', 5)
+        self.assert_count_equal('', 6)
         self.assert_select_equal('sell_account', 3)
         self.assert_select_equal('cost_accounting', {0: None, 2: 'open'})
+        self.assert_select_equal('provision_third_account', 4)
 
         self.factory.xfer = AccountPostingAddModify()
-        self.calljson('/diacamma.invoice/accountPostingAddModify', {'name': 'aaa', 'sell_account': '601', 'cost_accounting': 2, 'SAVE': 'YES'}, False)
+        self.calljson('/diacamma.invoice/accountPostingAddModify', {'name': 'aaa', 'sell_account': '601', 'cost_accounting': 2, 'provision_third_account': '4191a', 'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'accountPostingAddModify')
 
         self.factory.xfer = InvoiceConfFinancial()
