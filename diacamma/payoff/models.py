@@ -157,13 +157,7 @@ class Supporting(LucteriosModel):
     def get_third_account(self, third_mask, fiscalyear, third=None):
         if third is None:
             third = self.third
-        accounts = third.accountthird_set.filter(code__regex=third_mask)
-        if len(accounts) == 0:
-            raise LucteriosException(IMPORTANT, _("third has not correct account"))
-        third_account = ChartsAccount.get_account(accounts[0].code, fiscalyear)
-        if third_account is None:
-            raise LucteriosException(IMPORTANT, _("third has not correct account"))
-        return third_account
+        return third.get_account(fiscalyear, third_mask)
 
     def get_total_rest_topay(self, ignore_payoff=-1):
         if self.id is None:

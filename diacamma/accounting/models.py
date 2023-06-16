@@ -173,7 +173,7 @@ class Third(LucteriosModel, CustomizeObject):
         pass
 
     def get_account(self, fiscal_year, mask):
-        accounts = self.accountthird_set.filter(code__regex=mask)
+        accounts = self.accountthird_set.filter(code__regex=mask).order_by('code')
         if len(accounts) == 0:
             raise LucteriosException(IMPORTANT, _("third has not correct account"))
         third_account = ChartsAccount.get_account(accounts[0].code, fiscal_year)

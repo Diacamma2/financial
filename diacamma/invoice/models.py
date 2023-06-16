@@ -393,7 +393,7 @@ class Article(LucteriosModel, CustomizeObject):
         if self.stockable != self.STOCKABLE_NO:
             booking = {}
             for val in self.detail_set.filter(detail_filter).values('storagearea').annotate(data_sum=Sum('quantity')):
-                if abs(val['data_sum']) > 0.001:
+                if (abs(val['data_sum']) > 0.001) and (val['storagearea'] is not None):
                     if not val['storagearea'] in booking.keys():
                         booking[val['storagearea']] = [str(StorageArea.objects.get(id=val['storagearea'])), 0.0]
                     booking[val['storagearea']][1] += float(val['data_sum'])
@@ -1193,7 +1193,7 @@ class Bill(Supporting):
     def generate_accountlink(self):
         nb_link_created = Supporting.generate_accountlink(self)
         if (abs(self.get_total_rest_topay()) < 0.0001) and (self.entry is not None) and (self.parentbill is not None) and (self.parentbill.bill_type == Bill.BILLTYPE_ORDER):
-            for account in ChartsAccount.objects.filter(entrylineaccount__entry=self.entry, code__regex=current_system_account().get_third_mask()).distinct():
+            for account in ChartsAccount.objects.filter(entrylineaccount__entry=self.entry, code__regex=self.get_third_mask()).distinct():
                 if self.entry.entrylineaccount_set.filter(account=account, link__isnull=True) == 0:
                     break
                 try:
@@ -1218,7 +1218,7 @@ class Bill(Supporting):
         amount = 0.0
         third_account = self.get_third_account(current_system_account().get_customer_mask(), self.fiscal_year)
         for payoff in self.payoff_set.all():
-            for third_line in payoff.entry.entrylineaccount_set.filter(account__code__regex=current_system_account().get_third_mask()):
+            for third_line in payoff.entry.entrylineaccount_set.filter(account__code__regex=self.get_third_mask()):
                 if third_line.account != third_account:
                     amount += third_line.amount
                     third_line.amount = -1 * third_line.amount
@@ -1238,7 +1238,7 @@ class Bill(Supporting):
             Payoff.objects.create(supporting=new_bill, date=new_entry.date_value,
                                   amount=abs(sum([payoff.amount for payoff in self.payoff_set.all()])),
                                   mode=Payoff.MODE_INTERNAL, payer=str(self.third), reference=new_entry.designation, entry=new_entry, bank_account=None)
-            for account in ChartsAccount.objects.filter(entrylineaccount__entry=new_entry, code__regex=current_system_account().get_third_mask()).distinct():
+            for account in ChartsAccount.objects.filter(entrylineaccount__entry=new_entry, code__regex=self.get_third_mask()).distinct():
                 try:
                     entrylines_to_link = []
                     for payoff in self.payoff_set.all():
