@@ -176,7 +176,14 @@ class Third(LucteriosModel, CustomizeObject):
         accounts = self.accountthird_set.filter(code__regex=mask).order_by('code')
         if len(accounts) == 0:
             raise LucteriosException(IMPORTANT, _("third has not correct account"))
-        third_account = ChartsAccount.get_account(accounts[0].code, fiscal_year)
+        third_account = None
+        while third_account is None:
+            for account in accounts:
+                third_account = ChartsAccount.get_account(account.code, fiscal_year)
+                if third_account is not None:
+                    break
+            if third_account is not None:
+                break
         if third_account is None:
             raise LucteriosException(IMPORTANT, _("third has not correct account"))
         return third_account
