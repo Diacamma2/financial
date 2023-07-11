@@ -27,7 +27,7 @@ from datetime import datetime
 import logging
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from lucterios.framework.tools import get_bool_textual
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE

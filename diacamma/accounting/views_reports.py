@@ -27,7 +27,7 @@ import re
 from datetime import date, datetime
 from logging import getLogger
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django.db.models.aggregates import Sum
 from django.utils import formats

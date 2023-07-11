@@ -37,7 +37,7 @@ from django.db.models.query import QuerySet
 from django.db.models.aggregates import Sum, Max, Count
 from django.template import engines
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import pre_save
 from django_fsm import FSMIntegerField, transition
 

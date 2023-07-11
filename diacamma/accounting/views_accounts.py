@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from os.path import basename
 from datetime import date
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils import formats
 from django.db.models import Q
 

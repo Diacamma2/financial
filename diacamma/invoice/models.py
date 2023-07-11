@@ -39,7 +39,7 @@ from django.db.models.fields import FloatField, IntegerField
 from django.db.models import Q, Value, F
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.dateformat import DateFormat
 from django.utils import timezone
 from django_fsm import FSMIntegerField, transition
