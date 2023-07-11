@@ -2864,7 +2864,7 @@ class BillTest(InvoiceTest):
 
         new_year = FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
         new_year.set_has_actif()
-        self.assertEquals(FiscalYear.get_current().id, 2)
+        self.assertEqual(FiscalYear.get_current().id, 2)
 
         self._create_bill([{'article': 5, 'designation': 'article 5', 'price': '15', 'quantity': 3}], 1, '2016-04-01', 6, False)  # 45
         self.factory.xfer = BillList()
