@@ -24,6 +24,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
 from datetime import date
+import logging
 
 from django.utils.translation import gettext_lazy as _
 from django.utils import formats
@@ -67,6 +68,43 @@ from diacamma.accounting.tools import current_system_account, format_with_devise
 MenuManage.add_sub("invoice", None, "diacamma.invoice/images/invoice.png", _("Invoice"), _("Manage of billing"), 45)
 
 
+def _add_type_filter_selector(xfer, row, col=0):
+    type_filter = xfer.getparam('type_filter', str(Preference.get_value("invoice-billtype", xfer.request.user)))
+    xfer.params['type_filter'] = type_filter
+    if '|' in type_filter:
+        category, bill_type = type_filter.split('|')[:2]
+        category = int(category)
+        bill_type = int(bill_type)
+    else:
+        category = None
+        bill_type = int(type_filter)
+    if bill_type == Bill.BILLTYPE_CART:
+        Bill.clean_timeout_cart()
+    has_allready_cart = False
+    type_select = [(str(bill_type), title) for bill_type, title in Bill.SELECTION_BILLTYPES if Params.getvalue('invoice-cart-active') or bill_type != Bill.BILLTYPE_CART]
+    for cat_bill in CategoryBill.objects.all().order_by('is_default'):
+        type_pos = 1
+        for type_num, _description, type_value in cat_bill.get_title_info():
+            type_select.insert(type_pos, ("%d|%d" % (cat_bill.id, type_num), "[%s]%s" % (cat_bill.name, type_value)))
+            has_allready_cart = has_allready_cart or type_num == Bill.BILLTYPE_CART
+            type_pos += 1
+    if has_allready_cart:
+        for type_index, type_val in enumerate(type_select):
+            if type_val[0] == str(Bill.BILLTYPE_CART):
+                del type_select[type_index]
+                break
+    edt = XferCompSelect("type_filter")
+    edt.set_select(type_select)
+    edt.description = _('Filter by type')
+    edt.set_value(type_filter)
+    edt.set_location(col, row)
+    edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+    if Params.getvalue('invoice-order-mode') == 0:
+        edt.remove_select(Bill.BILLTYPE_ORDER)
+    xfer.add_component(edt)
+    return bill_type, category
+
+
 def _add_bill_filter(xfer, row, with_third=False):
     current_filter = Q()
     if with_third:
@@ -93,39 +131,7 @@ def _add_bill_filter(xfer, row, with_third=False):
     edt.set_location(0, row)
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     xfer.add_component(edt)
-
-    type_filter = xfer.getparam('type_filter', str(Preference.get_value("invoice-billtype", xfer.request.user)))
-    xfer.params['type_filter'] = type_filter
-    if '|' in type_filter:
-        category, bill_type = type_filter.split('|')[:2]
-        category = int(category)
-        bill_type = int(bill_type)
-    else:
-        category = None
-        bill_type = int(type_filter)
-    has_allready_cart = False
-    type_select = [(str(bill_type), title) for bill_type, title in Bill.SELECTION_BILLTYPES if Params.getvalue('invoice-cart-active') or (bill_type != Bill.BILLTYPE_CART)]
-    for cat_bill in CategoryBill.objects.all().order_by('is_default'):
-        type_pos = 1
-        for type_num, _description, type_value in cat_bill.get_title_info():
-            type_select.insert(type_pos, ("%d|%d" % (cat_bill.id, type_num), "[%s]%s" % (cat_bill.name, type_value)))
-            has_allready_cart = has_allready_cart or (type_num == Bill.BILLTYPE_CART)
-            type_pos += 1
-    if has_allready_cart:
-        for type_index, type_val in enumerate(type_select):
-            if type_val[0] == str(Bill.BILLTYPE_CART):
-                del type_select[type_index]
-                break
-    edt = XferCompSelect("type_filter")
-    edt.set_select(type_select)
-    edt.description = _('Filter by type')
-    edt.set_value(type_filter)
-    edt.set_location(0, row + 1)
-    edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-    if Params.getvalue('invoice-order-mode') == 0:
-        edt.remove_select(Bill.BILLTYPE_ORDER)
-    xfer.add_component(edt)
-
+    bill_type, category = _add_type_filter_selector(xfer, row + 1)
     if status_filter == Bill.STATUS_BUILDING_VALID:
         current_filter &= Q(status=Bill.STATUS_BUILDING) | Q(status=Bill.STATUS_VALID)
     elif status_filter != Bill.STATUS_ALL:
@@ -779,6 +785,7 @@ class ArticleFilter(object):
     STOCKABLE_ALL = -1
     STOCKABLE_WITH_STOCK = 3
     STOCKABLE_WITH_STOCK_AVAILABLE = 4
+    STOCKABLE_WITHOUT_STOCK = 5
 
     def items_filtering(self, items, categories_filter, show_stockable, show_storagearea):
         if len(categories_filter) > 0:
@@ -792,6 +799,10 @@ class ArticleFilter(object):
             new_items = LucteriosQuerySet(model=Article)
             new_items._result_cache = [item for item in items.distinct() if item.get_available_total_num(show_storagearea, default=0.0) > 1e-2]
             return new_items
+        elif show_stockable == self.STOCKABLE_WITHOUT_STOCK:
+            new_items = LucteriosQuerySet(model=Article)
+            new_items._result_cache = [item for item in items.distinct() if item.get_stockage_total_num(show_storagearea, default=0.0) < 1e-2]
+            return new_items
         else:
             return items.distinct()
 
@@ -802,7 +813,7 @@ class ArticleFilter(object):
         if show_filter == self.FILTER_SHOW_ONLY_ACTIVATE:
             new_filter &= Q(isdisabled=False)
         if show_stockable != self.STOCKABLE_ALL:
-            if (show_stockable == self.STOCKABLE_WITH_STOCK) or (show_stockable == self.STOCKABLE_WITH_STOCK_AVAILABLE):
+            if show_stockable in [self.STOCKABLE_WITH_STOCK, self.STOCKABLE_WITH_STOCK_AVAILABLE, self.STOCKABLE_WITHOUT_STOCK]:
                 new_filter &= Q(stockable=Article.STOCKABLE_YES)
             else:
                 new_filter &= Q(stockable=show_stockable)
@@ -896,6 +907,39 @@ class ArticleList(XferListEditor, ArticleFilter):
 
         self.filter = self.get_search_filter(ref_filter, show_filter, self.show_stockable, self.show_storagearea)
         self.add_action(ArticleSearch.get_action(_("Search"), "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
+
+
+@ActionsManage.affect_list(_("To disable"), "images/config_ext.png", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
+@MenuManage.describ('invoice.change_article')
+class ArticleClean(XferContainerAcknowledge, ArticleFilter):
+    icon = "images/config_ext.png"
+    model = Article
+    field_id = 'article'
+    caption = _("Clean articles")
+
+    def fillresponse(self):
+        criteria = self.getparam('CRITERIA')
+        if criteria is None:
+            ref_filter = self.getparam('ref_filter', '')
+            categories_filter = self.getparam('cat_filter', ())
+            show_storagearea = self.getparam('storagearea', 0)
+            self.filter = self.get_search_filter(ref_filter, self.FILTER_SHOW_ONLY_ACTIVATE, self.STOCKABLE_WITHOUT_STOCK, show_storagearea)
+        else:
+            self.filter, _desc = get_search_query_from_criteria(criteria, Article)
+            self.filter &= Q(isdisabled=False) & Q(stockable=Article.STOCKABLE_YES)
+            categories_filter = ()
+            show_storagearea = 0
+        items = self.model.objects.filter(self.filter).distinct()
+        self.items = self.items_filtering(items, categories_filter, self.STOCKABLE_WITHOUT_STOCK, show_storagearea)
+        if len(self.items) == 0:
+            self.message(_('No article to disabled.'))
+        elif self.confirme(_("Do you want to disabled %d articles without stock of current search ?") % len(self.items)):
+            for item in self.items:
+                try:
+                    item.isdisabled = True
+                    item.save()
+                except Exception:
+                    logging.getLogger('diacamma.invoice').exception("error for %s" % item)
 
 
 @ActionsManage.affect_list(TITLE_PRINT, "images/print.png", close=CLOSE_NO)

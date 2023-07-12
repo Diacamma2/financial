@@ -25,8 +25,10 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from shutil import rmtree
 from _io import StringIO
+from datetime import timedelta
 
 from django.contrib.auth.models import Permission
+from django.utils import timezone
 
 from lucterios.framework.filetools import get_user_dir
 from lucterios.framework.test import LucteriosTest, add_empty_user
@@ -48,7 +50,8 @@ from diacamma.invoice.views_storage import StorageSheetList, StorageSheetAddModi
     StorageSituation, StorageHistoric, InventorySheetList,\
     InventorySheetAddModify, InventorySheetShow, InventoryDetailCopy,\
     InventorySheetTransition, InventoryDetailModify, InventoryDetailFinalize
-from diacamma.invoice.models import Article, StorageSheet, StorageDetail
+from diacamma.invoice.models import Article, StorageSheet, StorageDetail,\
+    get_or_create_customer
 from lucterios.CORE.models import LucteriosUser
 from diacamma.invoice.views_summary import CurrentCart, CurrentCartAddArticle,\
     CurrentCartDel, CurrentCartShow, CurrentCartValid
@@ -64,7 +67,7 @@ class StorageTest(InvoiceTest):
         rmtree(get_user_dir(), True)
         default_categories()
         default_articles(with_storage=True)
-        initial_contact(add_empty_user())
+        self.jack_contact = initial_contact(add_empty_user())
         default_area()
 
     def test_receipt(self):
@@ -1480,10 +1483,13 @@ class StorageTest(InvoiceTest):
 
     def test_cart_simple(self):
         Params.setvalue('invoice-cart-active', True)
+        Params.setvalue('invoice-cart-timeout', 3)
         sheet = StorageSheet.objects.create(sheet_type=0, date='2014-01-01', storagearea_id=1, comment="A")
         StorageDetail.objects.create(storagesheet=sheet, article_id=1, price=5.00, quantity=10.0)
         StorageDetail.objects.create(storagesheet=sheet, article_id=2, price=4.00, quantity=15.0)
         sheet.valid()
+        third = get_or_create_customer(self.jack_contact.id)
+        self._create_bill([{'article': 1, 'designation': 'article 1', 'price': '12.34', 'quantity': 3}], 5, timezone.now().date() - timedelta(days=5), third.id)
 
         self.factory.user = LucteriosUser.objects.get(username='empty')
         self.factory.user.user_permissions.set(Permission.objects.all())
@@ -1492,7 +1498,7 @@ class StorageTest(InvoiceTest):
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
-        self.assert_count_equal('bill', 0)
+        self.assert_count_equal('bill', 1)
 
         self.factory.xfer = CurrentCart()
         self.calljson('/diacamma.invoice/currentCart', {}, False)
@@ -1517,30 +1523,30 @@ class StorageTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 1)
-        self.assert_json_equal('', 'bill/@0/id', 1)
+        self.assert_json_equal('', 'bill/@0/id', 2)
         self.assert_json_equal('', 'bill/@0/bill_type', 5)
         self.assert_json_equal('', 'bill/@0/third', "MISTER jack")
         self.assert_json_equal('', 'bill/@0/total', 0.00)
         self.assert_json_equal('', 'bill/@0/status', 0)
 
         self.factory.xfer = CurrentCartAddArticle()
-        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 1, "qty_article_1": 10}, False)
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 2, "qty_article_1": 10}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
         self.factory.xfer = CurrentCartAddArticle()
-        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 2, "bill": 1, "qty_article_2": 10}, False)
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 2, "bill": 2, "qty_article_2": 10}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
         self.factory.xfer = CurrentCartAddArticle()
-        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 3, "bill": 1, "qty_article_3": 10}, False)
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 3, "bill": 2, "qty_article_3": 10}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
         self.factory.xfer = CurrentCartAddArticle()
-        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 4, "bill": 1, "qty_article_4": 10}, False)
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 4, "bill": 2, "qty_article_4": 10}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
 
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 1)
-        self.assert_json_equal('', 'bill/@0/id', 1)
+        self.assert_json_equal('', 'bill/@0/id', 2)
         self.assert_json_equal('', 'bill/@0/bill_type', 5)
         self.assert_json_equal('', 'bill/@0/third', "MISTER jack")
         self.assert_json_equal('', 'bill/@0/total', 3940.9)  # 12.34 * 10 + 56.78 * 10 + 324.97 * 10
@@ -1565,7 +1571,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
 
         self.factory.xfer = CurrentCartDel()
-        self.calljson('/diacamma.invoice/currentCartDel', {"bill": 1}, False)
+        self.calljson('/diacamma.invoice/currentCartDel', {"bill": 2}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartDel')
 
         self.factory.xfer = BillList()
@@ -1604,10 +1610,26 @@ class StorageTest(InvoiceTest):
         sheet2 = StorageSheet.objects.create(sheet_type=0, date='2014-01-01', storagearea_id=2, comment="A")
         StorageDetail.objects.create(storagesheet=sheet2, article_id=1, price=5.00, quantity=10.0)
         sheet2.valid()
+        third = get_or_create_customer(self.jack_contact.id)
+        self._create_bill([{'article': 1, 'designation': 'article 1', 'price': '12.34', 'quantity': 3}], 5, timezone.now().date() - timedelta(days=5), third.id)
 
         self.factory.user = LucteriosUser.objects.get(username='empty')
         self.factory.user.user_permissions.set(Permission.objects.all())
         self.factory.user.save()
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 1)
+
+        self.factory.xfer = CurrentCart()
+        self.calljson('/diacamma.invoice/currentCart', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'currentCart')
+        self.assert_json_equal('LABELFORM', "cart_info", "{[center]}1 article(s){[center]}{[i]}{[p align='right']}37,02 €{[/p]}{[/i]}")
+
+        self.factory.xfer = CurrentCartDel()
+        self.calljson('/diacamma.invoice/currentCartDel', {"bill": 1}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartDel')
 
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
@@ -1620,10 +1642,10 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', "cart_info", "{[center]}0 article(s){[center]}{[i]}{[p align='right']}0,00 €{[/p]}{[/i]}")
 
         self.factory.xfer = CurrentCartAddArticle()
-        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 1, "qty_article_1": 4}, False)
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 2, "qty_article_1": 4}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
         self.factory.xfer = CurrentCartAddArticle()
-        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 2, "bill": 1, "qty_article_2": 10}, False)
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 2, "bill": 2, "qty_article_2": 10}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
 
         self.factory.xfer = CurrentCart()
@@ -1636,7 +1658,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
 
         self.factory.xfer = CurrentCartShow()
-        self.calljson('/diacamma.invoice/currentCartShow', {'bill': 1}, False)
+        self.calljson('/diacamma.invoice/currentCartShow', {'bill': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'currentCartShow')
         self.assert_count_equal('', 11)
         self.assert_json_equal('LINK', 'third', "MISTER jack")
@@ -1646,14 +1668,14 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'detail/@0/storagearea', 'Lieu 2')
 
         self.factory.xfer = CurrentCartAddArticle()
-        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 1, "qty_article_1": 11}, False)
+        self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 2, "qty_article_1": 11}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartAddArticle')
 
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 1)
-        self.assert_json_equal('', 'bill/@0/id', 1)
+        self.assert_json_equal('', 'bill/@0/id', 2)
         self.assert_json_equal('', 'bill/@0/total', 752.9)  # 12.34 * 15 + 56.78 * 10
 
         self.factory.xfer = CurrentCart()
@@ -1666,7 +1688,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
 
         self.factory.xfer = CurrentCartShow()
-        self.calljson('/diacamma.invoice/currentCartShow', {'bill': 1}, False)
+        self.calljson('/diacamma.invoice/currentCartShow', {'bill': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'currentCartShow')
         self.assert_count_equal('', 11)
         self.assert_json_equal('LINK', 'third', "MISTER jack")
@@ -1702,7 +1724,7 @@ class StorageTest(InvoiceTest):
             self.assertEqual(0, server.count())
 
             self.factory.xfer = CurrentCartValid()
-            self.calljson('/diacamma.invoice/currentCartValid', {"bill": 1, "CONFIRME": "YES"}, False)
+            self.calljson('/diacamma.invoice/currentCartValid', {"bill": 2, "CONFIRME": "YES"}, False)
             self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartValid')
 
             self.assertEqual(1, server.count())
@@ -1714,7 +1736,7 @@ class StorageTest(InvoiceTest):
             server.stop()
 
         self.factory.xfer = CurrentCartShow()
-        self.calljson('/diacamma.invoice/currentCartShow', {'bill': 1}, False)
+        self.calljson('/diacamma.invoice/currentCartShow', {'bill': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'currentCartShow')
         self.assert_count_equal('', 8)
         self.assert_json_equal('LINK', 'third', "MISTER jack")
@@ -1744,17 +1766,17 @@ class StorageTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billList', {'status_filter': -2, 'type_filter': -1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_count_equal('bill', 3)
-        self.assert_json_equal('', 'bill/@0/id', 2)
+        self.assert_json_equal('', 'bill/@0/id', 3)
         self.assert_json_equal('', 'bill/@0/bill_type', 0)
         self.assert_json_equal('', 'bill/@0/third', "MISTER jack")
         self.assert_json_equal('', 'bill/@0/status', 0)
         self.assert_json_equal('', 'bill/@0/total', 629.5)
-        self.assert_json_equal('', 'bill/@1/id', 3)
+        self.assert_json_equal('', 'bill/@1/id', 4)
         self.assert_json_equal('', 'bill/@1/bill_type', 0)
         self.assert_json_equal('', 'bill/@1/third', "MISTER jack")
         self.assert_json_equal('', 'bill/@1/status', 0)
         self.assert_json_equal('', 'bill/@1/total', 123.4)
-        self.assert_json_equal('', 'bill/@2/id', 1)
+        self.assert_json_equal('', 'bill/@2/id', 2)
         self.assert_json_equal('', 'bill/@2/bill_type', 5)
         self.assert_json_equal('', 'bill/@2/third', "MISTER jack")
         self.assert_json_equal('', 'bill/@2/status', 3)

@@ -23,6 +23,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
+from json import loads, dumps
 
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
@@ -40,8 +41,8 @@ from lucterios.contacts.models import Individual, LegalEntity
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.xferprint import XferPrintListing
 
-from diacamma.invoice.models import Bill, Category, get_or_create_customer, Article, Detail, CategoryBill
-from diacamma.invoice.views import BillPrint, BillShow, DetailDel
+from diacamma.invoice.models import Bill, Category, get_or_create_customer, Article, Detail, CategoryBill, StorageArea
+from diacamma.invoice.views import BillPrint, BillShow, DetailDel, _add_type_filter_selector
 from diacamma.payoff.models import PaymentMethod
 from diacamma.payoff.views import PayableShow
 from diacamma.accounting.tools import get_amount_from_format_devise, format_with_devise
@@ -70,9 +71,18 @@ class CurrentBill(XferListEditor):
             contacts.append(contact.id)
         self.filter = Q(third__contact_id__in=contacts) & ~Q(status=Bill.STATUS_BUILDING)
 
+    def change_grid_action(self):
+        bill_grid = self.get_components('bill')
+        old_actions = bill_grid.actions
+        bill_grid.actions = []
+        for action in old_actions:
+            if action[0].method != 'POST':
+                bill_grid.actions.append(action)
+        return bill_grid
+
     def fillresponse(self):
         XferListEditor.fillresponse(self)
-        bill_grid = self.get_components('bill')
+        bill_grid = self.change_grid_action()
         bill_grid.add_action(self.request, CurrentBillPrint.get_action(_("Print"), "images/print.png"), unique=SELECT_SINGLE, close=CLOSE_NO)
         if (len(PaymentMethod.objects.all()) > 0):
             bill_grid.add_action(self.request, CurrentPayableShow.get_action(_("Payment"), "diacamma.payoff/images/payments.png"),
@@ -114,6 +124,7 @@ class CurrentCart(XferContainerCustom):
     def show_cart(self):
         contacts = Individual.objects.filter(user=self.request.user).first()
         third = get_or_create_customer(contacts.id)
+        Bill.clean_timeout_cart(third)
         self.item = Bill.objects.filter(bill_type=Bill.BILLTYPE_CART, status=Bill.STATUS_BUILDING, third=third).first()
         if self.item is None:
             self.item = Bill.objects.create(bill_type=Bill.BILLTYPE_CART, status=Bill.STATUS_BUILDING,
@@ -145,7 +156,7 @@ class CurrentCart(XferContainerCustom):
 
     def filter_selector(self):
         row = self.get_max_row() + 1
-        cat_list = Category.objects.all()
+        cat_list = Category.objects.filter(self.category_filter)
         if len(cat_list) > 0:
             filter_cat = self.getparam('cat_filter', 0)
             edt = XferCompSelect("cat_filter")
@@ -236,7 +247,11 @@ class CurrentCart(XferContainerCustom):
     def search_articles(self):
         art_filter = Q(isdisabled=False)
         savecritera_article = Params.getobject("invoice-cart-article-filter")
+        self.category_filter = Q()
         if savecritera_article is not None:
+            category_criteria = dumps([cirteria_item for cirteria_item in loads(savecritera_article.criteria) if cirteria_item[0].startswith('categories')])
+            category_criteria = category_criteria.replace('categories.', '').replace('categories', 'id')
+            self.category_filter, _desc = get_search_query_from_criteria(category_criteria, Category)
             filter_result, _desc = get_search_query_from_criteria(savecritera_article.criteria, Article)
             art_filter &= filter_result
         filter_cat = self.getparam('cat_filter', 0)
@@ -247,9 +262,7 @@ class CurrentCart(XferContainerCustom):
         return Article.objects.filter(art_filter)
 
     def show_articles(self):
-        articles = self.search_articles()
-
-        nb_lines = len(articles)
+        nb_lines = len(self.articles)
         page_max = int(nb_lines / self.size_by_page) + 1
         num_page = max(1, min(self.getparam('num_page', 0), page_max))
         record_min = int((num_page - 1) * self.size_by_page)
@@ -281,11 +294,12 @@ class CurrentCart(XferContainerCustom):
         btn.set_location(3, row)
         btn.set_action(self.request, self.return_action(">", "images/right.png"), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'num_page': min(num_page + 1, page_max)})
         self.add_component(btn)
-        for article in articles[record_min: record_max]:
+        for article in self.articles[record_min: record_max]:
             row += 5
             self.show_article(article, row)
 
     def fillresponse(self):
+        self.articles = self.search_articles()
         self.show_cart()
         self.filter_selector()
         self.show_articles()
@@ -423,3 +437,31 @@ class CurrentCartValid(XferTransition):
         if self.confirme(_("Do you want to validate this cart ?")):
             self.item.date = timezone.now()
             self._confirmed("valid")
+
+
+def referent_storage(request):
+    right = False
+    if not request.user.is_anonymous:
+        contact = Individual.objects.filter(user=request.user).first()
+        if contact is not None:
+            right = StorageArea.objects.filter(contact=contact).count() > 0
+    return right
+
+
+@MenuManage.describ(referent_storage, FORMTYPE_MODAL, 'core.general', _('View invoices of storage managed.'))
+class CurrentBillForStorageManager(CurrentBill):
+    icon = "storagesheet.png"
+    model = Bill
+    field_id = 'bill'
+    caption = _("Storage managed")
+
+    def fillresponse_header(self):
+        bill_type, category = _add_type_filter_selector(self, self.get_max_row() + 1, 1)
+        contact = Individual.objects.filter(user=self.request.user).first()
+        self.filter = Q(detail__storagearea__contact=contact) & ~Q(status=Bill.STATUS_ARCHIVE) & ~Q(status=Bill.STATUS_CANCEL)
+        if bill_type != Bill.BILLTYPE_ALL:
+            self.filter &= Q(bill_type=bill_type) & Q(categoryBill_id=category)
+
+    def fillresponse(self):
+        XferListEditor.fillresponse(self)
+        self.change_grid_action()

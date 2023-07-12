@@ -272,6 +272,7 @@ class Article(LucteriosModel, CustomizeObject):
         for cf_name, cf_model in CustomField.get_fields(cls):
             fields.append((cf_name, cf_model.get_field(), 'articlecustomfield__value', Q(articlecustomfield__field__id=cf_model.id)))
         if len(Category.objects.all()) > 0:
+            fields.append('categories')
             fields.append('categories.name')
             fields.append('categories.designation')
         if len(Provider().third_query) > 0:
@@ -1099,6 +1100,17 @@ class Bill(Supporting):
         for detail in self.detail_set.all():
             area_set.add(detail.storagearea)
         return area_set
+
+    @classmethod
+    def clean_timeout_cart(cls, third=None):
+        timeout_days = Params.getvalue('invoice-cart-timeout')
+        if timeout_days > 0:
+            date_timeout = timezone.now().date() - timedelta(days=timeout_days)
+            query_cart = Q(status=Bill.STATUS_BUILDING) & Q(bill_type=Bill.BILLTYPE_CART) & Q(date__lte=date_timeout)
+            if third is not None:
+                query_cart &= Q(third=third)
+            for bill_cart in Bill.objects.filter(query_cart):
+                bill_cart.delete()
 
     def send_card_email(self):
         from diacamma.payoff.views import can_send_email
@@ -2400,6 +2412,7 @@ def invoice_checkparam():
     Parameter.check_and_create(name='invoice-cart-active', typeparam=Parameter.TYPE_BOOL, title=_("invoice-cart-active"), args='{}', value='False')
     Parameter.check_and_create(name='invoice-cart-article-filter', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-cart-article-filter"), args="{}", value='',
                                meta='("CORE","SavedCriteria","django.db.models.Q(modelname=\'%s\')", "id", False)' % Article.get_long_name())
+    Parameter.check_and_create(name='invoice-cart-timeout', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-cart-timeout"), args='{"Min":0,"Max":99}', value='0')
     Parameter.check_and_create(name='invoice-cart-email-subject', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-subject"), args='{}', value=_('new validated cart'))
     Parameter.check_and_create(name='invoice-cart-email-body', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-body"), args="{'Multi':True, 'HyperText': True}",
                                value=_('#name{[br/]}{[br/]}Joint in this email #doc.{[br/]}#nb quotation is created, each storage area manager will return you them soon.{[br/]}{[br/]}Regards'))

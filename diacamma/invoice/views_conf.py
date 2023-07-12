@@ -94,7 +94,7 @@ class InvoiceConfCommercial(XferListEditor):
     def add_cart_params(self):
         param_lists = ['invoice-cart-active']
         if Params.getvalue('invoice-cart-active'):
-            param_lists.extend(['invoice-cart-article-filter', 'invoice-cart-email-subject', 'invoice-cart-email-body'])
+            param_lists.extend(['invoice-cart-article-filter', 'invoice-cart-timeout', 'invoice-cart-email-subject', 'invoice-cart-email-body'])
         row = self.get_max_row() + 1
         Params.fill(self, param_lists, 1, row)
         btn = XferCompButton('editcartparam')
@@ -126,11 +126,12 @@ class ParamEditCart(ParamEdit):
 
     def fillresponse(self, params=(), nb_col=1):
         ParamEdit.fillresponse(self, params=params, nb_col=nb_col)
-        comment = XferCompLabelForm('comment')
-        comment.set_value(_('Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}name of documentation sended{[br/]} - {[b]}#nb:{[/b]}number of quotation created{[br/]}'))
-        comment.set_color("green")
-        comment.set_location(1, self.get_max_row() + 1)
-        self.add_component(comment)
+        if Params.getvalue('invoice-cart-active'):
+            comment = XferCompLabelForm('comment')
+            comment.set_value(_('Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}name of documentation sended{[br/]} - {[b]}#nb:{[/b]}number of quotation created{[br/]}'))
+            comment.set_color("green")
+            comment.set_location(1, self.get_max_row() + 1)
+            self.add_component(comment)
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
