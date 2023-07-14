@@ -69,7 +69,7 @@ Aux rapports comptables, s'ajoute l'édition des journaux :
 
      Menu *Comptabilité/Gestion comptable/Ecritures comptables*
      
-Depuis l'écran de la liste des écritures comptables, vous avez la possibilité de les visualiser et de les exporter en PDF ou  au format CSV (ce qui permet l'import dans un tableur).
+Depuis l'écran de la liste des écritures comptables, vous avez la possibilité de les visualiser et de les exporter en PDF ou au format CSV ou ODS (ce qui permet l'import dans un tableur).
 
 
 Listing du plan comptable de l'exercice
@@ -81,5 +81,5 @@ Depuis l'écran du plan comptable de l'exercice :
      
 Pour un exercice donné et par type de comptes (ou tous), vous pouvez visualiser, pour l'ensemble des comptes ouverts, le récapitulatif des soldes de début et de fin d'exercice avec l'indication des soldes de fin compte-tenu des seules écritures validées.
 
-Ce récapitulatif peut être imprimé, exporté au format PDF ou CSV (ce qui permet l'import de vos soldes dans un tableur). 
+Ce récapitulatif peut être imprimé, exporté au format PDF, CSV ou ODS (ce qui permet l'import de vos soldes dans un tableur). 
  

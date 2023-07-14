@@ -314,11 +314,9 @@ class EntryAccountImport(ObjectImport):
     model = EntryAccount
     caption = _("Accounting entries import")
 
-    def _convert_record(self, fields_association, fields_description, row):
-        new_row = ObjectImport._convert_record(self, fields_association, fields_description, row)
-        new_row['entry.year'] = self.select_year
-        new_row['entry.journal'] = self.select_journal
-        return new_row
+    def _fillcontent_step3(self):
+        self.import_driver.default_values = {'entry.year': self.select_year, 'entry.journal': self.select_journal}
+        ObjectImport._fillcontent_step3(self)
 
     def change_gui(self):
         self.item = EntryAccount()
@@ -336,10 +334,10 @@ class EntryAccountImport(ObjectImport):
                 self.get_components('year').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
                 self.get_components('journal').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
 
-    def fillresponse(self, quotechar="'", delimiter=";", encoding="utf-8", dateformat="%d/%m/%Y", step=0):
+    def fillresponse(self, drivername="CSV", step=0):
         self.select_year = self.getparam('year')
         self.select_journal = self.getparam('journal', 4)
-        ObjectImport.fillresponse(self, "accounting.EntryLineAccount", quotechar, delimiter, encoding, dateformat, step)
+        ObjectImport.fillresponse(self, "accounting.EntryLineAccount", drivername, step)
         self.change_gui()
         if step == 3:
             grid = XferCompGrid("entryline")

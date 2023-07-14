@@ -16,7 +16,7 @@ Situation
 
 Depuis le menu *Facturier/Stockage/Situation* vous pouvez consulter, pour chaque lieu de stockage, la quantité de chaque article géré.
 
-Le bouton *imprimer* permet de sortir un rapport au format PDF ou CSV (importable via un tableur)
+Le bouton *imprimer* permet de sortir un rapport au format PDF, CSV ou ODS (importable via un tableur)
 
 Depuis la fiche d'un article, vous pouvez également consulter sa situation de stockage pour chacun des lieux de stockage défini.
 
@@ -40,4 +40,4 @@ Vous ne pouvez valider votre bordereau d'inventaire qu'une fois la quantité de 
 
 Une fois votre bordereau correctement remplis, et une fois validé, 2 bordereaux de strockages peuvent être alors automatiquement généré afin de réaliser le réajustement (en plus ou en moins) de vos stocks.
 
-Le bouton *imprimer* permet d'éditer en PDF ou en CSV la list de l'inventaire.
+Le bouton *imprimer* permet d'éditer en PDF, en CSV ou en ODS la list de l'inventaire.

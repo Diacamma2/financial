@@ -209,22 +209,19 @@ class StorageDetailImport(ObjectImport):
     def get_select_models(self):
         return StorageDetail.get_select_contact_type(True)
 
-    def _read_csv_and_convert(self):
-        fields_description, csv_readed = ObjectImport._read_csv_and_convert(self)
-        new_csv_readed = []
-        for csv_readed_item in csv_readed:
-            csv_readed_item['storagesheet_id'] = self.getparam("storagesheet", 0)
-            new_csv_readed.append(csv_readed_item)
-        return fields_description, new_csv_readed
+    def _fillcontent_step3(self):
+        self.import_driver.default_values = {'storagesheet_id': self.storagesheet}
+        ObjectImport._fillcontent_step3(self)
 
     def _select_fields(self):
         ObjectImport._select_fields(self)
-        storage_sheet = StorageSheet.objects.get(id=self.getparam('storagesheet', 0))
+        storage_sheet = StorageSheet.objects.get(id=self.storagesheet)
         if storage_sheet.sheet_type != StorageSheet.TYPE_RECEIPT:
             self.remove_component('fld_price')
 
-    def fillresponse(self, modelname, quotechar="'", delimiter=";", encoding="utf-8", dateformat="%d/%m/%Y", step=0):
-        ObjectImport.fillresponse(self, modelname, quotechar, delimiter, encoding, dateformat, step)
+    def fillresponse(self, modelname, drivername="CSV", step=0):
+        self.storagesheet = self.getparam("storagesheet", 0)
+        ObjectImport.fillresponse(self, modelname, drivername, step)
         if step != 3:
             self.move(0, 0, 1)
             self.tab = 0

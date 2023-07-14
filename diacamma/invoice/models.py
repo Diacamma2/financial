@@ -166,7 +166,10 @@ class AccountPosting(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return ["name", "sell_account", ("cost_accounting", None), "provision_third_account"]
+        fields = ["name", "sell_account", ("cost_accounting", None)]
+        if Params.getvalue('invoice-order-mode') != 0:
+            fields.append("provision_third_account")
+        return fields
 
     @classmethod
     def get_show_fields(cls):
@@ -603,8 +606,7 @@ class CategoryBill(LucteriosModel):
         self.titles = dumps(titles)
 
     def get_title_info(self):
-        list_types = [type_item for type_item in Bill.LIST_BILLTYPES if (type_item[0] != Bill.BILLTYPE_RECEIPT) and ((Params.getvalue('invoice-cart-active') and self.is_default) or
-                                                                                                                     (type_item[0] != Bill.BILLTYPE_CART))]
+        list_types = [type_item for type_item in Bill.LIST_BILLTYPES if (type_item[0] != Bill.BILLTYPE_RECEIPT) and ((Params.getvalue('invoice-cart-active') and self.is_default) or (type_item[0] != Bill.BILLTYPE_CART))]
         if (Params.getvalue('invoice-order-mode') == 0) or (self.workflow_order == self.WORKFLOWS_NEVER_ORDER):
             list_types = [type_item for type_item in list_types if type_item[0] != Bill.BILLTYPE_ORDER]
         for type_num, type_title in list_types:

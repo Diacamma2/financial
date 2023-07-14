@@ -66,17 +66,18 @@ class AccountPostingEditor(LucteriosEditor):
         for account_name, account_filter, account_needed in [("sell_account", current_system_account().get_revenue_mask(), True),
                                                              ("provision_third_account", current_system_account().get_customer_mask(), False)]:
             old_account = xfer.get_components(account_name)
-            xfer.tab = old_account.tab
-            xfer.remove_component(account_name)
-            sel_code = XferCompSelect(account_name)
-            sel_code.description = old_account.description
-            sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
-            if not account_needed:
-                sel_code.select_list.append(('', None))
-            for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=account_filter).order_by('code'):
-                sel_code.select_list.append((item.code, str(item)))
-            sel_code.set_value(getattr(self.item, account_name))
-            xfer.add_component(sel_code)
+            if old_account is not None:
+                xfer.tab = old_account.tab
+                xfer.remove_component(account_name)
+                sel_code = XferCompSelect(account_name)
+                sel_code.description = old_account.description
+                sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
+                if not account_needed:
+                    sel_code.select_list.append(('', None))
+                for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=account_filter).order_by('code'):
+                    sel_code.select_list.append((item.code, str(item)))
+                sel_code.set_value(getattr(self.item, account_name))
+                xfer.add_component(sel_code)
         comp = xfer.get_components("cost_accounting")
         comp.set_needed(False)
         comp.set_select_query(CostAccounting.objects.filter(Q(status=0) & (Q(year=None) | Q(year=FiscalYear.get_current()))).distinct())

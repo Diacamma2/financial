@@ -39,9 +39,9 @@ De plus, dans l'impression de la facture, un sous-détail des taxes apparait par
 Import d'articles
 -----------------
 
-Depuis le menu *Administration/Modules (conf.)/Import d'article*, vous avez la possibilité d'importer des articles en lot depuis un fichier CSV.
+Depuis le menu *Administration/Modules (conf.)/Import d'article*, vous avez la possibilité d'importer des articles en lot depuis un fichier CSV, ODS ou XLS.
 
-Une fois avoir sélectionné votre fichier CVS et les information de son format,
+Une fois avoir sélectionné votre fichier et les information de son format,
 vous serez ammené à associer les champs d'un article aux colonnes de votre documents (la première ligne de votre document doit décrire la nature de chaque colonne).
     
 Vous pouvez alors contrôler vos données avant de les validés.

@@ -178,6 +178,63 @@ class PayoffEditor(LucteriosEditor):
         final_support = self.item.supporting.get_final_child()
         final_support.adding_payoff(self.item)
 
+    def _edit_internal_payoff(self, xfer, prefix, support_first, linked_supportings, amount, col):
+        row = xfer.get_max_row() + 1
+        sel = XferCompSelect(prefix + 'linked_supporting')
+        sel.set_value(xfer.getparam(prefix + 'linked_supporting', 0))
+        sel.set_select([(item.id, str(item)) for item in linked_supportings])
+        sel.set_location(col, row)
+        sel.description = _('linked')
+        sel.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        xfer.add_component(sel)
+        xfer.remove_component(prefix + "reference")
+        for linked_supporting in linked_supportings:
+            if linked_supporting.id == sel.value:
+                current_total_rest_topay = support_first.get_total_rest_topay()
+                linked_total_rest_topay = linked_supporting.get_total_rest_topay()
+                amount.value = min(current_total_rest_topay if current_total_rest_topay > 1e-3 else support_first.get_max_payoff(), linked_total_rest_topay if linked_total_rest_topay > 1e-3 else linked_supporting.get_max_payoff())
+                xfer.params[prefix + 'amount'] = float(amount.value)
+                if abs(amount.value) > 0.001:
+                    xfer.change_to_readonly(prefix + "amount")
+                return
+
+    def _edit_bank_and_fee(self, xfer, prefix, supporting_list, amount_max, currency_decimal):
+        fee_code = ''
+        if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
+            xfer.remove_component(prefix + "bank_account")
+        elif xfer.get_components(prefix + "bank_account") is not None:
+            xfer.get_components(prefix + "bank_account").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            bank_account = BankAccount.objects.get(id=xfer.get_components(prefix + "bank_account").value)
+            fee_code = bank_account.fee_account_code
+        if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
+            xfer.remove_component(prefix + "payer")
+        if fee_code == '':
+            xfer.remove_component(prefix + "bank_fee")
+        else:
+            bank_fee = xfer.get_components(prefix + "bank_fee")
+            bank_fee.prec = currency_decimal
+            bank_fee.min = 0.0
+            bank_fee.max = float(amount_max)
+
+    def _edit_bank_and_mode(self, xfer, prefix):
+        mode = xfer.get_components(prefix + "mode")
+        banks = xfer.get_components(prefix + "bank_account")
+        if banks.select_list[0][0] == 0:
+            del banks.select_list[0]
+        if len(banks.select_list) == 0:
+            mode.select_list = [mode.select_list[0], mode.select_list[-1]]
+            xfer.remove_component(prefix + "bank_account")
+        else:
+            levy = mode.select_list[5]
+            mode.select_list.insert(3, levy)
+            del mode.select_list[6]
+            xfer.get_components(prefix + "mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            if self.item.id is None:
+                self.item.mode = xfer.getparam(prefix + 'mode', Preference.get_value("payoff-mode", xfer.request.user))
+                xfer.get_components(prefix + "mode").value = self.item.mode
+                xfer.get_components(prefix + "bank_account").set_value(xfer.getparam(prefix + 'bank_account', Preference.get_value("payoff-bank_account", xfer.request.user)))  # change order of payoff mode
+        return mode
+
     def edit(self, xfer):
         currency_decimal = Params.getvalue("accounting-devise-prec")
         supportings = xfer.getparam('supportings', ())
@@ -242,62 +299,13 @@ class PayoffEditor(LucteriosEditor):
         amount.prec = currency_decimal
         amount.min = float(amount_min) if abs(amount_sum) > 1e-3 else 0
         amount.max = float(amount_max)
-        mode = xfer.get_components(prefix + "mode")
-        banks = xfer.get_components(prefix + "bank_account")
-        if banks.select_list[0][0] == 0:
-            del banks.select_list[0]
-        if len(banks.select_list) == 0:
-            mode.select_list = [mode.select_list[0], mode.select_list[-1]]
-            xfer.remove_component(prefix + "bank_account")
-        else:
-            # change order of payoff mode
-            levy = mode.select_list[5]
-            mode.select_list.insert(3, levy)
-            del mode.select_list[6]
-            xfer.get_components(prefix + "mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-            if self.item.id is None:
-                self.item.mode = xfer.getparam(prefix + 'mode', Preference.get_value("payoff-mode", xfer.request.user))
-                xfer.get_components(prefix + "mode").value = self.item.mode
-                xfer.get_components(prefix + "bank_account").set_value(xfer.getparam(prefix + 'bank_account', Preference.get_value("payoff-bank_account", xfer.request.user)))
+        mode = self._edit_bank_and_mode(xfer, prefix)
         linked_supportings = supporting_list[0].get_final_child().get_linked_supportings() if len(supporting_list) == 1 else []
         if len(linked_supportings) == 0:
             mode.select_list = mode.select_list[:-1]
         elif self.item.mode == Payoff.MODE_INTERNAL:
-            row = xfer.get_max_row() + 1
-            sel = XferCompSelect(prefix + 'linked_supporting')
-            sel.set_value(xfer.getparam(prefix + 'linked_supporting', 0))
-            sel.set_select([(item.id, str(item)) for item in linked_supportings])
-            sel.set_location(col, row)
-            sel.description = _('linked')
-            sel.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-            xfer.add_component(sel)
-            xfer.remove_component(prefix + "reference")
-            for linked_supporting in linked_supportings:
-                if linked_supporting.id == sel.value:
-                    current_total_rest_topay = supporting_list[0].get_final_child().get_total_rest_topay()
-                    linked_total_rest_topay = linked_supporting.get_total_rest_topay()
-                    amount.value = min(current_total_rest_topay if current_total_rest_topay > 1e-3 else supporting_list[0].get_final_child().get_max_payoff(),
-                                       linked_total_rest_topay if linked_total_rest_topay > 1e-3 else linked_supporting.get_max_payoff())
-                    xfer.params[prefix + 'amount'] = float(amount.value)
-                    if abs(amount.value) > 0.001:
-                        xfer.change_to_readonly(prefix + "amount")
-                    break
-        fee_code = ''
-        if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
-            xfer.remove_component(prefix + "bank_account")
-        elif xfer.get_components(prefix + "bank_account") is not None:
-            xfer.get_components(prefix + "bank_account").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-            bank_account = BankAccount.objects.get(id=xfer.get_components(prefix + "bank_account").value)
-            fee_code = bank_account.fee_account_code
-        if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
-            xfer.remove_component(prefix + "payer")
-        if fee_code == '':
-            xfer.remove_component(prefix + "bank_fee")
-        else:
-            bank_fee = xfer.get_components(prefix + "bank_fee")
-            bank_fee.prec = currency_decimal
-            bank_fee.min = 0.0
-            bank_fee.max = float(amount_max)
+            self._edit_internal_payoff(xfer, prefix, supporting_list[0].get_final_child(), linked_supportings, amount, col)
+        self._edit_bank_and_fee(xfer, prefix, supporting_list, amount_max, currency_decimal)
 
 
 class DepositSlipEditor(LucteriosEditor):

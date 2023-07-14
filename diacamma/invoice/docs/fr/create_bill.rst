@@ -1,5 +1,49 @@
-Création de facture
-===================
+Gestion du facturier
+====================
+
+Type de justificatif
+--------------------
+
+Dans le facturier *Diacamma*, il y a 5 type différents de justificatif de facturation:
+
+ - **Panier**
+ Le type *panier* n'est activable que depuis le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, onglet *Panier*.
+ Il permet l'utilisation d'un outil de gestion d'achat en ligne: remplissage d'un panier d'achat.
+ 
+ Une fois activé, un nouveau menu *General/Panier d'achat* apparait alors à tout les utilisateurs ayant le droit spécifique "[Facturier Diacamma] facture : panier".
+ Par défaut, ce type (et l'écran associé) n'est pas actif.
+  
+ Une fois le document "panier" rempli et validé par l'acheteur, celui-ci est transformé en *Devis* (un par lieu de stockage différent si les articles sont stockable).
+ 
+ - **Devis**
+ Le *devis* permet d'envoyer à un acheteur potentiel, un document indiquant l'estimation du prix d'un ensemble d'articles de services ou de biens.
+  
+ Un *devis* peut-être créé directement depuis le facturier *Diacamma* ou venant d'une transformation d'un *panier*.
+ Un *devis* peut-être transformer en *commande* 'validée' ou en *facture* 'en création'. 
+  
+ - **Commande**
+ Le type *commande* n'est activable que depuis le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, onglet *Paramètres*.
+ 
+ Une *commande* est une démarche de vente résultant d'un *devis* accepté formellement par un acheteur. 
+ C'est une mise en attente de réalisation suite à des contraintes logistique (transport) ou d'approvisionnement avant de pouvoir être transformer en *facture*.
+ 
+ Par contre, contrairement à un *devis*, un règlement peut lui être associée (prouvant l'acceptation de l'acheteur).
+  
+ Une *commande* ne peux venir que d'un devis, ne peux pas être à l'état 'en création' et ne peux qu'être transformer en *facture*.
+ 
+ - **Facture**
+ Une *facture* est le justificatif d'achat prouvant la vente d'un ensemble d'articles. 
+ Un ensemble de paiement peux lui-etre attachée.
+  
+ Une *facture* peut-être créé directement depuis le facturier *Diacamma* ou venant d'une transformation d'un *devis*, d'une *commande* ou d'un *avoir*.
+ Elle peux également être transformer en *avoir* (droit spécifique "[Facturier Diacamma] facture : avoir")
+  
+ - **Avoir**
+ Un *avoir* est le justificatif prouvant le remboursement d'un ensemble d'articles. 
+ Un ensemble de paiement peux lui-etre attachée.
+  
+ Une *avoir* peut-être créé directement depuis le facturier *Diacamma* ou venant d'une transformation d'une *facture*.
+ Il peux également être transformer en *facture* (droit spécifique "[Facturier Diacamma] facture : avoir") 
 
 Création
 --------
@@ -49,7 +93,7 @@ Une fois qu'une facture (ou un avoir) est considéré comme terminée (c'est à 
 
 Depuis une facture « fini », il vous est possible de créer un avoir correspondant à l'état « en cours ». Cette fonctionnalité vous sera utile si vous êtes amené à rembourser un client d'un bien ou un service précédemment facturé.
 
-Vous pouvez également archiver des justificatifs (devis, facture, avoir) quand ceux-ci ont été gérés.
+Vous pouvez également archiver des justificatifs (devis, facture, avoir) quand ceux-ci ont été gérés (droit spécifique "[Facturier Diacamma] facture : archivé").
 Notez que si un avoir et un facture sont totalement lié, c'est à dire qu'ils n'ont qu'un règlement interne de l'un vers l'autre, leurs états sont forcés à l'identique entre "validé" et "archivé".
 
 Si une facture contiens des articles *stockable*, un bordereau de sortie est automatiquement générer pour correspondre à cette vente.

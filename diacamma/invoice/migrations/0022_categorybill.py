@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('titles', models.TextField(verbose_name='titles')),
                 ('emailsubject', models.CharField(max_length=100, verbose_name='email subject')),
                 ('emailmessage', models.TextField(verbose_name='email message')),
-                ('printmodel', models.ForeignKey(default=None, null=True, on_delete=django.db.models.deletion.SET_NULL, 
+                ('printmodel', models.ForeignKey(default=None, null=True, on_delete=django.db.models.deletion.SET_NULL,
                                                  related_name='categorybill_presale', to='CORE.printmodel', verbose_name='print patern pre-sale')),
                 ('is_default', models.BooleanField(default=False, verbose_name='default')),
             ],

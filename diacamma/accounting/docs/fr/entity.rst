@@ -122,9 +122,9 @@ La ou les écritures extraites pourront être :
 Import d'écritures
 ------------------
 
-Depuis la liste des écritures, le bouton "Import" vous permet d'importer des écritures comptables depuis un fichier CSV.
+Depuis la liste des écritures, le bouton "Import" vous permet d'importer des écritures comptables depuis un fichier CSV, ODS ou XLS.
 
-Après avoir sélectionné l'exercice d'import, le journal et les informations de format de votre fichier CSV, vous devez associer les champs des écritures aux colonnes de votre document (la première ligne de votre document doit décrire la nature de chaque colonne).
+Après avoir sélectionné l'exercice d'import, le journal et les informations de format de votre fichier, vous devez associer les champs des écritures aux colonnes de votre document (la première ligne de votre document doit décrire la nature de chaque colonne).
 
     .. image:: entity_import.png
   

@@ -53,6 +53,19 @@ Les moyens de paiement proposés ainsi que le message par défaut lors de l'envo
 
 Notez que si vous définissez des catégories de facturation, la liste des facture (menu *Facturier/Facture*) vous proposera un filtrage par type spécifique de chaque catégorie.
 
+Gestion de panier
+-----------------
+
+Le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, onglet *Panier*
+
+Vous pouvez ici activer la fonctionnalité d'achat par panier.
+Un nouveau menu *General/Panier d'achat* apparait alors à tout les utilisateurs ayant le droit spécifique "[Facturier Diacamma] facture : panier".
+
+D'autres paramètres permet d'affiner l'a fonctionnalité
+ - Filtre d'article pour le panier : défini un critère de recherche sauvegardé des articles vendables par panier.
+ - Temps de vie d'un panier (jours : défini le temps de conversation (en jours) d'un panier non validé. laissez "0" si vous ne voulez pas les nettoyer automatiquement.
+ - sujet et message pour courriel de panier : permet de personnaliser le courriel envoyé à l'acheteur une fois le panier validé.
+ 
 Codes d'imputations comptable
 -----------------------------
 
@@ -65,6 +78,9 @@ Un "Code d'imputation comptable" contiens:
 Chaque article peut être associé à un code d'imputation comptable (si non précisé, l'article n'est pas vendable).
 Ce mécanisme permet de centraliser à un seul endroit les configurations comptables des articles.
 Au changement d'exercice, si ces configurations doivent changées, il est plus simple de modifier cette configuration que l'ensemble des articles.
+
+Un champs spécifique peut également être demandé si la gestion des *comande* est autorisée: "compte de tiers de provision". 
+Ce compte de tiers sera utilisé par la commande (plutôt que le code comptable habituel "client") dans le cas où l'on sait que les futures commandes seront transformé en facture dans un laps de temps long (ex: approvisionnement d'article).
 
 Codes comptables par défaut
 ---------------------------

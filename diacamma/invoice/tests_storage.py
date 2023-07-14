@@ -908,32 +908,32 @@ class StorageTest(InvoiceTest):
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 1, 'modelname': 'invoice.StorageDetail', 'quotechar': "'",
-                                                                'delimiter': ',', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent': StringIO(csv_content)}, False)
+                                                                'delimiter': ',', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent': StringIO(csv_content)}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
         self.assert_count_equal('', 10)
         self.assert_select_equal('fld_article', 3)  # nb=3
         self.assert_select_equal('fld_price', 3)  # nb=3
         self.assert_select_equal('fld_quantity', 3)  # nb=3
-        self.assert_count_equal('CSV', 6)
-        self.assert_count_equal('#CSV/actions', 0)
+        self.assert_count_equal('Array', 6)
+        self.assert_count_equal('#Array/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
         self.assert_action_equal('POST', self.json_actions[0], (str('Retour'), 'images/left.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '0'}))
         self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '2'}))
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 2, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
-                                                                'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
+                                                                'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                                 "fld_article": "num", "fld_price": "prix", "fld_quantity": "qty", }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
         self.assert_count_equal('', 5)
-        self.assert_count_equal('CSV', 6)
-        self.assert_count_equal('#CSV/actions', 0)
+        self.assert_count_equal('Array', 6)
+        self.assert_count_equal('#Array/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
         self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '3'}))
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 3, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
-                                                                'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
+                                                                'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                                 "fld_article": "num", "fld_price": "prix", "fld_quantity": "qty", }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
         self.assert_count_equal('', 3)

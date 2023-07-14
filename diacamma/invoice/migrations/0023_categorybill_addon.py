@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='categorybill',
             name='printmodel_sold',
-            field=models.ForeignKey(default=None, null=True, on_delete=models.deletion.SET_NULL, 
+            field=models.ForeignKey(default=None, null=True, on_delete=models.deletion.SET_NULL,
                                     related_name='categorybill_sold', to='CORE.printmodel', verbose_name='print patern sold'),
         ),
         migrations.AddField(

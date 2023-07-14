@@ -391,7 +391,7 @@ class EntryTest(LucteriosTest):
 
         self.factory.xfer = EntryLineAccountEdit()
         self.calljson('/diacamma.accounting/entryLineAccountEdit', {'year': 1, 'debit_val': 0, 'date_value': '2015-02-13', 'num_cpt_txt': '', 'credit_val': 0,
-                                                                    'entrylineaccount_serial':-2,
+                                                                    'entrylineaccount_serial': -2,
                                                                     'serial_entry': '-1|4|2|87.230000|0|0|None|\n-2|11|0|87.230000|2|0|None|',
                                                                     'journal': 2, 'designation': 'un plein cadie', 'entryaccount': '1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryLineAccountEdit')
@@ -1042,7 +1042,7 @@ class EntryTest(LucteriosTest):
 
         self.factory.xfer = EntryAccountImport()
         self.calljson('/diacamma.accounting/entryAccountImport', {'step': 1, 'year': 1, 'journal': 5, 'quotechar': "'",
-                                                                  'delimiter': ';', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent': StringIO(csv_content)}, False)
+                                                                  'delimiter': ';', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent': StringIO(csv_content)}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountImport')
         self.assert_count_equal('', 15)
         self.assert_json_equal('LABELFORM', 'year', 'Exercice du 1 janvier 2015 au 31 décembre 2015 [en création]')
@@ -1055,23 +1055,23 @@ class EntryTest(LucteriosTest):
         self.assert_select_equal('fld_third', 9)
         self.assert_select_equal('fld_reference', 9)
         self.assert_select_equal('fld_costaccounting', 9)
-        self.assert_count_equal('CSV', 17)
-        self.assert_count_equal('#CSV/actions', 0)
+        self.assert_count_equal('Array', 17)
+        self.assert_count_equal('#Array/actions', 0)
 
         self.factory.xfer = EntryAccountImport()
         self.calljson('/diacamma.accounting/entryAccountImport', {'step': 2, 'year': 1, 'journal': 5, 'quotechar': "'", 'delimiter': ';',
-                                                                  'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
+                                                                  'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                                   "fld_entry.date_value": "date", "fld_entry.designation": "description", "fld_account": "code",
                                                                   'fld_debit': 'debit', 'fld_credit': 'credit', 'fld_third': 'third',
                                                                   'fld_reference': 'ref', 'fld_costaccounting': 'cost'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountImport')
         self.assert_count_equal('', 5)
-        self.assert_count_equal('CSV', 17)
-        self.assert_count_equal('#CSV/actions', 0)
+        self.assert_count_equal('Array', 17)
+        self.assert_count_equal('#Array/actions', 0)
 
         self.factory.xfer = EntryAccountImport()
         self.calljson('/diacamma.accounting/entryAccountImport', {'step': 3, 'year': 1, 'journal': 5, 'quotechar': "'", 'delimiter': ';',
-                                                                  'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'csvcontent0': csv_content,
+                                                                  'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                                   "fld_entry.date_value": "date", "fld_entry.designation": "description", "fld_account": "code",
                                                                   'fld_debit': 'debit', 'fld_credit': 'credit', 'fld_third': 'third',
                                                                   'fld_reference': 'ref', 'fld_costaccounting': 'cost'}, False)
