@@ -458,7 +458,7 @@ class FiscalYear(LucteriosModel):
     def get_context(self):
         entries_by_journal = []
         for journal in Journal.objects.all():
-            entries = self.entryaccount_set.filter(journal=journal, close=True)
+            entries = self.entryaccount_set.filter(journal=journal, close=True).exclude(entrylineaccount__isnull=True)
             if len(entries) > 0:
                 entries_by_journal.append((journal, entries))
         if len(entries_by_journal) == 0:
@@ -476,7 +476,7 @@ class FiscalYear(LucteriosModel):
         fiscal_year_xml = str(template.render(context_data))
         res_val = xml_validator(fiscal_year_xml, xsd_file)
         if res_val is not None:
-            getLogger("diacamma.accounting").exception("Failure to export: '%s'" % context_data)
+            getLogger("diacamma.accounting").exception("Failure to export: '%s' / '%s'" % (context_data, res_val))
             raise LucteriosException(IMPORTANT, _("Failure to export this fiscal year !"))
         save_file(get_user_path("accounting", file_name), fiscal_year_xml)
         return join("accounting", file_name)

@@ -406,6 +406,6 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
         return_content = loads(wsgi_input_content)
         self.helloasso_data = return_content['data']
         self.helloasso_eventtype = return_content['eventType']
-        self.helloasso_meta = return_content['metadata']
+        self.helloasso_meta = return_content['metadata'] if 'metadata' in return_content else {}
         logging.getLogger('diacamma.payoff').debug("eventType = %s / data = %s / metadata = %s" % (self.helloasso_eventtype, self.helloasso_data, self.helloasso_meta))
         ValidationPaymentGeneric._initialize(self, request, *_, **kwargs)
