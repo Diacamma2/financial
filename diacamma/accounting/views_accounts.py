@@ -38,7 +38,7 @@ from lucterios.framework.tools import FORMTYPE_NOMODAL, FORMTYPE_REFRESH, CLOSE_
 from lucterios.framework.tools import ActionsManage, MenuManage
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompImage,\
     XferCompButton, XferCompSelect
-from lucterios.framework.xfergraphic import XferContainerAcknowledge
+from lucterios.framework.xfergraphic import XferContainerAcknowledge, XFER_DBOX_WARNING
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework import signal_and_lock
 from lucterios.framework.model_fields import get_value_if_choices
@@ -260,8 +260,10 @@ class FiscalYearReportLastYear(XferContainerAcknowledge):
         current_year = FiscalYear.objects.get(id=year)
         if self.confirme(_('Do you want to import last year result?')):
             signal_and_lock.Signal.call_signal("reportlastyear", self)
-            current_year.run_report_lastyear(self.getparam("import_result", True))
+            warning_text = current_year.run_report_lastyear(self.getparam("import_result", True))
             signal_and_lock.Signal.call_signal("reportlastyear_after", self)
+            if warning_text != '':
+                self.message(warning_text, XFER_DBOX_WARNING)
 
 
 @ActionsManage.affect_list(_('Begin'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == FiscalYear.STATUS_BUILDING, intop=True)

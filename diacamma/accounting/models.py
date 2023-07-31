@@ -385,7 +385,7 @@ class FiscalYear(LucteriosModel):
             raise LucteriosException(IMPORTANT, _("This fiscal year has not a last fiscal year!"))
         if self.status != 0:
             raise LucteriosException(IMPORTANT, _("This fiscal year is not 'in building'!"))
-        current_system_account().import_lastyear(self, import_result)
+        return current_system_account().import_lastyear(self, import_result)
 
     def getorcreate_chartaccount(self, code, name=None, rubric=""):
         code = correct_accounting_code(code)

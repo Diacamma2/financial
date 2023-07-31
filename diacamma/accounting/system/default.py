@@ -34,6 +34,7 @@ from django.db.models import Q
 from lucterios.framework.tools import get_icon_path
 from lucterios.framework.xferadvance import TITLE_OK, TITLE_CANCEL
 from diacamma.accounting.tools import get_amount_from_format_devise, correct_accounting_code
+from lucterios.framework.error import LucteriosException
 
 
 class DefaultSystemAccounting(object):
@@ -252,11 +253,13 @@ class DefaultSystemAccounting(object):
             rubric = charts_account.rubric
             new_entry.add_entry_line(charts_account.get_current_validated(with_correction=True), code, name, with_correction=True, rubric=rubric)
         new_entry.closed()
+        return ''
 
     def _create_report_third(self, year):
         from diacamma.accounting.models import Journal, EntryAccount, EntryLineAccount, AccountLink
         last_entry_account = year.last_fiscalyear.entryaccount_set.filter(journal__id=Journal.DEFAULT_OTHER).order_by('num').last()
         _no_change, debit_rest, credit_rest = last_entry_account.serial_control(last_entry_account.get_serial())
+        bad_link_third = []
         multilinks_to_transfere = {}
         if (abs(debit_rest - credit_rest) < 0.0001) and (len(last_entry_account.get_thirds()) > 0):
             end_desig = _("Retained earnings - Third party debt")
@@ -274,15 +277,25 @@ class DefaultSystemAccounting(object):
             new_entry.closed()
             for multilink, entrylines_to_link in multilinks_to_transfere.items():
                 if len(entrylines_to_link) > 1:
-                    AccountLink.create_link(entrylines_to_link)
-                    multilink.delete()
+                    try:
+                        AccountLink.create_link(entrylines_to_link)
+                        multilink.delete()
+                    except LucteriosException:
+                        bad_link_third.append(str(entrylines_to_link[0].third))
+                        getLogger("diacamma.accounting").warning("Bad balanced entry lines : %s" % entrylines_to_link)
                 else:
+                    bad_link_third.append(str(entrylines_to_link[0].third))
                     getLogger("diacamma.accounting").warning("Bad entry lines : %s" % entrylines_to_link)
+        if len(bad_link_third) > 0:
+            return _('Link problem for: {[br]} - %s{[br]}') % '{[br]} - '.join(bad_link_third)
+        else:
+            return ''
 
     def import_lastyear(self, year, import_result):
-        self._create_report_lastyearresult(year, import_result)
-        self._create_report_third(year)
-        return
+        warning_text = ''
+        warning_text += self._create_report_lastyearresult(year, import_result)
+        warning_text += self._create_report_third(year)
+        return warning_text
 
     def fill_fiscalyear_balancesheet(self, grid, currentfilter, lastfilter):
         from diacamma.accounting.tools_reports import convert_query_to_account, add_cell_in_grid, add_item_in_grid, fill_grid, get_spaces
