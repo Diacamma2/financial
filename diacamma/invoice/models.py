@@ -537,6 +537,8 @@ class CategoryBill(LucteriosModel):
     prefix_numbering = models.CharField(_('prefix numbering'), max_length=20, blank=True)
     workflow_order = models.IntegerField(verbose_name=_('workflow_order'), choices=LIST_WORKFLOWS, null=False, default=WORKFLOWS_BOTH, db_index=True)
     payment_method = models.ManyToManyField(PaymentMethod, verbose_name=_('payment method'), blank=True)
+    with_multi_emailinfo = models.BooleanField(verbose_name=_('with multi emailinfo'), default=False)
+    multi_emailinfo = models.TextField(_('multi emailinfo'), default='')
 
     titles_txt = LucteriosVirtualField(verbose_name=_('titles'), compute_from='get_titles_txt')
 
@@ -552,7 +554,7 @@ class CategoryBill(LucteriosModel):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
         if Params.getvalue('invoice-order-mode') != 0:
             fields.append('workflow_order')
-        fields.extend([('printmodel', 'printmodel_sold'), 'payment_method', 'emailsubject', 'emailmessage'])
+        fields.extend(['payment_method', ('printmodel', 'printmodel_sold'), 'with_multi_emailinfo', 'emailsubject', 'emailmessage', ])
         return fields
 
     @classmethod
@@ -605,17 +607,57 @@ class CategoryBill(LucteriosModel):
         titles[type_num] = newtitle
         self.titles = dumps(titles)
 
+    def get_multi_emailsubject(self, type_num):
+        try:
+            multi_emailinfo = loads(self.multi_emailinfo)
+        except JSONDecodeError:
+            multi_emailinfo = {}
+        if (str(type_num) in multi_emailinfo) and ('subject' in multi_emailinfo[str(type_num)]):
+            return multi_emailinfo[str(type_num)]['subject']
+        else:
+            return self.emailsubject
+
+    def set_multi_emailsubject(self, type_num, emailsubject):
+        try:
+            multi_emailinfo = loads(self.multi_emailinfo)
+        except JSONDecodeError:
+            multi_emailinfo = {}
+        if str(type_num) not in multi_emailinfo:
+            multi_emailinfo[str(type_num)] = {}
+        multi_emailinfo[str(type_num)]['subject'] = emailsubject
+        self.multi_emailinfo = dumps(multi_emailinfo)
+
+    def get_multi_emailmessage(self, type_num):
+        try:
+            multi_emailinfo = loads(self.multi_emailinfo)
+        except JSONDecodeError:
+            multi_emailinfo = {}
+        if (str(type_num) in multi_emailinfo) and ('message' in multi_emailinfo[str(type_num)]):
+            return multi_emailinfo[str(type_num)]['message']
+        else:
+            return self.emailmessage
+
+    def set_multi_emailmessage(self, type_num, emailmessage):
+        try:
+            multi_emailinfo = loads(self.multi_emailinfo)
+        except JSONDecodeError:
+            multi_emailinfo = {}
+        if str(type_num) not in multi_emailinfo:
+            multi_emailinfo[str(type_num)] = {}
+        multi_emailinfo[str(type_num)]['message'] = emailmessage
+        self.multi_emailinfo = dumps(multi_emailinfo)
+
     def get_title_info(self):
         list_types = [type_item for type_item in Bill.LIST_BILLTYPES if (type_item[0] != Bill.BILLTYPE_RECEIPT) and ((Params.getvalue('invoice-cart-active') and self.is_default) or (type_item[0] != Bill.BILLTYPE_CART))]
         if (Params.getvalue('invoice-order-mode') == 0) or (self.workflow_order == self.WORKFLOWS_NEVER_ORDER):
             list_types = [type_item for type_item in list_types if type_item[0] != Bill.BILLTYPE_ORDER]
         for type_num, type_title in list_types:
-            yield type_num, _("title of '%s'") % type_title, self.get_title(type_num)
+            yield type_num, type_title, self.get_title(type_num)
 
     def get_titles_txt(self):
         result = []
-        for _num, type_description, type_value in self.get_title_info():
-            result.append("%s = %s" % (type_description, type_value))
+        for _num, type_title, type_value in self.get_title_info():
+            result.append("%s = %s" % (_("title of '%s'") % type_title, type_value))
         return result
 
     class Meta(object):
@@ -1520,13 +1562,19 @@ class Bill(Supporting):
         if self.categoryBill_id is None:
             return Supporting.get_email_subject(self)
         else:
-            return self.categoryBill.emailsubject
+            if self.categoryBill.with_multi_emailinfo:
+                return self.categoryBill.get_multi_emailsubject(self.bill_type)
+            else:
+                return self.categoryBill.emailsubject
 
     def get_email_message(self):
         if self.categoryBill_id is None:
             return Supporting.get_email_message(self)
         else:
-            return self.categoryBill.emailmessage
+            if self.categoryBill.with_multi_emailinfo:
+                return self.categoryBill.get_multi_emailmessage(self.bill_type)
+            else:
+                return self.categoryBill.emailmessage
 
     def get_default_print_model(self):
         model = None

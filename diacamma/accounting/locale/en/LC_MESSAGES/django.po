@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-31 09:33+0000\n"
+"POT-Creation-Date: 2023-08-17 16:43+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -30,16 +30,16 @@ msgstr "This fiscal year is not the last!"
 msgid "Blank"
 msgstr "Blank"
 
-#: editors.py:124 views_accounts.py:179
+#: editors.py:124 views_accounts.py:178
 msgid "Initial"
 msgstr "Initial"
 
-#: editors.py:126 views_accounts.py:142 views_budget.py:213
+#: editors.py:126 views_accounts.py:141 views_budget.py:213
 #: views_entries.py:310
 msgid "Import"
 msgstr "Import"
 
-#: editors.py:128 views_accounts.py:56 views_accounts.py:62
+#: editors.py:128 views_accounts.py:55 views_accounts.py:61
 msgid "Charts of account"
 msgstr "Charts of account"
 
@@ -310,7 +310,7 @@ msgid "This fiscal year is not 'in running'!"
 msgstr "This fiscal year is not 'in running'!"
 
 #: models.py:579 models.py:596 models.py:693 models.py:997 models.py:1732
-#: views_accounts.py:242 views_budget.py:37 views_budget.py:245
+#: views_accounts.py:241 views_budget.py:37 views_budget.py:245
 #: views_entries.py:293
 msgid "fiscal year"
 msgstr "fiscal year"
@@ -792,7 +792,7 @@ msgstr "Modify account"
 msgid "Delete account"
 msgstr "Delete account"
 
-#: views.py:345 views_accounts.py:53
+#: views.py:345 views_accounts.py:52
 msgid "Bookkeeping"
 msgstr "Bookkeeping"
 
@@ -832,91 +832,91 @@ msgstr "Only entries without link"
 msgid "Accounts filter"
 msgstr "Accounts filter"
 
-#: views_accounts.py:53
+#: views_accounts.py:52
 msgid "Manage of Bookkeeping"
 msgstr "Manage of Bookkeeping"
 
-#: views_accounts.py:57
+#: views_accounts.py:56
 msgid "Editing and modifying of Charts of accounts for current fiscal year"
 msgstr "Editing and modifying of Charts of accounts for current fiscal year"
 
-#: views_accounts.py:98
+#: views_accounts.py:97
 msgid "Using codes unknows in this account chart:"
 msgstr "Using codes unknows in this account chart:"
 
-#: views_accounts.py:110
+#: views_accounts.py:109
 msgid "Add an account"
 msgstr "Add an account"
 
-#: views_accounts.py:111
+#: views_accounts.py:110
 msgid "Modify an account"
 msgstr "Modify an account"
 
-#: views_accounts.py:130
+#: views_accounts.py:129
 msgid "Show an account"
 msgstr "Show an account"
 
-#: views_accounts.py:139
+#: views_accounts.py:138
 msgid "Delete an account"
 msgstr "Delete an account"
 
-#: views_accounts.py:148
+#: views_accounts.py:147
 msgid "Import charts accounts from last fiscal year"
 msgstr "Import charts accounts from last fiscal year"
 
-#: views_accounts.py:152
+#: views_accounts.py:151
 msgid "Do you want to import last year charts accounts?"
 msgstr "Do you want to import last year charts accounts?"
 
-#: views_accounts.py:156
+#: views_accounts.py:155
 msgid "Merge"
 msgstr "Merge"
 
-#: views_accounts.py:171 views_accounts.py:175
+#: views_accounts.py:170 views_accounts.py:174
 msgid "Merge not possible !"
 msgstr "Merge not possible !"
 
-#: views_accounts.py:185
+#: views_accounts.py:184
 msgid "Add initial charts of account"
 msgstr "Add initial charts of account"
 
-#: views_accounts.py:191
+#: views_accounts.py:190
 msgid "Do you want to import initial accounts?"
 msgstr "Do you want to import initial accounts?"
 
-#: views_accounts.py:224 views_accounts.py:238
+#: views_accounts.py:223 views_accounts.py:237
 msgid "Listing charts of account"
 msgstr "Listing charts of account"
 
-#: views_accounts.py:251
+#: views_accounts.py:250
 msgid "Last fiscal year"
 msgstr "Last fiscal year"
 
-#: views_accounts.py:258
+#: views_accounts.py:257
 msgid "Last fiscal year import"
 msgstr "Last fiscal year import"
 
-#: views_accounts.py:262
+#: views_accounts.py:261
 msgid "Do you want to import last year result?"
 msgstr "Do you want to import last year result?"
 
-#: views_accounts.py:270
+#: views_accounts.py:269
 msgid "Begin"
 msgstr "Begin"
 
-#: views_accounts.py:276
+#: views_accounts.py:275
 msgid "Begin fiscal year"
 msgstr "Begin fiscal year"
 
-#: views_accounts.py:283
+#: views_accounts.py:282
 msgid "Closing"
 msgstr "Closing"
 
-#: views_accounts.py:289
+#: views_accounts.py:288
 msgid "Close fiscal year"
 msgstr "Close fiscal year"
 
-#: views_accounts.py:295
+#: views_accounts.py:294
 msgid "close-fiscal-year-confirme"
 msgstr ""
 "{[center]} {[b]} Want cloturer this exercise? {[/b] {} [/center]} {[br/]}"
@@ -928,13 +928,13 @@ msgstr ""
 "- The state of your inventory {[br/]}.{[br/]}{[u]}The tool will create "
 "eventually an ending entry. {[/u} {[br/]}"
 
-#: views_accounts.py:298
+#: views_accounts.py:297
 msgid "warning, entry no validated"
 msgstr ""
 "{[br/]} {[u]} Note: {[/u]} an entry is not validated {[br/]} it will be "
 "moved to the following fiscal year"
 
-#: views_accounts.py:300
+#: views_accounts.py:299
 #, python-format
 msgid "warning, %d entries no validated"
 msgstr ""

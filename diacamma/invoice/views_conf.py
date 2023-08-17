@@ -288,11 +288,6 @@ class CategoryBillAddModify(XferAddEditor):
                 self.item.is_default = (CategoryBill.objects.filter(is_default=True).count() == 0)
                 self.params['is_default'] = 1 if self.item.is_default else 0
         XferAddEditor.fillresponse(self)
-        comment = XferCompLabelForm('comment')
-        comment.set_value(_('Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}name of documentation sended{[br/]}'))
-        comment.set_color("green")
-        comment.set_location(1, self.get_max_row() + 1)
-        self.add_component(comment)
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)

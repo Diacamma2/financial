@@ -3713,3 +3713,27 @@ class BillTest(InvoiceTest):
         self.assertEqual(self.json_actions[3]['id'], 'diacamma.invoice/billPrint')
         self.assertEqual(self.json_actions[4]['id'], 'diacamma.invoice/billToOrder')
         self.assertEqual(self.json_actions[5]['id'], '')
+
+    def test_with_categorybill_withmultiemail(self):
+        Params.setvalue('invoice-cart-active', True)
+        default_paymentmethod()
+        default_articles()
+        default_categorybill(with_extra=True)
+
+        details = [{'article': 0, 'designation': 'article 0', 'price': '20.00', 'quantity': 15}]
+        bill_id = self._create_bill(details, 0, '2015-04-01', 6, True, 3)  # 59.50
+        self.factory.xfer = PayableEmail()
+        self.calljson('/diacamma.payoff/payableEmail',
+                      {'item_name': 'bill', 'bill': bill_id, 'modelname': 'invoice.Bill'}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
+        self.assert_json_equal('EDIT', 'subject', 'Q')
+        self.assert_json_equal('MEMO', 'message', 'QQ qq')
+
+        details = [{'article': 0, 'designation': 'article 0', 'price': '20.00', 'quantity': 15}]
+        bill_id = self._create_bill(details, 4, '2015-04-01', 6, True, 3)  # 59.50
+        self.factory.xfer = PayableEmail()
+        self.calljson('/diacamma.payoff/payableEmail',
+                      {'item_name': 'bill', 'bill': bill_id, 'modelname': 'invoice.Bill'}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
+        self.assert_json_equal('EDIT', 'subject', 'O')
+        self.assert_json_equal('MEMO', 'message', 'OO oo')

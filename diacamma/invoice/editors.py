@@ -32,7 +32,7 @@ from django.db.models import Q
 
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheckList, XferCompGrid, XferCompButton, XferCompEdit,\
-    XferCompUpLoad, XferCompImage
+    XferCompUpLoad, XferCompImage, XferCompMemo
 from lucterios.framework.tools import CLOSE_NO, FORMTYPE_REFRESH, ActionsManage, FORMTYPE_MODAL, format_to_string
 from lucterios.framework.filetools import save_from_base64, open_image_resize, get_user_path
 from lucterios.framework.xferbasic import NULL_VALUE
@@ -189,24 +189,57 @@ class ArticleEditor(LucteriosEditor):
 class CategoryBillEditor(SupportingEditor):
 
     def edit(self, xfer):
-        comp_emailmessage = xfer.get_components('emailmessage')
-        comp_emailmessage.with_hypertext = True
+        comp_payment_method = xfer.get_components('payment_method')
         xfer.item.workflow_order = int(xfer.item.workflow_order)
-        for type_num, type_description, type_value in xfer.item.get_title_info():
+        for type_num, type_title, type_value in xfer.item.get_title_info():
             comp_title = XferCompEdit('title_%d' % type_num)
-            comp_title.description = type_description
+            comp_title.description = _("title of '%s'") % type_title
             comp_title.value = type_value
-            comp_title.set_location(comp_emailmessage.col, xfer.get_max_row() + 1)
+            comp_title.set_location(comp_payment_method.col, xfer.get_max_row() + 1)
             xfer.add_component(comp_title)
         xfer.move_components('printmodel', 0, 20)
         xfer.move_components('printmodel_sold', 0, 20)
-        xfer.move_components('emailsubject', 0, 20)
-        xfer.move_components('emailmessage', 0, 20)
+        xfer.move_components('with_multi_emailinfo', 0, 20)
+        comp_with_multi_emailinfo = xfer.get_components('with_multi_emailinfo')
+        comp_with_multi_emailinfo.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        if xfer.item.with_multi_emailinfo:
+            xfer.remove_component('emailsubject')
+            xfer.remove_component('emailmessage')
+            row = comp_with_multi_emailinfo.row + 2
+            for type_num, type_title, _type_value in xfer.item.get_title_info():
+                comp_emailsubject = XferCompEdit('emailsubject_%d' % type_num)
+                comp_emailsubject.description = _("email subject of '%s'") % type_title
+                comp_emailsubject.value = xfer.item.get_multi_emailsubject(type_num)
+                comp_emailsubject.set_location(comp_payment_method.col, row, 2)
+                xfer.add_component(comp_emailsubject)
+                comp_emailmessage = XferCompMemo('emailmessage_%d' % type_num)
+                comp_emailmessage.with_hypertext = True
+                comp_emailmessage.description = _("email message of '%s'") % type_title
+                comp_emailmessage.value = xfer.item.get_multi_emailmessage(type_num)
+                comp_emailmessage.set_location(comp_payment_method.col, row + 1, 2)
+                xfer.add_component(comp_emailmessage)
+                comment = XferCompLabelForm('sepemail_%d' % type_num)
+                comment.set_value('{[hr/]}')
+                comment.set_location(1, row + 2, 2)
+                xfer.add_component(comment)
+                row += 3
+        else:
+            xfer.move_components('emailsubject', 0, 21)
+            xfer.move_components('emailmessage', 0, 21)
+            comp_emailmessage = xfer.get_components('emailmessage')
+            comp_emailmessage.with_hypertext = True
+
         comp_special = xfer.get_components('special_numbering')
         comp_special.java_script = """
 var with_special=current.getValue();
 parent.get('prefix_numbering').setEnabled(with_special);
 """
+        comment = XferCompLabelForm('comment')
+        comment.set_value(_('Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}name of documentation sended{[br/]}') + '{[hr/]}')
+        comment.set_color("green")
+        comment.set_location(1, comp_with_multi_emailinfo.row + 1, 2)
+        xfer.add_component(comment)
+
         comp_workflow = xfer.get_components('workflow_order')
         if comp_workflow is not None:
             comp_workflow.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
@@ -216,6 +249,12 @@ parent.get('prefix_numbering').setEnabled(with_special);
             if param_key.startswith('title_'):
                 type_num = int(param_key[6:])
                 xfer.item.set_title(type_num, param_val)
+            if param_key.startswith('emailsubject_'):
+                type_num = int(param_key[13:])
+                xfer.item.set_multi_emailsubject(type_num, param_val)
+            if param_key.startswith('emailmessage_'):
+                type_num = int(param_key[13:])
+                xfer.item.set_multi_emailmessage(type_num, param_val)
 
 
 class BillEditor(SupportingEditor):

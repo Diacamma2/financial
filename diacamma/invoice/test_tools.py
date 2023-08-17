@@ -118,7 +118,7 @@ def default_area():
     StorageArea.objects.create(name='Lieu 3', designation="CCC", contact_id=4)
 
 
-def default_categorybill():
+def default_categorybill(with_extra=False):
     cat_bill1 = CategoryBill.objects.create(name="1st type", designation='First', emailsubject="#reference", emailmessage="Hello", printmodel_id=8, printmodel_sold_id=9,
                                             titles='{"0": "QQQ", "1": "BBB", "2": "AAA", "3": "RRR", "4": "OOO", "5": "CCC"}')
     cat_bill1.payment_method.set(PaymentMethod.objects.filter(id__in=(1, 2, 3, 4)))
@@ -126,6 +126,14 @@ def default_categorybill():
                                             emailsubject="Warning: #reference", emailmessage="Hello{[br/]}name=#name{[br/]}doc=#doc{[br/]}{[br/]}Kiss", printmodel_id=9, printmodel_sold_id=8,
                                             titles='{"0": "Type Q", "1": "Type B", "2": "Type A", "3": "Type R", "4": "Type O", "5": "Type C"}')
     cat_bill2.payment_method.set(PaymentMethod.objects.filter(id__in=(1, 2, 3, 5, 6)))
+    if with_extra:
+        cat_bill3 = CategoryBill.objects.create(name="3nd type", designation='Third',
+                                                printmodel_id=8, printmodel_sold_id=9,
+                                                titles='{"0": "Type Q", "1": "Type B", "2": "Type A", "3": "Type R", "4": "Type O", "5": "Type C"}',
+                                                with_multi_emailinfo=True,
+                                                multi_emailinfo='{"0": {"subject":"Q","message":"QQ qq"}, "1": {"subject":"B","message":"BB bb"}, "2": {"subject":"A","message":"AA aa"}, "3": {"subject":"R","message":"RR rr"}, "4": {"subject":"O","message":"OO oo"}, "5": {"subject":"C","message":"CC cc"}}'
+                                                )
+        cat_bill3.payment_method.set(PaymentMethod.objects.filter(id__in=(1, 2)))
 
 
 def insert_storage(complet=False):
@@ -151,14 +159,14 @@ def insert_storage(complet=False):
 
 class InvoiceTest(LucteriosTest):
 
-    def _create_bill(self, details, bill_type, bill_date, bill_third, valid=False):
+    def _create_bill(self, details, bill_type, bill_date, bill_third, valid=False, categorybill=0):
         if (bill_type == 0) or (bill_type == 3):
             cost_accounting = 0
         else:
             cost_accounting = 2
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify',
-                      {'bill_type': bill_type, 'date': bill_date, 'cost_accounting': cost_accounting, 'third': bill_third, 'SAVE': 'YES'}, False)
+                      {'bill_type': bill_type, 'categoryBill': categorybill, 'date': bill_date, 'cost_accounting': cost_accounting, 'third': bill_third, 'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
         bill_id = self.response_json['action']['params']['bill']
         for detail in details:
