@@ -351,7 +351,7 @@ def add_payment_methods(xfer, supporting, payments):
     for paymeth in payments:
         max_row = xfer.get_max_row() + 1
         lbl = XferCompLabelForm('paymeth_%d' % paymeth.id)
-        lbl.description = get_value_if_choices(paymeth.paytype, paymeth.get_field_by_name('paytype'))
+        lbl.description = paymeth.paytypetext
         lbl.set_value(paymeth.show_pay(get_url_from_request(xfer.request), xfer.language, supporting))
         lbl.set_location(1, max_row, 3)
         xfer.add_component(lbl)
@@ -394,7 +394,7 @@ def get_html_payment(root_uri, lang, supporting):
     html_message += "<table width='90%'>"
     for paymeth in supporting.get_payment_method():
         html_message += "<tr>"
-        html_message += "<td><b>%s</b></td>" % get_value_if_choices(paymeth.paytype, paymeth.get_field_by_name('paytype'))
+        html_message += "<td><b>%s</b></td>" % paymeth.paytypetext
         html_message += "<td>%s</td>" % paymeth.show_pay(root_uri, lang, supporting).replace('{[', '<').replace(']}', '>')
         html_message += "</tr>"
         html_message += "<tr></tr>"

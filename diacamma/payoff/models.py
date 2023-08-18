@@ -248,8 +248,9 @@ class Supporting(LucteriosModel):
 
     def send_email(self, subject, message, model):
         fct_mailing_mod = import_module('lucterios.mailing.email_functions')
-        fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)],
-                                   cclist=self.get_cclist(), bcclist=self.get_bcclist(), withcopy=True)
+        if fct_mailing_mod.will_mail_send():
+            fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)],
+                                       cclist=self.get_cclist(), bcclist=self.get_bcclist(), withcopy=True)
 
     def get_document_filename(self):
         return remove_accent(self.get_payment_name(), True)
@@ -901,6 +902,10 @@ class PaymentMethod(LucteriosModel):
 
     def get_info(self):
         return self.paymentType.get_info()
+
+    @property
+    def paytypetext(self):
+        return get_value_if_choices(self.paytype, self.get_field_by_name('paytype'))
 
     def show_pay(self, absolute_uri, lang, supporting):
         return self.paymentType.show_pay(absolute_uri, lang, supporting)

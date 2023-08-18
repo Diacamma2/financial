@@ -99,7 +99,7 @@ def _add_type_filter_selector(xfer, row, col=0):
     edt.set_value(type_filter)
     edt.set_location(col, row)
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-    if Params.getvalue('invoice-order-mode') == 0:
+    if Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_NONE:
         edt.remove_select(Bill.BILLTYPE_ORDER)
     xfer.add_component(edt)
     return bill_type, category
@@ -481,7 +481,7 @@ class BillMultiPay(XferContainerAcknowledge):
 
 
 def condition_bill2bill(xfer):
-    if (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.categoryBill is not None) and (xfer.item.categoryBill.workflow_order == CategoryBill.WORKFLOWS_ALWAYS_ORDER) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION):
+    if (Params.getvalue('invoice-order-mode') != Bill.INVOICE_ORDER_NONE) and (xfer.item.categoryBill is not None) and (xfer.item.categoryBill.workflow_order == CategoryBill.WORKFLOWS_ALWAYS_ORDER) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION):
         return False
     return (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER))
 
@@ -525,9 +525,9 @@ class BillToBill(XferContainerAcknowledge):
 
 
 def condition_bill2order(xfer):
-    if (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.categoryBill is not None) and (xfer.item.categoryBill.workflow_order == CategoryBill.WORKFLOWS_NEVER_ORDER) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION):
+    if (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_CONVERT) and (xfer.item.categoryBill is not None) and (xfer.item.categoryBill.workflow_order == CategoryBill.WORKFLOWS_NEVER_ORDER) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION):
         return False
-    return (Params.getvalue('invoice-order-mode') != 0) and (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION)
+    return (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_CONVERT) and (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION)
 
 
 @ActionsManage.affect_show(_("=> Order"), "images/ok.png", close=CLOSE_YES, condition=condition_bill2order)

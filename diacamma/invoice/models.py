@@ -167,7 +167,7 @@ class AccountPosting(LucteriosModel):
     @classmethod
     def get_edit_fields(cls):
         fields = ["name", "sell_account", ("cost_accounting", None)]
-        if Params.getvalue('invoice-order-mode') != 0:
+        if Params.getvalue('invoice-order-mode') != Bill.INVOICE_ORDER_NONE:
             fields.append("provision_third_account")
         return fields
 
@@ -552,7 +552,7 @@ class CategoryBill(LucteriosModel):
     @classmethod
     def get_edit_fields(cls):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
-        if Params.getvalue('invoice-order-mode') != 0:
+        if Params.getvalue('invoice-order-mode') != Bill.INVOICE_ORDER_NONE:
             fields.append('workflow_order')
         fields.extend(['payment_method', ('printmodel', 'printmodel_sold'), 'with_multi_emailinfo', 'emailsubject', 'emailmessage', ])
         return fields
@@ -560,7 +560,7 @@ class CategoryBill(LucteriosModel):
     @classmethod
     def get_show_fields(cls):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
-        if Params.getvalue('invoice-order-mode') != 0:
+        if Params.getvalue('invoice-order-mode') != Bill.INVOICE_ORDER_NONE:
             fields.append('workflow_order')
         fields.extend([('printmodel', 'printmodel_sold'), 'payment_method', 'emailsubject', 'emailmessage'])
         return fields
@@ -649,7 +649,7 @@ class CategoryBill(LucteriosModel):
 
     def get_title_info(self):
         list_types = [type_item for type_item in Bill.LIST_BILLTYPES if (type_item[0] != Bill.BILLTYPE_RECEIPT) and ((Params.getvalue('invoice-cart-active') and self.is_default) or (type_item[0] != Bill.BILLTYPE_CART))]
-        if (Params.getvalue('invoice-order-mode') == 0) or (self.workflow_order == self.WORKFLOWS_NEVER_ORDER):
+        if (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_NONE) or (self.workflow_order == self.WORKFLOWS_NEVER_ORDER):
             list_types = [type_item for type_item in list_types if type_item[0] != Bill.BILLTYPE_ORDER]
         for type_num, type_title in list_types:
             yield type_num, type_title, self.get_title(type_num)
@@ -685,6 +685,10 @@ class Bill(Supporting):
     STATUS_ARCHIVE = 3
     LIST_STATUS = ((STATUS_BUILDING, _('building')), (STATUS_VALID, _('valid')), (STATUS_CANCEL, _('cancel')), (STATUS_ARCHIVE, _('archive')))
     SELECTION_STATUS = ((STATUS_BUILDING_VALID, '%s+%s' % (_('building'), _('valid'))),) + LIST_STATUS + ((STATUS_ALL, None),)
+
+    INVOICE_ORDER_NONE = 0
+    INVOICE_ORDER_CONVERT = 1
+    INVOICE_ORDER_LINK = 2
 
     fiscal_year = models.ForeignKey(FiscalYear, verbose_name=_('fiscal year'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
     bill_type = models.IntegerField(verbose_name=_('bill type'), choices=LIST_BILLTYPES, null=False, default=BILLTYPE_QUOTATION, db_index=True)
@@ -1175,6 +1179,20 @@ class Bill(Supporting):
         html_message += "</html>"
         self.send_email(replace_tag(contact, subject), replace_tag(contact, html_message), self.get_default_print_model())
 
+    def send_email_by_type(self):
+        def replace_tag(contact, text):
+            text = text.replace('#name', contact.get_presentation() if contact is not None else '???')
+            text = text.replace('#doc', str(self.get_docname()))
+            text = text.replace('#reference', str(self.reference))
+            return text
+        subject = self.get_email_subject()
+        message = self.get_email_message()
+        contact = self.third.contact.get_final_child()
+        html_message = "<html>"
+        html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
+        html_message += "</html>"
+        self.send_email(replace_tag(contact, subject), replace_tag(contact, html_message), self.get_default_print_model())
+
     transitionname__valid = _("Validate")
 
     @transition(field=status, source=STATUS_BUILDING, target=None, conditions=[lambda item:item.get_info_state() == []])
@@ -1328,13 +1346,13 @@ class Bill(Supporting):
         else:
             return None
 
-    def convert_to_order(self):
+    def convert_to_order(self, comment=None):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
             new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_ORDER, date=timezone.now(),
                                            third=self.third, status=Bill.STATUS_VALID, categoryBill=self.categoryBill,
-                                           comment=self.comment, parentbill=self)
+                                           comment=self.comment if comment is None else comment, parentbill=self)
             new_bill.affect_num()
             new_bill.save()
             for detail in self.detail_set.all():
@@ -1498,7 +1516,7 @@ class Bill(Supporting):
             raise LucteriosException(
                 IMPORTANT, _("This item can't be validated!"))
         if (self.bill_type == Bill.BILLTYPE_QUOTATION):
-            if (Params.getvalue('invoice-order-mode') != 0) and (self.categoryBill is not None) and (self.categoryBill.workflow_order != CategoryBill.WORKFLOWS_NEVER_ORDER):
+            if (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_CONVERT) and (self.categoryBill is not None) and (self.categoryBill.workflow_order != CategoryBill.WORKFLOWS_NEVER_ORDER):
                 new_bill = self.convert_to_order()()
             else:
                 new_bill = self.convert_to_bill()
@@ -1589,10 +1607,32 @@ class Bill(Supporting):
             return model
 
     def get_payment_method(self):
+        class FakePayementValidate(object):
+            def __init__(self, bill):
+                self.bill = bill
+
+            @property
+            def id(self):
+                return -100
+
+            @property
+            def paytypetext(self):
+                return _('validation of %s') % self.bill.billtype
+
+            def show_pay(self, absolute_uri, lang, supporting):
+                return """{[center]}
+{[a href='%(uri)s/diacamma.invoice/invoiceValidQuotation?bill=%(billid)s' name='validate' target='_blank']}
+%(validation)s
+{[/a]}
+{[/center]}""" % {'uri': absolute_uri, 'billid': self.bill.id, 'validation': _('validation')}
+
         if self.categoryBill_id is None:
-            return Supporting.get_payment_method(self)
+            payment_methods = list(Supporting.get_payment_method(self))
         else:
-            return list(self.categoryBill.payment_method.all())
+            payment_methods = list(self.categoryBill.payment_method.all())
+        if (self.bill_type == Bill.BILLTYPE_QUOTATION) and (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_LINK) and ((self.categoryBill is None) or (self.categoryBill.workflow_order != CategoryBill.WORKFLOWS_NEVER_ORDER)):
+            payment_methods.insert(0, FakePayementValidate(self))
+        return payment_methods
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.bill_type = int(self.bill_type)
@@ -2452,7 +2492,7 @@ def invoice_checkparam():
     Parameter.check_and_create(name='invoice-reduce-with-ratio', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-with-ratio"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-reduce-allow-article-empty', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-allow-article-empty"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-order-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-order-mode"),
-                               args="{'Enum':2}", value='0', param_titles=(_("invoice-order-mode.0"), _("invoice-order-mode.1")))
+                               args="{'Enum':3}", value='0', param_titles=(_("invoice-order-mode.0"), _("invoice-order-mode.1"), _("invoice-order-mode.2")))
     Parameter.check_and_create(name='invoice-asset-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-asset-mode"),
                                args="{'Enum':2}", value='0', param_titles=(_("invoice-asset-mode.0"), _("invoice-asset-mode.1")))
     Parameter.check_and_create(name='invoice-default-nbpayoff', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-default-nbpayoff"),
