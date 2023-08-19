@@ -207,6 +207,8 @@ class CategoryBillEditor(SupportingEditor):
             xfer.remove_component('emailmessage')
             row = comp_with_multi_emailinfo.row + 2
             for type_num, type_title, _type_value in xfer.item.get_title_info():
+                if type_num == Bill.BILLTYPE_CART:
+                    continue
                 comp_emailsubject = XferCompEdit('emailsubject_%d' % type_num)
                 comp_emailsubject.description = _("email subject of '%s'") % type_title
                 comp_emailsubject.value = xfer.item.get_multi_emailsubject(type_num)

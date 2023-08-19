@@ -888,12 +888,13 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billToBill',
                       {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billToBill')
-        self.assert_count_equal('', 3)
+        self.assert_count_equal('', 4)
         self.assert_json_equal('DATE', 'billdate', '')
+        self.assert_json_equal('MEMO', 'comment', '')
 
         self.factory.xfer = BillToBill()
         self.calljson('/diacamma.invoice/billToBill',
-                      {'CONFIRME': 'YES', 'bill': 1, 'billdate': '2015-04-10'}, False)
+                      {'CONFIRME': 'YES', 'bill': 1, 'billdate': '2015-04-10', 'comment': 'blablabla'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToBill')
         self.assertEqual(self.response_json['action']['id'], "diacamma.invoice/billShow")
         self.assertEqual(len(self.response_json['action']['params']), 1)
@@ -929,6 +930,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'date', '2015-04-10')
+        self.assert_json_equal('LABELFORM', 'comment', 'blablabla')
         self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
 
@@ -1098,6 +1100,78 @@ class BillTest(InvoiceTest):
             self.assertEqual('<html>message quotation</html>', decode_b64(msg.get_payload()))
             self.assertTrue('commande_A-1_Dalton Jack.pdf' in msg_file.get('Content-Type', ''), msg_file.get('Content-Type', ''))
             self.save_pdf(base64_content=msg_file.get_payload())
+        finally:
+            server.stop()
+
+    def test_quotation_to_order_by_link(self):
+        Params.setvalue('invoice-order-mode', 2)
+        default_articles()
+        self._create_bill([{'article': 1, 'designation': 'article 1',
+                            'price': '22.50', 'quantity': 3, 'reduce': '5.0'}], 0, '2015-04-01', 6, True)
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -2, 'type_filter': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 1)
+        self.assert_json_equal('', 'bill/@0/bill_type', 0)
+        self.assert_json_equal('', 'bill/@0/status', 1)
+        self.assert_json_equal('', 'bill/@0/third', 'Dalton Jack')
+        self.assert_json_equal('', 'bill/@0/total', 62.5)
+
+        configSMTP('localhost', 2125)
+        server = TestReceiver()
+        server.start(2125)
+        try:
+            default_area()
+            self.assertEqual(0, server.count())
+
+            self.factory.xfer = PayableEmail()
+            self.calljson('/diacamma.payoff/payableEmail',
+                          {'bill': 1, 'OK': 'YES', 'item_name': 'bill', 'subject': 'my bill', 'message': 'this is a bill.', 'model': 8}, False)
+            self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
+
+            self.assertEqual(1, server.count())
+            _msg_txt, msg, _msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
+            self.assertEqual('base64', msg.get('Content-Transfer-Encoding', ''))
+            self.assertEqual("""<html>this is a bill.<hr/><center><i><u>Moyens de paiement</u></i></center><table width='90%'><tr><td><b>Validation de devis sans paiement</b></td><td><center>
+En cliquant ici, vous acceptez ce devis, vous devrez envoyer le paiement ultérieurement.<br>
+<a href='http://testserver/diacamma.invoice/invoiceValidQuotation?payid=1' name='validate' target='_blank'>
+<button>
+<img src="http://testserver/static/lucterios.CORE/images/ok.png" title="Ok" alt="Ok"> validation
+</button>
+</a>
+</center></td></tr><tr></tr></table></html>""", decode_b64(msg.get_payload()))
+
+            self.call_ex('/diacamma.invoice/invoiceValidQuotation', {'payid': 1}, 'get', 200)
+            self.assertTrue(self.content.startswith("<!DOCTYPE html>"), self.content)
+            self.assertIn('form method="post" id="validation" name="validation" action="http://testserver/diacamma.invoice/invoiceValidQuotation"', self.content)
+            self.assertIn('input type="hidden" name="payid" value="1"', self.content)
+            self.assertIn('input type="hidden" name="CONFIRME" value="True"', self.content)
+            self.assertIn('input type="text" name="firstname" required="required"', self.content)
+            self.assertIn('input type="text" name="lastname" required="required"', self.content)
+            self.assertIn('img src="http://testserver/static/lucterios.CORE/images/ok.png" title="Ok" alt="Ok"', self.content)
+
+            self.call_ex('/diacamma.invoice/invoiceValidQuotation', {'payid': 1, 'CONFIRME': 'True', 'firstname': 'Jean', 'lastname': 'Valjean'}, 'post', 200)
+            self.assertTrue(self.content.startswith("<!DOCTYPE html>"), self.content)
+            self.assertIn('devis validé par Jean Valjean', self.content)
+
+            self.assertEqual(2, server.count())
+
+            self.factory.xfer = BillList()
+            self.calljson('/diacamma.invoice/billList', {'status_filter': -2, 'type_filter': -1}, False)
+            self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+            self.assert_count_equal('bill', 2)
+            self.assert_json_equal('', 'bill/@0/bill_type', 4)
+            self.assert_json_equal('', 'bill/@0/status', 1)
+            self.assert_json_equal('', 'bill/@0/third', 'Dalton Jack')
+            self.assert_json_equal('', 'bill/@0/total', 62.5)
+            self.assert_json_equal('', 'bill/@0/num_txt', 'A-1')
+            self.assert_json_equal('', 'bill/@0/comment', "{[i]}commande venant de la validation de devis A-1 par Jean Valjean le", True)
+            self.assert_json_equal('', 'bill/@1/bill_type', 0)
+            self.assert_json_equal('', 'bill/@1/status', 3)
+            self.assert_json_equal('', 'bill/@1/third', 'Dalton Jack')
+            self.assert_json_equal('', 'bill/@1/total', 62.5)
+            self.assert_json_equal('', 'bill/@1/num_txt', 'A-1')
         finally:
             server.stop()
 

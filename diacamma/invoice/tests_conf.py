@@ -316,7 +316,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify', {'with_multi_emailinfo': True}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'categoryBillAddModify')
-        self.assert_count_equal('', 31)
+        self.assert_count_equal('', 28)
         self.assert_json_equal('EDIT', 'title_5', "panier")
         self.assert_json_equal('EDIT', 'title_0', "devis")
         self.assert_json_equal('EDIT', 'title_4', "commande")
@@ -333,8 +333,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('CHECKLIST', 'payment_method', [])
         self.assert_select_equal('payment_method', 6, checked=True)
         self.assert_json_equal('CHECK', 'with_multi_emailinfo', True)
-        self.assert_json_equal('EDIT', 'emailsubject_5', "#reference")
-        self.assert_json_equal('MEMO', 'emailmessage_5', "#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations")
         self.assert_json_equal('EDIT', 'emailsubject_0', "#reference")
         self.assert_json_equal('MEMO', 'emailmessage_0', "#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations")
         self.assert_json_equal('EDIT', 'emailsubject_4', "#reference")
@@ -344,7 +342,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('EDIT', 'emailsubject_2', "#reference")
         self.assert_json_equal('MEMO', 'emailmessage_2', "#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations")
 
-        self.factory.xfer = CategoryBillAddModify()        
+        self.factory.xfer = CategoryBillAddModify()
         self.calljson('/diacamma.invoice/categoryBillAddModify',
                       {'name': 'cat1', 'designation': "Truc", 'special_numbering': False, 'prefix_numbering': '', 'workflow_order': 2,
                        'title_0': 'AAA', 'title_1': 'BBB', 'title_2': 'CCC', 'title_5': 'DDD', 'is_default': 1,

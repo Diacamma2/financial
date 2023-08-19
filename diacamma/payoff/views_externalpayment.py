@@ -41,6 +41,63 @@ from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, Payment
     PaymentTypeHelloAsso
 
 
+class CheckPaymentGeneric(XferContainerAbstract):
+    caption = _("Payment")
+    icon = "payments.png"
+    readonly = True
+    methods_allowed = ('GET', )
+
+    payment_name = ""
+
+    @property
+    def payid(self):
+        return self.getparam("payid", 0)
+
+    @property
+    def support(self):
+        if not hasattr(self, '_support'):
+            self._support = Supporting.objects.get(id=self.payid).get_final_child()
+        return self._support
+
+    @property
+    def payment_meth(self):
+        return None
+
+    def get_form(self):
+        root_uri = self.getparam("url", get_url_from_request(self.request))
+        return self.payment_meth.paymentType.get_form(root_uri, self.language, self.support)
+
+    @property
+    def sub_title_default(self):
+        return ""
+
+    @property
+    def sub_title_error(self):
+        return _("It is not possible to pay-off this item with %s !") % self.payment_name
+
+    def request_handling(self, request, *args, **kwargs):
+        from django.shortcuts import render
+        dictionary = {}
+        dictionary['title'] = str(settings.APPLIS_NAME)
+        dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
+        dictionary['applogo'] = settings.APPLIS_LOGO.decode()
+        dictionary['content1'] = ''
+        dictionary['content2'] = ''
+        dictionary['error'] = ''
+        self._initialize(request, *args, **kwargs)
+        try:
+            dictionary['content1'] = self.sub_title_default
+            dictionary['content2'] = toHtml(self.get_form(), withclean=False)
+        except Exception as err:
+            logging.getLogger('diacamma.payoff').exception("CheckPayment")
+            dictionary['content1'] = self.sub_title_error
+            if isinstance(err, ObjectDoesNotExist) or (isinstance(err, LucteriosException) and err.code in (IMPORTANT, MINOR)):
+                dictionary['content2'] = _("This item is deleted, payed or disabled.")
+            else:
+                dictionary['error'] = str(err)
+        return render(request, 'info.html', context=dictionary)
+
+
 class ValidationPaymentGeneric(XferContainerAbstract):
     model = BankTransaction
     field_id = 'banktransaction'
@@ -140,46 +197,6 @@ class ValidationPaymentGeneric(XferContainerAbstract):
             return render(self.request, 'info.html', context=dictionary)
         else:
             return HttpResponse(self.reponse_content)
-
-
-class CheckPaymentGeneric(XferContainerAbstract):
-    caption = _("Payment")
-    icon = "payments.png"
-    readonly = True
-    methods_allowed = ('GET', )
-
-    payment_name = ""
-
-    @property
-    def payid(self):
-        return self.getparam("payid", 0)
-
-    @property
-    def payment_meth(self):
-        return None
-
-    def request_handling(self, request, *args, **kwargs):
-        from django.shortcuts import render
-        dictionary = {}
-        dictionary['title'] = str(settings.APPLIS_NAME)
-        dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
-        dictionary['applogo'] = settings.APPLIS_LOGO.decode()
-        dictionary['content1'] = ''
-        dictionary['content2'] = ''
-        dictionary['error'] = ''
-        self._initialize(request, *args, **kwargs)
-        root_uri = self.getparam("url", get_url_from_request(self.request))
-        try:
-            support = Supporting.objects.get(id=self.payid).get_final_child()
-            dictionary['content2'] = toHtml(self.payment_meth.paymentType.get_form(root_uri, self.language, support), withclean=False)
-        except Exception as err:
-            logging.getLogger('diacamma.payoff').exception("CheckPayment")
-            dictionary['content1'] = _("It is not possible to pay-off this item with %s !") % self.payment_name
-            if isinstance(err, ObjectDoesNotExist) or (isinstance(err, LucteriosException) and err.code in (IMPORTANT, MINOR)):
-                dictionary['content2'] = _("This item is deleted, payed or disabled.")
-            else:
-                dictionary['error'] = str(err)
-        return render(request, 'info.html', context=dictionary)
 
 
 @MenuManage.describ('')

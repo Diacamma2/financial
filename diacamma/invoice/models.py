@@ -1328,14 +1328,14 @@ class Bill(Supporting):
                 payoff.supporting = new_bill
                 payoff.save(do_generate=False, do_linking=False, do_internal=False)
 
-    def convert_to_bill(self, billdate=None):
+    def convert_to_bill(self, billdate=None, comment=None):
         if (self.status == Bill.STATUS_VALID) and (self.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)):
             self.status = Bill.STATUS_ARCHIVE
             self.save()
             new_type = Bill.BILLTYPE_BILL
             new_bill = Bill.objects.create(bill_type=new_type, date=timezone.now().date() if (billdate is None) else convert_date(billdate),
                                            third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
-                                           comment=self.comment, parentbill=self)
+                                           comment=self.comment if comment is None else comment, parentbill=self)
             for detail in self.detail_set.all():
                 detail.id = None
                 detail.bill = new_bill
@@ -1607,31 +1607,13 @@ class Bill(Supporting):
             return model
 
     def get_payment_method(self):
-        class FakePayementValidate(object):
-            def __init__(self, bill):
-                self.bill = bill
-
-            @property
-            def id(self):
-                return -100
-
-            @property
-            def paytypetext(self):
-                return _('validation of %s') % self.bill.billtype
-
-            def show_pay(self, absolute_uri, lang, supporting):
-                return """{[center]}
-{[a href='%(uri)s/diacamma.invoice/invoiceValidQuotation?bill=%(billid)s' name='validate' target='_blank']}
-%(validation)s
-{[/a]}
-{[/center]}""" % {'uri': absolute_uri, 'billid': self.bill.id, 'validation': _('validation')}
-
+        from diacamma.invoice.views_summary import InvoiceValidQuotation
         if self.categoryBill_id is None:
             payment_methods = list(Supporting.get_payment_method(self))
         else:
             payment_methods = list(self.categoryBill.payment_method.all())
         if (self.bill_type == Bill.BILLTYPE_QUOTATION) and (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_LINK) and ((self.categoryBill is None) or (self.categoryBill.workflow_order != CategoryBill.WORKFLOWS_NEVER_ORDER)):
-            payment_methods.insert(0, FakePayementValidate(self))
+            payment_methods.insert(0, InvoiceValidQuotation.PaymentMethodValidate(self))
         return payment_methods
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):

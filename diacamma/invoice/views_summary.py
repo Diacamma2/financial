@@ -40,7 +40,6 @@ from lucterios.framework.xferprinting import PRINT_PDF_FILE
 from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton, XferCompFloat, XferCompImage
 from lucterios.framework.xfersearch import get_search_query_from_criteria
-from lucterios.framework.xferbasic import XferContainerAbstract
 
 from lucterios.contacts.models import Individual, LegalEntity
 from lucterios.CORE.parameters import Params
@@ -49,7 +48,8 @@ from lucterios.CORE.xferprint import XferPrintListing
 from diacamma.invoice.models import Bill, Category, get_or_create_customer, Article, Detail, CategoryBill, StorageArea
 from diacamma.invoice.views import BillPrint, BillShow, DetailDel, _add_type_filter_selector
 from diacamma.payoff.models import PaymentMethod
-from diacamma.payoff.views import PayableShow, get_html_payment
+from diacamma.payoff.views import PayableShow
+from diacamma.payoff.views_externalpayment import CheckPaymentGeneric
 from diacamma.accounting.tools import get_amount_from_format_devise, format_with_devise
 
 
@@ -105,77 +105,99 @@ class CurrentPayableShow(PayableShow):
 
 
 @MenuManage.describ(lambda request: Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_LINK)
-class InvoiceValidQuotation(XferContainerAbstract):
-    icon = "bill.png"
-    model = Bill
-    field_id = 'bill'
+class InvoiceValidQuotation(CheckPaymentGeneric):
     methods_allowed = ('GET', 'POST')
     caption = _("Validation")
 
-    def request_handling(self, request, *args, **kwargs):
-        from django.shortcuts import render
-        dictionary = {}
-        dictionary['title'] = str(settings.APPLIS_NAME)
-        dictionary['subtitle'] = settings.APPLIS_SUBTITLE()
-        dictionary['applogo'] = settings.APPLIS_LOGO.decode()
-        dictionary['content1'] = ''
-        dictionary['content2'] = ''
-        dictionary['error'] = ''
-        try:
-            self._initialize(request, *args, **kwargs)
-            if (self.item.id is None) or (self.item.status != Bill.STATUS_VALID) or (self.item.bill_type != Bill.BILLTYPE_QUOTATION):
+    class PaymentMethodValidate(object):
+        def __init__(self, bill):
+            self.bill = bill
+
+        @property
+        def id(self):
+            return -100
+
+        @property
+        def paytypetext(self):
+            return _('validation of %s without payment') % self.bill.billtype
+
+        def show_pay(self, absolute_uri, lang, supporting):
+            return """{[center]}
+%(validation_text)s{[br]}
+{[a href='%(uri)s/diacamma.invoice/invoiceValidQuotation?payid=%(billid)s' name='validate' target='_blank']}
+{[button]}
+{[img src="%(uri)s/static/lucterios.CORE/images/ok.png" title="Ok" alt="Ok"]} %(validation)s
+{[/button]}
+{[/a]}
+{[/center]}""" % {
+                'uri': absolute_uri,
+                'billid': self.bill.id,
+                'validation_text': _('By clicking here, you accept this %s, you will have to send the payment later.') % self.bill.billtype,
+                'validation': _('validation')
+            }
+
+    def get_form(self):
+        root_url = self.getparam("url", get_url_from_request(self.request))
+        if self.getparam("CONFIRME") is None:
+            if (self.support.status != Bill.STATUS_VALID) or (self.support.bill_type != Bill.BILLTYPE_QUOTATION):
                 raise LucteriosException(IMPORTANT, _("This item can not be validated !"))
-            root_uri = get_url_from_request(self.request)
-            if self.getparam("CONFIRME") is None:
-                invoice_data = {'type': self.item.billtype, 'num': self.item.num_txt,
-                                'url': root_uri, 'firstname': _('your firstname'), 'lastname': _('your lastname'),
-                                'billid': self.item.id, 'title': self.caption,
-                                'client': str(self.item.third), 'amount': get_amount_from_format_devise(self.item.total, 5).replace("{[p", "<span").replace("{[/p", "</span").replace("]}", ">"),
-                                'fromtxt': _('from'), 'amounttxt': _('amount'),
-                                }
-                dictionary['content1'] = _("Do you want validate this %(type)s?") % invoice_data
-                dictionary['content2'] = """
-<form method="post" id="validation" name="validation" action="%(url)s/diacamma.invoice/invoiceValidQuotation">
-<input type="hidden" name="bill" value="%(billid)s">
-<input type="hidden" name="CONFIRME" value="True">
-<table style="margin-left: auto;margin-right: auto;margin-bottom:10px;">
-    <tr><td colspan="2" style="text-align: left;"padding: 10px;">
-%(type)s %(num)s<br>
-- %(fromtxt)s: %(client)s<br>
-- %(amounttxt)s: %(amount)s<br>
-</td></tr>
-    <tr><th style="padding: 10px;">%(firstname)s</th><td style="padding: 10px;"><input type='text' name='firstname' required="required"></td></tr>
-    <tr><th style="padding: 10px;">%(lastname)s</th><td style="padding: 10px;"><input type='text' name='lastname' required="required"></td></tr>
-    <tr><td colspan="2" style="text-align: left;"padding: 10px;">
-</table>
-<button type="submit" style="margin:auto;">
-    <img src='%(url)s/static/lucterios.CORE/images/ok.png' title='Ok' alt='Ok'>%(title)s
-</button>
-</form>
+            invoice_data = {'type': self.support.billtype, 'num': self.support.num_txt,
+                            'url': root_url, 'firstname': _('your firstname'), 'lastname': _('your lastname'),
+                            'payid': self.support.id, 'title': self.caption,
+                            'client': str(self.support.third), 'amount': get_amount_from_format_devise(self.support.total, 5).replace("{[p", "{[span").replace("{[/p", "{[/span"),
+                            'fromtxt': _('from'), 'amounttxt': _('amount'),
+                            }
+            return """
+{[form method="post" id="validation" name="validation" action="%(url)s/diacamma.invoice/invoiceValidQuotation"]}
+{[input type="hidden" name="payid" value="%(payid)s"]}
+{[input type="hidden" name="CONFIRME" value="True"]}
+{[table style="margin-left: auto;margin-right: auto;margin-bottom:10px;"]}
+    {[tr]}{[td colspan="2" style="text-align: left;"padding: 10px;"]}
+%(type)s %(num)s{[br]}
+- %(fromtxt)s: %(client)s{[br]}
+- %(amounttxt)s: %(amount)s{[br]}
+{[/td]}{[/tr]}
+    {[tr]}{[th style="padding: 10px;"]}%(firstname)s{[/th]}{[td style="padding: 10px;"]}{[input type="text" name="firstname" required="required"]}{[/td]}{[/tr]}
+    {[tr]}{[th style="padding: 10px;"]}%(lastname)s{[/th]}{[td style="padding: 10px;"]}{[input type="text" name="lastname" required="required"]}{[/td]}{[/tr]}
+    {[tr]}{[td colspan="2" style="text-align: left;"padding: 10px;"]}
+{[/table]}
+{[button type="submit" style="margin:auto;"]}
+    {[img src="%(url)s/static/lucterios.CORE/images/ok.png" title="Ok" alt="Ok"]}%(title)s
+{[/button]}
+{[/form]}
 """ % invoice_data
+        else:
+            if self.support.categoryBill_id is None:
+                typetarget = get_value_if_choices(Bill.BILLTYPE_ORDER, Bill.get_field_by_name("bill_type"))
             else:
-                if self.item.categoryBill_id is None:
-                    typetarget = get_value_if_choices(Bill.BILLTYPE_ORDER, self.get_field_by_name("bill_type"))
-                else:
-                    typetarget = self.item.categoryBill.get_title(Bill.BILLTYPE_ORDER)
-                validate_comment = _("%(typetarget)s from the validation of the %(typesource)s %(num)s by %(firstname)s %(lastname)s on %(date)s") % {
-                    'typetarget': typetarget,
-                    'typesource': self.item.billtype,
-                    'num': self.item.num_txt,
-                    'firstname': self.getparam("firstname", ''),
-                    'lastname': self.getparam("lastname", ''),
-                    'date': get_date_formating(datetime.now())
-                }
-                new_order = self.item.convert_to_order(validate_comment)
-                new_order.send_email_by_type()
-                dictionary['content2'] = _("%(typesource)s validated by %(firstname)s %(lastname)s") % {
-                    'typesource': self.item.billtype,
-                    'firstname': self.getparam("firstname", ''),
-                    'lastname': self.getparam("lastname", '')}
-        except Exception as err:
-            dictionary['content1'] = ""
-            dictionary['error'] = str(err)
-        return render(request, 'info.html', context=dictionary)
+                typetarget = self.support.categoryBill.get_title(Bill.BILLTYPE_ORDER)
+            validate_comment = "{[i]}%s{[/i]}" % (_("%(typetarget)s from the validation of the %(typesource)s %(num)s by %(firstname)s %(lastname)s on %(date)s") % {
+                'typetarget': typetarget,
+                'typesource': self.support.billtype,
+                'num': self.support.num_txt,
+                'firstname': self.getparam("firstname", ''),
+                'lastname': self.getparam("lastname", ''),
+                'date': get_date_formating(datetime.now())
+            },)
+            if self.support.comment != '':
+                validate_comment = self.support.comment + '{[br]}' + validate_comment
+            new_order = self.support.convert_to_order(validate_comment)
+            new_order.send_email_by_type()
+            return _("%(typesource)s validated by %(firstname)s %(lastname)s") % {
+                'typesource': self.support.billtype,
+                'firstname': self.getparam("firstname", ''),
+                'lastname': self.getparam("lastname", '')}
+
+    @property
+    def sub_title_default(self):
+        if self.getparam("CONFIRME") is None:
+            return _("Do you want validate this %(type)s?") % {"type": self.support.billtype}
+        else:
+            return ""
+
+    @property
+    def sub_title_error(self):
+        return _("It is not possible to validate this %(type)s !") % {"type": self.support.billtype}
 
 
 def current_cart_right(request):
