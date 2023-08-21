@@ -1134,7 +1134,7 @@ class BillTest(InvoiceTest):
             _msg_txt, msg, _msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
             self.assertEqual('base64', msg.get('Content-Transfer-Encoding', ''))
             self.assertEqual("""<html>this is a bill.<hr/><center><i><u>Moyens de paiement</u></i></center><table width='90%'><tr><td><b>Validation de devis sans paiement</b></td><td><center>
-En cliquant ici, vous acceptez ce devis, vous devrez envoyer le paiement ultérieurement.<br>
+En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement au plus tôt pour finaliser cette transaction.<br>
 <a href='http://testserver/diacamma.invoice/invoiceValidQuotation?payid=1' name='validate' target='_blank'>
 <button>
 <img src="http://testserver/static/lucterios.CORE/images/ok.png" title="Ok" alt="Ok"> validation
