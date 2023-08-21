@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-19 11:29+0000\n"
+"POT-Creation-Date: 2023-08-21 16:14+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -119,8 +119,8 @@ msgstr "provider"
 
 #: editors.py:357 models.py:207 printmodel/ArticleSituation_0002.py:45
 #: printmodel/Article_0001.py:41 views.py:901 views_storage.py:306
-#: views_storage.py:318 views_storage.py:457 views_summary.py:266
-#: views_summary.py:303
+#: views_storage.py:318 views_storage.py:457 views_summary.py:267
+#: views_summary.py:304
 msgid "categories"
 msgstr "categories"
 
@@ -166,7 +166,7 @@ msgstr "VATs"
 #: models.py:1636 models.py:2099 printmodel/ArticleSituation_0001.py:42
 #: printmodel/ArticleSituation_0002.py:45 printmodel/Article_0001.py:41
 #: printmodel/Article_0002.py:41 printmodel/Bill_0001.py:131
-#: printmodel/Bill_0002.py:148 views_summary.py:298
+#: printmodel/Bill_0002.py:148 views_summary.py:299
 msgid "designation"
 msgstr "designation"
 
@@ -247,13 +247,13 @@ msgid "stockable & no marketable"
 msgstr "stockable & no marketable"
 
 #: models.py:198 printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0002.py:159 views.py:1273 views_summary.py:293
+#: printmodel/Bill_0002.py:159 views.py:1273 views_summary.py:294
 msgid "reference"
 msgstr "reference"
 
 #: models.py:200 models.py:214 models.py:890 models.py:1637 models.py:1648
 #: printmodel/Article_0001.py:41 printmodel/Article_0002.py:41
-#: printmodel/Bill_0001.py:132 printmodel/Bill_0002.py:149 views_summary.py:309
+#: printmodel/Bill_0001.py:132 printmodel/Bill_0002.py:149 views_summary.py:310
 msgid "price"
 msgstr "price"
 
@@ -480,7 +480,7 @@ msgid "origin : %s"
 msgstr "origin : %s"
 
 #: models.py:890 models.py:1640 models.py:1965 models.py:1967 models.py:2095
-#: models.py:2097 views_summary.py:335
+#: models.py:2097 views_summary.py:336
 msgid "quantity"
 msgstr "quantity"
 
@@ -679,7 +679,7 @@ msgid "mode"
 msgstr "mode"
 
 #: models.py:2135 models.py:2139 views.py:1071 views.py:1088 views.py:1109
-#: views.py:1128 views.py:1271 views_summary.py:149
+#: views.py:1128 views.py:1271 views_summary.py:147
 msgid "amount"
 msgstr "amount"
 
@@ -1086,7 +1086,7 @@ msgstr "Send"
 msgid "Send by email"
 msgstr "Send by email"
 
-#: views.py:741 views.py:742 views_summary.py:92
+#: views.py:741 views.py:742 views_summary.py:90
 msgid "Print"
 msgstr "Print"
 
@@ -1183,7 +1183,7 @@ msgstr "duplicate"
 msgid "Show article"
 msgstr "Show article"
 
-#: views.py:1002 views_summary.py:435
+#: views.py:1002 views_summary.py:436
 msgid "Add article"
 msgstr "Add article"
 
@@ -1400,7 +1400,7 @@ msgstr "Custom field"
 msgid "Category bill"
 msgstr "Category bill"
 
-#: views_conf.py:119 views_summary.py:237 views_summary.py:480
+#: views_conf.py:119 views_summary.py:238 views_summary.py:481
 msgid "Cart"
 msgstr "Cart"
 
@@ -1685,28 +1685,28 @@ msgstr ""
 msgid "%d articles are reported."
 msgstr "%d articles are reported."
 
-#: views_summary.py:65
+#: views_summary.py:63
 msgid "View your invoices."
 msgstr "View your invoices."
 
-#: views_summary.py:70
+#: views_summary.py:68
 msgid "Your invoices"
 msgstr "Your invoices"
 
-#: views_summary.py:94
+#: views_summary.py:92
 msgid "Payment"
 msgstr "Payment"
 
-#: views_summary.py:111
+#: views_summary.py:109
 msgid "Validation"
 msgstr "Validation"
 
-#: views_summary.py:123
+#: views_summary.py:121
 #, python-format
 msgid "validation of %s without payment"
 msgstr "validation of %s without payment"
 
-#: views_summary.py:136
+#: views_summary.py:134
 #, python-format
 msgid ""
 "By clicking here, you accept this %s, you will have to send the payment "
@@ -1715,27 +1715,27 @@ msgstr ""
 "By clicking here, you accept this %s, you will have to send the payment "
 "later."
 
-#: views_summary.py:137
+#: views_summary.py:135
 msgid "validation"
 msgstr "validation"
 
-#: views_summary.py:144
+#: views_summary.py:142
 msgid "This item can not be validated !"
 msgstr "This item can not be validated !"
 
-#: views_summary.py:146
+#: views_summary.py:144
 msgid "your firstname"
 msgstr "your firstname"
 
-#: views_summary.py:146
+#: views_summary.py:144
 msgid "your lastname"
 msgstr "your lastname"
 
-#: views_summary.py:149
+#: views_summary.py:147
 msgid "from"
 msgstr "from"
 
-#: views_summary.py:175
+#: views_summary.py:173
 #, python-format
 msgid ""
 "%(typetarget)s from the validation of the %(typesource)s %(num)s by "
@@ -1744,89 +1744,89 @@ msgstr ""
 "%(typetarget)s from the validation of the %(typesource)s %(num)s by "
 "%(firstname)s %(lastname)s on %(date)s"
 
-#: views_summary.py:187
+#: views_summary.py:185
 #, python-format
 msgid "%(typesource)s validated by %(firstname)s %(lastname)s"
 msgstr "%(typesource)s validated by %(firstname)s %(lastname)s"
 
-#: views_summary.py:194
+#: views_summary.py:193
 #, python-format
 msgid "Do you want validate this %(type)s?"
 msgstr "Do you want validate this %(type)s?"
 
-#: views_summary.py:198
+#: views_summary.py:199
 #, python-format
 msgid "It is not possible to validate this %(type)s !"
 msgstr "It is not possible to validate this %(type)s !"
 
-#: views_summary.py:214
+#: views_summary.py:215
 msgid "To fill your shopping cart"
 msgstr "To fill your shopping cart"
 
-#: views_summary.py:219
+#: views_summary.py:220
 msgid "Shopping cart"
 msgstr "Shopping cart"
 
-#: views_summary.py:231
+#: views_summary.py:232
 #, python-format
 msgid "{[center]}%(nb_art)d article(s){[center]}{[i]}%(amount)s{[/i]}"
 msgstr "{[center]}%(nb_art)d article(s){[center]}{[i]}%(amount)s{[/i]}"
 
-#: views_summary.py:274
+#: views_summary.py:275
 msgid "keyword"
 msgstr "keyword"
 
-#: views_summary.py:329
+#: views_summary.py:330
 msgid "sold out"
 msgstr "sold out"
 
-#: views_summary.py:343
+#: views_summary.py:344
 msgid "add in cart"
 msgstr "add in cart"
 
-#: views_summary.py:372
+#: views_summary.py:373
 #, python-format
 msgid "%s items match your search"
 msgstr "%s items match your search"
 
-#: views_summary.py:385
+#: views_summary.py:386
 msgid "page"
 msgstr "page"
 
-#: views_summary.py:410
+#: views_summary.py:411
 msgid "Add your articles in your cart"
 msgstr "Add your articles in your cart"
 
-#: views_summary.py:415
+#: views_summary.py:416
 msgid "Print full catalog"
 msgstr "Print full catalog"
 
-#: views_summary.py:425
+#: views_summary.py:426
 msgid "Clear"
 msgstr "Clear"
 
-#: views_summary.py:495
+#: views_summary.py:496
 msgid "Return"
 msgstr "Return"
 
-#: views_summary.py:504
+#: views_summary.py:505
 msgid "Full catalog"
 msgstr "Full catalog"
 
-#: views_summary.py:518
+#: views_summary.py:519
 #, python-format
 msgid "{[b]}Catalog dated{[/b]} %s"
 msgstr "{[b]}Catalog dated{[/b]} %s"
 
-#: views_summary.py:536
+#: views_summary.py:537
 msgid "Do you want to validate this cart ?"
 msgstr "Do you want to validate this cart ?"
 
-#: views_summary.py:550
+#: views_summary.py:551
 msgid "View invoices of storage managed."
 msgstr "View invoices of storage managed."
 
-#: views_summary.py:555
+#: views_summary.py:556
 msgid "Storage managed"
 msgstr "Storage managed"
 

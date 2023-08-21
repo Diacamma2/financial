@@ -29,7 +29,6 @@ from datetime import datetime
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django.utils import timezone
-from django.conf import settings
 
 from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE, CLOSE_NO, WrapAction, FORMTYPE_REFRESH, CLOSE_YES,\
     get_date_formating, get_url_from_request
