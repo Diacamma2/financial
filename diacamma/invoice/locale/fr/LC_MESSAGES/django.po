@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-21 16:14+0000\n"
+"POT-Creation-Date: 2023-08-25 13:26+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -1735,7 +1735,7 @@ msgstr "Cet élément ne peut pas être validé !"
 
 #: views_summary.py:144
 msgid "your firstname"
-msgstr "vortre prénom"
+msgstr "votre prénom"
 
 #: views_summary.py:144
 msgid "your lastname"
