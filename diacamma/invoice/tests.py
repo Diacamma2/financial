@@ -1175,6 +1175,59 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         finally:
             server.stop()
 
+    def test_quotation_to_order_by_link_and_mailing(self):
+        Params.setvalue('invoice-order-mode', 2)
+        default_articles()
+        self._create_bill([{'article': 1, 'designation': 'article 1',
+                            'price': '22.50', 'quantity': 3, 'reduce': '5.0'}], 0, '2015-04-01', 6, True)
+        self._create_bill([{'article': 1, 'designation': 'article 1',
+                            'price': '15.0', 'quantity': 2, 'reduce': '0.0'}], 0, '2015-04-02', 6, True)
+
+        self.factory.xfer = BillList()
+        self.calljson('/diacamma.invoice/billList', {'status_filter': -2, 'type_filter': -1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
+        self.assert_count_equal('bill', 2)
+        self.assert_json_equal('', 'bill/@0/bill_type', 0)
+        self.assert_json_equal('', 'bill/@0/status', 1)
+        self.assert_json_equal('', 'bill/@0/date', "2015-04-02")
+        self.assert_json_equal('', 'bill/@0/third', 'Dalton Jack')
+        self.assert_json_equal('', 'bill/@0/total', 30.0)
+        self.assert_json_equal('', 'bill/@1/bill_type', 0)
+        self.assert_json_equal('', 'bill/@1/status', 1)
+        self.assert_json_equal('', 'bill/@1/date', "2015-04-01")
+        self.assert_json_equal('', 'bill/@1/third', 'Dalton Jack')
+        self.assert_json_equal('', 'bill/@1/total', 62.5)
+
+        configSMTP('localhost', 2125)
+        server = TestReceiver()
+        server.start(2125)
+        try:
+            self.factory.xfer = PayableEmail()
+            self.calljson('/diacamma.payoff/payableEmail',
+                          {'bill': '1;2', 'OK': 'YES', 'item_name': 'bill', 'subject': '#reference', 'message': '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations', 'model': 8}, False)
+            self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
+
+            email_msg = Message.objects.get(id=1)
+            self.assertEqual(email_msg.subject, '#reference')
+            self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations#footer')
+            self.assertEqual(email_msg.status, 2)
+            self.assertEqual(email_msg.recipients, "invoice.Bill id||8||1;2\n")
+            self.assertEqual(email_msg.email_to_send, "invoice.Bill:1:8\ninvoice.Bill:2:8")
+
+            self.assertEqual(1, len(LucteriosScheduler.get_list()))
+            LucteriosScheduler.stop_scheduler()
+            email_msg.sendemail(10, "http://testserver")
+            self.assertEqual(2, server.count())
+            for msg_index in range(2):
+                data = {'ident': msg_index + 1}
+                _msg_txt, msg, _msg_file = server.get_msg_index(msg_index, 'Devis A-%(ident)d' % data)
+                message = decode_b64(msg.get_payload())
+                self.assertIn('Jack Dalton<br/><br/>Veuillez trouver joint à ce courriel devis_A-%(ident)d_Dalton Jack.pdf.<br/><br/>Sincères salutations' % data, message)
+                self.assertIn("<center><i><u>Moyens de paiement</u></i></center>", message)
+                self.assertIn("<a href='http://testserver/diacamma.invoice/invoiceValidQuotation?payid=%(ident)d' name='validate' target='_blank'>" % data, message)
+        finally:
+            server.stop()
+
     def test_valid_bill_with_user(self):
         Params.setvalue('invoice-order-mode', 1)
         Params.setvalue('invoice-default-nbpayoff', 2)
@@ -2614,6 +2667,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
 
     def test_send_multi_bill(self):
         default_articles()
+        default_paymentmethod()
         configSMTP('localhost', 2325)
         server = TestReceiver()
         server.start(2325)
@@ -2639,6 +2693,14 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.calljson('/diacamma.invoice/billList', {'status_filter': 1}, False)
             self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
             self.assert_count_equal('bill', 4)
+            self.assert_json_equal('', 'bill/@0/total', 100.00)
+            self.assert_json_equal('', 'bill/@0/total_rest_topay', 100.00)
+            self.assert_json_equal('', 'bill/@1/total', 100.00)
+            self.assert_json_equal('', 'bill/@1/total_rest_topay', 100.00)
+            self.assert_json_equal('', 'bill/@2/total', 100.00)
+            self.assert_json_equal('', 'bill/@2/total_rest_topay', 100.00)
+            self.assert_json_equal('', 'bill/@3/total', 100.00)
+            self.assert_json_equal('', 'bill/@3/total_rest_topay', 100.00)
             self.assert_count_equal('#bill/actions', 6)
             self.assert_action_equal('POST', self.get_json_path('#bill/actions/@5'), ("Envoyer", "lucterios.mailing/images/email.png", "diacamma.invoice", "billPayableEmail", 0, 1, 2))
 
@@ -2667,7 +2729,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
 
             email_msg = Message.objects.get(id=1)
             self.assertEqual(email_msg.subject, '#reference')
-            self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations')
+            self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations#footer')
             self.assertEqual(email_msg.status, 2)
             self.assertEqual(email_msg.recipients, "invoice.Bill id||8||1;2;3;4\n")
             self.assertEqual(email_msg.email_to_send, "invoice.Bill:1:8\ninvoice.Bill:2:8\ninvoice.Bill:3:8\ninvoice.Bill:4:8")
@@ -2677,7 +2739,14 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             email_msg.sendemail(10, "http://testserver")
             self.assertEqual(4, server.count())
             for msg_index in range(4):
-                _msg, _msg_txt, msg_file = server.get_msg_index(msg_index)
+                _msg_txt, msg, msg_file = server.get_msg_index(msg_index)
+                message = decode_b64(msg.get_payload())
+                if msg_index == 2:
+                    self.assertNotIn("<center><i><u>Moyens de paiement</u></i></center>", message)
+                else:
+                    self.assertIn("<center><i><u>Moyens de paiement</u></i></center>", message)
+                    self.assertIn("<tr><td><b>virement</b></td><td><center><table width='100%'><tr>    <td><u><i>IBAN</i></u></td>    <td>123456789</td></tr><tr>    <td><u><i>BIC</i></u></td>    <td>AABBCCDD</td></tr>", message)
+                    self.assertIn("<tr><td><b>chèque</b></td><td><center><table width='100%%'>    <tr>        <td><u><i>à l'ordre de</i></u></td>        <td>Truc</td>    </tr>    <tr>        <td><u><i>adresse</i></u></td>        <td>1 rue de la Paix<newline>99000 LA-BAS</td>    </tr>", message)
                 self.save_pdf(base64_content=msg_file.get_payload(), ident=msg_index + 1)
                 check_pdfreport(self, 'Bill', msg_index + 1, False, msg_file.get_payload())
         finally:
@@ -2702,7 +2771,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
 
             email_msg = Message.objects.get(id=1)
             self.assertEqual(email_msg.subject, '#reference')
-            self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations')
+            self.assertEqual(email_msg.body, '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations#footer')
             self.assertEqual(email_msg.status, 2)
             self.assertEqual(email_msg.recipients, "invoice.Bill id||8||1;2;3;4\n")
             self.assertEqual(email_msg.email_to_send, "invoice.Bill:1:0\ninvoice.Bill:2:0\ninvoice.Bill:3:0\ninvoice.Bill:4:0")

@@ -234,15 +234,14 @@ class PayableEmail(XferContainerAcknowledge):
     def fillresponse_send1message(self, subject, message, model):
         html_message = "<html>"
         html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
-        if self.item.payoff_have_payment() and (len(self.item.get_payment_method()) > 0):
-            html_message += get_html_payment(get_url_from_request(self.request), self.language, self.item)
+        html_message += self.item.get_email_footer(self.request)
         html_message += "</html>"
         self.item.send_email(subject, html_message, model)
 
     def fillresponse_sendmultimessages(self, subject, message, model):
         from lucterios.mailing.models import Message
         model_obj = self.item.__class__
-        email_msg = Message.objects.create(subject=subject, body=message, email_to_send="%s:0:%s" % (model_obj.get_long_name(), model))
+        email_msg = Message.objects.create(subject=subject, body=message + "#footer", email_to_send="%s:0:%s" % (model_obj.get_long_name(), model))
         email_msg.add_recipient(model_obj.get_long_name(), 'id||8||%s' % ';'.join([str(item.id) for item in self.items]))
         email_msg.save()
         email_msg.valid()
@@ -386,17 +385,3 @@ class PayableShow(XferContainerCustom):
         self.fill_from_model(1, max_row, True, self.item.get_payment_fields())
         add_payment_methods(self, self.item, payments)
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
-
-
-def get_html_payment(root_uri, lang, supporting):
-    html_message = "<hr/>"
-    html_message += "<center><i><u>%s</u></i></center>" % _("Payement methods")
-    html_message += "<table width='90%'>"
-    for paymeth in supporting.get_payment_method():
-        html_message += "<tr>"
-        html_message += "<td><b>%s</b></td>" % paymeth.paytypetext
-        html_message += "<td>%s</td>" % paymeth.show_pay(root_uri, lang, supporting).replace('{[', '<').replace(']}', '>')
-        html_message += "</tr>"
-        html_message += "<tr></tr>"
-    html_message += "</table>"
-    return html_message

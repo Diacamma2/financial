@@ -37,7 +37,7 @@ from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field
 from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField
-from lucterios.framework.tools import get_date_formating
+from lucterios.framework.tools import get_date_formating, get_url_from_request
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.printgenerators import ReportingGenerator
 from lucterios.framework.signal_and_lock import Signal
@@ -354,6 +354,12 @@ class Supporting(LucteriosModel):
 
     def get_payment_method(self):
         return list(PaymentMethod.objects.all())
+
+    def get_email_footer(self, request=None):
+        message = ""
+        if self.payoff_have_payment() and (len(self.get_payment_method()) > 0):
+            message += get_html_payment(get_url_from_request(request), None, self)
+        return message
 
     def adding_payoff(self, payoff):
         return
@@ -1031,3 +1037,18 @@ def payoff_auditlog_register():
     auditlog.register(DepositSlip, include_fields=['status', 'bank_account', 'date', 'reference', 'total'])
     auditlog.register(DepositDetail, include_fields=['payoff', 'amount'])
     auditlog.register(Payoff, include_fields=["date", "amount", "mode", "reference", "payer", "bank_account", "bank_fee"])
+
+
+def get_html_payment(root_uri, lang=None, supporting=None):
+    from django.conf import settings
+    html_message = "<hr/>"
+    html_message += "<center><i><u>%s</u></i></center>" % _("Payement methods")
+    html_message += "<table width='90%'>"
+    for paymeth in supporting.get_payment_method():
+        html_message += "<tr>"
+        html_message += "<td><b>%s</b></td>" % paymeth.paytypetext
+        html_message += "<td>%s</td>" % paymeth.show_pay(root_uri, settings.LANGUAGE_CODE if lang is None else lang, supporting).replace('{[', '<').replace(']}', '>')
+        html_message += "</tr>"
+        html_message += "<tr></tr>"
+    html_message += "</table>"
+    return html_message
