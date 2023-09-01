@@ -1041,7 +1041,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'total_excltax', 62.50)
         self.assert_json_equal('LABELFORM', 'total_payed', 30.00)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 32.50)
-        self.assertEqual(len(self.json_actions), 4)
+        self.assertEqual(len(self.json_actions), 5)
 
         self.factory.xfer = EntryAccountList()
         self.calljson('/diacamma.accounting/entryAccountList',

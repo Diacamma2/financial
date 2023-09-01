@@ -1260,7 +1260,7 @@ class Bill(Supporting):
 
     transitionname__cancel = _("Cancel")
 
-    @transition(field=status, source=STATUS_VALID, target=STATUS_CANCEL, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART)])
+    @transition(field=status, source=STATUS_VALID, target=STATUS_CANCEL, conditions=[lambda item:item.bill_type in (Bill.BILLTYPE_CART, Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)])
     def cancel(self):
         return None
 
