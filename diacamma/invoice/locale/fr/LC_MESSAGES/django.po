@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-25 13:26+0000\n"
+"POT-Creation-Date: 2023-09-12 18:52+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -731,107 +731,107 @@ msgstr "détail d'inventaire"
 msgid "inventory details"
 msgstr "détails d'inventaire"
 
-#: models.py:2464
+#: models.py:2475
 msgid "invoice-default-sell-account"
 msgstr "compte de vente par défaut"
 
-#: models.py:2466
+#: models.py:2477
 msgid "invoice-reduce-account"
 msgstr "compte de réduction"
 
-#: models.py:2468
+#: models.py:2479
 msgid "invoice-vat-mode"
 msgstr "mode TVA"
 
-#: models.py:2469
+#: models.py:2480
 msgid "invoice-vat-mode.0"
 msgstr "non applicable"
 
-#: models.py:2469
+#: models.py:2480
 msgid "invoice-vat-mode.1"
 msgstr "prix hors taxes"
 
-#: models.py:2469
+#: models.py:2480
 msgid "invoice-vat-mode.2"
 msgstr "prix toutes taxes comprises"
 
-#: models.py:2470
+#: models.py:2481
 msgid "invoice-account-third"
 msgstr "Compte tiers par défaut"
 
-#: models.py:2473
+#: models.py:2484
 msgid "invoice-article-with-picture"
 msgstr "article avec image"
 
-#: models.py:2474
+#: models.py:2485
 msgid "invoice-reduce-with-ratio"
 msgstr "réduction affichée avec %"
 
-#: models.py:2475
+#: models.py:2486
 msgid "invoice-reduce-allow-article-empty"
 msgstr "autoriser les arcticles sans code dans la facture"
 
-#: models.py:2476
+#: models.py:2487
 msgid "invoice-order-mode"
 msgstr "mode commande"
 
-#: models.py:2477
+#: models.py:2488
 msgid "invoice-order-mode.0"
 msgstr "aucune"
 
-#: models.py:2477
+#: models.py:2488
 msgid "invoice-order-mode.1"
 msgstr "conversion de devis"
 
-#: models.py:2477
+#: models.py:2488
 msgid "invoice-order-mode.2"
 msgstr "via lien de validation de devis"
 
-#: models.py:2478
+#: models.py:2489
 msgid "invoice-asset-mode"
 msgstr "mode avoir"
 
-#: models.py:2479
+#: models.py:2490
 msgid "invoice-asset-mode.0"
 msgstr "Archiver la facture après changement en avoir"
 
-#: models.py:2479
+#: models.py:2490
 msgid "invoice-asset-mode.1"
 msgstr "Laisser la facture validée après changement en avoir"
 
-#: models.py:2480
+#: models.py:2491
 msgid "invoice-default-nbpayoff"
 msgstr "nombre de paiement par défaut"
 
-#: models.py:2482
+#: models.py:2493
 msgid "invoice-default-send-pdf"
 msgstr "activer l'envoie PDF par défaut"
 
-#: models.py:2484
+#: models.py:2495
 msgid "invoice-cart-active"
 msgstr "Panier actif"
 
-#: models.py:2485
+#: models.py:2496
 msgid "invoice-cart-article-filter"
 msgstr "Filtre d'article pour le panier"
 
-#: models.py:2487
+#: models.py:2498
 msgid "invoice-cart-timeout"
 msgstr "Temps de vie d'un panier (jours)"
 
-#: models.py:2488
+#: models.py:2499
 msgid "invoice-cart-email-subject"
 msgstr "sujet pour courriel de panier"
 
-#: models.py:2488
+#: models.py:2499
 msgid "new validated cart"
 msgstr "Nouveau panier validé"
 
-#: models.py:2489
+#: models.py:2500
 msgid "invoice-cart-email-body"
 msgstr "message pour courriel de panier"
 
-#: models.py:2490
+#: models.py:2501
 msgid ""
 "#name{[br/]}{[br/]}Joint in this email #doc.{[br/]}#nb quotation is created, "
 "each storage area manager will return you them soon.{[br/]}{[br/]}Regards"
@@ -840,23 +840,23 @@ msgstr ""
 "chaque responsable de zone de stockage vous les renverra prochainement."
 "{[br/]}{[br/]}Cordialement"
 
-#: models.py:2492
+#: models.py:2503
 msgid "# invoice (administrator)"
 msgstr "# facture (administrateur)"
 
-#: models.py:2495
+#: models.py:2506
 msgid "# invoice (editor)"
 msgstr "# facture (éditeur)"
 
-#: models.py:2497
+#: models.py:2508
 msgid "# invoice (shower)"
 msgstr "# facture (observateur)"
 
-#: models.py:2500
+#: models.py:2511
 msgid "invoice-status"
 msgstr "facture > statut"
 
-#: models.py:2502
+#: models.py:2513
 msgid "invoice-billtype"
 msgstr "facture > type de facture"
 

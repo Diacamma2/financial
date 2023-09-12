@@ -987,7 +987,7 @@ class ModelTest(LucteriosTest):
         self.calljson('/diacamma.accounting/modelEntryList', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
         self.assert_count_equal('', 3)
-        self.assert_grid_equal('modelentry', {'journal': "journal", 'designation': "nom", 'total': "total"}, 0)  # nb=3
+        self.assert_grid_equal('modelentry', {'journal': "journal", 'designation': "nom", "costaccounting": "comptabilité analytique", 'total': "total"}, 0)  # nb=3
 
         self.factory.xfer = ModelEntryAddModify()
         self.calljson('/diacamma.accounting/modelEntryAddModify', {}, False)
@@ -1004,7 +1004,7 @@ class ModelTest(LucteriosTest):
         self.calljson('/diacamma.accounting/modelEntryList', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
         self.assert_count_equal('', 3)
-        self.assert_grid_equal('modelentry', {'journal': "journal", 'designation': "nom", 'total': "total"}, 1)  # nb=3
+        self.assert_grid_equal('modelentry', {'journal': "journal", 'designation': "nom", "costaccounting": "comptabilité analytique", 'total': "total"}, 1)  # nb=3
         self.assert_json_equal('', 'modelentry/@0/journal', "Achats")
         self.assert_json_equal('', 'modelentry/@0/designation', "foo")
         self.assert_json_equal('', 'modelentry/@0/total', 0.0)
@@ -1045,11 +1045,11 @@ class ModelTest(LucteriosTest):
         self.calljson('/diacamma.accounting/modelEntryList', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
         self.assert_count_equal('', 3)
-        self.assert_grid_equal('modelentry', {'journal': "journal", 'designation': "nom", 'total': "total"}, 1)  # nb=3
+        self.assert_grid_equal('modelentry', {'journal': "journal", 'designation': "nom", "costaccounting": "comptabilité analytique", 'total': "total"}, 1)  # nb=3
 
-        self.assert_json_equal('', '#modelentry/headers/@2/@0', 'total')
-        self.assert_json_equal('', '#modelentry/headers/@2/@2', "C2EUR")
-        self.assert_json_equal('', '#modelentry/headers/@2/@4', "{[p align='right']}%s{[/p]}")
+        self.assert_json_equal('', '#modelentry/headers/@3/@0', 'total')
+        self.assert_json_equal('', '#modelentry/headers/@3/@2', "C2EUR")
+        self.assert_json_equal('', '#modelentry/headers/@3/@4', "{[p align='right']}%s{[/p]}")
 
         self.assert_json_equal('', 'modelentry/@0/journal', "Achats")
         self.assert_json_equal('', 'modelentry/@0/designation', "foo")

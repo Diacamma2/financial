@@ -2434,6 +2434,17 @@ def correct_quotation_asset_account():
         getLogger("diacamma.invoice").info(" * account correction assert = %d / quotation = %s", nb_asset_correct, nb_quotation_correct)
 
 
+@Signal.decorate('costaccounting_change')
+def invoice_changecost_model(new_cost, lastcost, old_cost):
+    for model in AccountPosting.objects.filter(cost_accounting=old_cost):
+        model.cost_accounting = new_cost
+        model.save()
+    if lastcost and old_cost.last_costaccounting is not None:
+        invoice_changecost_model(new_cost, lastcost=True, old_cost=old_cost.last_costaccounting)
+    if not lastcost and old_cost.next_costaccounting.first() is not None:
+        invoice_changecost_model(new_cost, lastcost=False, old_cost=old_cost.next_costaccounting.first())
+
+
 @Signal.decorate('delete_fiscalyear')
 def invoice_deleteyear(year):
     for bill in Bill.objects.filter(entry__year=year):

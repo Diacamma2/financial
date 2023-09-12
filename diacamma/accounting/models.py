@@ -319,6 +319,7 @@ class FiscalYear(LucteriosModel):
             year_item.save()
         self.is_actif = True
         self.save()
+        CostAccounting.change_in_accounting()
 
     @classmethod
     def get_default_fields(cls):
@@ -558,6 +559,8 @@ class FiscalYear(LucteriosModel):
     def closed(self):
         for cost in CostAccounting.objects.filter(year=self):
             cost.close()
+        if self.next_fiscalyear.first() is not None:
+            CostAccounting.create_costs_from_lastyear(self.next_fiscalyear.first().id)
         self._check_annexe()
         self.move_entry_noclose()
         self.unlink_entry_multiyear()
@@ -651,6 +654,50 @@ class CostAccounting(LucteriosModel):
             raise LucteriosException(IMPORTANT, _('The cost accounting "%s" has some not validated entry!') % self)
         if self.modelentry_set.all().count() > 0:
             raise LucteriosException(IMPORTANT, _('The cost accounting "%s" is include in a model of entry!') % self)
+
+    @classmethod
+    def create_costs_from_lastyear(cls, currentyear_id):
+        current_year = FiscalYear.objects.get(id=currentyear_id)
+        last_year = current_year.last_fiscalyear
+        cost_list = CostAccounting.objects.filter(year=last_year, year__next_fiscalyear__status=FiscalYear.STATUS_BUILDING, is_protected=False, next_costaccounting__isnull=True)
+        lastconvert_dict = {"begin": str(last_year.begin.year),
+                            "end": str(last_year.end.year),
+                            'beginendlong': "%s-%s" % (str(last_year.begin.year), str(last_year.end.year)),
+                            'beginendshort': "%s-%s" % (str(last_year.begin.year)[-2:], str(last_year.end.year)[-2:])}
+        newconvert_dict = {"begin": str(current_year.begin.year),
+                           "end": str(current_year.end.year),
+                           'beginendlong': "%s-%s" % (str(current_year.begin.year), str(current_year.end.year)),
+                           'beginendshort': "%s-%s" % (str(current_year.begin.year)[-2:], str(current_year.end.year)[-2:])}
+        error = []
+        new_by_default = None
+        for cost_item in cost_list:
+            patern_title = cost_item.name
+            for convname, convvalue in lastconvert_dict.items():
+                if match(r'.*[^0-9]%s[^0-9].*' % convvalue, patern_title):
+                    patern_title = patern_title.replace(convvalue, "%%(%s)s" % convname)
+            if patern_title != cost_item.name:
+                new_name = patern_title % newconvert_dict
+                if CostAccounting.objects.filter(name=new_name).count() > 0:
+                    getLogger("diacamma.accounting").error("Failure to create new cost accouting '%s' from '%s'", new_name, self)
+                    error.append(cost_item.name)
+                else:
+                    new_cost = CostAccounting.objects.create(name=new_name, description=self.description, year=self.year.next_fiscalyear.first(), status=CostAccounting.STATUS_OPENED, last_costaccounting=self)
+                    if cost_item.is_default:
+                        new_by_default = new_cost
+            else:
+                error.append(cost_item.name)
+        if new_by_default is not None:
+            new_by_default.change_has_default()
+        return error
+
+    @classmethod
+    def change_in_accounting(cls):
+        current_year = FiscalYear.get_current()
+        for cost_item in CostAccounting.objects.filter(year=current_year, is_protected=False):
+            if cost_item.last_costaccounting is not None:
+                Signal.call_signal("costaccounting_change", cost_item, True, cost_item.last_costaccounting)
+            if cost_item.next_costaccounting.first() is not None:
+                Signal.call_signal("costaccounting_change", cost_item, False, cost_item.next_costaccounting.first())
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if (self.id is not None) and (self.year is not None):
@@ -1621,7 +1668,7 @@ class ModelEntry(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        return ['journal', 'designation', 'total']
+        return ['journal', 'designation', 'costaccounting', 'total']
 
     @classmethod
     def get_edit_fields(cls):
@@ -1899,6 +1946,17 @@ def get_meta_currency_iso():
         return '("","",%s,"",True)' % str(currency_list)
     else:
         return None
+
+
+@Signal.decorate('costaccounting_change')
+def accounting_changecost_model(new_cost, lastcost, old_cost):
+    for model in ModelEntry.objects.filter(costaccounting=old_cost):
+        model.costaccounting = new_cost
+        model.save()
+    if lastcost and old_cost.last_costaccounting is not None:
+        accounting_changecost_model(new_cost, lastcost=True, old_cost=old_cost.last_costaccounting)
+    if not lastcost and old_cost.next_costaccounting.first() is not None:
+        accounting_changecost_model(new_cost, lastcost=False, old_cost=old_cost.next_costaccounting.first())
 
 
 @Signal.decorate('check_report')

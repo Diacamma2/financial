@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-25 13:26+0000\n"
+"POT-Creation-Date: 2023-09-12 18:52+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -731,107 +731,107 @@ msgstr "inventory detail"
 msgid "inventory details"
 msgstr "inventory details"
 
-#: models.py:2464
+#: models.py:2475
 msgid "invoice-default-sell-account"
 msgstr "default sell account"
 
-#: models.py:2466
+#: models.py:2477
 msgid "invoice-reduce-account"
 msgstr "reduce account"
 
-#: models.py:2468
+#: models.py:2479
 msgid "invoice-vat-mode"
 msgstr "VAT mode"
 
-#: models.py:2469
+#: models.py:2480
 msgid "invoice-vat-mode.0"
 msgstr "not applicable"
 
-#: models.py:2469
+#: models.py:2480
 msgid "invoice-vat-mode.1"
 msgstr "price without tax"
 
-#: models.py:2469
+#: models.py:2480
 msgid "invoice-vat-mode.2"
 msgstr "price including tax"
 
-#: models.py:2470
+#: models.py:2481
 msgid "invoice-account-third"
 msgstr "default third account"
 
-#: models.py:2473
+#: models.py:2484
 msgid "invoice-article-with-picture"
 msgstr "article with picture"
 
-#: models.py:2474
+#: models.py:2485
 msgid "invoice-reduce-with-ratio"
 msgstr "reduce with ratio"
 
-#: models.py:2475
+#: models.py:2486
 msgid "invoice-reduce-allow-article-empty"
 msgstr "allow article with code in invoice"
 
-#: models.py:2476
+#: models.py:2487
 msgid "invoice-order-mode"
 msgstr "Order mode"
 
-#: models.py:2477
+#: models.py:2488
 msgid "invoice-order-mode.0"
 msgstr "none"
 
-#: models.py:2477
+#: models.py:2488
 msgid "invoice-order-mode.1"
 msgstr "convert from quotation"
 
-#: models.py:2477
+#: models.py:2488
 msgid "invoice-order-mode.2"
 msgstr "quotation validation link"
 
-#: models.py:2478
+#: models.py:2489
 msgid "invoice-asset-mode"
 msgstr "Asset mode"
 
-#: models.py:2479
+#: models.py:2490
 msgid "invoice-asset-mode.0"
 msgstr "Archive invoice when convert to asset"
 
-#: models.py:2479
+#: models.py:2490
 msgid "invoice-asset-mode.1"
 msgstr "Let invoice to valided status when convert to asset"
 
-#: models.py:2480
+#: models.py:2491
 msgid "invoice-default-nbpayoff"
 msgstr "default number of payoff"
 
-#: models.py:2482
+#: models.py:2493
 msgid "invoice-default-send-pdf"
 msgstr "default send PDF"
 
-#: models.py:2484
+#: models.py:2495
 msgid "invoice-cart-active"
 msgstr "active cart"
 
-#: models.py:2485
+#: models.py:2496
 msgid "invoice-cart-article-filter"
 msgstr "article filter for cart"
 
-#: models.py:2487
+#: models.py:2498
 msgid "invoice-cart-timeout"
 msgstr "time-out for cart (days)"
 
-#: models.py:2488
+#: models.py:2499
 msgid "invoice-cart-email-subject"
 msgstr "subject for cart email"
 
-#: models.py:2488
+#: models.py:2499
 msgid "new validated cart"
 msgstr "new validated cart"
 
-#: models.py:2489
+#: models.py:2500
 msgid "invoice-cart-email-body"
 msgstr "body for cart email"
 
-#: models.py:2490
+#: models.py:2501
 msgid ""
 "#name{[br/]}{[br/]}Joint in this email #doc.{[br/]}#nb quotation is created, "
 "each storage area manager will return you them soon.{[br/]}{[br/]}Regards"
@@ -839,23 +839,23 @@ msgstr ""
 "#name{[br/]}{[br/]}Joint in this email #doc.{[br/]}#nb quotation is created, "
 "each storage area manager will return you them soon.{[br/]}{[br/]}Regards"
 
-#: models.py:2492
+#: models.py:2503
 msgid "# invoice (administrator)"
 msgstr "# invoice (administrator)"
 
-#: models.py:2495
+#: models.py:2506
 msgid "# invoice (editor)"
 msgstr "# invoice (editor)"
 
-#: models.py:2497
+#: models.py:2508
 msgid "# invoice (shower)"
 msgstr "# invoice (shower)"
 
-#: models.py:2500
+#: models.py:2511
 msgid "invoice-status"
 msgstr "invoice > status"
 
-#: models.py:2502
+#: models.py:2513
 msgid "invoice-billtype"
 msgstr "invoice > bill type"
 

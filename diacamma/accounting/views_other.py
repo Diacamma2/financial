@@ -11,7 +11,7 @@ from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
 from lucterios.framework.xfercomponents import XferCompImage, XferCompLabelForm, XferCompDate
 from lucterios.framework.xferadvance import XferListEditor
 from lucterios.framework.xferadvance import XferAddEditor
-from lucterios.framework.xfergraphic import XferContainerAcknowledge
+from lucterios.framework.xfergraphic import XferContainerAcknowledge, XFER_DBOX_WARNING
 from lucterios.framework.error import LucteriosException, IMPORTANT
 
 from diacamma.accounting.models import CostAccounting, ModelLineEntry, ModelEntry, FiscalYear
@@ -156,6 +156,37 @@ class CostAccountingDel(XferDelete):
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Delete cost accounting")
+
+
+def condition_recreate(xfer):
+    select_year = xfer.getparam('year', 0)
+    if select_year <= 0:
+        return False
+    last_year = FiscalYear.objects.get(id=select_year).last_fiscalyear
+    if last_year is None:
+        return False
+    cost_list = CostAccounting.objects.filter(year=last_year, year__next_fiscalyear__status=FiscalYear.STATUS_BUILDING, is_protected=False, next_costaccounting__isnull=True)
+    return len(cost_list) > 0
+
+
+@ActionsManage.affect_list(_("Recreate"), "images/new.png", condition=condition_recreate)
+@MenuManage.describ('accounting.add_fiscalyear')
+class CostAccountingRecreate(XferContainerAcknowledge):
+    icon = "images/new.png"
+    model = CostAccounting
+    field_id = 'costaccounting'
+    caption = _("Recreate")
+    readonly = True
+
+    def fillresponse(self, year=0):
+        current_year = FiscalYear.objects.get(id=year)
+        cost_nb = CostAccounting.objects.filter(year__next_fiscalyear__in=(current_year,), year__next_fiscalyear__status=FiscalYear.STATUS_BUILDING, is_protected=False, next_costaccounting__isnull=True).count()
+        if self.confirme(_('Do you want to try to import %d old cost accounting in this fiscal year ?') % cost_nb):
+            error = CostAccounting.create_costs_from_lastyear(year)
+            if len(error) > 0:
+                self.message(_('Some last cost accounting have not be imported:{[br]}%s') % "{[br]}".join(error), XFER_DBOX_WARNING)
+            else:
+                self.message(_('All last cost accounting have be imported.'))
 
 
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of entry model'),)
