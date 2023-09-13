@@ -641,8 +641,7 @@ class CostAccounting(LucteriosModel):
                 self.is_default = False
                 self.save()
             else:
-                all_cost = CostAccounting.objects.all()
-                for cost_item in all_cost:
+                for cost_item in CostAccounting.objects.filter(is_default=True):
                     cost_item.is_default = False
                     cost_item.save()
                 self.is_default = True
@@ -662,26 +661,26 @@ class CostAccounting(LucteriosModel):
         cost_list = CostAccounting.objects.filter(year=last_year, year__next_fiscalyear__status=FiscalYear.STATUS_BUILDING, is_protected=False, next_costaccounting__isnull=True)
         lastconvert_dict = {"begin": str(last_year.begin.year),
                             "end": str(last_year.end.year),
-                            'beginendlong': "%s-%s" % (str(last_year.begin.year), str(last_year.end.year)),
-                            'beginendshort': "%s-%s" % (str(last_year.begin.year)[-2:], str(last_year.end.year)[-2:])}
+                            'beginshort': str(last_year.begin.year)[-2:],
+                            'endshort': str(last_year.end.year)[-2:]}
         newconvert_dict = {"begin": str(current_year.begin.year),
                            "end": str(current_year.end.year),
-                           'beginendlong': "%s-%s" % (str(current_year.begin.year), str(current_year.end.year)),
-                           'beginendshort': "%s-%s" % (str(current_year.begin.year)[-2:], str(current_year.end.year)[-2:])}
+                           'beginshort': str(current_year.begin.year)[-2:],
+                           'endshort': str(current_year.end.year)[-2:]}
         error = []
         new_by_default = None
         for cost_item in cost_list:
             patern_title = cost_item.name
             for convname, convvalue in lastconvert_dict.items():
-                if match(r'.*[^0-9]%s[^0-9].*' % convvalue, patern_title):
+                if match(r'(^|.*[^0-9])%s($|[^0-9].*)' % convvalue, patern_title):
                     patern_title = patern_title.replace(convvalue, "%%(%s)s" % convname)
             if patern_title != cost_item.name:
                 new_name = patern_title % newconvert_dict
                 if CostAccounting.objects.filter(name=new_name).count() > 0:
-                    getLogger("diacamma.accounting").error("Failure to create new cost accouting '%s' from '%s'", new_name, self)
+                    getLogger("diacamma.accounting").error("Failure to create new cost accouting '%s' from '%s'", new_name, cost_item)
                     error.append(cost_item.name)
                 else:
-                    new_cost = CostAccounting.objects.create(name=new_name, description=self.description, year=self.year.next_fiscalyear.first(), status=CostAccounting.STATUS_OPENED, last_costaccounting=self)
+                    new_cost = CostAccounting.objects.create(name=new_name, description=cost_item.description, year=cost_item.year.next_fiscalyear.first(), status=CostAccounting.STATUS_OPENED, last_costaccounting=cost_item)
                     if cost_item.is_default:
                         new_by_default = new_cost
             else:
@@ -1190,14 +1189,14 @@ class EntryAccount(LucteriosModel):
                 res._result_cache.append(new_line)
         return res
 
-    def save_entrylineaccounts(self, serial_vals):
+    def save_entrylineaccounts(self, serial_vals, check_integrity=True):
         if not self.close:
             old_linkids = [line.link_id for line in self.entrylineaccount_set.all() if line.link_id is not None]
             self.entrylineaccount_set.all().delete()
             for line in self.get_entrylineaccounts(serial_vals):
                 if line.id < 0:
                     line.id = None
-                line.save()
+                line.save(check_integrity=check_integrity)
             has_link = False
             for line in self.entrylineaccount_set.all():
                 if line.link_id is not None:
@@ -1643,9 +1642,13 @@ class EntryLineAccount(LucteriosModel):
         self.unlink()
         LucteriosModel.delete(self)
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None, check_integrity=True):
         if (self.account.type_of_account not in (3, 4, 5)) and (self.costaccounting is not None):
             self.costaccounting = None
+        if check_integrity and (self.costaccounting is not None) and (self.costaccounting.status == CostAccounting.STATUS_CLOSED):
+            raise LucteriosException(IMPORTANT, _('The cost accounting "%s" is closed !') % self.costaccounting)
+        if check_integrity and (self.costaccounting is not None) and (self.costaccounting.year is not None) and (self.costaccounting.year != self.entry.year):
+            raise LucteriosException(IMPORTANT, _('The cost accounting "%s" has another year!') % self.costaccounting)
         return LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     class Meta(object):

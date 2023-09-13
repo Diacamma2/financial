@@ -33,9 +33,10 @@ from lucterios.CORE.views import ObjectMerge
 from lucterios.CORE.parameters import Params
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, default_costaccounting,\
-    initial_contacts, create_account
+    initial_contacts, create_account, create_year
+from diacamma.accounting.models import CostAccounting
 from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod
-from diacamma.invoice.models import Article
+from diacamma.invoice.models import Article, AccountPosting
 from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting
 from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel, \
     StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel, \
@@ -139,7 +140,7 @@ class ConfigTest(LucteriosTest):
         self.assert_select_equal('cost_accounting', {0: None, 2: 'open'})
 
         self.factory.xfer = AccountPostingAddModify()
-        self.calljson('/diacamma.invoice/accountPostingAddModify', {'name': 'aaa', 'sell_account': '601', 'cost_accounting': 2, 'provision_third_account': '4191a', 'SAVE': 'YES'}, False)
+        self.calljson('/diacamma.invoice/accountPostingAddModify', {'name': 'aaa', 'sell_account': '701', 'cost_accounting': 2, 'provision_third_account': '4191a', 'SAVE': 'YES'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'accountPostingAddModify')
 
         self.factory.xfer = InvoiceConfFinancial()
@@ -155,6 +156,54 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')
         self.assert_count_equal('accountposting', 0)
+
+    def test_accountposting_costaccounting(self):
+        year1 = create_year(0, 2021)
+        year2 = create_year(0, 2022, year1)
+        year3 = create_year(0, 2023, year2)
+        cost1 = CostAccounting.objects.create(name='cost 2021', description='cost', status=1, is_default=False, year=year1, last_costaccounting=None)
+        cost2 = CostAccounting.objects.create(name='cost 2022', description='cost', status=1, is_default=False, year=year2, last_costaccounting=cost1)
+        cost3 = CostAccounting.objects.create(name='cost 2023', description='cost', status=1, is_default=False, year=year3, last_costaccounting=cost2)
+
+        AccountPosting.objects.create(name="my account posting", sell_account='701', cost_accounting=cost3)
+        self.factory.xfer = InvoiceConfFinancial()
+        self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')
+        self.assert_count_equal('accountposting', 1)
+        self.assert_json_equal('', 'accountposting/@0/name', 'my account posting')
+        self.assert_json_equal('', 'accountposting/@0/cost_accounting', 'cost 2023')
+
+        year2.set_has_actif()
+        self.factory.xfer = InvoiceConfFinancial()
+        self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')
+        self.assert_count_equal('accountposting', 1)
+        self.assert_json_equal('', 'accountposting/@0/name', 'my account posting')
+        self.assert_json_equal('', 'accountposting/@0/cost_accounting', 'cost 2022')
+
+        year1.set_has_actif()
+        self.factory.xfer = InvoiceConfFinancial()
+        self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')
+        self.assert_count_equal('accountposting', 1)
+        self.assert_json_equal('', 'accountposting/@0/name', 'my account posting')
+        self.assert_json_equal('', 'accountposting/@0/cost_accounting', 'cost 2021')
+
+        year3.set_has_actif()
+        self.factory.xfer = InvoiceConfFinancial()
+        self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')
+        self.assert_count_equal('accountposting', 1)
+        self.assert_json_equal('', 'accountposting/@0/name', 'my account posting')
+        self.assert_json_equal('', 'accountposting/@0/cost_accounting', 'cost 2023')
+
+        year1.set_has_actif()
+        self.factory.xfer = InvoiceConfFinancial()
+        self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')
+        self.assert_count_equal('accountposting', 1)
+        self.assert_json_equal('', 'accountposting/@0/name', 'my account posting')
+        self.assert_json_equal('', 'accountposting/@0/cost_accounting', 'cost 2021')
 
     def test_automaticreduce(self):
         default_categories()

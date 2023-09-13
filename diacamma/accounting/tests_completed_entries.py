@@ -39,18 +39,18 @@ from lucterios.contacts.models import CustomField
 
 from diacamma.accounting.views_entries import EntryAccountList, EntryAccountListing, EntryAccountEdit, EntryAccountShow, \
     EntryAccountClose, EntryAccountCostAccounting, EntryAccountSearch
-from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr, fill_entries_fr, add_entry
-from diacamma.accounting.views_other import CostAccountingList, CostAccountingClose, CostAccountingAddModify
+from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr, fill_entries_fr, add_entry, create_year
+from diacamma.accounting.views_other import CostAccountingList, CostAccountingClose, CostAccountingAddModify, CostAccountingRecreate, ModelEntryList
 from diacamma.accounting.views_reports import FiscalYearBalanceSheet, FiscalYearIncomeStatement, FiscalYearLedger, FiscalYearTrialBalance,\
     CostAccountingTrialBalance, CostAccountingLedger, CostAccountingIncomeStatement,\
     FiscalYearReportPrint, FiscalYearLedgerShow, CostAccountingReportPrint
 from diacamma.accounting.views_admin import FiscalYearExport
-from diacamma.accounting.models import FiscalYear, Third
+from diacamma.accounting.models import FiscalYear, Third, CostAccounting, ModelEntry
 from diacamma.accounting.tools_reports import get_totalaccount_for_query, get_budget_total
 from diacamma.accounting.views_budget import BudgetList, BudgetAddModify, BudgetDel, BudgetImport
 
 
-class CompletedEntryTest(LucteriosTest):
+class EntryTest(LucteriosTest):
 
     def setUp(self):
         initial_thirds_fr()
@@ -73,6 +73,15 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('', 11 if filter_advance else 8)
         self.assert_count_equal('entryline', nb_line)
+
+    def _check_result(self):
+        return self.assert_json_equal('LABELFORM', 'result', [230.62, 348.60, -117.98, 1050.66, 1244.74])
+
+    def _check_result_with_filter(self):
+        return self.assert_json_equal('LABELFORM', 'result', [34.01, 0.00, 34.01, 70.64, 70.64])
+
+
+class CompletedEntryTest(EntryTest):
 
     def test_lastyear(self):
         self._goto_entrylineaccountlist(1, 0, '', 3)
@@ -158,12 +167,6 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_json_equal('', 'entryline/@0/entry_account', '[512] 512')
         self.assert_json_equal('', 'entryline/@0/credit', 12.34)
         self.assert_json_equal('', 'entryline/@1/entry_account', '[627] 627')
-
-    def _check_result(self):
-        return self.assert_json_equal('LABELFORM', 'result', [230.62, 348.60, -117.98, 1050.66, 1244.74])
-
-    def _check_result_with_filter(self):
-        return self.assert_json_equal('LABELFORM', 'result', [34.01, 0.00, 34.01, 70.64, 70.64])
 
     def test_all(self):
         self._goto_entrylineaccountlist(0, 0, '', 25)
@@ -308,7 +311,350 @@ class CompletedEntryTest(LucteriosTest):
         self.assertAlmostEqual(7.35, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '602'), delta=0.0001)
         self.assertAlmostEqual(6.24, get_budget_total(Q(code__regex=r'^6.*$') & Q(year_id=1), '604'), delta=0.0001)
 
-    def test_costaccounting(self):
+    def test_export(self):
+        self.assertFalse(exists(get_user_path('accounting', 'fiscalyear_export_1.xml')))
+        self.factory.xfer = FiscalYearExport()
+        self.calljson('/diacamma.accounting/fiscalYearExport', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearExport')
+        self.assertTrue(exists(get_user_path('accounting', 'fiscalyear_export_1.xml')))
+
+        self.assertFalse(exists(get_user_path('accounting', 'fiscalyear_export_2.xml')))
+        self.factory.xfer = FiscalYearExport()
+        self.calljson('/diacamma.accounting/fiscalYearExport', {'fiscalyear': '2'}, False)
+        self.assert_observer('core.exception', 'diacamma.accounting', 'fiscalYearExport')
+        self.assertFalse(exists(get_user_path('accounting', 'fiscalyear_export_2.xml')))
+        self.assert_json_equal('', 'code', '3')
+        self.assert_json_equal('', 'message', "Cet exercice n'a pas d'écriture validée !")
+
+    def test_search_advanced(self):
+        CustomField.objects.create(modelname='accounting.Third', name='categorie', kind=4, args="{'list':['---','petit','moyen','gros']}")
+        CustomField.objects.create(modelname='accounting.Third', name='value', kind=1, args="{'min':0,'max':100}")
+        third = Third.objects.get(id=7)
+        third.set_custom_values({'custom_2': '4'})
+
+        self.factory.xfer = EntryAccountSearch()
+        self.calljson('/diacamma.accounting/entryAccountSearch', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountSearch')
+        self.assert_count_equal('entryline', 25)
+
+        self.factory.xfer = EntryAccountSearch()
+        self.calljson('/diacamma.accounting/entryAccountSearch', {'CRITERIA': 'third.custom_2||1||4'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountSearch')
+        self.assert_count_equal('entryline', 2)
+
+
+class FiscalYearTest(EntryTest):
+
+    def test_balancesheet(self):
+        self.factory.xfer = FiscalYearBalanceSheet()
+        self.calljson('/diacamma.accounting/fiscalYearBalanceSheet', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearBalanceSheet')
+        self._check_result()
+        self.assert_count_equal('report_1', 11)
+        self.assert_json_equal('', 'report_1/@1/left', '[411] 411')
+        self.assert_json_equal('', 'report_1/@1/left_n', 159.98)
+        self.assert_json_equal('', 'report_1/@1/left_n_1', '')
+
+        self.assert_json_equal('', 'report_1/@5/left', '[512] 512')
+        self.assert_json_equal('', 'report_1/@5/left_n', 1130.29)
+        self.assert_json_equal('', 'report_1/@5/left_n_1', '')
+
+        self.assert_json_equal('', 'report_1/@6/left', '[531] 531')
+        self.assert_json_equal('', 'report_1/@6/left_n', -79.63)
+        self.assert_json_equal('', 'report_1/@6/left_n_1', '')
+
+        self.assert_json_equal('', 'report_1/@1/right', '[106] 106')
+        self.assert_json_equal('', 'report_1/@1/right_n', 1250.38)
+        self.assert_json_equal('', 'report_1/@1/right_n_1', '')
+
+        self.assert_json_equal('', 'report_1/@5/right', '[401] 401')
+        self.assert_json_equal('', 'report_1/@5/right_n', 78.24)
+        self.assert_json_equal('', 'report_1/@5/right_n_1', '')
+
+        self.assert_json_equal('', 'report_1/@10/left', "&#160;&#160;&#160;&#160;&#160;{[i]}{[b]}résultat (déficit){[/b]}{[/i]}")
+        self.assert_json_equal('', 'report_1/@10/left_n', {"format": "{[i]}{[b]}{0}{[/b]}{[/i]}", "value": 117.98})
+        self.assert_json_equal('', 'report_1/@10/right', "")
+        self.assert_json_equal('', 'report_1/@10/right_n', "")
+
+    def test_balancesheet_filter(self):
+        self.factory.xfer = FiscalYearBalanceSheet()
+        self.calljson('/diacamma.accounting/fiscalYearBalanceSheet', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearBalanceSheet')
+        self._check_result_with_filter()
+
+    def test_balancesheet_print(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearBalanceSheet', "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_pdf()
+
+    def test_balancesheet_print_ods(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearBalanceSheet', "PRINT_MODE": 2}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_ods()
+
+    def test_incomestatement(self):
+        self.factory.xfer = FiscalYearIncomeStatement()
+        self.calljson('/diacamma.accounting/fiscalYearIncomeStatement', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearIncomeStatement')
+        self._check_result()
+        self.assert_count_equal('report_1', 12)
+
+        self.assert_json_equal('', 'report_1/@0/left', '[601] 601')
+        self.assert_json_equal('', 'report_1/@0/left_n', 78.24)
+        self.assert_json_equal('', 'report_1/@0/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@0/left_b', 8.19)
+
+        self.assert_json_equal('', 'report_1/@1/left', '[602] 602')
+        self.assert_json_equal('', 'report_1/@1/left_n', 63.94)
+        self.assert_json_equal('', 'report_1/@1/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@1/left_b', 7.35)
+
+        self.assert_json_equal('', 'report_1/@2/left', '[604] 604')
+        self.assert_json_equal('', 'report_1/@2/left_n', '')
+        self.assert_json_equal('', 'report_1/@2/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@2/left_b', 6.24)
+
+        self.assert_json_equal('', 'report_1/@3/left', '[607] 607')
+        self.assert_json_equal('', 'report_1/@3/left_n', 194.08)
+        self.assert_json_equal('', 'report_1/@3/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@3/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@4/left', '[627] 627')
+        self.assert_json_equal('', 'report_1/@4/left_n', 12.34)
+        self.assert_json_equal('', 'report_1/@4/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@4/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@9/left', '[870] 870')
+        self.assert_json_equal('', 'report_1/@9/left_n', 1234.00)
+        self.assert_json_equal('', 'report_1/@9/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@9/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@0/right', '[701] 701')
+        self.assert_json_equal('', 'report_1/@0/right_n', '')
+        self.assert_json_equal('', 'report_1/@0/right_n_1', '')
+        self.assert_json_equal('', 'report_1/@0/right_b', 67.89)
+
+        self.assert_json_equal('', 'report_1/@1/right', '[707] 707')
+        self.assert_json_equal('', 'report_1/@1/right_n', 230.62)
+        self.assert_json_equal('', 'report_1/@1/right_n_1', '')
+        self.assert_json_equal('', 'report_1/@1/right_b', 123.45)
+
+        self.assert_json_equal('', 'report_1/@9/right', '[860] 860')
+        self.assert_json_equal('', 'report_1/@9/right_n', 1234.00)
+        self.assert_json_equal('', 'report_1/@9/right_n_1', '')
+        self.assert_json_equal('', 'report_1/@9/right_b', '')
+
+    def test_import_budget(self):
+        FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
+
+        self.factory.xfer = BudgetList()
+        self.calljson('/diacamma.accounting/budgetList', {'year': '3'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'budgetList')
+        self.assert_count_equal('', 5)
+        self.assertEqual(len(self.json_actions), 4)
+        self.assert_count_equal('budget_revenue', 0)
+        self.assert_count_equal('#budget_revenue/actions', 2)
+        self.assert_count_equal('budget_expense', 0)
+        self.assert_count_equal('#budget_expense/actions', 2)
+
+        self.factory.xfer = BudgetImport()
+        self.calljson('/diacamma.accounting/budgetImport', {'year': '3'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'budgetImport')
+        self.assert_count_equal('', 4)
+        self.assert_select_equal('currentyear', {1: 'Exercice du 1 janvier 2015 au 31 décembre 2015 [en création]', 2: 'Exercice du 1 janvier 2014 au 31 décembre 2014 [terminé]'})
+
+        self.factory.xfer = BudgetImport()
+        self.calljson('/diacamma.accounting/budgetImport', {'year': '3', 'currentyear': '1', 'CONFIRME': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'budgetImport')
+
+        self.factory.xfer = BudgetList()
+        self.calljson('/diacamma.accounting/budgetList', {'year': '3'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'budgetList')
+        self.assert_count_equal('', 6)
+        self.assert_count_equal('budget_revenue', 1)
+        self.assert_count_equal('budget_expense', 4)
+        self.assert_json_equal('LABELFORM', 'result', -117.98)
+
+    def test_incomestatement_filter(self):
+        self.factory.xfer = FiscalYearIncomeStatement()
+        self.calljson('/diacamma.accounting/fiscalYearIncomeStatement', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearIncomeStatement')
+        self._check_result_with_filter()
+
+    def test_incomestatement_print(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearIncomeStatement', "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_pdf()
+
+    def test_incomestatement_print_ods(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearIncomeStatement', "PRINT_MODE": 2}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_ods()
+
+    def test_ledger(self):
+        self.factory.xfer = FiscalYearLedger()
+        self.calljson('/diacamma.accounting/fiscalYearLedger', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearLedger')
+        self._check_result()
+        self.assert_count_equal('report_1', 91)
+        self.assert_json_equal('', 'report_1/@0/id', 'L0001-0')
+        self.assert_json_equal('', 'report_1/@0/designation_ref', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[106] 106{[/b]}{[/u]}')
+        self.assert_json_equal('', 'report_1/@1/id', 'L0002-1')
+        self.assert_json_equal('', 'report_1/@1/designation_ref', 'Report à nouveau')
+        self.assert_json_equal('', 'report_1/@2/id', 'L0003-0')
+        self.assert_json_equal('', 'report_1/@2/designation_ref', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[i]}total{[/i]}')
+        self.assert_count_equal('#report_1/actions', 1)
+        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
+
+        self.factory.xfer = FiscalYearLedgerShow()
+        self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-1'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearLedgerShow')
+        self.assert_action_equal('POST', self.response_json['action'], ('Editer', 'images/edit.png', "diacamma.accounting", "entryAccountOpenFromLine", "1", '1', '1', {"entryaccount": "1"}))
+
+        self.factory.xfer = FiscalYearLedgerShow()
+        self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-0'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearLedgerShow')
+        self.assertNotIn('action', self.response_json)
+
+    def test_ledger_filter(self):
+        self.factory.xfer = FiscalYearLedger()
+        self.calljson('/diacamma.accounting/fiscalYearLedger', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearLedger')
+        self._check_result_with_filter()
+
+    def test_ledger_print(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearLedger', "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_pdf()
+
+    def test_ledger_print_ods(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearLedger', "PRINT_MODE": 2}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_ods()
+
+    def test_trialbalance(self):
+        self.factory.xfer = FiscalYearTrialBalance()
+        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
+        self._check_result()
+        self.assert_count_equal('report_1', 14)
+        self.assert_json_equal('', 'report_1/@0/designation', '[106] 106')
+        self.assert_json_equal('', 'report_1/@0/total_debit', 0.00)
+        self.assert_json_equal('', 'report_1/@0/total_credit', 1250.38)
+        self.assert_json_equal('', 'report_1/@0/solde_debit', 0)
+        self.assert_json_equal('', 'report_1/@0/solde_credit', 1250.38)
+
+        self.assert_json_equal('', 'report_1/@1/designation', '[401] 401')
+        self.assert_json_equal('', 'report_1/@1/total_debit', 258.02)
+        self.assert_json_equal('', 'report_1/@1/total_credit', 336.26)
+        self.assert_json_equal('', 'report_1/@1/solde_debit', 0)
+        self.assert_json_equal('', 'report_1/@1/solde_credit', 78.24)
+
+        self.assert_json_equal('', 'report_1/@2/designation', '[411] 411')
+        self.assert_json_equal('', 'report_1/@2/total_debit', 230.62)
+        self.assert_json_equal('', 'report_1/@2/total_credit', 70.64)
+        self.assert_json_equal('', 'report_1/@2/solde_debit', 159.98)
+        self.assert_json_equal('', 'report_1/@2/solde_credit', 0)
+
+        self.assert_json_equal('', 'report_1/@3/designation', '[512] 512')
+        self.assert_json_equal('', 'report_1/@3/total_debit', 1206.57)
+        self.assert_json_equal('', 'report_1/@3/total_credit', 76.28)
+        self.assert_json_equal('', 'report_1/@3/solde_debit', 1130.29)
+        self.assert_json_equal('', 'report_1/@3/solde_credit', 0)
+
+        self.assert_json_equal('', 'report_1/@4/designation', '[531] 531')
+        self.assert_json_equal('', 'report_1/@4/total_debit', 114.45)
+        self.assert_json_equal('', 'report_1/@4/total_credit', 194.08)
+        self.assert_json_equal('', 'report_1/@4/solde_debit', 0)
+        self.assert_json_equal('', 'report_1/@4/solde_credit', 79.63)
+
+        self.assert_json_equal('', 'report_1/@5/designation', '[601] 601')
+        self.assert_json_equal('', 'report_1/@5/total_debit', 78.24)
+        self.assert_json_equal('', 'report_1/@5/total_credit', 0.00)
+        self.assert_json_equal('', 'report_1/@5/solde_debit', 78.24)
+        self.assert_json_equal('', 'report_1/@5/solde_credit', 0)
+
+        self.assert_json_equal('', 'report_1/@6/designation', '[602] 602')
+        self.assert_json_equal('', 'report_1/@6/total_debit', 63.94)
+        self.assert_json_equal('', 'report_1/@6/total_credit', 0.00)
+        self.assert_json_equal('', 'report_1/@6/solde_debit', 63.94)
+        self.assert_json_equal('', 'report_1/@6/solde_credit', 0)
+
+        self.assert_json_equal('', 'report_1/@7/designation', '[607] 607')
+        self.assert_json_equal('', 'report_1/@7/total_debit', 194.08)
+        self.assert_json_equal('', 'report_1/@7/total_credit', 0.00)
+        self.assert_json_equal('', 'report_1/@7/solde_debit', 194.08)
+        self.assert_json_equal('', 'report_1/@7/solde_credit', 0)
+
+        self.assert_json_equal('', 'report_1/@8/designation', '[627] 627')
+        self.assert_json_equal('', 'report_1/@8/total_debit', 12.34)
+        self.assert_json_equal('', 'report_1/@8/total_credit', 0.00)
+        self.assert_json_equal('', 'report_1/@8/solde_debit', 12.34)
+        self.assert_json_equal('', 'report_1/@8/solde_credit', 0)
+
+        self.assert_json_equal('', 'report_1/@9/designation', '[707] 707')
+        self.assert_json_equal('', 'report_1/@9/total_debit', 0.00)
+        self.assert_json_equal('', 'report_1/@9/total_credit', 230.62)
+        self.assert_json_equal('', 'report_1/@9/solde_debit', 0)
+        self.assert_json_equal('', 'report_1/@9/solde_credit', 230.62)
+
+        self.assert_json_equal('', 'report_1/@10/designation', '[860] 860')
+        self.assert_json_equal('', 'report_1/@10/total_debit', 0.00)
+        self.assert_json_equal('', 'report_1/@10/total_credit', 1234.00)
+        self.assert_json_equal('', 'report_1/@10/solde_debit', 0)
+        self.assert_json_equal('', 'report_1/@10/solde_credit', 1234.00)
+
+        self.assert_json_equal('', 'report_1/@11/designation', '[870] 870')
+        self.assert_json_equal('', 'report_1/@11/total_debit', 1234.00)
+        self.assert_json_equal('', 'report_1/@11/total_credit', 0.00)
+        self.assert_json_equal('', 'report_1/@11/solde_debit', 1234.00)
+        self.assert_json_equal('', 'report_1/@11/solde_credit', 0)
+
+        self.assert_json_equal('', 'report_1/@13/designation', "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total{[/b]}{[/u]}")
+        self.assert_json_equal('', 'report_1/@13/total_debit', {"value": 3392.26, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal('', 'report_1/@13/total_credit', {"value": 3392.26, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal('', 'report_1/@13/solde_debit', {"value": 2872.87, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal('', 'report_1/@13/solde_credit', {"value": 2872.8700000000003, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+
+    def test_trialbalance_filter(self):
+        self.factory.xfer = FiscalYearTrialBalance()
+        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
+        self._check_result_with_filter()
+
+    def test_trialbalance_third(self):
+        self.factory.xfer = FiscalYearTrialBalance()
+        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {'filtercode': '4', 'with_third': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
+        self.assert_count_equal('report_1', 8)
+
+        self.factory.xfer = FiscalYearTrialBalance()
+        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {'filtercode': '4', 'with_third': 1, 'only_nonull': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
+        self.assert_count_equal('report_1', 5)
+
+    def test_trialbalance_print(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearTrialBalance', "PRINT_MODE": 3}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_pdf()
+
+    def test_trialbalance_print_ods(self):
+        self.factory.xfer = FiscalYearReportPrint()
+        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearTrialBalance', "PRINT_MODE": 2}, False)
+        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
+        self.save_ods()
+
+
+class CostAccountingTest(EntryTest):
+
+    def test_entryshow(self):
         self.factory.xfer = EntryAccountEdit()
         self.calljson('/diacamma.accounting/entryAccountEdit',
                       {'year': '1', 'journal': '2'}, False)
@@ -344,7 +690,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_count_equal('#entrylineaccount/actions', 0)
         self.assertEqual(len(self.json_actions), 1)
 
-    def test_costaccounting_list(self):
+    def test_list(self):
         self.factory.xfer = CostAccountingList()
         self.calljson('/diacamma.accounting/costAccountingList', {'status': 0}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
@@ -400,7 +746,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
         self.assert_count_equal('costaccounting', 2)
 
-    def test_costaccounting_budget(self):
+    def test_budget(self):
         self.factory.xfer = CostAccountingAddModify()
         self.calljson('/diacamma.accounting/costAccountingAddModify', {"SAVE": "YES", 'name': 'aaa', 'description': 'aaa', 'year': '1'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'costAccountingAddModify')  # id = 3
@@ -445,6 +791,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'budgetList')
         self.assert_count_equal('', 6)
         self.assertEqual(len(self.json_actions), 4)
+
         self.assert_count_equal('budget_revenue', 0)
         self.assert_count_equal('#budget_revenue/actions', 2)
         self.assert_count_equal('budget_expense', 1)
@@ -486,7 +833,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_count_equal('budget_expense', 2)
         self.assert_json_equal('LABELFORM', 'result', 176.91)
 
-    def test_costaccounting_change(self):
+    def test_change(self):
         FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
 
         self.factory.xfer = CostAccountingAddModify()
@@ -766,7 +1113,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
         self.assert_count_equal('costaccounting', 4)
 
-    def test_costaccounting_needed(self):
+    def test_needed(self):
         FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
 
         self.factory.xfer = CostAccountingAddModify()
@@ -818,7 +1165,7 @@ class CompletedEntryTest(LucteriosTest):
         self.calljson('/diacamma.accounting/entryAccountClose', {'CONFIRME': 'YES', 'year': '1', 'journal': '2', 'entryline': '8;9;12;13;18;19'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountClose')
 
-    def test_costaccounting_incomestatement(self):
+    def test_incomestatement(self):
         self.factory.xfer = CostAccountingIncomeStatement()
         self.calljson('/diacamma.accounting/costAccountingIncomeStatement', {'costaccounting': '1;2'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingIncomeStatement')
@@ -847,7 +1194,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
         self.save_pdf()
 
-    def test_costaccounting_importbudget(self):
+    def test_importbudget(self):
         FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
         self.factory.xfer = CostAccountingAddModify()
         self.calljson('/diacamma.accounting/costAccountingAddModify', {"SAVE": "YES", 'name': 'aaa', 'description': 'aaa', 'year': '2', 'last_costaccounting': '2'}, False)
@@ -878,7 +1225,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_count_equal('budget_expense', 2)
         self.assert_json_equal('LABELFORM', 'result', -187.38)
 
-    def test_costaccounting_ledger(self):
+    def test_ledger(self):
         self.factory.xfer = CostAccountingLedger()
         self.calljson('/diacamma.accounting/costAccountingLedger', {'costaccounting': '1;2'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingLedger')
@@ -905,7 +1252,7 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
         self.save_pdf()
 
-    def test_costaccounting_trialbalance(self):
+    def test_trialbalance(self):
         self.factory.xfer = CostAccountingTrialBalance()
         self.calljson('/diacamma.accounting/costAccountingTrialBalance', {'costaccounting': '1;2'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingTrialBalance')
@@ -928,339 +1275,134 @@ class CompletedEntryTest(LucteriosTest):
         self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
         self.save_pdf()
 
-    def test_fiscalyear_balancesheet(self):
-        self.factory.xfer = FiscalYearBalanceSheet()
-        self.calljson('/diacamma.accounting/fiscalYearBalanceSheet', {}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearBalanceSheet')
-        self._check_result()
-        self.assert_count_equal('report_1', 11)
-        self.assert_json_equal('', 'report_1/@1/left', '[411] 411')
-        self.assert_json_equal('', 'report_1/@1/left_n', 159.98)
-        self.assert_json_equal('', 'report_1/@1/left_n_1', '')
+    def test_recreate(self):
+        old_year = create_year(0, 2021)
+        old_year.begin = '2020-07-01'
+        old_year.end = '2021-06-30'
+        old_year.save()
+        new_year = create_year(0, 2022, old_year)
+        new_year.begin = '2021-07-01'
+        new_year.end = '2022-06-30'
+        new_year.save()
+        CostAccounting.objects.create(name='date begin 2020', description='date begin', status=1, is_default=False, year=old_year)
+        CostAccounting.objects.create(name='2021 date end', description='date end', status=1, is_default=False, year=old_year)
+        CostAccounting.objects.create(name='date long 2020-2021 range', description='date long range', status=1, is_default=False, year=old_year)
+        CostAccounting.objects.create(name='date short 20=>21 range', description='date short', status=1, is_default=False, year=old_year)
+        CostAccounting.objects.create(name='date other 2021', description='date other', status=1, is_default=False, year=old_year)
+        cost_other22 = CostAccounting.objects.create(name='date other 2022', description='date other', status=0, is_default=False, year=new_year)
+        cost_ok21 = CostAccounting.objects.create(name='date ok 2021', description='date ok', status=1, is_default=False, year=old_year)
+        CostAccounting.objects.create(name='date ok 2022', description='date ok', status=0, is_default=False, year=new_year, last_costaccounting=cost_ok21)
+        cost_nodate = CostAccounting.objects.create(name='without date 9872021620224', description='without date', status=1, is_default=False, year=old_year)
 
-        self.assert_json_equal('', 'report_1/@5/left', '[512] 512')
-        self.assert_json_equal('', 'report_1/@5/left_n', 1130.29)
-        self.assert_json_equal('', 'report_1/@5/left_n_1', '')
+        self.factory.xfer = CostAccountingList()
+        self.calljson('/diacamma.accounting/costAccountingList', {'status': -1, 'year': 0}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
+        self.assert_count_equal('costaccounting', 9 + 2)
 
-        self.assert_json_equal('', 'report_1/@6/left', '[531] 531')
-        self.assert_json_equal('', 'report_1/@6/left_n', -79.63)
-        self.assert_json_equal('', 'report_1/@6/left_n_1', '')
+        self.factory.xfer = CostAccountingList()
+        self.calljson('/diacamma.accounting/costAccountingList', {'status': 1, 'year': old_year.id}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
+        self.assert_count_equal('costaccounting', 7)
+        self.assert_json_equal('', 'costaccounting/@0/name', '2021 date end')
+        self.assert_json_equal('', 'costaccounting/@1/name', 'date begin 2020')
+        self.assert_json_equal('', 'costaccounting/@2/name', 'date long 2020-2021 range')
+        self.assert_json_equal('', 'costaccounting/@3/name', 'date ok 2021')
+        self.assert_json_equal('', 'costaccounting/@4/name', 'date other 2021')
+        self.assert_json_equal('', 'costaccounting/@5/name', 'date short 20=>21 range')
+        self.assert_json_equal('', 'costaccounting/@6/name', 'without date 9872021620224')
+        self.assertEqual(len(self.json_actions), 2)
+        self.assert_action_equal('POST', self.json_actions[0], ('Par date', 'images/print.png', 'diacamma.accounting', 'costAccountingReportByDate', 0, 1, 1))
 
-        self.assert_json_equal('', 'report_1/@1/right', '[106] 106')
-        self.assert_json_equal('', 'report_1/@1/right_n', 1250.38)
-        self.assert_json_equal('', 'report_1/@1/right_n_1', '')
+        self.factory.xfer = CostAccountingList()
+        self.calljson('/diacamma.accounting/costAccountingList', {'status': 0, 'year': new_year.id}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
+        self.assert_count_equal('costaccounting', 2)
+        self.assert_json_equal('', 'costaccounting/@0/name', 'date ok 2022')
+        self.assert_json_equal('', 'costaccounting/@1/name', 'date other 2022')
+        self.assertEqual(len(self.json_actions), 3)
+        self.assert_action_equal('POST', self.json_actions[0], ('Par date', 'images/print.png', 'diacamma.accounting', 'costAccountingReportByDate', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[1], ('Re-créaction', 'images/new.png', 'diacamma.accounting', 'costAccountingRecreate', 0, 1, 1))
 
-        self.assert_json_equal('', 'report_1/@5/right', '[401] 401')
-        self.assert_json_equal('', 'report_1/@5/right_n', 78.24)
-        self.assert_json_equal('', 'report_1/@5/right_n_1', '')
+        self.factory.xfer = CostAccountingRecreate()
+        self.calljson('/diacamma.accounting/costAccountingRecreate', {'year': new_year.id}, False)
+        self.assert_observer('core.dialogbox', 'diacamma.accounting', 'costAccountingRecreate')
+        self.assert_json_equal('', 'text', "Voulez-vous essayer d'importer les 6 anciennes comptabilités analytiques dans cette exercice ?")
 
-        self.assert_json_equal('', 'report_1/@10/left', "&#160;&#160;&#160;&#160;&#160;{[i]}{[b]}résultat (déficit){[/b]}{[/i]}")
-        self.assert_json_equal('', 'report_1/@10/left_n', {"format": "{[i]}{[b]}{0}{[/b]}{[/i]}", "value": 117.98})
-        self.assert_json_equal('', 'report_1/@10/right', "")
-        self.assert_json_equal('', 'report_1/@10/right_n', "")
+        self.factory.xfer = CostAccountingRecreate()
+        self.calljson('/diacamma.accounting/costAccountingRecreate', {'year': new_year.id, 'CONFIRME': 'YES'}, False)
+        self.assert_observer('core.dialogbox', 'diacamma.accounting', 'costAccountingRecreate')
+        self.assert_json_equal('', 'text', "Des comptabilités analytiques n'ont pas pu être importées:{[br]}date other 2021{[br]}without date 9872021620224")
 
-    def test_fiscalyear_balancesheet_filter(self):
-        self.factory.xfer = FiscalYearBalanceSheet()
-        self.calljson('/diacamma.accounting/fiscalYearBalanceSheet', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearBalanceSheet')
-        self._check_result_with_filter()
+        cost_other22.delete()
+        cost_nodate.delete()
 
-    def test_fiscalyear_balancesheet_print(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearBalanceSheet', "PRINT_MODE": 3}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_pdf()
+        self.factory.xfer = CostAccountingRecreate()
+        self.calljson('/diacamma.accounting/costAccountingRecreate', {'year': new_year.id, 'CONFIRME': 'YES'}, False)
+        self.assert_observer('core.dialogbox', 'diacamma.accounting', 'costAccountingRecreate')
+        self.assert_json_equal('', 'text', "Toutes les comptabilités analytiques précédentes ont été importées.")
 
-    def test_fiscalyear_balancesheet_print_ods(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearBalanceSheet', "PRINT_MODE": 2}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_ods()
+        self.factory.xfer = CostAccountingList()
+        self.calljson('/diacamma.accounting/costAccountingList', {'status': 1, 'year': old_year.id}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
+        self.assert_count_equal('costaccounting', 6)
+        self.assertEqual(len(self.json_actions), 2)
 
-    def test_fiscalyear_incomestatement(self):
-        self.factory.xfer = FiscalYearIncomeStatement()
-        self.calljson('/diacamma.accounting/fiscalYearIncomeStatement', {}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearIncomeStatement')
-        self._check_result()
-        self.assert_count_equal('report_1', 12)
+        self.factory.xfer = CostAccountingList()
+        self.calljson('/diacamma.accounting/costAccountingList', {'status': 0, 'year': new_year.id}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingList')
+        self.assert_count_equal('costaccounting', 6)
+        self.assert_json_equal('', 'costaccounting/@0/name', '2022 date end')
+        self.assert_json_equal('', 'costaccounting/@1/name', 'date begin 2021')
+        self.assert_json_equal('', 'costaccounting/@2/name', 'date long 2021-2022 range')
+        self.assert_json_equal('', 'costaccounting/@3/name', 'date ok 2022')
+        self.assert_json_equal('', 'costaccounting/@4/name', 'date other 2022')
+        self.assert_json_equal('', 'costaccounting/@5/name', 'date short 21=>22 range')
+        self.assertEqual(len(self.json_actions), 2)
 
-        self.assert_json_equal('', 'report_1/@0/left', '[601] 601')
-        self.assert_json_equal('', 'report_1/@0/left_n', 78.24)
-        self.assert_json_equal('', 'report_1/@0/left_n_1', '')
-        self.assert_json_equal('', 'report_1/@0/left_b', 8.19)
+    def test_model_costaccounting(self):
+        year1 = create_year(0, 2021)
+        year2 = create_year(0, 2022, year1)
+        year3 = create_year(0, 2023, year2)
+        cost1 = CostAccounting.objects.create(name='cost 2021', description='cost', status=1, is_default=False, year=year1, last_costaccounting=None)
+        cost2 = CostAccounting.objects.create(name='cost 2022', description='cost', status=1, is_default=False, year=year2, last_costaccounting=cost1)
+        cost3 = CostAccounting.objects.create(name='cost 2023', description='cost', status=1, is_default=False, year=year3, last_costaccounting=cost2)
 
-        self.assert_json_equal('', 'report_1/@1/left', '[602] 602')
-        self.assert_json_equal('', 'report_1/@1/left_n', 63.94)
-        self.assert_json_equal('', 'report_1/@1/left_n_1', '')
-        self.assert_json_equal('', 'report_1/@1/left_b', 7.35)
+        ModelEntry.objects.create(journal_id=5, designation="my model", costaccounting=cost3)
+        self.factory.xfer = ModelEntryList()
+        self.calljson('/diacamma.accounting/modelEntryList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
+        self.assert_count_equal('modelentry', 1)
+        self.assert_json_equal('', 'modelentry/@0/designation', 'my model')
+        self.assert_json_equal('', 'modelentry/@0/costaccounting', 'cost 2023')
 
-        self.assert_json_equal('', 'report_1/@2/left', '[604] 604')
-        self.assert_json_equal('', 'report_1/@2/left_n', '')
-        self.assert_json_equal('', 'report_1/@2/left_n_1', '')
-        self.assert_json_equal('', 'report_1/@2/left_b', 6.24)
+        year2.set_has_actif()
+        self.factory.xfer = ModelEntryList()
+        self.calljson('/diacamma.accounting/modelEntryList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
+        self.assert_count_equal('modelentry', 1)
+        self.assert_json_equal('', 'modelentry/@0/designation', 'my model')
+        self.assert_json_equal('', 'modelentry/@0/costaccounting', 'cost 2022')
 
-        self.assert_json_equal('', 'report_1/@3/left', '[607] 607')
-        self.assert_json_equal('', 'report_1/@3/left_n', 194.08)
-        self.assert_json_equal('', 'report_1/@3/left_n_1', '')
-        self.assert_json_equal('', 'report_1/@3/left_b', '')
+        year1.set_has_actif()
+        self.factory.xfer = ModelEntryList()
+        self.calljson('/diacamma.accounting/modelEntryList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
+        self.assert_count_equal('modelentry', 1)
+        self.assert_json_equal('', 'modelentry/@0/designation', 'my model')
+        self.assert_json_equal('', 'modelentry/@0/costaccounting', 'cost 2021')
 
-        self.assert_json_equal('', 'report_1/@4/left', '[627] 627')
-        self.assert_json_equal('', 'report_1/@4/left_n', 12.34)
-        self.assert_json_equal('', 'report_1/@4/left_n_1', '')
-        self.assert_json_equal('', 'report_1/@4/left_b', '')
+        year3.set_has_actif()
+        self.factory.xfer = ModelEntryList()
+        self.calljson('/diacamma.accounting/modelEntryList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
+        self.assert_count_equal('modelentry', 1)
+        self.assert_json_equal('', 'modelentry/@0/designation', 'my model')
+        self.assert_json_equal('', 'modelentry/@0/costaccounting', 'cost 2023')
 
-        self.assert_json_equal('', 'report_1/@9/left', '[870] 870')
-        self.assert_json_equal('', 'report_1/@9/left_n', 1234.00)
-        self.assert_json_equal('', 'report_1/@9/left_n_1', '')
-        self.assert_json_equal('', 'report_1/@9/left_b', '')
-
-        self.assert_json_equal('', 'report_1/@0/right', '[701] 701')
-        self.assert_json_equal('', 'report_1/@0/right_n', '')
-        self.assert_json_equal('', 'report_1/@0/right_n_1', '')
-        self.assert_json_equal('', 'report_1/@0/right_b', 67.89)
-
-        self.assert_json_equal('', 'report_1/@1/right', '[707] 707')
-        self.assert_json_equal('', 'report_1/@1/right_n', 230.62)
-        self.assert_json_equal('', 'report_1/@1/right_n_1', '')
-        self.assert_json_equal('', 'report_1/@1/right_b', 123.45)
-
-        self.assert_json_equal('', 'report_1/@9/right', '[860] 860')
-        self.assert_json_equal('', 'report_1/@9/right_n', 1234.00)
-        self.assert_json_equal('', 'report_1/@9/right_n_1', '')
-        self.assert_json_equal('', 'report_1/@9/right_b', '')
-
-    def test_fiscalyear_import_budget(self):
-        FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
-
-        self.factory.xfer = BudgetList()
-        self.calljson('/diacamma.accounting/budgetList', {'year': '3'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'budgetList')
-        self.assert_count_equal('', 5)
-        self.assertEqual(len(self.json_actions), 4)
-        self.assert_count_equal('budget_revenue', 0)
-        self.assert_count_equal('#budget_revenue/actions', 2)
-        self.assert_count_equal('budget_expense', 0)
-        self.assert_count_equal('#budget_expense/actions', 2)
-
-        self.factory.xfer = BudgetImport()
-        self.calljson('/diacamma.accounting/budgetImport', {'year': '3'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'budgetImport')
-        self.assert_count_equal('', 4)
-        self.assert_select_equal('currentyear', {1: 'Exercice du 1 janvier 2015 au 31 décembre 2015 [en création]', 2: 'Exercice du 1 janvier 2014 au 31 décembre 2014 [terminé]'})
-
-        self.factory.xfer = BudgetImport()
-        self.calljson('/diacamma.accounting/budgetImport', {'year': '3', 'currentyear': '1', 'CONFIRME': 'YES'}, False)
-        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'budgetImport')
-
-        self.factory.xfer = BudgetList()
-        self.calljson('/diacamma.accounting/budgetList', {'year': '3'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'budgetList')
-        self.assert_count_equal('', 6)
-        self.assert_count_equal('budget_revenue', 1)
-        self.assert_count_equal('budget_expense', 4)
-        self.assert_json_equal('LABELFORM', 'result', -117.98)
-
-    def test_fiscalyear_incomestatement_filter(self):
-        self.factory.xfer = FiscalYearIncomeStatement()
-        self.calljson('/diacamma.accounting/fiscalYearIncomeStatement', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearIncomeStatement')
-        self._check_result_with_filter()
-
-    def test_fiscalyear_incomestatement_print(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearIncomeStatement', "PRINT_MODE": 3}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_pdf()
-
-    def test_fiscalyear_incomestatement_print_ods(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearIncomeStatement', "PRINT_MODE": 2}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_ods()
-
-    def test_fiscalyear_ledger(self):
-        self.factory.xfer = FiscalYearLedger()
-        self.calljson('/diacamma.accounting/fiscalYearLedger', {}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearLedger')
-        self._check_result()
-        self.assert_count_equal('report_1', 91)
-        self.assert_json_equal('', 'report_1/@0/id', 'L0001-0')
-        self.assert_json_equal('', 'report_1/@0/designation_ref', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[106] 106{[/b]}{[/u]}')
-        self.assert_json_equal('', 'report_1/@1/id', 'L0002-1')
-        self.assert_json_equal('', 'report_1/@1/designation_ref', 'Report à nouveau')
-        self.assert_json_equal('', 'report_1/@2/id', 'L0003-0')
-        self.assert_json_equal('', 'report_1/@2/designation_ref', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[i]}total{[/i]}')
-        self.assert_count_equal('#report_1/actions', 1)
-        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
-
-        self.factory.xfer = FiscalYearLedgerShow()
-        self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-1'}, False)
-        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearLedgerShow')
-        self.assert_action_equal('POST', self.response_json['action'], ('Editer', 'images/edit.png', "diacamma.accounting", "entryAccountOpenFromLine", "1", '1', '1', {"entryaccount": "1"}))
-
-        self.factory.xfer = FiscalYearLedgerShow()
-        self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-0'}, False)
-        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearLedgerShow')
-        self.assertNotIn('action', self.response_json)
-
-    def test_fiscalyear_ledger_filter(self):
-        self.factory.xfer = FiscalYearLedger()
-        self.calljson('/diacamma.accounting/fiscalYearLedger', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearLedger')
-        self._check_result_with_filter()
-
-    def test_fiscalyear_ledger_print(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearLedger', "PRINT_MODE": 3}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_pdf()
-
-    def test_fiscalyear_ledger_print_ods(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearLedger', "PRINT_MODE": 2}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_ods()
-
-    def test_fiscalyear_trialbalance(self):
-        self.factory.xfer = FiscalYearTrialBalance()
-        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
-        self._check_result()
-        self.assert_count_equal('report_1', 14)
-        self.assert_json_equal('', 'report_1/@0/designation', '[106] 106')
-        self.assert_json_equal('', 'report_1/@0/total_debit', 0.00)
-        self.assert_json_equal('', 'report_1/@0/total_credit', 1250.38)
-        self.assert_json_equal('', 'report_1/@0/solde_debit', 0)
-        self.assert_json_equal('', 'report_1/@0/solde_credit', 1250.38)
-
-        self.assert_json_equal('', 'report_1/@1/designation', '[401] 401')
-        self.assert_json_equal('', 'report_1/@1/total_debit', 258.02)
-        self.assert_json_equal('', 'report_1/@1/total_credit', 336.26)
-        self.assert_json_equal('', 'report_1/@1/solde_debit', 0)
-        self.assert_json_equal('', 'report_1/@1/solde_credit', 78.24)
-
-        self.assert_json_equal('', 'report_1/@2/designation', '[411] 411')
-        self.assert_json_equal('', 'report_1/@2/total_debit', 230.62)
-        self.assert_json_equal('', 'report_1/@2/total_credit', 70.64)
-        self.assert_json_equal('', 'report_1/@2/solde_debit', 159.98)
-        self.assert_json_equal('', 'report_1/@2/solde_credit', 0)
-
-        self.assert_json_equal('', 'report_1/@3/designation', '[512] 512')
-        self.assert_json_equal('', 'report_1/@3/total_debit', 1206.57)
-        self.assert_json_equal('', 'report_1/@3/total_credit', 76.28)
-        self.assert_json_equal('', 'report_1/@3/solde_debit', 1130.29)
-        self.assert_json_equal('', 'report_1/@3/solde_credit', 0)
-
-        self.assert_json_equal('', 'report_1/@4/designation', '[531] 531')
-        self.assert_json_equal('', 'report_1/@4/total_debit', 114.45)
-        self.assert_json_equal('', 'report_1/@4/total_credit', 194.08)
-        self.assert_json_equal('', 'report_1/@4/solde_debit', 0)
-        self.assert_json_equal('', 'report_1/@4/solde_credit', 79.63)
-
-        self.assert_json_equal('', 'report_1/@5/designation', '[601] 601')
-        self.assert_json_equal('', 'report_1/@5/total_debit', 78.24)
-        self.assert_json_equal('', 'report_1/@5/total_credit', 0.00)
-        self.assert_json_equal('', 'report_1/@5/solde_debit', 78.24)
-        self.assert_json_equal('', 'report_1/@5/solde_credit', 0)
-
-        self.assert_json_equal('', 'report_1/@6/designation', '[602] 602')
-        self.assert_json_equal('', 'report_1/@6/total_debit', 63.94)
-        self.assert_json_equal('', 'report_1/@6/total_credit', 0.00)
-        self.assert_json_equal('', 'report_1/@6/solde_debit', 63.94)
-        self.assert_json_equal('', 'report_1/@6/solde_credit', 0)
-
-        self.assert_json_equal('', 'report_1/@7/designation', '[607] 607')
-        self.assert_json_equal('', 'report_1/@7/total_debit', 194.08)
-        self.assert_json_equal('', 'report_1/@7/total_credit', 0.00)
-        self.assert_json_equal('', 'report_1/@7/solde_debit', 194.08)
-        self.assert_json_equal('', 'report_1/@7/solde_credit', 0)
-
-        self.assert_json_equal('', 'report_1/@8/designation', '[627] 627')
-        self.assert_json_equal('', 'report_1/@8/total_debit', 12.34)
-        self.assert_json_equal('', 'report_1/@8/total_credit', 0.00)
-        self.assert_json_equal('', 'report_1/@8/solde_debit', 12.34)
-        self.assert_json_equal('', 'report_1/@8/solde_credit', 0)
-
-        self.assert_json_equal('', 'report_1/@9/designation', '[707] 707')
-        self.assert_json_equal('', 'report_1/@9/total_debit', 0.00)
-        self.assert_json_equal('', 'report_1/@9/total_credit', 230.62)
-        self.assert_json_equal('', 'report_1/@9/solde_debit', 0)
-        self.assert_json_equal('', 'report_1/@9/solde_credit', 230.62)
-
-        self.assert_json_equal('', 'report_1/@10/designation', '[860] 860')
-        self.assert_json_equal('', 'report_1/@10/total_debit', 0.00)
-        self.assert_json_equal('', 'report_1/@10/total_credit', 1234.00)
-        self.assert_json_equal('', 'report_1/@10/solde_debit', 0)
-        self.assert_json_equal('', 'report_1/@10/solde_credit', 1234.00)
-
-        self.assert_json_equal('', 'report_1/@11/designation', '[870] 870')
-        self.assert_json_equal('', 'report_1/@11/total_debit', 1234.00)
-        self.assert_json_equal('', 'report_1/@11/total_credit', 0.00)
-        self.assert_json_equal('', 'report_1/@11/solde_debit', 1234.00)
-        self.assert_json_equal('', 'report_1/@11/solde_credit', 0)
-
-        self.assert_json_equal('', 'report_1/@13/designation', "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total{[/b]}{[/u]}")
-        self.assert_json_equal('', 'report_1/@13/total_debit', {"value": 3392.26, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
-        self.assert_json_equal('', 'report_1/@13/total_credit', {"value": 3392.26, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
-        self.assert_json_equal('', 'report_1/@13/solde_debit', {"value": 2872.87, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
-        self.assert_json_equal('', 'report_1/@13/solde_credit', {"value": 2872.8700000000003, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
-
-    def test_fiscalyear_trialbalance_filter(self):
-        self.factory.xfer = FiscalYearTrialBalance()
-        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
-        self._check_result_with_filter()
-
-    def test_fiscalyear_trialbalance_third(self):
-        self.factory.xfer = FiscalYearTrialBalance()
-        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {'filtercode': '4', 'with_third': 1}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
-        self.assert_count_equal('report_1', 8)
-
-        self.factory.xfer = FiscalYearTrialBalance()
-        self.calljson('/diacamma.accounting/fiscalYearTrialBalance', {'filtercode': '4', 'with_third': 1, 'only_nonull': 1}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearTrialBalance')
-        self.assert_count_equal('report_1', 5)
-
-    def test_fiscalyear_trialbalance_print(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearTrialBalance', "PRINT_MODE": 3}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_pdf()
-
-    def test_fiscalyear_trialbalance_print_ods(self):
-        self.factory.xfer = FiscalYearReportPrint()
-        self.calljson('/diacamma.accounting/fiscalYearReportPrint', {'classname': 'FiscalYearTrialBalance', "PRINT_MODE": 2}, False)
-        self.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
-        self.save_ods()
-
-    def test_export(self):
-        self.assertFalse(exists(get_user_path('accounting', 'fiscalyear_export_1.xml')))
-        self.factory.xfer = FiscalYearExport()
-        self.calljson('/diacamma.accounting/fiscalYearExport', {}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearExport')
-        self.assertTrue(exists(get_user_path('accounting', 'fiscalyear_export_1.xml')))
-
-        self.assertFalse(exists(get_user_path('accounting', 'fiscalyear_export_2.xml')))
-        self.factory.xfer = FiscalYearExport()
-        self.calljson('/diacamma.accounting/fiscalYearExport', {'fiscalyear': '2'}, False)
-        self.assert_observer('core.exception', 'diacamma.accounting', 'fiscalYearExport')
-        self.assertFalse(exists(get_user_path('accounting', 'fiscalyear_export_2.xml')))
-        self.assert_json_equal('', 'code', '3')
-        self.assert_json_equal('', 'message', "Cet exercice n'a pas d'écriture validée !")
-
-    def test_search_advanced(self):
-        CustomField.objects.create(modelname='accounting.Third', name='categorie', kind=4, args="{'list':['---','petit','moyen','gros']}")
-        CustomField.objects.create(modelname='accounting.Third', name='value', kind=1, args="{'min':0,'max':100}")
-        third = Third.objects.get(id=7)
-        third.set_custom_values({'custom_2': '4'})
-
-        self.factory.xfer = EntryAccountSearch()
-        self.calljson('/diacamma.accounting/entryAccountSearch', {}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountSearch')
-        self.assert_count_equal('entryline', 25)
-
-        self.factory.xfer = EntryAccountSearch()
-        self.calljson('/diacamma.accounting/entryAccountSearch', {'CRITERIA': 'third.custom_2||1||4'}, False)
-        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountSearch')
-        self.assert_count_equal('entryline', 2)
+        year1.set_has_actif()
+        self.factory.xfer = ModelEntryList()
+        self.calljson('/diacamma.accounting/modelEntryList', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'modelEntryList')
+        self.assert_count_equal('modelentry', 1)
+        self.assert_json_equal('', 'modelentry/@0/designation', 'my model')
+        self.assert_json_equal('', 'modelentry/@0/costaccounting', 'cost 2021')

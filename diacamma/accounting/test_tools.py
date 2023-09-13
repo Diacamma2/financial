@@ -86,8 +86,8 @@ def create_third(abstractids, codes=None):
                 AccountThird.objects.create(third=new_third, code=code)
 
 
-def create_year(status=0):
-    new_year = FiscalYear.objects.create(begin='2015-01-01', end='2015-12-31', status=status)
+def create_year(status=0, year=2015, lastyear=None):
+    new_year = FiscalYear.objects.create(begin='%s-01-01' % year, end='%s-12-31' % year, status=status, last_fiscalyear=lastyear)
     new_year.set_has_actif()
     return new_year
 
@@ -206,7 +206,7 @@ def add_entry(yearid, journalid, date_value, designation, serial_entry, closed=F
     year = FiscalYear.objects.get(id=yearid)
     journal = Journal.objects.get(id=journalid)
     new_entry = EntryAccount.objects.create(year=year, journal=journal, date_value=date_value, designation=designation)
-    new_entry.save_entrylineaccounts(serial_entry)
+    new_entry.save_entrylineaccounts(serial_entry, check_integrity=False)
     if closed:
         new_entry.closed()
     return new_entry
