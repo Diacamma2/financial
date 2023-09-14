@@ -321,7 +321,7 @@ class ArticleImport(ObjectImport):
 
 
 @signal_and_lock.Signal.decorate('compte_no_found')
-def comptenofound_invoice(known_codes, accompt_returned):
+def comptenofound_invoice(known_codes, accompt_returned, cost_returned):
     article_unknown = Article.objects.filter(isdisabled=False).exclude(sell_account__in=known_codes).values_list('sell_account', flat=True)
     vat_unknown = Vat.objects.filter(isactif=True).exclude(account__in=known_codes).values_list('account', flat=True)
     param_unknown = Parameter.objects.filter(name__in=('invoice-default-sell-account', 'invoice-reduce-account')).exclude(value__in=known_codes).values_list('value', flat=True)
@@ -334,6 +334,9 @@ def comptenofound_invoice(known_codes, accompt_returned):
         comptenofound += _("parameters") + ":" + ",".join(set(param_unknown))
     if comptenofound != "":
         accompt_returned.append("- {[i]}{[u]}%s{[/u]}: %s{[/i]}" % (_('Invoice'), comptenofound))
+    posting_badcost = AccountPosting.objects.filter(cost_accounting__isnull=False, cost_accounting__year__isnull=False, cost_accounting__year__is_actif=False)
+    if (len(posting_badcost) > 0):
+        cost_returned.append("- {[i]}{[u]}%s{[/u]}: %s{[/i]}" % (_('Account posting code'), ",".join(set([str(posting) for posting in posting_badcost]))))
     return True
 
 

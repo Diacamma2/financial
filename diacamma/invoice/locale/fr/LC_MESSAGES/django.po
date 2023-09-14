@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-12 18:52+0000\n"
+"POT-Creation-Date: 2023-09-14 10:30+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.3\n"
 
-#: __init__.py:42 views_conf.py:375 views_conf.py:378
+#: __init__.py:42 views_conf.py:378 views_conf.py:381
 msgid "Diacamma invoice"
 msgstr "Facturier Diacamma"
 
@@ -154,7 +154,7 @@ msgstr "actif ?"
 msgid "vat account"
 msgstr "compte de TVA"
 
-#: models.py:83 views_conf.py:72 views_conf.py:332 views_conf.py:378
+#: models.py:83 views_conf.py:72 views_conf.py:332 views_conf.py:381
 msgid "VAT"
 msgstr "TVA"
 
@@ -226,13 +226,13 @@ msgstr "compte analytique"
 msgid "provision third account"
 msgstr "compte de tiers de provision"
 
-#: models.py:184 models.py:209 printmodel/ArticleSituation_0002.py:45
-msgid "account posting code"
-msgstr "code d'imputation comptable"
+#: models.py:184 views_conf.py:339
+msgid "Account posting code"
+msgstr "Code d'imputation comptable"
 
-#: models.py:185
-msgid "account posting codes"
-msgstr "codes d'imputation comptable"
+#: models.py:185 views_conf.py:70
+msgid "Account posting codes"
+msgstr "Codes d'imputation comptable"
 
 #: models.py:193
 msgid "no stockable"
@@ -272,6 +272,10 @@ msgstr "TVA"
 #: models.py:208
 msgid "quantity decimal"
 msgstr "décimal de la quantité"
+
+#: models.py:209 printmodel/ArticleSituation_0002.py:45
+msgid "account posting code"
+msgstr "code d'imputation comptable"
 
 #: models.py:212
 msgid "booking"
@@ -1382,13 +1386,9 @@ msgstr "Gestion des paramètres et configuration financière du facturier"
 msgid "Invoice financial configuration"
 msgstr "Configuration financière du facturier"
 
-#: views_conf.py:68 views_conf.py:107 views_conf.py:375
+#: views_conf.py:68 views_conf.py:107 views_conf.py:378
 msgid "Parameters"
 msgstr "Paramètres"
-
-#: views_conf.py:70
-msgid "Account posting codes"
-msgstr "Codes d'imputation comptable"
 
 #: views_conf.py:75
 msgid "Management of commercial configuration of invoice"
@@ -1514,11 +1514,11 @@ msgstr "Import d'articles"
 msgid "parameters"
 msgstr "paramètres"
 
-#: views_conf.py:375
+#: views_conf.py:378
 msgid "Configuration of parameters"
 msgstr "Définissez les paramètres du facturier."
 
-#: views_conf.py:378
+#: views_conf.py:381
 msgid "Configuration of vat"
 msgstr "Configurez votre gestion de la TVA."
 
@@ -1839,6 +1839,9 @@ msgstr "Voir les factures des stockages gérés."
 #: views_summary.py:556
 msgid "Storage managed"
 msgstr "Stockages gérés"
+
+#~ msgid "account posting codes"
+#~ msgstr "codes d'imputation comptable"
 
 #~ msgid "Clean"
 #~ msgstr "Effacer"

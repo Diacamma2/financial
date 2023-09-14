@@ -44,7 +44,7 @@ from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
 from lucterios.contacts.tools import ContactSelection
 from lucterios.contacts.models import AbstractContact
 
-from diacamma.accounting.models import Third, AccountThird, FiscalYear, EntryLineAccount, ModelLineEntry, ChartsAccount
+from diacamma.accounting.models import Third, AccountThird, FiscalYear, EntryLineAccount, ModelLineEntry, ChartsAccount, ModelEntry
 from diacamma.accounting.views_admin import Configuration, add_year_info
 from diacamma.accounting.tools import correct_accounting_code, current_system_account
 from django.db.models.aggregates import Count
@@ -374,7 +374,7 @@ def summary_accounting(xfer):
 
 
 @signal_and_lock.Signal.decorate('compte_no_found')
-def comptenofound_accounting(known_codes, accompt_returned):
+def comptenofound_accounting(known_codes, accompt_returned, cost_returned):
     third_unknown = AccountThird.objects.filter(third__status=0).exclude(code__in=known_codes).values_list('code', flat=True)
     model_unknown = ModelLineEntry.objects.exclude(code__in=known_codes).values_list('code', flat=True)
     comptenofound = ""
@@ -384,6 +384,9 @@ def comptenofound_accounting(known_codes, accompt_returned):
         comptenofound += _("models") + ":" + ",".join(set(model_unknown))
     if comptenofound != "":
         accompt_returned.append("- {[i]}{[u]}%s{[/u]}: %s{[/i]}" % (_('Accounting'), comptenofound))
+    model_badcost = ModelEntry.objects.filter(costaccounting__isnull=False, costaccounting__year__isnull=False, costaccounting__year__is_actif=False)
+    if (len(model_badcost) > 0):
+        cost_returned.append("- {[i]}{[u]}%s{[/u]}: %s{[/i]}" % (_('Model of entry'), ",".join(set([str(model) for model in model_badcost]))))
     return True
 
 

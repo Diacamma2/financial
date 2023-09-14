@@ -181,8 +181,8 @@ class AccountPosting(LucteriosModel):
         return LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     class Meta(object):
-        verbose_name = _('account posting code')
-        verbose_name_plural = _('account posting codes')
+        verbose_name = _('Account posting code')
+        verbose_name_plural = _('Account posting codes')
         default_permissions = []
 
 

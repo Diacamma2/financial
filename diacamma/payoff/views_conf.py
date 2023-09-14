@@ -113,7 +113,7 @@ class PaymentMethodDelete(XferDelete):
 
 
 @signal_and_lock.Signal.decorate('compte_no_found')
-def comptenofound_payoff(known_codes, accompt_returned):
+def comptenofound_payoff(known_codes, accompt_returned, cost_returned):
     bank_unknown = list(BankAccount.objects.exclude(account_code__in=known_codes).values_list('account_code', flat=True))
     bank_unknown += list(BankAccount.objects.exclude(account_code__in=known_codes).values_list('temporary_account_code', flat=True))
     bank_unknown += list(BankAccount.objects.exclude(account_code__in=known_codes).values_list('fee_account_code', flat=True))

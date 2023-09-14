@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-12 18:52+0000\n"
+"POT-Creation-Date: 2023-09-14 10:30+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 2.3\n"
 
-#: __init__.py:42 views_conf.py:375 views_conf.py:378
+#: __init__.py:42 views_conf.py:378 views_conf.py:381
 msgid "Diacamma invoice"
 msgstr "Diacamma invoice"
 
@@ -154,7 +154,7 @@ msgstr "is actif"
 msgid "vat account"
 msgstr "vat account"
 
-#: models.py:83 views_conf.py:72 views_conf.py:332 views_conf.py:378
+#: models.py:83 views_conf.py:72 views_conf.py:332 views_conf.py:381
 msgid "VAT"
 msgstr "VAT"
 
@@ -226,13 +226,13 @@ msgstr "cost accounting"
 msgid "provision third account"
 msgstr "provision third account"
 
-#: models.py:184 models.py:209 printmodel/ArticleSituation_0002.py:45
-msgid "account posting code"
-msgstr "account posting code"
+#: models.py:184 views_conf.py:339
+msgid "Account posting code"
+msgstr "Account posting code"
 
-#: models.py:185
-msgid "account posting codes"
-msgstr "account posting codes"
+#: models.py:185 views_conf.py:70
+msgid "Account posting codes"
+msgstr "Account posting codes"
 
 #: models.py:193
 msgid "no stockable"
@@ -272,6 +272,10 @@ msgstr "VAT"
 #: models.py:208
 msgid "quantity decimal"
 msgstr "quantity decimal"
+
+#: models.py:209 printmodel/ArticleSituation_0002.py:45
+msgid "account posting code"
+msgstr "account posting code"
 
 #: models.py:212
 msgid "booking"
@@ -1376,13 +1380,9 @@ msgstr "Management of parameters and financial configuration of invoice"
 msgid "Invoice financial configuration"
 msgstr "Invoice financial configuration"
 
-#: views_conf.py:68 views_conf.py:107 views_conf.py:375
+#: views_conf.py:68 views_conf.py:107 views_conf.py:378
 msgid "Parameters"
 msgstr "Parameters"
-
-#: views_conf.py:70
-msgid "Account posting codes"
-msgstr "Account posting codes"
 
 #: views_conf.py:75
 msgid "Management of commercial configuration of invoice"
@@ -1508,11 +1508,11 @@ msgstr "Article import"
 msgid "parameters"
 msgstr "parameters"
 
-#: views_conf.py:375
+#: views_conf.py:378
 msgid "Configuration of parameters"
 msgstr "Define parameters for invoice"
 
-#: views_conf.py:378
+#: views_conf.py:381
 msgid "Configuration of vat"
 msgstr "Configuration of vat"
 
@@ -1829,6 +1829,9 @@ msgstr "View invoices of storage managed."
 #: views_summary.py:556
 msgid "Storage managed"
 msgstr "Storage managed"
+
+#~ msgid "account posting codes"
+#~ msgstr "account posting codes"
 
 #~| msgid "Clear"
 #~ msgid "Clean"

@@ -87,16 +87,22 @@ class ChartsAccountList(XferListEditor):
     def fillresponse(self):
         XferListEditor.fillresponse(self)
         add_fiscalyear_result(self, 0, 10, 2, self.item.year, "result")
-
-        accompt_returned = []
-        all_codes = list(self.item.year.chartsaccount_set.all().values_list('code', flat=True))
-        all_codes.append('')
-        Signal.call_signal("compte_no_found", all_codes, accompt_returned)
-        lbl = XferCompLabelForm("CompteNoFound")
-        if len(accompt_returned) > 0:
-            lbl.set_value("{[u]}{[b]}%s{[/b]}{[/u]}{[br]}%s" % (_("Using codes unknows in this account chart:"), "{[br/]}".join(accompt_returned)))
-        lbl.set_location(0, 11, 2)
-        self.add_component(lbl)
+        if self.item.year == FiscalYear.get_current():
+            accompt_returned = []
+            cost_returned = []
+            all_codes = list(self.item.year.chartsaccount_set.all().values_list('code', flat=True))
+            all_codes.append('')
+            Signal.call_signal("compte_no_found", all_codes, accompt_returned, cost_returned)
+            if len(accompt_returned) > 0:
+                lbl = XferCompLabelForm("CompteNoFound")
+                lbl.set_value("{[u]}{[b]}%s{[/b]}{[/u]}{[br]}%s" % (_("Using codes unknows in this account chart:"), "{[br/]}".join(accompt_returned)))
+                lbl.set_location(0, 11, 2)
+                self.add_component(lbl)
+            if len(cost_returned) > 0:
+                lbl = XferCompLabelForm("CostNoFound")
+                lbl.set_value("{[u]}{[b]}%s{[/b]}{[/u]}{[br]}%s" % (_("Using bad cost accounting in this fiscal year:"), "{[br/]}".join(cost_returned)))
+                lbl.set_location(0, 12, 2)
+                self.add_component(lbl)
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.year.status != 2)

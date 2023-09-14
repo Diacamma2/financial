@@ -973,7 +973,7 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.factory.xfer = ChartsAccountList()
         self.calljson('/diacamma.accounting/chartsAccountList', {'year': '2', 'type_of_account': '-1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
-        self.assert_count_equal('', 8)
+        self.assert_count_equal('', 7)
         self.assertEqual(len(self.json_actions), 4)
         self.assert_count_equal('chartsaccount', 10)
         self.assert_json_equal('', 'chartsaccount/@1/code', '120')
@@ -987,3 +987,4 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.calljson('/diacamma.accounting/chartsAccountList', {'year': '1', 'type_of_account': '-1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
         self.assertEqual(len(self.json_actions), 3)
+        self.assert_count_equal('', 8)
