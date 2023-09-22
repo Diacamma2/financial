@@ -1602,6 +1602,7 @@ class StorageTest(InvoiceTest):
         self.maxDiff = 2000
         Params.setvalue('invoice-cart-active', True)
         Params.setvalue('invoice-cart-email-subject', 'Nouveau panier')
+        Params.setvalue('invoice-cart-default-comment', 'Envoi par la poste')
         Params.setvalue('invoice-cart-email-body', '#name{[br/]}{[br/]}Ci-joint dans ce mail #reference.{[br/]}#nb devis est créé, chaque responsable de zone de stockage vous les renverra prochainement.{[br/]}{[br/]}Cordialement')
         sheet1 = StorageSheet.objects.create(sheet_type=0, date='2014-01-01', storagearea_id=1, comment="A")
         StorageDetail.objects.create(storagesheet=sheet1, article_id=1, price=5.00, quantity=5.0)
@@ -1724,7 +1725,13 @@ class StorageTest(InvoiceTest):
             self.assertEqual(0, server.count())
 
             self.factory.xfer = CurrentCartValid()
-            self.calljson('/diacamma.invoice/currentCartValid', {"bill": 2, "CONFIRME": "YES"}, False)
+            self.calljson('/diacamma.invoice/currentCartValid', {"bill": 2}, False)
+            self.assert_observer('core.custom', 'diacamma.invoice', 'currentCartValid')
+            self.assert_count_equal('', 3)
+            self.assert_json_equal('MEMO', 'comment', 'Envoi par la poste')
+
+            self.factory.xfer = CurrentCartValid()
+            self.calljson('/diacamma.invoice/currentCartValid', {"bill": 2, "CONFIRME": "YES", 'comment': 'Récupération sur place'}, False)
             self.assert_observer('core.acknowledge', 'diacamma.invoice', 'currentCartValid')
 
             self.assertEqual(1, server.count())
@@ -1738,7 +1745,7 @@ class StorageTest(InvoiceTest):
         self.factory.xfer = CurrentCartShow()
         self.calljson('/diacamma.invoice/currentCartShow', {'bill': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'currentCartShow')
-        self.assert_count_equal('', 8)
+        self.assert_count_equal('', 9)
         self.assert_json_equal('LINK', 'third', "MISTER jack")
         self.assert_count_equal('detail', 3)
         self.assert_json_equal('', 'detail/@2/article', 'ABC1')
@@ -1758,6 +1765,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'detail/@0/total', 123.4)
         self.assert_count_equal('#detail/actions', 0)
         self.assert_json_equal('LABELFORM', 'total_excltax', 752.9)
+        self.assert_json_equal('LABELFORM', 'comment', 'Récupération sur place')
         self.assertEqual(len(self.json_actions), 2)
         self.assertEqual(self.json_actions[0]['id'], 'diacamma.invoice/currentCart')
         self.assertEqual(self.json_actions[1]['id'], '')

@@ -2499,6 +2499,7 @@ def invoice_checkparam():
     Parameter.check_and_create(name='invoice-cart-email-subject', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-subject"), args='{}', value=_('new validated cart'))
     Parameter.check_and_create(name='invoice-cart-email-body', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-body"), args="{'Multi':True, 'HyperText': True}",
                                value=_('#name{[br/]}{[br/]}Joint in this email #doc.{[br/]}#nb quotation is created, each storage area manager will return you them soon.{[br/]}{[br/]}Regards'))
+    Parameter.check_and_create(name='invoice-cart-default-comment', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-default-comment"), args="{'Multi':True, 'HyperText': True}", value='')
 
     LucteriosGroup.redefine_generic(_("# invoice (administrator)"), Vat.get_permission(True, True, True), BankAccount.get_permission(True, True, True), BankTransaction.get_permission(True, True, True),
                                     Article.get_permission(True, True, True), Bill.get_permission(True, True, True),

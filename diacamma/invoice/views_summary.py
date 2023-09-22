@@ -37,7 +37,7 @@ from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.framework.xferadvance import XferListEditor, TITLE_CLOSE, TITLE_DELETE, XferTransition
 from lucterios.framework.xferprinting import PRINT_PDF_FILE
 from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton, XferCompFloat, XferCompImage
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton, XferCompFloat, XferCompImage, XferCompMemo
 from lucterios.framework.xfersearch import get_search_query_from_criteria
 
 from lucterios.contacts.models import Individual, LegalEntity
@@ -482,7 +482,8 @@ class CurrentCartShow(BillShow):
 
     def fillresponse(self):
         BillShow.fillresponse(self)
-        self.remove_component("comment")
+        if self.item.status == Bill.STATUS_BUILDING:
+            self.remove_component("comment")
         self.remove_component("status")
         self.remove_component("categoryBill")
         self.remove_component("bill_type")
@@ -533,9 +534,35 @@ class CurrentCartValid(XferTransition):
     def fillresponse(self):
         self.fill_confirm()
 
+    def confirme_with_comment(self):
+        if self.getparam("CONFIRME") is not None:
+            return self.params["CONFIRME"] != ""
+        else:
+            dlg = self.create_custom(Bill)
+            dlg.caption = _("Confirmation")
+            icon = XferCompImage('img')
+            icon.set_location(0, 0, 1, 6)
+            icon.set_value(self.icon_path("images/confirm.png"))
+            dlg.add_component(icon)
+            lbl = XferCompLabelForm('lb_title')
+            lbl.set_value_as_headername(_("Do you want to validate this cart ?"))
+            lbl.set_location(1, 0)
+            dlg.add_component(lbl)
+            commentcmp = XferCompMemo('comment')
+            commentcmp.description = _('comment on your cart and its delivery')
+            commentcmp.set_location(1, 2)
+            commentcmp.set_needed(True)
+            commentcmp.with_hypertext = True
+            commentcmp.set_value(Params.getvalue('invoice-cart-default-comment'))
+            dlg.add_component(commentcmp)
+            dlg.add_action(self.return_action(_('Yes'), 'images/ok.png'), params={"CONFIRME": "YES"})
+            dlg.add_action(WrapAction(_('No'), 'images/cancel.png'))
+            return False
+
     def fill_confirm(self):
-        if self.confirme(_("Do you want to validate this cart ?")):
+        if self.confirme_with_comment():
             self.item.date = timezone.now()
+            self.item.comment = self.getparam('comment', '')
             self._confirmed("valid")
 
 
