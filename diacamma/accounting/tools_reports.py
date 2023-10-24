@@ -131,7 +131,12 @@ def add_account_without_amount(dict_account, query1, query2, query_budget_list, 
     else:
         total3_initial = [0]
     total3 = total3_initial[:]
-    for account in ChartsAccount.objects.filter(extra_account):
+    account_codes = []
+    for account in ChartsAccount.objects.filter(extra_account).order_by('-year_id'):
+        if account.code not in account_codes:
+            account_codes.append(account.code)
+        else:
+            continue
         value2 = 0
         total_b = []
         if query2 is not None:

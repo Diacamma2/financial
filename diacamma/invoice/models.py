@@ -2459,7 +2459,7 @@ def invoice_deleteyear(year):
 @Signal.decorate('check_report')
 def check_report_invoice(year):
     for bill in Bill.objects.filter(fiscal_year=year, bill_type__in=(Bill.BILLTYPE_BILL, Bill.BILLTYPE_ASSET, Bill.BILLTYPE_RECEIPT), status__in=(Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)):
-        bill.get_saved_pdfreport()
+        bill.get_saved_pdfreport(False)
 
 
 def convert_asset_and_revenue():
