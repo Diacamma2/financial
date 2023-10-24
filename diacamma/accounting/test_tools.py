@@ -245,11 +245,11 @@ def check_pdfreport(testobj, year, pdfname, printclassname, modulename):
     doc_content = b64encode(doc.content.read()).decode()
 
     testobj.factory.xfer = FiscalYearReportPrint()
-    testobj.calljson('/diacamma.accounting/fiscalYearReportPrint', {'year': year, 'classname': printclassname, "modulename": modulename, "PRINT_MODE": 3, 'PRINT_PERSITENT': True}, False)
+    testobj.calljson('/diacamma.accounting/fiscalYearReportPrint', {'year': year, 'classname': printclassname, "modulename": modulename, "PRINT_MODE": 3, 'PRINT_PERSITENT_MODE': 0}, False)
     testobj.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
     testobj.assertEqual(doc_content, testobj.response_json['print']["content"], doc.name)
 
     testobj.factory.xfer = FiscalYearReportPrint()
-    testobj.calljson('/diacamma.accounting/fiscalYearReportPrint', {'year': year, 'classname': printclassname, "modulename": modulename, "PRINT_MODE": 3, 'PRINT_PERSITENT': False}, False)
+    testobj.calljson('/diacamma.accounting/fiscalYearReportPrint', {'year': year, 'classname': printclassname, "modulename": modulename, "PRINT_MODE": 3, 'PRINT_PERSITENT_MODE': 1}, False)
     testobj.assert_observer('core.print', 'diacamma.accounting', 'fiscalYearReportPrint')
     testobj.assertNotEqual(doc_content, testobj.response_json['print']["content"], doc.name)

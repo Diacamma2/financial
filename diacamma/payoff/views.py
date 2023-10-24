@@ -37,9 +37,8 @@ from lucterios.framework.tools import ActionsManage, MenuManage, \
     get_url_from_request
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
 from lucterios.framework.xfercomponents import XferCompLabelForm, \
-    XferCompEdit, XferCompImage, XferCompMemo, XferCompSelect, XferCompCheck
+    XferCompEdit, XferCompImage, XferCompMemo, XferCompSelect
 from lucterios.framework.error import LucteriosException, MINOR, IMPORTANT
-from lucterios.framework.model_fields import get_value_if_choices
 from lucterios.framework.models import LucteriosQuerySet
 from lucterios.CORE.models import PrintModel
 from lucterios.CORE.xferprint import XferPrintReporting
@@ -201,20 +200,23 @@ class SupportingPrint(XferPrintReporting):
         self.default_model = self.params['MODEL']
         del self.params['MODEL']
 
-    def _get_persistent_pdfreport(self):
+    def _get_persistent_pdfreport(self, recreate):
         if len(self.items) == 1:
-            doc = self.item.get_final_child().get_saved_pdfreport()
+            doc = self.item.get_final_child().get_saved_pdfreport(recreate)
             if doc is not None:
                 return doc.content.read()
         else:
             docs = []
             for item in self.items:
-                doc = item.get_final_child().get_saved_pdfreport()
+                doc = item.get_final_child().get_saved_pdfreport(recreate)
                 if doc is not None:
                     docs.append((doc.name, doc.content))
             if len(docs) > 0:
                 return docs
         return None
+
+    def get_persistent_renew(self):
+        return self.item.get_final_child().get_saved_renew()
 
     def fillresponse(self):
         if (self.item is None) and (len(self.items) > 0):
@@ -248,6 +250,12 @@ class PayableEmail(XferContainerAcknowledge):
         email_msg.set_context(self)
         email_msg.sending()
 
+    def get_persistent_renew(self):
+        for item in self.items:
+            if not item.get_saved_renew():
+                return False
+        return True
+
     def fillresponse(self, item_name='', subject='', message='', model=0, modelname=""):
         def replace_tag(contact, text):
             text = text.replace('#name', contact.get_final_child().get_presentation() if contact is not None else '???')
@@ -266,7 +274,7 @@ class PayableEmail(XferContainerAcknowledge):
             self.item = self.items[0]
             self.model = self.item.__class__
         if self.getparam("OK") is None:
-            items_with_doc = [item for item in self.items if item.get_saved_pdfreport() is not None]
+            items_with_doc = [item for item in self.items if item.get_saved_pdfreport(False) is not None]
             dlg = self.create_custom()
             icon = XferCompImage('img')
             icon.set_location(0, 0, 1, 6)
@@ -298,20 +306,19 @@ class PayableEmail(XferContainerAcknowledge):
             memo.set_location(1, 3)
             dlg.add_component(memo)
             if len(items_with_doc) == len(self.items):
-                presitent_report = XferCompCheck('PRINT_PERSITENT')
-                presitent_report.set_value(True)
-                presitent_report.set_location(1, 4)
-                presitent_report.description = _('Send saved report')
-                presitent_report.java_script = """
-var is_persitent=current.getValue();
-parent.get('model').setEnabled(!is_persitent);
-parent.get('print_sep').setEnabled(!is_persitent);
-    """
-                dlg.add_component(presitent_report)
-                sep = XferCompLabelForm('print_sep')
-                sep.set_value_center(XferContainerPrint.PRINT_REGENERATE_MSG)
-                sep.set_location(1, 5)
-                dlg.add_component(sep)
+                report_mode_list = [(XferContainerPrint.PRINT_PERSITENT_CODE, _('Get saved report')),
+                                    (XferContainerPrint.PRINT_REGENERATE_CODE, XferContainerPrint.PRINT_REGENERATE_MSG)]
+                if self.get_persistent_renew():
+                    report_mode_list.append((XferContainerPrint.PRINT_RENEW_CODE, XferContainerPrint.PRINT_RENEW_MSG))
+                presitent_report_mode = XferCompSelect('PRINT_PERSITENT_MODE')
+                presitent_report_mode.set_location(1, 4)
+                presitent_report_mode.set_select(report_mode_list)
+                presitent_report_mode.set_value(XferContainerPrint.PRINT_PERSITENT_CODE)
+                presitent_report_mode.java_script = """
+var persitent_mode=current.getValue();
+parent.get('model').setEnabled(persitent_mode==%d);
+""" % XferContainerPrint.PRINT_REGENERATE_CODE
+                dlg.add_component(presitent_report_mode)
             elif len(self.items) > 1:
                 sep = XferCompLabelForm('print_sep')
                 sep.set_value_center(XferContainerPrint.PRINT_WARNING_SAVING_MSG)
@@ -327,8 +334,12 @@ parent.get('print_sep').setEnabled(!is_persitent);
             dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"OK": "YES"})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
-            if (self.getparam("PRINT_PERSITENT", False) is True):
+            persitent_mode = self.getparam("PRINT_PERSITENT_MODE", XferContainerPrint.PRINT_REGENERATE_CODE)
+            if (persitent_mode != XferContainerPrint.PRINT_REGENERATE_CODE):
                 model = 0
+            if (persitent_mode == XferContainerPrint.PRINT_RENEW_CODE):
+                for item in self.items:
+                    item.get_saved_pdfreport(True)
             if len(self.items) == 1:
                 self.fillresponse_send1message(subject, message, model)
             else:

@@ -204,8 +204,14 @@ class PayoffEditor(LucteriosEditor):
             xfer.remove_component(prefix + "bank_account")
         elif xfer.get_components(prefix + "bank_account") is not None:
             xfer.get_components(prefix + "bank_account").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-            bank_account = BankAccount.objects.get(id=xfer.get_components(prefix + "bank_account").value)
-            fee_code = bank_account.fee_account_code
+            bank_account_comp = xfer.get_components(prefix + "bank_account")
+            fee_code = ''
+            if bank_account_comp is not None:
+                try:
+                    bank_account = BankAccount.objects.get(id=bank_account_comp.value)
+                    fee_code = bank_account.fee_account_code
+                except BankAccount.DoesNotExist:
+                    pass
         if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
             xfer.remove_component(prefix + "payer")
         if fee_code == '':

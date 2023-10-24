@@ -1594,6 +1594,9 @@ class Bill(Supporting):
             else:
                 return self.categoryBill.emailmessage
 
+    def get_saved_renew(self):
+        return (self.fiscal_year is not None) and (self.fiscal_year.status != FiscalYear.STATUS_FINISHED)
+
     def get_default_print_model(self):
         model = None
         if self.categoryBill_id is not None:

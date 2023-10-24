@@ -499,7 +499,7 @@ class BillTest(InvoiceTest):
         self.factory.xfer = BillTransition()
         self.calljson('/diacamma.invoice/billTransition', {'bill': 1, 'TRANSITION': 'valid', "nbpayoff": 1, 'payoff00_mode': 1, 'payoff00_bank_account': 2}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
-        self.assert_count_equal('', 2 + 9 + 6)
+        self.assert_count_equal('', 2 + 9 + 5)
         self.assert_json_equal('', 'nbpayoff', 1)
         self.assert_json_equal('', 'payoff00_amount', '107.45')
         self.assert_json_equal('', 'sendemail', False)
@@ -1280,7 +1280,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.factory.xfer = BillTransition()
             self.calljson('/diacamma.invoice/billTransition', {'bill': bill_id, 'TRANSITION': 'valid'}, False)
             self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
-            self.assert_count_equal('', 3 + 6 * 2 + 6 + 0)
+            self.assert_count_equal('', 3 + 6 * 2 + 5 + 0)
             self.assert_json_equal('', 'nbpayoff', 2)
             self.assert_json_equal('', 'sendemail', True)
 
@@ -1290,7 +1290,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.factory.xfer = BillTransition()
             self.calljson('/diacamma.invoice/billTransition', {'bill': bill_id, 'TRANSITION': 'valid'}, False)
             self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
-            self.assert_count_equal('', 3 + 6 * 2 + 6 + 5)
+            self.assert_count_equal('', 3 + 6 * 2 + 5 + 5)
             self.assert_json_equal('', 'nbpayoff', 2)
             self.assert_json_equal('', 'sendemail', True)
             self.assert_json_equal('', 'sendemail_quotation', True)
@@ -1729,14 +1729,14 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.factory.xfer = BillPrint()
         self.calljson('/diacamma.invoice/billPrint', {'bill': '2;3;4;5'}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billPrint')
-        self.assert_count_equal('', 4)
-        self.assert_json_equal('CHECK', 'PRINT_PERSITENT', True)
-        self.assert_json_equal('LABELFORM', 'print_sep', '{[hr/]}Re-générer un nouveau rapport')
+        self.assert_count_equal('', 3)
+        self.assert_json_equal('SELECT', 'PRINT_PERSITENT_MODE', 0)
+        self.assert_select_equal('PRINT_PERSITENT_MODE', {0: 'Obtenir le rapport sauvegardé', 1: 'Générer un rapport duplicata', 2: 'Recréer un rapport officiel'})
 
         download_file = join(get_user_dir(), "pdfreports.zip")
         self.assertFalse(isfile(download_file))
         self.factory.xfer = BillPrint()
-        self.calljson('/diacamma.invoice/billPrint', {'bill': '2;3;4;5', 'PRINT_PERSITENT': True}, False)
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '2;3;4;5', 'PRINT_PERSITENT_MODE': 0}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billPrint')
         self.assert_json_equal('DOWNLOAD', 'filename', 'pdfreports.zip')
         self.assert_json_equal('', '#filename/filename', "CORE/download?filename=pdfreports.zip&sign=", True)
@@ -2046,7 +2046,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         check_pdfreport(self, 'Bill', 1, False)
 
         self.factory.xfer = BillPrint()
-        self.calljson('/diacamma.invoice/billPrint', {'bill': '1', 'PRINT_PERSITENT': True, 'PRINT_MODE': 3, 'MODEL': 9}, False)
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '1', 'PRINT_PERSITENT_MODE': 0, 'PRINT_MODE': 3, 'MODEL': 9}, False)
         self.assert_observer('core.print', 'diacamma.invoice', 'billPrint')
         check_pdfreport(self, 'Bill', 1, True)
 
@@ -2618,7 +2618,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.calljson('/diacamma.payoff/payableEmail',
                           {'item_name': 'bill', 'bill': bill_id}, False)
             self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
-            self.assert_count_equal('', 6)
+            self.assert_count_equal('', 5)
             self.assert_json_equal('EDIT', 'subject', 'Facture A-1')
             self.assert_json_equal('MEMO', 'message', 'Jack Dalton{[br/]}{[br/]}Veuillez trouver joint à ce courriel facture A-1 - 1 avril 2015.{[br/]}{[br/]}Sincères salutations')
 
@@ -2653,11 +2653,11 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.calljson('/diacamma.payoff/payableEmail',
                           {'item_name': 'bill', 'bill': bill_id}, False)
             self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
-            self.assert_count_equal('', 6)
+            self.assert_count_equal('', 5)
 
             self.factory.xfer = PayableEmail()
             self.calljson('/diacamma.payoff/payableEmail',
-                          {'bill': bill_id, 'OK': 'YES', 'PRINT_PERSITENT': True, 'item_name': 'bill', 'subject': 'my bill', 'message': 'this is a bill.', 'model': 8, }, False)
+                          {'bill': bill_id, 'OK': 'YES', 'PRINT_PERSITENT_MODE': 0, 'item_name': 'bill', 'subject': 'my bill', 'message': 'this is a bill.', 'model': 8, }, False)
             self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
             self.assertEqual(1, server.count())
             _msg_txt, _msg, msg_file = server.check_first_message('my bill', 3, {'To': 'Jack.Dalton@worldcompany.com'})
@@ -2716,7 +2716,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.calljson('/diacamma.payoff/payableEmail',
                           {'item_name': 'bill', 'bill': "1;2;3;4", 'modelname': 'invoice.Bill'}, False)
             self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
-            self.assert_count_equal('', 7)
+            self.assert_count_equal('', 6)
             self.assert_json_equal('LABELFORM', "nb_item", '4')
             self.assert_json_equal('EDIT', 'subject', '#reference')
             self.assert_json_equal('MEMO', 'message', '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations')
@@ -2765,7 +2765,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
 
             self.factory.xfer = PayableEmail()
             self.calljson('/diacamma.payoff/payableEmail',
-                          {'bill': "1;2;3;4", 'OK': 'YES', 'item_name': 'bill', 'PRINT_PERSITENT': True, 'subject': '#reference',
+                          {'bill': "1;2;3;4", 'OK': 'YES', 'item_name': 'bill', 'PRINT_PERSITENT_MODE': 0, 'subject': '#reference',
                            'message': '#name{[br/]}{[br/]}Veuillez trouver joint à ce courriel #doc.{[br/]}{[br/]}Sincères salutations', 'model': 8}, False)
             self.assert_observer('core.acknowledge', 'diacamma.payoff', 'payableEmail')
 
@@ -3716,7 +3716,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.factory.xfer = BillTransition()
             self.calljson('/diacamma.invoice/billTransition', {'bill': 2, 'TRANSITION': 'valid', 'nbpayoff': 0}, False)
             self.assert_observer('core.custom', 'diacamma.invoice', 'billTransition')
-            self.assert_count_equal('', 3 + 0 + 6 + 0)
+            self.assert_count_equal('', 3 + 0 + 5 + 0)
             self.assert_json_equal('', 'nbpayoff', 0)
             self.assert_json_equal('', 'sendemail', False)
             self.assert_json_equal('', 'subject', 'Warning: #reference')

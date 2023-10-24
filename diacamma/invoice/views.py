@@ -363,21 +363,18 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
             memo.set_location(2, row + 3)
             dlg.add_component(memo)
             if self.item.bill_type != Bill.BILLTYPE_QUOTATION:
-                check_payoff.java_script += "parent.get('PRINT_PERSITENT').setEnabled(type);\n"
-                presitent_report = XferCompCheck('PRINT_PERSITENT')
-                presitent_report.set_value(True)
-                presitent_report.set_location(2, row + 4)
-                presitent_report.description = _('Send saved report')
-                presitent_report.java_script = """
-var is_persitent=current.getValue();
-parent.get('model').setEnabled(!is_persitent);
-parent.get('print_sep').setEnabled(!is_persitent);
-"""
-                dlg.add_component(presitent_report)
-                sep = XferCompLabelForm('print_sep')
-                sep.set_value_center(XferContainerPrint.PRINT_REGENERATE_MSG)
-                sep.set_location(2, row + 5)
-                dlg.add_component(sep)
+                check_payoff.java_script += "parent.get('PRINT_PERSITENT_MODE').setEnabled(type);\n"
+                report_mode_list = [(XferContainerPrint.PRINT_PERSITENT_CODE, _('Get saved report')),
+                                    (XferContainerPrint.PRINT_REGENERATE_CODE, XferContainerPrint.PRINT_REGENERATE_MSG)]
+                presitent_report_mode = XferCompSelect('PRINT_PERSITENT_MODE')
+                presitent_report_mode.set_location(2, row + 5)
+                presitent_report_mode.set_select(report_mode_list)
+                presitent_report_mode.set_value(XferContainerPrint.PRINT_PERSITENT_CODE)
+                presitent_report_mode.java_script = """
+var persitent_mode=current.getValue();
+parent.get('model').setEnabled(persitent_mode==%d);
+""" % XferContainerPrint.PRINT_REGENERATE_CODE
+                dlg.add_component(presitent_report_mode)
             selectors = PrintModel.get_print_selector(2, self.item.__class__)[0]
             sel = XferCompSelect('model')
             sel.set_select(selectors[2])

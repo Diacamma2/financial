@@ -197,12 +197,18 @@ class Supporting(LucteriosModel):
     def set_context(self, xfer):
         setattr(self, 'last_user', xfer.request.user)
 
-    def get_saved_pdfreport(self):
+    def get_saved_pdfreport(self, recreate):
         metadata = '%s-%d' % (self.__class__.__name__, self.id)
         doc = DocumentContainer.objects.filter(metadata=metadata).first()
+        if recreate and (doc is not None):
+            doc.delete()
+            doc = None
         if doc is None:
             doc = self.generate_pdfreport()
         return doc
+
+    def get_saved_renew(self):
+        return False
 
     def add_pdf_document(self, title, user, metadata, pdf_content):
         return self.fiscal_year.folder.add_pdf_document(title, user, metadata, pdf_content)
@@ -234,7 +240,7 @@ class Supporting(LucteriosModel):
         self.generate_pdfreport()
 
     def get_pdfreport(self, printmodel):
-        doc = self.get_saved_pdfreport()
+        doc = self.get_saved_pdfreport(False)
         if printmodel == 0:
             if doc is None:
                 raise LucteriosException(IMPORTANT, _('saved PDF report not found !'))

@@ -499,7 +499,7 @@ class MethodTest(InvoiceTest, PaymentTest):
             self.factory.xfer = PayableEmail()
             self.calljson('/diacamma.payoff/payableEmail', {'item_name': 'bill', 'bill': 2}, False)
             self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
-            self.assert_count_equal('', 6)
+            self.assert_count_equal('', 5)
             self.assert_json_equal('EDIT', 'subject', 'Facture A-1')
             self.assert_json_equal('MEMO', 'message', 'William Dalton (Minimum)', True)
 
@@ -611,7 +611,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assertEqual(len(self.json_actions), 4)
 
         self.factory.xfer = BillPrint()
-        self.calljson('/diacamma.invoice/billPrint', {'bill': '6', 'PRINT_MODE': 3, 'MODEL': 8, 'PRINT_PERSITENT': True}, False)
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '6', 'PRINT_MODE': 3, 'MODEL': 8, 'PRINT_PERSITENT_MODE': 0}, False)
         self.assert_observer('core.print', 'diacamma.invoice', 'billPrint')
         self.save_pdf()
 
@@ -734,6 +734,6 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assertEqual(len(self.json_actions), 4)
 
         self.factory.xfer = BillPrint()
-        self.calljson('/diacamma.invoice/billPrint', {'bill': '6', 'PRINT_MODE': 3, 'MODEL': 8, 'PRINT_PERSITENT': True}, False)
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '6', 'PRINT_MODE': 3, 'MODEL': 8, 'PRINT_PERSITENT_MODE': 0}, False)
         self.assert_observer('core.print', 'diacamma.invoice', 'billPrint')
         self.save_pdf()

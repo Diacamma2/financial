@@ -656,17 +656,20 @@ class FiscalYearReportPrint(XferPrintAction):
         else:
             self.caption = self.action_class.caption
 
-    def _get_persistent_pdfreport(self):
+    def _get_persistent_pdfreport(self, recreate):
         self.action_class = getattr(sys.modules[self.getparam("modulename", __name__)], self.getparam("classname", ''))
         if getattr(self.action_class, 'saving_pdfreport', False) is True:
             if self.action_class is None:
                 self.caption = self.__class__.caption
             else:
                 self.caption = self.action_class.caption
-            doc = self.item.get_reports(self.action_class)
+            doc = self.item.get_reports(self.action_class, recreate=recreate)
             if doc is not None:
                 return doc.content.read()
         return None
+
+    def get_persistent_renew(self):
+        return self.item.status != FiscalYear.STATUS_FINISHED
 
     def get_report_generator(self):
         self.action_class = getattr(sys.modules[self.getparam("modulename", __name__)], self.getparam("classname", ''))

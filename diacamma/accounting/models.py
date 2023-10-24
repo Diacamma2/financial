@@ -527,10 +527,13 @@ class FiscalYear(LucteriosModel):
             raise LucteriosException(IMPORTANT, _("This fiscal year has entries not closed and not next fiscal year!"))
         return nb_entry_noclose
 
-    def get_reports(self, printclass, params={}):
+    def get_reports(self, printclass, params={}, recreate=False):
         if self.status == FiscalYear.STATUS_FINISHED:
             metadata = '%s-%d' % (printclass.url_text, self.id)
             doc = DocumentContainer.objects.filter(metadata=metadata).first()
+            if recreate and (doc is not None):
+                doc.delete()
+                doc = None
             if doc is None:
                 try:
                     last_user = getattr(self, 'last_user', None)
