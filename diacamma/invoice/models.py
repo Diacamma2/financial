@@ -1382,6 +1382,24 @@ class Bill(Supporting):
         else:
             return None
 
+    def clone_quotation(self):
+        if (self.status in (Bill.STATUS_VALID, Bill.STATUS_CANCEL, Bill.STATUS_ARCHIVE)) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
+            if self.status == Bill.STATUS_VALID:
+                self.status = Bill.STATUS_CANCEL
+            self.save()
+            new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_QUOTATION, date=timezone.now(),
+                                           third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
+                                           comment=self.comment, parentbill=self)
+            new_bill.save()
+            for detail in self.detail_set.all():
+                detail.id = None
+                detail.bill = new_bill
+                detail.save(check_autoreduce=False)
+            Signal.call_signal("change_bill", 'convert', self, new_bill)
+            return new_bill
+        else:
+            return None
+
     def get_statistics_customer(self, without_reduct):
         cust_list = []
         if self.fiscal_year is not None:

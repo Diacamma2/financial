@@ -459,7 +459,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assert_json_equal('LABELFORM', 'title', "devis")
         self.assert_json_equal('LABELFORM', 'status', 1)
-        self.assertEqual(len(self.json_actions), 6)
+        self.assertEqual(len(self.json_actions), 7)
         self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'diacamma.payoff/images/payments.png', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
         self.factory.xfer = PayableShow()

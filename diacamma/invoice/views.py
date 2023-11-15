@@ -630,6 +630,21 @@ class BillToQuotation(XferContainerAcknowledge):
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 
 
+@ActionsManage.affect_show(_("=> Edit again"), "images/ok.png", close=CLOSE_YES, condition=lambda xfer: (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_CANCEL, Bill.STATUS_ARCHIVE)) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
+@MenuManage.describ('invoice.add_bill')
+class BillCloneQuotation(XferContainerAcknowledge):
+    caption = _("Edit again quotation")
+    icon = "bill.png"
+    model = Bill
+    field_id = 'bill'
+
+    def fillresponse(self):
+        if self.confirme(_("Do you want edit again this quotation ?")):
+            new_bill = self.item.clone_quotation()
+            if new_bill is not None:
+                self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
+
+
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @MenuManage.describ('invoice.delete_bill')
 class BillDel(XferDelete):
