@@ -792,8 +792,11 @@ class DepositSlip(LucteriosModel):
 
     def get_payoff_not_deposit(self, payer, reference, order_list, date_begin, date_end):
         payoff_nodeposit = []
-        if self.bank_account_id is not None:
-            payoff_query = Q(supporting__is_revenu=True) & Q(bank_account=self.bank_account) & Q(mode=1)
+        if self.bank_account_id == 0:
+            payoff_query = Q(supporting__is_revenu=True) & Q(mode=Payoff.MODE_CHEQUE)
+            entity_known = []
+        elif self.bank_account_id is not None:
+            payoff_query = Q(supporting__is_revenu=True) & Q(bank_account=self.bank_account) & Q(mode=Payoff.MODE_CHEQUE)
             entity_known = DepositDetail.objects.values_list('payoff__entry_id', flat=True).distinct()
         else:
             payoff_query = Q()
@@ -815,12 +818,17 @@ class DepositSlip(LucteriosModel):
             bills = []
             for supporting in Supporting.objects.filter(payoff__entry=values['entry_id']).distinct():
                 bills.append(str(supporting.get_final_child()))
+            deposits = []
+            if self.bank_account_id == 0:
+                for depodetail in DepositDetail.objects.filter(payoff__entry=values['entry_id']).distinct():
+                    deposits.append(str(depodetail.deposit))
             payoff['bill'] = '{[br/]}'.join(bills)
             payoff['payer'] = values['payer']
             payoff['amount'] = values['amount']
             payoff['date'] = values['date']
             payoff['reference'] = values['reference']
             payoff['is_revenu'] = values['supporting__is_revenu']
+            payoff['deposit'] = deposits
             payoff_nodeposit.append(payoff)
         return payoff_nodeposit
 
@@ -834,6 +842,7 @@ class DepositDetail(LucteriosModel):
     payoff = models.ForeignKey(Payoff, verbose_name=_('payoff'), null=True, default=None, db_index=True, on_delete=models.CASCADE)
 
     amount = LucteriosVirtualField(verbose_name=_('amount'), compute_from='get_amount', format_string=lambda: format_with_devise(5))
+    supports = LucteriosVirtualField(verbose_name=_('link document'), compute_from='get_supports')
 
     @classmethod
     def get_default_fields(cls):
@@ -861,6 +870,9 @@ class DepositDetail(LucteriosModel):
             return values['amount__sum']
         else:
             return 0
+
+    def get_supports(self):
+        return [str(payoff.supporting.get_final_child()) for payoff in Payoff.objects.filter(entry=self.payoff.entry, reference=self.payoff.reference)]
 
     def get_auditlog_object(self):
         return self.deposit

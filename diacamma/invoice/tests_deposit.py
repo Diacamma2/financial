@@ -33,7 +33,8 @@ from lucterios.contacts.views_contacts import ResponsabilityModify
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, create_account
 from diacamma.accounting.views_entries import EntryAccountList
-from diacamma.payoff.views_deposit import DepositSlipList, DepositSlipAddModify, DepositSlipShow, DepositDetailAddModify, DepositDetailSave, DepositSlipTransition
+from diacamma.payoff.views_deposit import DepositSlipList, DepositSlipAddModify, DepositSlipShow, DepositDetailAddModify, DepositDetailSave, DepositSlipTransition,\
+    DepositShowPayoff
 from diacamma.payoff.views import PayoffAddModify, PayableShow, PayableEmail
 from diacamma.payoff.views_conf import BankAccountAddModify
 from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod, PaymentTest
@@ -109,11 +110,16 @@ class DepositTest(InvoiceTest):
         self.factory.xfer = DepositSlipShow()
         self.calljson('/diacamma.payoff/depositSlipShow', {'depositslip': 1}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'depositSlipShow')
-        self.assert_count_equal('', 15)
+        self.assert_count_equal('', 16)
         self.assertEqual(len(self.json_actions), 2)
         self.assert_grid_equal('depositdetail', {"payoff.payer": "payeur", "payoff.date": "date", "payoff.reference": "référence", "amount": "montant"}, 0)  # nb=4
         self.assert_count_equal('#depositdetail/actions', 2)
         self.assert_json_equal('LABELFORM', 'total', 0.0)
+
+        self.factory.xfer = DepositSlipShow()
+        self.calljson('/diacamma.payoff/depositSlipShow', {'depositslip': 1, "show_support": 1}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'depositSlipShow')
+        self.assert_grid_equal('depositdetail', {"payoff.payer": "payeur", "payoff.date": "date", "payoff.reference": "référence", "amount": "montant", "supports": "document associé"}, 0)  # nb=4
 
     def test_deposit_nocheque(self):
         self.create_deposit()
@@ -123,7 +129,7 @@ class DepositTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.payoff', 'depositDetailAddModify')
         self.assert_count_equal('', 7)
         self.assertEqual(len(self.json_actions), 1)
-        self.assert_grid_equal('entry', {"bill": "facture", "payer": "payeur", "amount": "montant", "date": "date", "reference": "référence"}, 0)  # nb=5
+        self.assert_grid_equal('entry', {"bill": "document associé", "payer": "payeur", "amount": "montant", "date": "date", "reference": "référence"}, 0)  # nb=5
         self.assert_count_equal('#entry/actions', 1)
 
     def test_deposit_simple(self):
@@ -166,6 +172,37 @@ class DepositTest(InvoiceTest):
         self.calljson('/diacamma.payoff/depositDetailAddModify', {'depositslip': 1}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'depositDetailAddModify')
         self.assert_count_equal('entry', 1)
+
+        self.factory.xfer = DepositShowPayoff()
+        self.calljson('/diacamma.payoff/depositShowPayoff', {}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'depositShowPayoff')
+        self.assert_count_equal('', 9)
+        self.assert_grid_equal('entry', {"bill": "document associé", "payer": "payeur", "amount": "montant", "date": "date", "reference": "référence", "deposit": "remise"}, 3)
+        self.assert_json_equal('', 'entry/@0/bill', 'facture A-1 - 1 avril 2015')
+        self.assert_json_equal('', 'entry/@0/payer', 'Mr Smith')
+        self.assert_json_equal('', 'entry/@0/amount', 75.00)
+        self.assert_json_equal('', 'entry/@0/reference', 'ABC123')
+        self.assert_json_equal('', 'entry/@0/deposit', ['123456 10 avril 2015'])
+        self.assert_json_equal('', 'entry/@1/bill', 'facture A-2 - 1 avril 2015')
+        self.assert_json_equal('', 'entry/@1/payer', 'Mme Smith')
+        self.assert_json_equal('', 'entry/@1/amount', 50.00)
+        self.assert_json_equal('', 'entry/@1/reference', 'XYZ987')
+        self.assert_json_equal('', 'entry/@1/deposit', ['123456 10 avril 2015'])
+        self.assert_json_equal('', 'entry/@2/bill', 'reçu A-1 - 1 avril 2015')
+        self.assert_json_equal('', 'entry/@2/payer', 'Miss Smith')
+        self.assert_json_equal('', 'entry/@2/amount', 30.00)
+        self.assert_json_equal('', 'entry/@2/reference', '?????')
+        self.assert_json_equal('', 'entry/@2/deposit', [])
+
+        self.factory.xfer = DepositShowPayoff()
+        self.calljson('/diacamma.payoff/depositShowPayoff', {"without_deposit": 1}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'depositShowPayoff')
+        self.assert_count_equal('entry', 1)
+        self.assert_json_equal('', 'entry/@0/bill', 'reçu A-1 - 1 avril 2015')
+        self.assert_json_equal('', 'entry/@0/payer', 'Miss Smith')
+        self.assert_json_equal('', 'entry/@0/amount', 30.00)
+        self.assert_json_equal('', 'entry/@0/reference', '?????')
+        self.assert_json_equal('', 'entry/@0/deposit', [])
 
     def test_deposit_othermode(self):
         self.create_payoff(1, "10.0", "Mr Smith", 0, "ABC123")
