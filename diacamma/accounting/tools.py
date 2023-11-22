@@ -65,8 +65,11 @@ def currency_round(amount):
 
 
 def correct_accounting_code(code):
-    if current_system_account().has_minium_code_size():
+    code = code.strip()
+    if current_system_account().has_minium_code_size() and (code != ''):
         code_size = Params.getvalue("accounting-sizecode")
+        if code == '0' * code_size:
+            return ''
         while len(code) > code_size and code[-1] == '0':
             code = code[:-1]
         while len(code) < code_size:
