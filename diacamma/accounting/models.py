@@ -1646,6 +1646,8 @@ class EntryLineAccount(LucteriosModel):
         LucteriosModel.delete(self)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None, check_integrity=True):
+        if self.id == 0:
+            self.id = None
         if (self.account.type_of_account not in (3, 4, 5)) and (self.costaccounting is not None):
             self.costaccounting = None
         if check_integrity and (self.costaccounting is not None) and (self.costaccounting.status == CostAccounting.STATUS_CLOSED):

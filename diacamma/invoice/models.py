@@ -1580,7 +1580,7 @@ class Bill(Supporting):
             target_payoff.save(do_internal=False)
 
     def delete_linked_supporting(self, payoff):
-        if payoff.entry.year.status == FiscalYear.STATUS_FINISHED:
+        if (payoff.entry is not None) and (payoff.entry.year is not None) and payoff.entry.year.status == FiscalYear.STATUS_FINISHED:
             raise LucteriosException(IMPORTANT, _('Payoff not deletable !'))
         return
 
