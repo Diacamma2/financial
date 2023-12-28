@@ -57,7 +57,7 @@ from lucterios.contacts.views_contacts import AbstractContactFindDouble
 from lucterios.contacts.models import Individual, LegalEntity
 
 from diacamma.invoice.models import Article, Bill, Detail, Category, Provider, StorageArea, AutomaticReduce,\
-    CategoryBill
+    CategoryBill, RecipeKitArticle
 from diacamma.payoff.views import PayoffAddModify, PayableEmail, can_send_email, SupportingPrint
 from diacamma.payoff.models import Payoff, DepositSlip
 from diacamma.accounting.models import FiscalYear, Third, EntryLineAccount, EntryAccount
@@ -833,7 +833,7 @@ class ArticleFilter(object):
             new_filter &= Q(isdisabled=False)
         if show_stockable != self.STOCKABLE_ALL:
             if show_stockable in [self.STOCKABLE_WITH_STOCK, self.STOCKABLE_WITH_STOCK_AVAILABLE, self.STOCKABLE_WITHOUT_STOCK]:
-                new_filter &= Q(stockable=Article.STOCKABLE_YES)
+                new_filter &= Q(stockable__in=(Article.STOCKABLE_YES, Article.STOCKABLE_KIT))
             else:
                 new_filter &= Q(stockable=show_stockable)
         if show_storagearea != 0:
@@ -945,7 +945,7 @@ class ArticleClean(XferContainerAcknowledge, ArticleFilter):
             self.filter = self.get_search_filter(ref_filter, self.FILTER_SHOW_ONLY_ACTIVATE, self.STOCKABLE_WITHOUT_STOCK, show_storagearea)
         else:
             self.filter, _desc = get_search_query_from_criteria(criteria, Article)
-            self.filter &= Q(isdisabled=False) & Q(stockable=Article.STOCKABLE_YES)
+            self.filter &= Q(isdisabled=False) & Q(stockable__in=(Article.STOCKABLE_YES, Article.STOCKABLE_KIT))
             categories_filter = ()
             show_storagearea = 0
         items = self.model.objects.filter(self.filter).distinct()
@@ -1024,6 +1024,26 @@ class ArticleDel(XferDelete):
     caption = _("Delete article")
 
 
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png")
+@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES)
+@MenuManage.describ('invoice.add_article')
+class RecipeKitArticleAddModify(XferAddEditor):
+    icon = "article.png"
+    model = RecipeKitArticle
+    field_id = 'kit_article'
+    caption_add = _("Add kit of articles")
+    caption_modify = _("Modify kit of articles")
+
+
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@MenuManage.describ('invoice.add_article')
+class RecipeKitArticleDel(XferDelete):
+    icon = "article.png"
+    model = RecipeKitArticle
+    field_id = 'kit_article'
+    caption = _("Delete kit of articles")
+
+
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
 @ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_article')
@@ -1036,7 +1056,7 @@ class ProviderAddModify(XferAddEditor):
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
-@MenuManage.describ('invoice.delete_article')
+@MenuManage.describ('invoice.add_article')
 class ProviderDel(XferDelete):
     icon = "article.png"
     model = Provider

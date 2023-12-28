@@ -31,7 +31,8 @@ from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.test_tools import create_account, default_costaccounting
 
 from diacamma.invoice.models import Article, Vat, Category, Provider,\
-    StorageArea, StorageSheet, StorageDetail, AccountPosting, CategoryBill
+    StorageArea, StorageSheet, StorageDetail, AccountPosting, CategoryBill,\
+    RecipeKitArticle
 from diacamma.invoice.views import BillTransition, DetailAddModify, BillAddModify
 from diacamma.payoff.models import PaymentMethod
 
@@ -155,6 +156,14 @@ def insert_storage(complet=False):
         sheet3.valid()
         sheet4 = StorageSheet.objects.create(sheet_type=1, date='2014-01-10', storagearea_id=2, comment="D")
         StorageDetail.objects.create(storagesheet=sheet4, article_id=4, quantity=10.0)
+
+
+def create_kit(name, amount, articles):
+    art_kit = Article.objects.create(reference=name, designation=name,
+                                     price=amount, isdisabled=False, accountposting_id=1, vat=None, stockable=4, qtyDecimal=0)
+    for art_id, art_qty in articles.items():
+        RecipeKitArticle.objects.create(article=art_kit, link_article_id=art_id, quantity=art_qty)
+    return art_kit
 
 
 class InvoiceTest(LucteriosTest):

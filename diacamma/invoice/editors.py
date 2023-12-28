@@ -88,6 +88,12 @@ class AccountPostingEditor(LucteriosEditor):
         xfer.add_component(btn)
 
 
+class RecipeKitArticleEditor(LucteriosEditor):
+
+    def edit(self, xfer):
+        xfer.change_to_readonly('article')
+
+
 class ArticleEditor(LucteriosEditor):
 
     def edit(self, xfer):
@@ -147,6 +153,9 @@ class ArticleEditor(LucteriosEditor):
             img.type = 'jpg'
             img.set_location(new_col, obj_ref.row, 1, 6)
             xfer.add_component(img)
+        if self.item.stockable == Article.STOCKABLE_KIT:
+            xfer.new_tab(_("Kits of articles"))
+            xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, ['kit_article_set'])
         if self.item.stockable != Article.STOCKABLE_NO:
             xfer.new_tab(_("Storage"))
             grid = XferCompGrid('storage')
@@ -175,13 +184,14 @@ class ArticleEditor(LucteriosEditor):
                 grid.set_value(area_id, 'available', get_value_formated(format_to_string(float(self.item.get_available_total_num(storagearea=area_id, default=0)), format_txt, None), area_id))
             xfer.add_component(grid)
 
-            grid = XferCompGrid('moving')
-            grid.set_location(1, 3)
-            grid.description = _('moving')
-            grid.set_model(self.item.storagedetail_set.filter(storagesheet__status=1).order_by('-storagesheet__date'),
-                           ['storagesheet.date', 'storagesheet.comment', 'quantity_txt'], xfer)
-            xfer.add_component(grid)
-        else:
+            if self.item.stockable != Article.STOCKABLE_KIT:
+                grid = XferCompGrid('moving')
+                grid.set_location(1, 3)
+                grid.description = _('moving')
+                grid.set_model(self.item.storagedetail_set.filter(storagesheet__status=1).order_by('-storagesheet__date'),
+                               ['storagesheet.date', 'storagesheet.comment', 'quantity_txt'], xfer)
+                xfer.add_component(grid)
+        if self.item.stockable in (Article.STOCKABLE_NO, Article.STOCKABLE_KIT):
             xfer.remove_component('provider')
             xfer.del_tab(_('002@Provider'))
 

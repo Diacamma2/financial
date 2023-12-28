@@ -110,6 +110,8 @@ class Category(LucteriosModel):
 
 
 class StorageArea(LucteriosModel):
+    NO_AREA = 0
+
     name = models.CharField(_('name'), max_length=50)
     designation = models.TextField(_('designation'))
     contact = models.ForeignKey(Individual, verbose_name=_('manager'), null=True, on_delete=models.SET_NULL)
@@ -190,7 +192,8 @@ class Article(LucteriosModel, CustomizeObject):
     STOCKABLE_NO = 0
     STOCKABLE_YES = 1
     STOCKABLE_YES_WITHOUTSELL = 2
-    LIST_STOCKABLES = ((STOCKABLE_NO, _('no stockable')), (STOCKABLE_YES, _('stockable')), (STOCKABLE_YES_WITHOUTSELL, _('stockable & no marketable')))
+    STOCKABLE_KIT = 4
+    LIST_STOCKABLES = ((STOCKABLE_NO, _('no stockable')), (STOCKABLE_YES, _('stockable')), (STOCKABLE_YES_WITHOUTSELL, _('stockable & no marketable')), (STOCKABLE_KIT, _('kit of articles')))
 
     CustomFieldClass = ArticleCustomField
     FieldName = 'article'
@@ -219,6 +222,10 @@ class Article(LucteriosModel, CustomizeObject):
 
     def __str__(self):
         return str(self.reference)
+
+    @property
+    def kit_article_set(self):
+        return RecipeKitArticle.objects.filter(article=self)
 
     def get_text_value(self):
         text_value = self.designation.split('{[br/]}')[0]
@@ -354,14 +361,20 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_amount_from_area(self, currentqty, area):
         sum_amount = 0.0
-        nb_qty = 0.0
-        for det_item in self.storagedetail_set.filter(storagesheet__status=1, storagesheet__sheet_type=0, storagesheet__storagearea_id=area).order_by('-storagesheet__date'):
-            if (nb_qty + float(det_item.quantity)) < currentqty:
-                sum_amount += float(det_item.price * det_item.quantity)
-                nb_qty += float(det_item.quantity)
-            else:
-                sum_amount += float(det_item.price) * (float(currentqty) - nb_qty)
-                break
+        if self.stockable == self.STOCKABLE_KIT:
+            for kitart in self.kit_article_set.all():
+                sum_amount += kitart.link_article.get_amount_from_area(currentqty * float(kitart.quantity), area)
+        else:
+            nb_qty = 0.0
+            for det_item in self.storagedetail_set.filter(storagesheet__status=StorageSheet.STATUS_VALID,
+                                                          storagesheet__sheet_type=StorageSheet.TYPE_RECEIPT,
+                                                          storagesheet__storagearea_id=area).order_by('-storagesheet__date'):
+                if (nb_qty + float(det_item.quantity)) < currentqty:
+                    sum_amount += float(det_item.price * det_item.quantity)
+                    nb_qty += float(det_item.quantity)
+                else:
+                    sum_amount += float(det_item.price) * (float(currentqty) - nb_qty)
+                    break
         return sum_amount
 
     def set_context(self, xfer):
@@ -369,16 +382,27 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_stockage_values(self):
         stock_list = []
-        detail_filter = Q(storagesheet__status=StorageSheet.STATUS_VALID)
-        if self.show_storagearea != 0:
-            detail_filter &= Q(storagesheet__storagearea=self.show_storagearea)
-        if self.stockable != self.STOCKABLE_NO:
-            stock = {}
+        stock = {}
+        if self.stockable in (self.STOCKABLE_YES, self.STOCKABLE_YES_WITHOUTSELL):
+            detail_filter = Q(storagesheet__status=StorageSheet.STATUS_VALID)
+            if self.show_storagearea != StorageArea.NO_AREA:
+                detail_filter &= Q(storagesheet__storagearea=self.show_storagearea)
             for val in self.storagedetail_set.filter(detail_filter).values('storagesheet__storagearea').annotate(data_sum=Sum('quantity')):
                 if abs(val['data_sum']) > 0.001:
-                    if not val['storagesheet__storagearea'] in stock.keys():
+                    if val['storagesheet__storagearea'] not in stock.keys():
                         stock[val['storagesheet__storagearea']] = [str(StorageArea.objects.get(id=val['storagesheet__storagearea'])), 0.0]
                     stock[val['storagesheet__storagearea']][1] += float(val['data_sum'])
+        if self.stockable == self.STOCKABLE_KIT:
+            for kitart in self.kit_article_set.all():
+                for areaid, area, qty, total_amount in kitart.link_article.get_stockage_values():
+                    if areaid == StorageArea.NO_AREA:
+                        continue
+                    if areaid not in stock.keys():
+                        stock[areaid] = [area, {}]
+                    stock[areaid][1][kitart.id] = round(qty / float(kitart.quantity), self.qtyDecimal)
+            for key in sorted(list(stock.keys())):
+                stock[key][1] = min(stock[key][1].values())
+        if self.stockable != self.STOCKABLE_NO:
             total_amount = 0.0
             total_qty = 0.0
             for key in sorted(list(stock.keys())):
@@ -391,16 +415,30 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_booking_values(self):
         booking_list = []
-        detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART, Bill.BILLTYPE_ORDER))
-        if self.show_storagearea != 0:
-            detail_filter &= Q(storagearea=self.show_storagearea)
-        if self.stockable != self.STOCKABLE_NO:
-            booking = {}
-            for val in self.detail_set.filter(detail_filter).values('storagearea').annotate(data_sum=Sum('quantity')):
+        booking = {}
+        if self.stockable in (self.STOCKABLE_YES, self.STOCKABLE_YES_WITHOUTSELL):
+            detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART, Bill.BILLTYPE_ORDER))
+            if self.show_storagearea != StorageArea.NO_AREA:
+                detail_filter &= Q(storagearea=self.show_storagearea)
+            for val in Detail.objects.filter(detail_filter).values('storagearea', 'article').annotate(data_sum=Sum('quantity')):
+                katart = RecipeKitArticle.objects.filter(link_article=self, article_id=val['article']).first()
+                if (val['article'] != self.id) and (katart is None):
+                    continue
                 if (abs(val['data_sum']) > 0.001) and (val['storagearea'] is not None):
                     if not val['storagearea'] in booking.keys():
                         booking[val['storagearea']] = [str(StorageArea.objects.get(id=val['storagearea'])), 0.0]
-                    booking[val['storagearea']][1] += float(val['data_sum'])
+                    booking[val['storagearea']][1] += float(val['data_sum']) * (1 if katart is None else float(katart.quantity))
+        if self.stockable == self.STOCKABLE_KIT:
+            for kitart in self.kit_article_set.all():
+                for areaid, area, qty in kitart.link_article.get_booking_values():
+                    if areaid == StorageArea.NO_AREA:
+                        continue
+                    if areaid not in booking.keys():
+                        booking[areaid] = [area, {}]
+                    booking[areaid][1][kitart.id] = round(qty / float(kitart.quantity), self.qtyDecimal)
+            for key in sorted(list(booking.keys())):
+                booking[key][1] = min(booking[key][1].values())
+        if self.stockable != self.STOCKABLE_NO:
             total_qty = 0.0
             for key in sorted(list(booking.keys())):
                 booking_list.append((int(key), booking[key][0], booking[key][1]))
@@ -430,7 +468,22 @@ class Article(LucteriosModel, CustomizeObject):
         return default
 
     def get_available_total_num(self, storagearea=0, default=None):
-        if self.stockable != self.STOCKABLE_NO:
+        if self.stockable == self.STOCKABLE_KIT:
+            if storagearea == 0:
+                return sum([self.get_available_total_num(storagearea.id, default) for storagearea in StorageArea.objects.all()])
+            else:
+                available_list = []
+                for kitart in self.kit_article_set.all():
+                    stockage = kitart.link_article.get_stockage_total_num(storagearea=storagearea, default=0)
+                    booking = kitart.link_article.get_booking_total_num(storagearea=storagearea, default=0)
+                    available_list.append(round((stockage - booking) / float(kitart.quantity), self.qtyDecimal))
+                if len(available_list) == 0:
+                    return default
+                elif len(available_list) == 1:
+                    return available_list[0]
+                else:
+                    return min(available_list)
+        elif self.stockable != self.STOCKABLE_NO:
             stockage = self.get_stockage_total_num(storagearea=storagearea, default=0)
             booking = self.get_booking_total_num(storagearea=storagearea, default=0)
             return stockage - booking
@@ -483,6 +536,35 @@ class Article(LucteriosModel, CustomizeObject):
         verbose_name = _('article')
         verbose_name_plural = _('articles')
         ordering = ['reference']
+
+
+class RecipeKitArticle(LucteriosModel):
+    article = models.ForeignKey(Article, verbose_name=_('own article'), related_name='kit_article', null=False, on_delete=models.CASCADE)
+    link_article = models.ForeignKey(Article, verbose_name=_('linked article'), related_name='linked_article', null=False, on_delete=models.PROTECT)
+    quantity = LucteriosDecimalField(verbose_name=_('quantity'), max_digits=12, decimal_places=3,
+                                     default=1.0, validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string="N3")
+
+    def __str__(self):
+        return "%d x %s" % (self.quantity, self.link_article)
+
+    @classmethod
+    def get_default_fields(cls):
+        return ["link_article", "quantity"]
+
+    @classmethod
+    def get_edit_fields(cls):
+        return ["article", "link_article", "quantity"]
+
+    @property
+    def link_article_query(self):
+        artfilter = Q(isdisabled=False) & Q(stockable=Article.STOCKABLE_YES)
+        return Article.objects.filter(artfilter).distinct()
+
+    class Meta(object):
+        verbose_name = _('kit of articles')
+        verbose_name_plural = _('kits of articles')
+        ordering = ['article', '-quantity']
+        default_permissions = []
 
 
 class Provider(LucteriosModel):
@@ -1009,8 +1091,13 @@ class Bill(Supporting):
                     last_sheet.valid()
                 last_sheet = StorageSheet.objects.create(sheet_type=sheet_type, storagearea_id=old_area, date=self.date, comment=str(self), status=0)
             if last_sheet is not None:
-                price = detail.article.get_stockage_mean_price() if (self.bill_type == self.BILLTYPE_ASSET) else 0.0
-                StorageDetail.objects.create(storagesheet=last_sheet, article=detail.article, quantity=abs(detail.quantity), price=price)
+                if detail.article.stockable == Article.STOCKABLE_YES:
+                    price = detail.article.get_stockage_mean_price() if (self.bill_type == self.BILLTYPE_ASSET) else 0.0
+                    StorageDetail.objects.create(storagesheet=last_sheet, article=detail.article, quantity=abs(detail.quantity), price=price)
+                elif detail.article.stockable == Article.STOCKABLE_KIT:
+                    for kitart in detail.article.kit_article_set.all():
+                        price = kitart.link_article.get_stockage_mean_price() if (self.bill_type == self.BILLTYPE_ASSET) else 0.0
+                        StorageDetail.objects.create(storagesheet=last_sheet, article=kitart.link_article, quantity=abs(float(detail.quantity) * float(kitart.quantity)), price=price)
         if last_sheet is not None:
             last_sheet.valid()
 

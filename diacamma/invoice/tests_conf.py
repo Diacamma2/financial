@@ -42,7 +42,8 @@ from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommerc
     StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel, \
     CategoryBillAddModify, CategoryBillDel, CategoryBillDefault,\
     StorageAreaChangeContact, StorageAreaSaveContact
-from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch, ArticlePrint, ArticleLabel
+from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch, ArticlePrint, ArticleLabel,\
+    RecipeKitArticleAddModify, RecipeKitArticleDel
 
 
 class ConfigTest(LucteriosTest):
@@ -466,7 +467,7 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/articleList', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
         self.assert_count_equal('', 6)
-        self.assert_select_equal('stockable', 6)
+        self.assert_select_equal('stockable', 7)
         self.assert_grid_equal('article', {'reference': "référence", 'designation': "désignation", 'price': "prix", 'unit': "unité", 'isdisabled': "désactivé ?", 'accountposting': "code d'imputation comptable", 'stockable': "stockable"}, 0)
         self.assert_count_equal('#article/actions', 3)
 
@@ -997,3 +998,81 @@ class ConfigTest(LucteriosTest):
         self.calljson('/diacamma.invoice/articleAddModify',
                       {'reference': 'ABC1', 'designation': 'Article 01', 'price': '12.34', 'accountposting': 1, 'stockable': '1', 'qtyDecimal': '3', 'SAVE': 'YES'}, False)
         self.assert_observer('core.exception', 'diacamma.invoice', 'articleAddModify')
+
+    def test_article_kit(self):
+        default_categories()
+        default_articles(with_storage=True)
+
+        self.factory.xfer = ArticleAddModify()
+        self.calljson('/diacamma.invoice/articleAddModify',
+                      {'reference': 'KIT01', 'designation': 'My beautiful kit', 'price': '68.74', 'accountposting': 4, 'stockable': 4, 'qtyDecimal': 0, 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'articleAddModify')
+
+        self.factory.xfer = ArticleShow()
+        self.calljson('/diacamma.invoice/articleShow', {'article': 6}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
+        self.assert_count_equal('', 16)
+        self.assert_json_equal('LABELFORM', 'reference', "KIT01")
+        self.assert_json_equal('LABELFORM', 'designation', "My beautiful kit")
+        self.assert_json_equal('LABELFORM', 'price', 68.74)
+        self.assert_json_equal('LABELFORM', 'stockable', 4)
+        self.assert_json_equal('LABELFORM', 'categories', [])
+        self.assert_json_equal('LABELFORM', 'qtyDecimal', '0')
+        self.assert_count_equal('storage', 1)
+        self.assert_json_equal('', 'storage/@0/area', {"value": "Total", "format": "{[b]}{0}{[/b]}"})
+        self.assert_json_equal('', 'storage/@0/qty', {"value": "0", "format": "{[b]}{0}{[/b]}"})
+        self.assert_json_equal('', 'storage/@0/amount', {"value": 0, "format": "{[b]}{0}{[/b]}"})
+        self.assert_json_equal('', 'storage/@0/mean', '')
+        self.assert_json_equal('', 'storage/@0/available', {"value": '0', "format": "{[b]}{0}{[/b]}"})
+        self.assert_grid_equal('kit_article', {'link_article': "article associé", 'quantity': "quantité"}, 0)
+
+        self.factory.xfer = RecipeKitArticleAddModify()
+        self.calljson('/diacamma.invoice/recipeKitArticleAddModify', {'article': 6}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'recipeKitArticleAddModify')
+        self.assert_count_equal('', 4)
+        self.assert_json_equal('LABELFORM', 'article', 6)
+        self.assert_select_equal('link_article', {1: 'ABC1 | Article 01 (0.0kg)', 2: 'ABC2 | Article 02 (0.0l)'})
+        self.assert_json_equal('FLOAT', 'quantity', 1.0)
+
+        self.factory.xfer = RecipeKitArticleAddModify()
+        self.calljson('/diacamma.invoice/recipeKitArticleAddModify',
+                      {'article': 6, 'quantity': 2, 'link_article': 1, 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'recipeKitArticleAddModify')
+
+        self.factory.xfer = RecipeKitArticleAddModify()
+        self.calljson('/diacamma.invoice/recipeKitArticleAddModify',
+                      {'article': 6, 'quantity': 3, 'link_article': 2, 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'recipeKitArticleAddModify')
+
+        self.factory.xfer = ArticleShow()
+        self.calljson('/diacamma.invoice/articleShow', {'article': 6}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
+        self.assert_count_equal('', 16)
+        self.assert_count_equal('kit_article', 2)
+        self.assert_json_equal('', 'kit_article/@0/id', 2)
+        self.assert_json_equal('', 'kit_article/@0/link_article', 'ABC2')
+        self.assert_json_equal('', 'kit_article/@0/quantity', 3)
+        self.assert_json_equal('', 'kit_article/@1/id', 1)
+        self.assert_json_equal('', 'kit_article/@1/link_article', 'ABC1')
+        self.assert_json_equal('', 'kit_article/@1/quantity', 2)
+        self.assert_count_equal('storage', 1)
+
+        self.factory.xfer = RecipeKitArticleDel()
+        self.calljson('/diacamma.invoice/recipeKitArticleDel',
+                      {'kit_article': 1, 'CONFIRME': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'recipeKitArticleDel')
+
+        self.factory.xfer = RecipeKitArticleAddModify()
+        self.calljson('/diacamma.invoice/recipeKitArticleAddModify',
+                      {'kit_article': 2, 'article': 6, 'quantity': 4, 'link_article': 1, 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'recipeKitArticleAddModify')
+
+        self.factory.xfer = ArticleShow()
+        self.calljson('/diacamma.invoice/articleShow', {'article': 6}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
+        self.assert_count_equal('', 16)
+        self.assert_count_equal('kit_article', 1)
+        self.assert_json_equal('', 'kit_article/@0/id', 2)
+        self.assert_json_equal('', 'kit_article/@0/link_article', 'ABC1')
+        self.assert_json_equal('', 'kit_article/@0/quantity', 4)
+        self.assert_count_equal('storage', 1)
