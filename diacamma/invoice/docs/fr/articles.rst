@@ -20,6 +20,11 @@ Le champ *stockable* permet de définir si vous voulez gérer une gestion de sto
  * stockable & non vendable
     Article stockable non proposable à la vente.
     Utile pour suivre des stocks de matériel interne.
+ * kit d'article
+    Cet article est constitué d'un ensemble d'articles stockables.
+    Il est nécessaire de définir une liste d'article le consituant ainsi que la quantité dans la recette.
+    Cet article n'a pas de stock lui-même, il est déduit des stocks des articles associés.
+    À la facturation, c'est la quantité des articles associés qui sont alors sortie du stock.
 
 De plus, dans le cas où vous réalisez des factures avec TVA, vous devrez préciser, pour chaque articles, le taux de taxe à appliquer.
 

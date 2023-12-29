@@ -1003,6 +1003,19 @@ class ArticleShow(XferShowEditor):
     model = Article
     field_id = 'article'
 
+    def fillresponse(self):
+        XferShowEditor.fillresponse(self)
+        kit_article = self.get_components('kit_article')
+        if kit_article is not None:
+            for actionid, action in enumerate(kit_article.actions):
+                if action[0].caption == TITLE_MODIFY:
+                    params = action[4] if action[4] is not None else {}
+                    params['third'] = 0
+                    params['reference'] = ''
+                    params['cat_filter'] = []
+                    params['ref_filter'] = ''
+                    kit_article.actions[actionid] = (action[0], action[1], action[2], action[3], params)
+
 
 @ActionsManage.affect_grid(TITLE_CREATE, "images/new.png")
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES)
@@ -1024,15 +1037,27 @@ class ArticleDel(XferDelete):
     caption = _("Delete article")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png")
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES)
+@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", unique=SELECT_SINGLE)
+@MenuManage.describ('invoice.add_article')
+class RecipeKitArticleShowLinkArticle(XferContainerAcknowledge):
+    icon = "article.png"
+    model = RecipeKitArticle
+    field_id = 'kit_article'
+    caption_add = _("Show linked article")
+
+    def fillresponse(self):
+        self.redirect_action(ActionsManage.get_action_url('invoice.Article', 'Show', self), params={"article": self.item.link_article_id})
+
+
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_article')
 class RecipeKitArticleAddModify(XferAddEditor):
     icon = "article.png"
     model = RecipeKitArticle
     field_id = 'kit_article'
-    caption_add = _("Add kit of articles")
-    caption_modify = _("Modify kit of articles")
+    caption_add = _("Add article of kit")
+    caption_modify = _("Modify article of kit")
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
@@ -1041,7 +1066,7 @@ class RecipeKitArticleDel(XferDelete):
     icon = "article.png"
     model = RecipeKitArticle
     field_id = 'kit_article'
-    caption = _("Delete kit of articles")
+    caption = _("Delete article of kit")
 
 
 @ActionsManage.affect_grid(TITLE_ADD, "images/add.png")

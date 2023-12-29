@@ -180,7 +180,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'detail/@0/designation', 'My article')
         self.assert_json_equal('', 'detail/@0/price', 43.72)
         self.assert_json_equal('', 'detail/@0/unit', '')
-        self.assert_json_equal('', 'detail/@0/quantity', '2.000')
+        self.assert_json_equal('', 'detail/@0/quantity_txt', '2,000')
         self.assert_json_equal('', 'detail/@0/reduce_txt', None)
         self.assert_json_equal('', 'detail/@0/total', 87.44)
 
@@ -1552,7 +1552,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
 
         self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price": "prix TTC", "unit": "unité",
-                                          "quantity": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total TTC"}, 4)  # nb=8
+                                          "quantity_txt": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total TTC"}, 4)  # nb=8
         self.assert_attrib_equal('total_excltax', 'description', "total HT")
         self.assert_json_equal('LABELFORM', 'info', [])
         self.assert_attrib_equal('total_incltax', 'description', "total TTC")
@@ -1600,7 +1600,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
 
         self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price": "prix HT", "unit": "unité",
-                                          "quantity": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total HT"}, 4)  # nb=8
+                                          "quantity_txt": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total HT"}, 4)  # nb=8
         self.assert_json_equal('', '#detail/headers/@2/@0', "price")
         self.assert_json_equal('', '#detail/headers/@2/@2', "C2EUR")
         self.assert_json_equal('', '#detail/headers/@7/@0', "total")
@@ -2956,7 +2956,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.assert_json_equal('', 'detail/@0/designation', 'article 5')
         self.assert_json_equal('', 'detail/@0/price', 100.00)
         self.assert_json_equal('', 'detail/@0/unit', '')
-        self.assert_json_equal('', 'detail/@0/quantity', '1.00')
+        self.assert_json_equal('', 'detail/@0/quantity_txt', '1,00')
         self.assert_json_equal('', 'detail/@0/reduce_txt', '30,00 €(30.00%)')
         self.assert_json_equal('', 'detail/@0/total', 70.00)
 
@@ -3008,7 +3008,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.assert_json_equal('', 'detail/@0/designation', 'article 5')
         self.assert_json_equal('', 'detail/@0/price', 50.00)
         self.assert_json_equal('', 'detail/@0/unit', '')
-        self.assert_json_equal('', 'detail/@0/quantity', '1.00')
+        self.assert_json_equal('', 'detail/@0/quantity_txt', '1,00')
         self.assert_json_equal('', 'detail/@0/reduce_txt', '5,00 €(10.00%)')
         self.assert_json_equal('', 'detail/@0/total', 45.00)
 
@@ -3070,7 +3070,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.assert_json_equal('', 'detail/@0/designation', 'article 5')
         self.assert_json_equal('', 'detail/@0/price', 15.00)
         self.assert_json_equal('', 'detail/@0/unit', '')
-        self.assert_json_equal('', 'detail/@0/quantity', '7.00')
+        self.assert_json_equal('', 'detail/@0/quantity_txt', '7,00')
         self.assert_json_equal('', 'detail/@0/reduce_txt', '45,00 €')
         self.assert_json_equal('', 'detail/@0/total', 60.00)
 

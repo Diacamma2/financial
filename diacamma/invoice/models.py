@@ -49,7 +49,7 @@ from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirt
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
-from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, convert_date
+from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, convert_date, format_value
 from lucterios.framework.auditlog import auditlog
 from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser, PrintModel
 from lucterios.CORE.parameters import Params
@@ -541,28 +541,55 @@ class Article(LucteriosModel, CustomizeObject):
 class RecipeKitArticle(LucteriosModel):
     article = models.ForeignKey(Article, verbose_name=_('own article'), related_name='kit_article', null=False, on_delete=models.CASCADE)
     link_article = models.ForeignKey(Article, verbose_name=_('linked article'), related_name='linked_article', null=False, on_delete=models.PROTECT)
-    quantity = LucteriosDecimalField(verbose_name=_('quantity'), max_digits=12, decimal_places=3,
+    quantity = LucteriosDecimalField(verbose_name=_('amount in the recipe'), max_digits=12, decimal_places=3,
                                      default=1.0, validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string="N3")
+
+    quantity_txt = LucteriosVirtualField(verbose_name=_('amount in the recipe'), compute_from="get_quantity_txt")
+    link_article_fake = LucteriosVirtualField(verbose_name=_('linked article'), compute_from=lambda _this: "link article fake")
+
+    def __init__(self, *args, **kwargs):
+        LucteriosModel.__init__(self, *args, **kwargs)
+        self.filter_ref = ''
+
+    def set_context(self, xfer):
+        self.filter_thirdid = xfer.getparam('third', 0)
+        self.filter_ref = xfer.getparam('reference', '')
+        self.filter_cat = xfer.getparam('cat_filter', ())
+        self.filter_lib = xfer.getparam('ref_filter', '')
 
     def __str__(self):
         return "%d x %s" % (self.quantity, self.link_article)
 
     @classmethod
     def get_default_fields(cls):
-        return ["link_article", "quantity"]
+        return ["link_article", "link_article.designation", "link_article.available_total", "quantity_txt"]
 
     @classmethod
     def get_edit_fields(cls):
-        return ["article", "link_article", "quantity"]
+        return ["article", "link_article_fake", "quantity"]
+
+    def get_quantity_txt(self):
+        return format_value(self.quantity, "N%d" % self.link_article.qtyDecimal)
 
     @property
     def link_article_query(self):
         artfilter = Q(isdisabled=False) & Q(stockable=Article.STOCKABLE_YES)
-        return Article.objects.filter(artfilter).distinct()
+        artidexclude = [kitart.link_article.id for kitart in self.article.kit_article_set.exclude(id=self.id)]
+        if self.filter_thirdid != 0:
+            artfilter &= Q(provider__third_id=self.filter_thirdid)
+        if self.filter_ref != '':
+            artfilter &= Q(provider__reference__icontains=self.filter_ref)
+        if self.filter_lib != '':
+            artfilter &= Q(reference__icontains=self.filter_lib) | Q(designation__icontains=self.filter_lib)
+        items = Article.objects.filter(artfilter).exclude(id__in=artidexclude).distinct()
+        if len(self.filter_cat) > 0:
+            for cat_item in Category.objects.filter(id__in=self.filter_cat).distinct():
+                items = items.filter(categories__in=[cat_item]).distinct()
+        return items
 
     class Meta(object):
-        verbose_name = _('kit of articles')
-        verbose_name_plural = _('kits of articles')
+        verbose_name = _('article of kit')
+        verbose_name_plural = _('articles of kit')
         ordering = ['article', '-quantity']
         default_permissions = []
 
@@ -1753,6 +1780,7 @@ class Detail(LucteriosModel):
                                      default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(1.0)], format_string=lambda: format_with_devise(5))
     storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
 
+    quantity_txt = LucteriosVirtualField(verbose_name=_('quantity'), compute_from="get_quantity_txt")
     price_txt = LucteriosVirtualField(verbose_name=_('price'), compute_from="get_price")
     reduce_txt = LucteriosVirtualField(verbose_name=_('reduce'), compute_from="get_reduce_txt")
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total_ex', format_string=lambda: format_with_devise(5))
@@ -1806,7 +1834,7 @@ class Detail(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        return ["article", "designation", "price", "unit", "quantity", "storagearea", "reduce_txt", 'total']
+        return ["article", "designation", "price", "unit", "quantity_txt", "storagearea", "reduce_txt", 'total']
 
     @classmethod
     def get_edit_fields(cls):
@@ -1814,7 +1842,7 @@ class Detail(LucteriosModel):
 
     @classmethod
     def get_show_fields(cls):
-        return ["article", "designation", "price", "unit", "quantity", "reduce_txt", "storagearea"]
+        return ["article", "designation", "price", "unit", "quantity_txt", "reduce_txt", "storagearea"]
 
     @classmethod
     def get_print_fields(cls):
@@ -1840,6 +1868,9 @@ class Detail(LucteriosModel):
         newdetail.editor.before_save(None)
         newdetail.save()
         return newdetail
+
+    def get_quantity_txt(self):
+        return format_value(self.quantity, "N%d" % self.article.qtyDecimal)
 
     def get_price(self):
         if (Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT) and (self.vta_rate > 0.001):

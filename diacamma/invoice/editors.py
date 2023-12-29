@@ -45,6 +45,57 @@ from diacamma.invoice.models import Provider, Category, CustomField, Article, In
     Bill, Vat, StorageSheet, StorageArea, AccountPosting, CategoryBill
 
 
+def add_provider_filter(xfer, init_col, init_row):
+    old_item = xfer.item
+    old_model = xfer.model
+    xfer.model = Provider
+    xfer.item = Provider()
+    xfer.filltab_from_model(init_col, init_row, False, ['third'])
+    xfer.filltab_from_model(init_col + 1, init_row, False, ['reference'])
+    xfer.item = old_item
+    xfer.model = old_model
+    filter_thirdid = xfer.getparam('third', 0)
+    filter_ref = xfer.getparam('reference', '')
+    sel_third = xfer.get_components("third")
+    sel_third.set_needed(False)
+    sel_third.set_select_query(Third.objects.filter(provider__isnull=False).distinct())
+    sel_third.set_value(filter_thirdid)
+    sel_third.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+    sel_third.description = _('provider')
+    sel_ref = xfer.get_components("reference")
+    sel_ref.set_value(filter_ref)
+    sel_ref.set_needed(False)
+    sel_ref.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+
+
+def add_filters(xfer, init_col, init_row, has_select):
+    has_filter = False
+    cat_list = Category.objects.all()
+    if len(cat_list) > 0:
+        filter_cat = xfer.getparam('cat_filter', ())
+        edt = XferCompCheckList("cat_filter")
+        edt.set_select_query(cat_list)
+        edt.set_value(filter_cat)
+        edt.set_location(init_col, init_row, 2)
+        edt.description = _('categories')
+        edt.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+        xfer.add_component(edt)
+        has_filter = True
+    if not has_select or (len(cat_list) > 0):
+        ref_filter = xfer.getparam('ref_filter', '')
+        edt = XferCompEdit("ref_filter")
+        edt.set_value(ref_filter)
+        edt.set_location(init_col, init_row + 1, 2)
+        edt.description = _('ref./designation')
+        edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+        xfer.add_component(edt)
+        has_filter = True
+    if len(Provider.objects.all()) > 0:
+        add_provider_filter(xfer, init_col, init_row + 2)
+        has_filter = True
+    return has_filter
+
+
 class VatEditor(LucteriosEditor):
 
     def edit(self, xfer):
@@ -90,8 +141,48 @@ class AccountPostingEditor(LucteriosEditor):
 
 class RecipeKitArticleEditor(LucteriosEditor):
 
+    def refresh_link_article(self, xfer):
+        if self.item.link_article_query.count() > 100:
+            xfer.change_to_readonly("link_article_fake")
+            sel_art = xfer.get_components("link_article_fake")
+            sel_art.value = self.item.link_article.get_text_value() if self.item.link_article_id is not None else None
+            sel_art.colspan = 1
+        else:
+            comp_art = xfer.get_components("link_article_fake")
+            xfer.filltab_from_model(comp_art.col, comp_art.row, False, ['link_article'])
+            xfer.remove_component("link_article_fake")
+            sel_art = xfer.get_components("link_article")
+            sel_art.set_needed(True)
+            sel_art._check_case()
+            sel_art.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            if (sel_art.value == 0) or (sel_art.value is None):
+                self.item.link_article_id = None
+                self.item.link_article = None
+            else:
+                self.item.link_article_id = int(sel_art.value)
+                self.item.link_article = Article.objects.get(id=self.item.link_article_id)
+                xfer.get_components('quantity').prec = self.item.link_article.qtyDecimal
+        return sel_art
+
     def edit(self, xfer):
         xfer.change_to_readonly('article')
+        xfer.move_components('article', 0, 10)
+        xfer.move_components('link_article_fake', 0, 10)
+        xfer.move_components('quantity', 0, 10)
+        link_article = self.refresh_link_article(xfer)
+        has_select = (xfer.get_components("link_article") is not None)
+        has_filter = add_filters(xfer, link_article.col, 0, has_select)
+        if has_filter:
+            if not has_select:
+                lbl = XferCompLabelForm('warning_filter')
+                lbl.set_color("red")
+                lbl.set_value_center(_("Modify filter to reduce articles list."))
+                lbl.set_location(link_article.col, 8, 2)
+                xfer.add_component(lbl)
+            lbl = XferCompLabelForm('sep_filter')
+            lbl.set_value("{[hr/]}")
+            lbl.set_location(link_article.col, 9, 2)
+            xfer.add_component(lbl)
 
 
 class ArticleEditor(LucteriosEditor):
@@ -154,7 +245,7 @@ class ArticleEditor(LucteriosEditor):
             img.set_location(new_col, obj_ref.row, 1, 6)
             xfer.add_component(img)
         if self.item.stockable == Article.STOCKABLE_KIT:
-            xfer.new_tab(_("Kits of articles"))
+            xfer.new_tab(_("Articles of kit"))
             xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, ['kit_article_set'])
         if self.item.stockable != Article.STOCKABLE_NO:
             xfer.new_tab(_("Storage"))
@@ -330,57 +421,6 @@ class BillEditor(SupportingEditor):
             if self.item.bill_type not in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART):
                 SupportingEditor.show(self, xfer)
         return
-
-
-def add_provider_filter(xfer, init_col, init_row):
-    old_item = xfer.item
-    old_model = xfer.model
-    xfer.model = Provider
-    xfer.item = Provider()
-    xfer.filltab_from_model(init_col, init_row, False, ['third'])
-    xfer.filltab_from_model(init_col + 1, init_row, False, ['reference'])
-    xfer.item = old_item
-    xfer.model = old_model
-    filter_thirdid = xfer.getparam('third', 0)
-    filter_ref = xfer.getparam('reference', '')
-    sel_third = xfer.get_components("third")
-    sel_third.set_needed(False)
-    sel_third.set_select_query(Third.objects.filter(provider__isnull=False).distinct())
-    sel_third.set_value(filter_thirdid)
-    sel_third.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-    sel_third.description = _('provider')
-    sel_ref = xfer.get_components("reference")
-    sel_ref.set_value(filter_ref)
-    sel_ref.set_needed(False)
-    sel_ref.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-
-
-def add_filters(xfer, init_col, init_row, has_select):
-    has_filter = False
-    cat_list = Category.objects.all()
-    if len(cat_list) > 0:
-        filter_cat = xfer.getparam('cat_filter', ())
-        edt = XferCompCheckList("cat_filter")
-        edt.set_select_query(cat_list)
-        edt.set_value(filter_cat)
-        edt.set_location(init_col, init_row, 2)
-        edt.description = _('categories')
-        edt.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-        xfer.add_component(edt)
-        has_filter = True
-    if not has_select or (len(cat_list) > 0):
-        ref_filter = xfer.getparam('ref_filter', '')
-        edt = XferCompEdit("ref_filter")
-        edt.set_value(ref_filter)
-        edt.set_location(init_col, init_row + 1, 2)
-        edt.description = _('ref./designation')
-        edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
-        xfer.add_component(edt)
-        has_filter = True
-    if len(Provider.objects.all()) > 0:
-        add_provider_filter(xfer, init_col, init_row + 2)
-        has_filter = True
-    return has_filter
 
 
 class DetailFilter(object):
