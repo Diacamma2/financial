@@ -55,7 +55,7 @@ class EntryTest(LucteriosTest):
     def setUp(self):
         initial_thirds_fr()
         LucteriosTest.setUp(self)
-        default_compta_fr(with8=True)
+        default_compta_fr(with8=True, with_rubric=self._testMethodName.endswith("_with_rubric"))
         rmtree(get_user_dir(), True)
         fill_entries_fr(1)
         add_entry(1, 5, '2015-12-31', 'Bénévolat', '-1|19|0|-1234.000000|0|0|None|\n-2|18|0|1234.000000|0|0|None|', True)
@@ -446,6 +446,84 @@ class FiscalYearTest(EntryTest):
         self.assert_json_equal('', 'report_1/@9/right_n_1', '')
         self.assert_json_equal('', 'report_1/@9/right_b', '')
 
+    def test_incomestatement_with_rubric(self):
+        self.factory.xfer = FiscalYearIncomeStatement()
+        self.calljson('/diacamma.accounting/fiscalYearIncomeStatement', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearIncomeStatement')
+        self.assert_json_equal('CHECK', 'with_rubric', True)
+        self._check_result()
+        self.assert_count_equal('report_1', 18)
+
+        self.assert_json_equal('', 'report_1/@0/left', '&#160;&#160;&#160;&#160;&#160;{[i]}EEE{[/i]}')
+        self.assert_json_equal('', 'report_1/@0/left_n', '')
+        self.assert_json_equal('', 'report_1/@0/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@0/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@1/left', '[601] 601')
+        self.assert_json_equal('', 'report_1/@1/left_n', 78.24)
+        self.assert_json_equal('', 'report_1/@1/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@1/left_b', 8.19)
+
+        self.assert_json_equal('', 'report_1/@2/left', '[602] 602')
+        self.assert_json_equal('', 'report_1/@2/left_n', 63.94)
+        self.assert_json_equal('', 'report_1/@2/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@2/left_b', 7.35)
+
+        self.assert_json_equal('', 'report_1/@3/left', '[604] 604')
+        self.assert_json_equal('', 'report_1/@3/left_n', '')
+        self.assert_json_equal('', 'report_1/@3/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@3/left_b', 6.24)
+
+        self.assert_json_equal('', 'report_1/@4/left', {"value": "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Sous-total", "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal('', 'report_1/@4/left_n', {"value": 142.18, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal('', 'report_1/@4/left_n_1', {"value": 0, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal('', 'report_1/@4/left_b', {"value": 21.78, "format": "{[i]}{0}{[/i]}"})
+
+        self.assert_json_equal('', 'report_1/@6/left', '&#160;&#160;&#160;&#160;&#160;{[i]}FFF{[/i]}')
+        self.assert_json_equal('', 'report_1/@6/left_n', '')
+        self.assert_json_equal('', 'report_1/@6/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@6/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@7/left', '[607] 607')
+        self.assert_json_equal('', 'report_1/@7/left_n', 194.08)
+        self.assert_json_equal('', 'report_1/@7/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@7/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@8/left', '[627] 627')
+        self.assert_json_equal('', 'report_1/@8/left_n', 12.34)
+        self.assert_json_equal('', 'report_1/@8/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@8/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@9/left', {"value": "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Sous-total", "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal('', 'report_1/@9/left_n', {"value": 206.42, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal('', 'report_1/@9/left_n_1', {"value": 0, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal('', 'report_1/@9/left_b', {"value": 0, "format": "{[i]}{0}{[/i]}"})
+
+        self.assert_json_equal('', 'report_1/@12/left', "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total{[/b]}{[/u]}")
+        self.assert_json_equal('', 'report_1/@12/left_n', {"value": 348.6, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal('', 'report_1/@12/left_n_1', {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal('', 'report_1/@12/left_b', {"value": 21.78, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+
+        self.assert_json_equal('', 'report_1/@13/left', "&#160;&#160;&#160;&#160;&#160;{[i]}résultat (excédent){[/i]}")
+        self.assert_json_equal('', 'report_1/@13/left_n', "")
+        self.assert_json_equal('', 'report_1/@13/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@13/left_b', '169.56')
+
+        self.assert_json_equal('', 'report_1/@15/left', '[870] 870')
+        self.assert_json_equal('', 'report_1/@15/left_n', 1234.00)
+        self.assert_json_equal('', 'report_1/@15/left_n_1', '')
+        self.assert_json_equal('', 'report_1/@15/left_b', '')
+
+        self.assert_json_equal('', 'report_1/@16/left', "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total avec annexe{[/b]}{[/u]}")
+        self.assert_json_equal('', 'report_1/@16/left_n', {"value": 1582.6, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal('', 'report_1/@16/left_n_1', {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal('', 'report_1/@16/left_b', {"value": 191.34, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+
+        self.calljson('/diacamma.accounting/fiscalYearIncomeStatement', {'with_rubric': False}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearIncomeStatement')
+        self.assert_json_equal('CHECK', 'with_rubric', False)
+        self.assert_count_equal('report_1', 12)
+
     def test_import_budget(self):
         FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)
 
@@ -502,11 +580,29 @@ class FiscalYearTest(EntryTest):
         self._check_result()
         self.assert_count_equal('report_1', 91)
         self.assert_json_equal('', 'report_1/@0/id', 'L0001-0')
-        self.assert_json_equal('', 'report_1/@0/designation_ref', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[106] 106{[/b]}{[/u]}')
+        self.assert_json_equal('', 'report_1/@0/designation_ref_with_third', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[106] 106{[/b]}{[/u]}')
         self.assert_json_equal('', 'report_1/@1/id', 'L0002-1')
-        self.assert_json_equal('', 'report_1/@1/designation_ref', 'Report à nouveau')
+        self.assert_json_equal('', 'report_1/@1/designation_ref_with_third', 'Report à nouveau')
         self.assert_json_equal('', 'report_1/@2/id', 'L0003-0')
-        self.assert_json_equal('', 'report_1/@2/designation_ref', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[i]}total{[/i]}')
+        self.assert_json_equal('', 'report_1/@2/designation_ref_with_third', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[i]}total{[/i]}')
+
+        self.assert_json_equal('', 'report_1/@5/id', 'L0006-0')
+        self.assert_json_equal('', 'report_1/@5/designation_ref_with_third', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[401] 401{[/b]}{[/u]}')
+        self.assert_json_equal('', 'report_1/@6/id', 'L0007-0')
+        self.assert_json_equal('', 'report_1/@6/designation_ref_with_third', "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[b]}[401 Dalton Avrel]{[/b]}")
+        self.assert_json_equal('', 'report_1/@7/id', 'L0008-4')
+        self.assert_json_equal('', 'report_1/@7/designation_ref_with_third', "depense 2")
+
+        self.assert_json_equal('', 'report_1/@40/id', 'L0041-0')
+        self.assert_json_equal('', 'report_1/@40/designation_ref_with_third', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[512] 512{[/b]}{[/u]}')
+        self.assert_json_equal('', 'report_1/@42/id', 'L0043-3')
+        self.assert_json_equal('', 'report_1/@42/designation_ref_with_third', "regement depense 1 (Minimum){[br/]}ch N\u00b034543")
+
+        self.assert_json_equal('', 'report_1/@74/id', 'L0075-0')
+        self.assert_json_equal('', 'report_1/@74/designation_ref_with_third', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[707] 707{[/b]}{[/u]}')
+        self.assert_json_equal('', 'report_1/@75/id', 'L0076-7')
+        self.assert_json_equal('', 'report_1/@75/designation_ref_with_third', "vente 1 (Dalton Joe)")
+
         self.assert_count_equal('#report_1/actions', 1)
         self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
 
@@ -1193,6 +1289,166 @@ class CostAccountingTest(EntryTest):
         self.calljson('/diacamma.accounting/costAccountingReportPrint', {'classname': 'CostAccountingIncomeStatement', "PRINT_MODE": 3, 'costaccounting': '1', "begin_date": "NULL", "end_date": "NULL"}, False)
         self.assert_observer('core.print', 'diacamma.accounting', 'costAccountingReportPrint')
         self.save_pdf()
+
+    def test_incomestatement_with_rubric(self):
+        self.factory.xfer = CostAccountingIncomeStatement()
+        self.calljson('/diacamma.accounting/costAccountingIncomeStatement', {'costaccounting': '1;2'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingIncomeStatement')
+        self.assert_count_equal('', 5)
+        self.assert_json_equal('CHECK', 'with_rubric', True)
+        self.assert_count_equal('report_2', 24)
+        # id L0000-0
+        self.assert_json_equal("", "report_2/@0/name", "{[b]}{[u]}close{[/u]}{[/b]}")
+        self.assert_json_equal("", "report_2/@0/left", "")
+        self.assert_json_equal("", "report_2/@0/left_n", "")
+        self.assert_json_equal("", "report_2/@0/left_b", "")
+        # id L0001-0
+        self.assert_json_equal("", "report_2/@1/name", "")
+        self.assert_json_equal("", "report_2/@1/left", "&#160;&#160;&#160;&#160;&#160;{[i]}FFF{[/i]}")
+        self.assert_json_equal("", "report_2/@1/left_n", "")
+        self.assert_json_equal("", "report_2/@1/left_b", "")
+        # id L0002-0
+        self.assert_json_equal("", "report_2/@2/name", "")
+        self.assert_json_equal("", "report_2/@2/left", "[627] 627")
+        self.assert_json_equal("", "report_2/@2/left_n", 12.34)
+        self.assert_json_equal("", "report_2/@2/left_b", "")
+        # id L0004-0
+        self.assert_json_equal("", "report_2/@3/name", "")
+        self.assert_json_equal("", "report_2/@3/left", {"value": "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Sous-total", "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@3/left_n", {"value": 12.34, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@3/left_b", {"value": 0, "format": "{[i]}{0}{[/i]}"})
+        # id L0005-0
+        # id L0007-0
+        # id L0008-0
+        self.assert_json_equal("", "report_2/@6/name", "")
+        self.assert_json_equal("", "report_2/@6/left", "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total{[/b]}{[/u]}")
+        self.assert_json_equal("", "report_2/@6/left_n", {"value": 12.34, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal("", "report_2/@6/left_b", {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        # id L0009-0
+        # id L0010-0
+        # id L0011-0
+        self.assert_json_equal("", "report_2/@9/name", "{[b]}{[u]}open{[/u]}{[/b]}")
+        self.assert_json_equal("", "report_2/@9/left", "")
+        self.assert_json_equal("", "report_2/@9/left_n", "")
+        self.assert_json_equal("", "report_2/@9/left_b", "")
+        # id L0012-0
+        self.assert_json_equal("", "report_2/@10/name", "")
+        self.assert_json_equal("", "report_2/@10/left", "&#160;&#160;&#160;&#160;&#160;{[i]}EEE{[/i]}")
+        self.assert_json_equal("", "report_2/@10/left_n", "")
+        self.assert_json_equal("", "report_2/@10/left_b", "")
+        # id L0013-0
+        self.assert_json_equal("", "report_2/@11/name", "")
+        self.assert_json_equal("", "report_2/@11/left", "[602] 602")
+        self.assert_json_equal("", "report_2/@11/left_n", 63.94)
+        self.assert_json_equal("", "report_2/@11/left_b", "")
+        # id L0026-0
+        self.assert_json_equal("", "report_2/@12/name", "")
+        self.assert_json_equal("", "report_2/@12/left", {"value": "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Sous-total", "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@12/left_n", {"value": 63.94, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@12/left_b", {"value": 0, "format": "{[i]}{0}{[/i]}"})
+        # id L0027-0
+        # id L0028-0
+        self.assert_json_equal("", "report_2/@14/name", "")
+        self.assert_json_equal("", "report_2/@14/left", "&#160;&#160;&#160;&#160;&#160;{[i]}FFF{[/i]}")
+        self.assert_json_equal("", "report_2/@14/left_n", "")
+        self.assert_json_equal("", "report_2/@14/left_b", "")
+        # id L0029-0
+        self.assert_json_equal("", "report_2/@15/name", "")
+        self.assert_json_equal("", "report_2/@15/left", "[607] 607")
+        self.assert_json_equal("", "report_2/@15/left_n", 194.08)
+        self.assert_json_equal("", "report_2/@15/left_b", "")
+        # id L0042-0
+        self.assert_json_equal("", "report_2/@16/name", "")
+        self.assert_json_equal("", "report_2/@16/left", {"value": "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Sous-total", "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@16/left_n", {"value": 194.08, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@16/left_b", {"value": 0, "format": "{[i]}{0}{[/i]}"})
+        # id L0043-0
+        # id L0045-0
+        # id L0046-0
+        self.assert_json_equal("", "report_2/@19/name", "")
+        self.assert_json_equal("", "report_2/@19/left", "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total{[/b]}{[/u]}")
+        self.assert_json_equal("", "report_2/@19/left_n", {"value": 258.02, "format": '{[u]}{[b]}{0}{[/b]}{[/u]}'})
+        self.assert_json_equal("", "report_2/@19/left_b", {"value": 0, "format": '{[u]}{[b]}{0}{[/b]}{[/u]}'})
+        # id L0047-0
+        # id L0048-0
+        # id L0050-0
+        self.assert_json_equal("", "report_2/@22/name", "")
+        self.assert_json_equal("", "report_2/@22/left", "&#160;&#160;&#160;&#160;&#160;{[i]}r\u00e9sultat g\u00e9n\u00e9ral (exc\u00e9dent){[/i]}")
+        self.assert_json_equal("", "report_2/@22/left_n", "")
+        self.assert_json_equal("", "report_2/@22/left_b", "")
+        # id L0051-0
+        self.assert_json_equal("", "report_2/@23/name", "")
+        self.assert_json_equal("", "report_2/@23/left", "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total g\u00e9n\u00e9ral{[/b]}{[/u]}")
+        self.assert_json_equal("", "report_2/@23/left_n", {"value": 270.36, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal("", "report_2/@23/left_b", {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+
+        # id L0000-0
+        self.assert_json_equal("", "report_2/@0/name", "{[b]}{[u]}close{[/u]}{[/b]}")
+        self.assert_json_equal("", "report_2/@0/right", "")
+        self.assert_json_equal("", "report_2/@0/right_n", "")
+        self.assert_json_equal("", "report_2/@0/right_b", "")
+        # id L0001-0
+        # id L0002-0
+        # id L0004-0
+        # id L0005-0
+        # id L0006-0
+        # id L0008-0
+        self.assert_json_equal("", "report_2/@6/name", "")
+        self.assert_json_equal("", "report_2/@6/right", "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total{[/b]}{[/u]}")
+        self.assert_json_equal("", "report_2/@6/right_n", {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal("", "report_2/@6/right_b", {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        # id L0009-0
+        # id L0010-0
+        # id L0011-0
+        # id L0012-0       
+        self.assert_json_equal("", "report_2/@10/name", "")
+        self.assert_json_equal("", "report_2/@10/right", "&#160;&#160;&#160;&#160;&#160;{[i]}DDD{[/i]}")
+        self.assert_json_equal("", "report_2/@10/right_n", "")
+        self.assert_json_equal("", "report_2/@10/right_b", "")
+        # id L0012-0
+        self.assert_json_equal("", "report_2/@11/name", "")
+        self.assert_json_equal("", "report_2/@11/right", "[707] 707")
+        self.assert_json_equal("", "report_2/@11/right_n", 70.64)
+        self.assert_json_equal("", "report_2/@11/right_b", "")
+        # id L0026-0
+        self.assert_json_equal("", "report_2/@12/name", "")
+        self.assert_json_equal("", "report_2/@12/right", {"value": "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;Sous-total", "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@12/right_n", {"value": 70.64, "format": "{[i]}{0}{[/i]}"})
+        self.assert_json_equal("", "report_2/@12/right_b", {"value": 0, "format": "{[i]}{0}{[/i]}"})
+        # id L0027-0
+        # id L0028-0
+        # id L0029-0
+        # id L0042-0
+        # id L0043-0
+        # id L0045-0
+        # id L0046-0
+        self.assert_json_equal("", "report_2/@19/name", "")
+        self.assert_json_equal("", "report_2/@19/right", "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total{[/b]}{[/u]}")
+        self.assert_json_equal("", "report_2/@19/right_n", {"value": 70.64, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal("", "report_2/@19/right_b", {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        # id L0047-0
+        self.assert_json_equal("", "report_2/@20/name", "")
+        self.assert_json_equal("", "report_2/@20/right", "&#160;&#160;&#160;&#160;&#160;{[i]}r\u00e9sultat (d\u00e9ficit){[/i]}")
+        self.assert_json_equal("", "report_2/@20/right_n", 187.38)
+        self.assert_json_equal("", "report_2/@20/right_b", "")
+        # id L0048-0
+        # id L0050-0
+        self.assert_json_equal("", "report_2/@22/name", "")
+        self.assert_json_equal("", "report_2/@22/right", "&#160;&#160;&#160;&#160;&#160;{[i]}r\u00e9sultat g\u00e9n\u00e9ral(d\u00e9ficit){[/i]}")
+        self.assert_json_equal("", "report_2/@22/right_n", 199.72)
+        self.assert_json_equal("", "report_2/@22/right_b", 0)
+        # id L0051-0
+        self.assert_json_equal("", "report_2/@23/name", "")
+        self.assert_json_equal("", "report_2/@23/right", "&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}total g\u00e9n\u00e9ral{[/b]}{[/u]}")
+        self.assert_json_equal("", "report_2/@23/right_n", {"value": 270.36, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+        self.assert_json_equal("", "report_2/@23/right_b", {"value": 0, "format": "{[u]}{[b]}{0}{[/b]}{[/u]}"})
+
+        self.factory.xfer = CostAccountingIncomeStatement()
+        self.calljson('/diacamma.accounting/costAccountingIncomeStatement', {'costaccounting': '1;2', 'with_rubric': False}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingIncomeStatement')
+        self.assert_count_equal('', 5)
+        self.assert_json_equal('CHECK', 'with_rubric', False)
+        self.assert_count_equal('report_2', 6 + 7 + 2)
 
     def test_importbudget(self):
         FiscalYear.objects.create(begin='2016-01-01', end='2016-12-31', status=0, last_fiscalyear_id=1)

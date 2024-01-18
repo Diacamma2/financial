@@ -1361,6 +1361,7 @@ class EntryLineAccount(LucteriosModel):
     debit = LucteriosVirtualField(verbose_name=_('debit'), compute_from='get_debit', format_string=lambda: format_with_devise(6))
     credit = LucteriosVirtualField(verbose_name=_('credit'), compute_from='get_credit', format_string=lambda: format_with_devise(6))
     designation_ref = LucteriosVirtualField(verbose_name=_('name'), compute_from='get_designation_ref')
+    designation_ref_with_third = LucteriosVirtualField(verbose_name=_('name'), compute_from='get_designation_ref_with_third')
     link_costaccounting = LucteriosVirtualField(verbose_name=_('link/cost accounting'), compute_from='get_link_costaccounting')
 
     def get_auditlog_object(self):
@@ -1421,6 +1422,16 @@ class EntryLineAccount(LucteriosModel):
 
     def get_designation_ref(self):
         val = self.entry.designation
+        if (self.reference is not None) and (self.reference != ''):
+            val = "%s{[br/]}%s" % (val, self.reference)
+        return val
+
+    def get_designation_ref_with_third(self):
+        val = self.entry.designation
+        if not self.account.is_third:
+            thirds = set([str(line.third) for line in self.entry.entrylineaccount_set.filter(third__isnull=False)])
+            if len(thirds) > 0:
+                val = "%s (%s)" % (val, ",".join(thirds))
         if (self.reference is not None) and (self.reference != ''):
             val = "%s{[br/]}%s" % (val, self.reference)
         return val

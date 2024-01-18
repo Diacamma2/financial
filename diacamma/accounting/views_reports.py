@@ -132,7 +132,7 @@ class FiscalYearReport(XferContainerCustom):
             self.filter &= Q(entry__date_value__gte=self.item.begin)
             self.filter &= Q(entry__date_value__lte=self.item.end)
         self.fill_filterCode()
-        add_fiscalyear_result(self, 0, 6, 6, self.item, 'result')
+        add_fiscalyear_result(self, 0, 8, 6, self.item, 'result')
         self.fill_filterheader()
         self.define_gridheader()
 
@@ -251,21 +251,21 @@ class FiscalYearReport(XferContainerCustom):
         rubric_filter = Q(account__rubric=rubric_name)
         data_line_left, subtotal1_left, subtotal2_left, subtotalb_left, account_codes_left = convert_query_to_account(self.filter & left_filter & rubric_filter, self.lastfilter & left_filter if self.lastfilter is not None else None, self.budgetfilter_left, old_accountcode=self.account_codes_left if rubric_name == '' else None)
         if len(data_line_left) > 0:
-            add_cell_in_grid(self.grid, left_line_idx, 'left', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
+            add_cell_in_grid(self.grid, self.line_offset + left_line_idx, 'left', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
             left_line_idx += 1
-            left_line_idx = fill_grid(self.grid, left_line_idx, 'left', data_line_left)
-            add_item_in_grid(self.grid, left_line_idx, 'left', (get_spaces(10) + "%s" % _('Sub-total'), subtotal1_left, subtotal2_left, subtotalb_left), "{[i]}%s{[/i]}")
+            left_line_idx = fill_grid(self.grid, self.line_offset + left_line_idx, 'left', data_line_left)
+            add_item_in_grid(self.grid, self.line_offset + left_line_idx, 'left', (get_spaces(10) + "%s" % _('Sub-total'), subtotal1_left, subtotal2_left, subtotalb_left), "{[i]}%s{[/i]}")
             left_line_idx += 1
-            add_cell_in_grid(self.grid, left_line_idx, 'left', '')
+            add_cell_in_grid(self.grid, self.line_offset + left_line_idx, 'left', '')
             left_line_idx += 1
         data_line_right, subtotal1_right, subtotal2_right, subtotalb_right, account_codes_right = convert_query_to_account(self.filter & rigth_filter & rubric_filter, self.lastfilter & rigth_filter if self.lastfilter is not None else None, self.budgetfilter_right, old_accountcode=self.account_codes_right if rubric_name == '' else None)
         if len(data_line_right) > 0:
-            add_cell_in_grid(self.grid, right_line_idx, 'right', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
+            add_cell_in_grid(self.grid, self.line_offset + right_line_idx, 'right', get_spaces(5) + "{[i]}%s{[/i]}" % rubric_title)
             right_line_idx += 1
-            right_line_idx = fill_grid(self.grid, right_line_idx, 'right', data_line_right)
-            add_item_in_grid(self.grid, right_line_idx, 'right', (get_spaces(10) + "%s" % _('Sub-total'), subtotal1_right, subtotal2_right, subtotalb_right), "{[i]}%s{[/i]}")
+            right_line_idx = fill_grid(self.grid, self.line_offset + right_line_idx, 'right', data_line_right)
+            add_item_in_grid(self.grid, self.line_offset + right_line_idx, 'right', (get_spaces(10) + "%s" % _('Sub-total'), subtotal1_right, subtotal2_right, subtotalb_right), "{[i]}%s{[/i]}")
             right_line_idx += 1
-            add_cell_in_grid(self.grid, right_line_idx, 'right', '')
+            add_cell_in_grid(self.grid, self.line_offset + right_line_idx, 'right', '')
             right_line_idx += 1
         self.account_codes_left.extend(account_codes_left)
         self.account_codes_right.extend(account_codes_right)
@@ -354,7 +354,24 @@ class FiscalYearIncomeStatement(FiscalYearReport):
         if self.lastfilter is not None:
             self.grid.add_header('right_n_1', self.item.last_fiscalyear.get_identify(), self.hfield, 0, self.format_str)
 
+    def get_rubric_list(self):
+        return self.item.get_rubric_list(type_of_account=(3, 4))
+
+    def select_rubric(self):
+        self.rubric_names = self.get_rubric_list()
+        if len(self.rubric_names) > 0:
+            with_rubric = self.getparam("with_rubric", True)
+            check = XferCompCheck('with_rubric')
+            check.set_value(with_rubric)
+            check.set_location(1, 6, 2)
+            check.description = _('show with rubrics')
+            check.set_action(self.request, self.get_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            self.add_component(check)
+            if not with_rubric:
+                self.rubric_names = []
+
     def fill_filterheader(self):
+        self.select_rubric()
         if self.item.last_fiscalyear is not None:
             self.lastfilter = Q(entry__year=self.item.last_fiscalyear)
             lbl = XferCompLabelForm('sep_last')
@@ -418,9 +435,8 @@ class FiscalYearIncomeStatement(FiscalYearReport):
         self.budgetfilter_right = Q(year=self.item) & Q(code__regex=current_system_account().get_revenue_mask())
         self.budgetfilter_left = Q(year=self.item) & Q(code__regex=current_system_account().get_expence_mask())
 
-        rubric_names = self.item.get_rubric_list(type_of_account=(3, 4))
-        if len(rubric_names) > 0:
-            line_idx = self._add_left_right_accounting_with_rubric(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True, rubric_names)
+        if len(self.rubric_names) > 0:
+            line_idx = self._add_left_right_accounting_with_rubric(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True, self.rubric_names)
         else:
             line_idx = self._add_left_right_accounting(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True)
         self.show_annexe(line_idx, Q(year=self.item), filter_exclude)
@@ -467,7 +483,7 @@ class FiscalYearLedger(FiscalYearReport):
         self.grid.add_header('entry.num', _('numeros'))
         self.grid.add_header('entry.date_entry', _('date entry'))
         self.grid.add_header('entry.date_value', _('date value'))
-        self.grid.add_header('designation_ref', _('name'))
+        self.grid.add_header('designation_ref_with_third', _('name'))
         self.grid.add_header('link_costaccounting', _('link/cost accounting'))
         self.grid.add_header('debit', _('debit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
         self.grid.add_header('credit', _('credit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
@@ -476,7 +492,7 @@ class FiscalYearLedger(FiscalYearReport):
     def _add_total_account(self, third=False):
         current_total = self.last_third_total if third else self.last_total
         if (self.last_account is not None and not third) or (self.last_third is not None and third):
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(40 if third else 30) + "{[i]}%s{[/i]}" % (_('sub-total') if third else _('total')))
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', get_spaces(40 if third else 30) + "{[i]}%s{[/i]}" % (_('sub-total') if third else _('total')))
             if self.last_account.credit_debit_way() == -1:
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', current_total[0], "{[i]}%s{[/i]}")
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', current_total[1], "{[i]}%s{[/i]}")
@@ -485,11 +501,11 @@ class FiscalYearLedger(FiscalYearReport):
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', current_total[0], "{[i]}%s{[/i]}")
             self.line_idx += 1
             last_total = current_total[0] - current_total[1]
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(40 if third else 30) + "{[u]}{[i]}%s{[/i]}{[/u]}" % (_('sub-balance') if third else _('balance')))
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', get_spaces(40 if third else 30) + "{[u]}{[i]}%s{[/i]}{[/u]}" % (_('sub-balance') if third else _('balance')))
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', max((0, -1 * self.last_account.credit_debit_way() * last_total)), "{[u]}{[i]}%s{[/i]}{[/u]}")
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'credit', max((0, self.last_account.credit_debit_way() * last_total)), "{[u]}{[i]}%s{[/i]}{[/u]}")
             self.line_idx += 1
-            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', '{[br/]}')
+            add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', '{[br/]}')
             if not third:
                 self.line_idx += 1
                 self.last_total = [0.0, 0.0]
@@ -507,12 +523,12 @@ class FiscalYearLedger(FiscalYearReport):
                 self._add_total_account(False)
                 self.last_account = line.account
                 self.last_third = None
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % str(self.last_account))
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % str(self.last_account))
                 self.line_idx += 1
                 self.last_third = None
             if self.last_third != line.third:
                 self._add_total_account(True)
-                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref', get_spaces(8) + "{[b]}%s{[/b]}" % str(line.entry_account))
+                add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', get_spaces(8) + "{[b]}%s{[/b]}" % str(line.entry_account))
                 self.line_idx += 1
                 self.last_third = line.third
             for header in self.grid.headers:
@@ -826,6 +842,8 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
         self.item = self.items[len(self.items) - 1]
         self.define_gridheader()
         for self.item in self.items:
+            self.total_summary_left = (0, 0, 0)
+            self.total_summary_right = (0, 0, 0)
             add_cell_in_grid(self.grid, self.line_offset, 'name', '{[b]}{[u]}%s{[/u]}{[/b]}' % self.item)
             self.line_offset += 1
             self.filter = Q(costaccounting=self.item)
@@ -850,7 +868,10 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
             res2 -= subres2
             resb -= subresb
             self.fill_body()
-            self.line_offset = len(self.grid.records)
+            last_record_id = sorted(self.grid.records.keys())[-1].split('-')[0]
+            while not last_record_id.isnumeric() and len(last_record_id) > 0:
+                last_record_id = last_record_id[1:]
+            self.line_offset = int('0' + last_record_id) + 1
         if not all_have_last:
             self.grid.delete_header('left_n_1')
             self.grid.delete_header('right_n_1')
@@ -884,7 +905,11 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
             self.grid.delete_header('name')
         self.fill_buttons()
 
+    def get_rubric_list(self):
+        return ChartsAccount.get_rubriclist_from_entryline(self.filter)
+
     def fill_filterheader(self):
+        self.select_rubric()
         if self.item.last_costaccounting is not None:
             self.lastfilter = Q(costaccounting=self.item.last_costaccounting)
         else:
@@ -904,9 +929,8 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
             self.budgetfilter_left = Q(cost_accounting=self.item) & Q(code__regex=current_system_account().get_expence_mask())
 
         filter_exclude = Q(entry__in=[entry for entry in EntryAccount.objects.filter(journal_id=5, entrylineaccount__account__code__in=current_system_account().result_accounting_codes)])
-        rubric_list = ChartsAccount.get_rubriclist_from_entryline(self.filter)
-        if len(rubric_list) > 0:
-            line_idx = self._add_left_right_accounting_with_rubric(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True, rubric_list)
+        if len(self.rubric_names) > 0:
+            line_idx = self._add_left_right_accounting_with_rubric(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True, self.rubric_names)
         else:
             line_idx = self._add_left_right_accounting(Q(account__type_of_account=4) & ~filter_exclude, Q(account__type_of_account=3) & ~filter_exclude, True)
         self.show_annexe(line_idx, Q(cost_accounting=self.item), filter_exclude)
