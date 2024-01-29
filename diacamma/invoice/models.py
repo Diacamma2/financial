@@ -1498,9 +1498,6 @@ class Bill(Supporting):
 
     def clone_quotation(self):
         if (self.status in (Bill.STATUS_VALID, Bill.STATUS_CANCEL, Bill.STATUS_ARCHIVE)) and (self.bill_type == Bill.BILLTYPE_QUOTATION):
-            if self.status == Bill.STATUS_VALID:
-                self.status = Bill.STATUS_CANCEL
-            self.save()
             new_bill = Bill.objects.create(bill_type=Bill.BILLTYPE_QUOTATION, date=timezone.now(),
                                            third=self.third, status=Bill.STATUS_BUILDING, categoryBill=self.categoryBill,
                                            comment=self.comment, parentbill=self)

@@ -1045,7 +1045,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'bill/@1/third', 'Dalton Jack')
         self.assert_json_equal('', 'bill/@1/total', 22.2)
         self.assert_json_equal('', 'bill/@2/bill_type', 0)
-        self.assert_json_equal('', 'bill/@2/status', 2)
+        self.assert_json_equal('', 'bill/@2/status', 1)
         self.assert_json_equal('', 'bill/@2/third', 'Dalton Jack')
         self.assert_json_equal('', 'bill/@2/total', 62.5)
         self.assert_json_equal('', 'bill/@3/bill_type', 0)
