@@ -438,7 +438,7 @@ class Payoff(LucteriosModel):
     MODE_LEVY = 5
     MODE_INTERNAL = 6
     LIST_MODES = ((MODE_CASH, _('cash')), (MODE_CHEQUE, _('cheque')), (MODE_TRANSFER, _('transfer')),
-                  (MODE_CREDITCARD, _('crédit card')), (MODE_OTHER, _('other')), (MODE_LEVY, _('levy')), (MODE_INTERNAL, _('internal')))
+                  (MODE_CREDITCARD, _('credit card')), (MODE_OTHER, _('other')), (MODE_LEVY, _('levy')), (MODE_INTERNAL, _('internal')))
 
     REPARTITION_BYRATIO = 0
     REPARTITION_BYDATE = 1

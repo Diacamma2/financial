@@ -200,7 +200,7 @@ class DefaultSystemAccounting(object):
         from lucterios.CORE.parameters import Params
 
         new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=self.CLOSE_TITLE_THIRD, date_value=year.end)
-        nolettering_account = ChartsAccount.objects.filter(year=year, code__in=Params.getvalue("accounting-lettering-check").split('{[br/]}')).order_by('code').distinct()
+        nolettering_account = ChartsAccount.objects.filter(year=year, code__in=Params.getvalue("accounting-lettering-check")).order_by('code').distinct()
         for account_item in nolettering_account:
             amounts_by_third = EntryLineAccount.objects.filter(Q(account=account_item)).order_by('third').values('third').annotate(amount=Sum('amount'))
             sum_account = reduce(lambda item1, item2: item1 + item2, [float(item['amount']) for item in amounts_by_third], 0.0)

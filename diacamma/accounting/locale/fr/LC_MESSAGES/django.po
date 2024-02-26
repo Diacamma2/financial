@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-01-18 16:21+0000\n"
+"POT-Creation-Date: 2024-02-26 11:39+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -1477,7 +1477,7 @@ msgstr "total avec annexe"
 msgid "Show ledger for current fiscal year"
 msgstr "Consulter le grand livre pour l'exercice courant"
 
-#: views_reports.py:447 views_reports.py:553 views_reports.py:934
+#: views_reports.py:447 views_reports.py:553 views_reports.py:939
 msgid "Ledger"
 msgstr "Grand livre"
 
@@ -1501,7 +1501,7 @@ msgstr "balance"
 msgid "Show trial balance for current fiscal year"
 msgstr "Consulter la balance pour l'exercice courant"
 
-#: views_reports.py:569 views_reports.py:953
+#: views_reports.py:569 views_reports.py:958
 msgid "Trial balance"
 msgstr "Balance"
 
@@ -1557,22 +1557,22 @@ msgstr "Rapport"
 msgid "Income statement of cost accounting"
 msgstr "Compte de résultat analytique"
 
-#: views_reports.py:874
+#: views_reports.py:879
 msgid "general result (profit)"
 msgstr "résultat général (excédent)"
 
-#: views_reports.py:875
+#: views_reports.py:880
 msgid "general result (deficit)"
 msgstr "résultat général(déficit)"
 
-#: views_reports.py:891 views_reports.py:895
+#: views_reports.py:896 views_reports.py:900
 msgid "general total"
 msgstr "total général"
 
-#: views_reports.py:937
+#: views_reports.py:942
 msgid "Ledger of cost accounting"
 msgstr "Bilan de comptabilité analytique"
 
-#: views_reports.py:956
+#: views_reports.py:961
 msgid "Trial balance of cost accounting"
 msgstr "Compte de résultat analytique"
