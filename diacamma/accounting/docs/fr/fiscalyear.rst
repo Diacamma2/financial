@@ -86,6 +86,9 @@ Lorsque vous consultez un compte (bouton "Editer" ou double-clic), les écriture
 
 Il vous est aussi possible de supprimer un compte du plan comptable à la condition qu'aucune écriture ne lui soit associée.
 
+**Remarque :** Pour les comptes de charges et de produits, il vous est possible de définir une rubrique.
+Cette rubrique sera utilisé pour ordonnancer votre compte de résultat.
+
 Clôture d'un exercice
 ---------------------
 
