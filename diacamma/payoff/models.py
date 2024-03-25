@@ -352,7 +352,7 @@ class Supporting(LucteriosModel):
         return message
 
     def get_default_print_model(self):
-        model = PrintModel.objects.filter(kind=PrintModel.KIND_REPORT, modelname=self.get_long_name(), is_default=True).first()
+        model = PrintModel.objects.filter(kind=PrintModel.KIND_REPORT, modelname=self.get_long_name()).order_by('-is_default').first()
         if model is None:
             return None
         else:

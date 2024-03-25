@@ -1902,7 +1902,7 @@ def check_accountingcost():
     entryline_cmp = 0
     for entryline in EntryLineAccount.objects.filter(costaccounting_id__isnull=True, entry__costaccounting_id__isnull=False, account__type_of_account__in=(ChartsAccount.TYPE_REVENUE, ChartsAccount.TYPE_EXPENSE, ChartsAccount.TYPE_CONTRAACCOUNTS)).distinct():
         entryline.costaccounting_id = entryline.entry.costaccounting_id
-        entryline.save()
+        entryline.save(check_integrity=False)
         entryline_cmp += 1
     if entryline_cmp > 0:
         getLogger("diacamma.accounting").info(' * convert costaccounting: nb=%d', entryline_cmp)
