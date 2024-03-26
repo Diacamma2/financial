@@ -33,7 +33,7 @@ from django.utils import formats
 from lucterios.framework import signal_and_lock
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferShowEditor, XferDelete,\
     TITLE_ADD, TITLE_EDIT, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, XferTransition,\
-    TITLE_CREATE
+    TITLE_CREATE, TITLE_SEARCH
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompEdit, XferCompButton, XferCompSelect, XferCompImage, XferCompDate, XferCompGrid
 from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_REFRESH, CLOSE_NO, WrapAction, FORMTYPE_MODAL, SELECT_SINGLE, SELECT_MULTI, SELECT_NONE, CLOSE_YES
@@ -124,7 +124,7 @@ class ThirdList(XferListEditor):
             self.filter &= Q(entrylineaccount__link__isnull=True) & Q(num_entryline__gt=0)
 
 
-@ActionsManage.affect_list(_("Search"), "diacamma.accounting/images/thirds.png", condition=lambda xfer: xfer.get_components('thirdtype'))
+@ActionsManage.affect_list(TITLE_SEARCH, "diacamma.accounting/images/thirds.png", condition=lambda xfer: xfer.get_components('thirdtype'))
 @MenuManage.describ('accounting.change_third')
 class ThirdSearch(XferSavedCriteriaSearchEditor):
     icon = "thirds.png"

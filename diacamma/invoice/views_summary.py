@@ -34,7 +34,8 @@ from lucterios.framework.tools import MenuManage, FORMTYPE_MODAL, SELECT_SINGLE,
     get_date_formating, get_url_from_request
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.model_fields import get_value_if_choices
-from lucterios.framework.xferadvance import XferListEditor, TITLE_CLOSE, TITLE_DELETE, XferTransition
+from lucterios.framework.xferadvance import XferListEditor, TITLE_CLOSE, TITLE_DELETE, XferTransition,\
+    TITLE_NO
 from lucterios.framework.xferprinting import PRINT_PDF_FILE
 from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompEdit, XferCompButton, XferCompFloat, XferCompImage, XferCompMemo
@@ -556,7 +557,7 @@ class CurrentCartValid(XferTransition):
             commentcmp.set_value(Params.getvalue('invoice-cart-default-comment'))
             dlg.add_component(commentcmp)
             dlg.add_action(self.return_action(_('Yes'), 'images/ok.png'), params={"CONFIRME": "YES"})
-            dlg.add_action(WrapAction(_('No'), 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_NO, 'images/cancel.png'))
             return False
 
     def fill_confirm(self):

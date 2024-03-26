@@ -32,7 +32,7 @@ from django.db.models.fields import DecimalField
 from django.db.models.aggregates import Count
 
 from lucterios.framework.xferadvance import XferShowEditor, XferDelete, XferSave, TITLE_LISTING, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, TITLE_CLOSE, TITLE_MODIFY,\
-    TITLE_EDIT, TITLE_ADD
+    TITLE_EDIT, TITLE_ADD, TITLE_SEARCH
 from lucterios.framework.tools import FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, SELECT_SINGLE, SELECT_MULTI, SELECT_NONE, CLOSE_YES,\
     convert_date, get_date_formating
 from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
@@ -201,7 +201,7 @@ class EntryAccountList(XferListEditor):
         add_fiscalyear_result(self, 0, 10, 3, self.item.year, 'result')
 
 
-@ActionsManage.affect_list(_("Search"), "diacamma.accounting/images/entry.png", modal=FORMTYPE_NOMODAL, close=CLOSE_YES, condition=lambda xfer: xfer.url_text.endswith('AccountList'))
+@ActionsManage.affect_list(TITLE_SEARCH, "diacamma.accounting/images/entry.png", modal=FORMTYPE_NOMODAL, close=CLOSE_YES, condition=lambda xfer: xfer.url_text.endswith('AccountList'))
 @MenuManage.describ('accounting.change_entryaccount')
 class EntryAccountSearch(XferSavedCriteriaSearchEditor):
     icon = "entry.png"
@@ -238,7 +238,7 @@ class EntryAccountSearch(XferSavedCriteriaSearchEditor):
         self.actions = []
         for act, opt in ActionsManage.get_actions(ActionsManage.ACTION_IDENT_LIST, self, key=action_list_sorted):
             self.add_action(act, **opt)
-        self.add_action(WrapAction(_('Close'), 'images/close.png'))
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
 
 
 @ActionsManage.affect_list(TITLE_LISTING, "images/print.png")
@@ -461,7 +461,7 @@ class EntryAccountCostAccounting(XferContainerAcknowledge):
             sel.set_location(1, 2)
             dlg.add_component(sel)
             dlg.add_action(self.return_action(_('Ok'), 'images/ok.png'), params={"SAVE": "YES"})
-            dlg.add_action(WrapAction(_('Cancel'), 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
         else:
             if cost_accounting_id == 0:
                 new_cost = None

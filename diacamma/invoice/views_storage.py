@@ -33,7 +33,7 @@ from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, ActionsManag
     FORMTYPE_REFRESH, CLOSE_NO, SELECT_NONE, WrapAction, convert_date
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, \
     TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE,\
-    action_list_sorted, TITLE_CLOSE
+    action_list_sorted, TITLE_CLOSE, TITLE_SEARCH
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheck,\
     XferCompCheckList, XferCompButton, XferCompDate, XferCompEdit, XferCompImage
 from lucterios.framework.xferbasic import NULL_VALUE
@@ -87,7 +87,7 @@ class StorageSheetList(XferListEditor):
             self.filter &= Q(sheet_type=type_filter)
 
 
-@ActionsManage.affect_list(_("Search"), "diacamma.invoice/images/storagesheet.png")
+@ActionsManage.affect_list(TITLE_SEARCH, "diacamma.invoice/images/storagesheet.png")
 @MenuManage.describ('invoice.change_storagesheet')
 class StorageSheetSearch(XferSavedCriteriaSearchEditor):
     icon = "storagesheet.png"

@@ -33,7 +33,7 @@ from django.db.models import Q, Value
 from django.db.models.aggregates import Sum, Count
 
 from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELETE, TITLE_MODIFY, TITLE_ADD, TITLE_CANCEL, TITLE_OK, TITLE_EDIT,\
-    TITLE_LABEL, TITLE_CREATE
+    TITLE_LABEL, TITLE_CREATE, TITLE_NO, TITLE_SEARCH
 from lucterios.framework.xferadvance import XferListEditor, XferShowEditor, XferAddEditor, XferDelete, XferTransition
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompImage, XferCompGrid, XferCompCheck, XferCompEdit, XferCompCheckList, XferCompMemo,\
     XferCompButton, XferCompFloat, XferCompDate
@@ -518,7 +518,7 @@ class BillToBill(XferContainerAcknowledge):
             commentcmp.set_value(self.item.comment)
             dlg.add_component(commentcmp)
             dlg.add_action(self.return_action(_('Yes'), 'images/ok.png'), params={"CONFIRME": "YES"})
-            dlg.add_action(WrapAction(_('No'), 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_NO, 'images/cancel.png'))
             return False
 
     def fillresponse(self):
@@ -925,7 +925,7 @@ class ArticleList(XferListEditor, ArticleFilter):
             self.add_component(sel_stock)
 
         self.filter = self.get_search_filter(ref_filter, show_filter, self.show_stockable, self.show_storagearea)
-        self.add_action(ArticleSearch.get_action(_("Search"), "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
+        self.add_action(ArticleSearch.get_action(TITLE_SEARCH, "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
 
 
 @ActionsManage.affect_list(_("To disable"), "images/config_ext.png", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
