@@ -72,6 +72,7 @@ class CostAccountingReportByDate(XferContainerAcknowledge):
             dlg = self.create_custom()
             img = XferCompImage('img')
             img.set_value(self.icon_path())
+            img.set_short_icon(self.short_icon)
             img.set_location(0, 0)
             dlg.add_component(img)
             lbl = XferCompLabelForm('title')
@@ -205,7 +206,7 @@ class ModelEntryList(XferListEditor):
     caption = _("Models of entry")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus', unique=SELECT_NONE)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', unique=SELECT_NONE)
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES)
 @MenuManage.describ('accounting.add_entryaccount')
 class ModelEntryAddModify(XferAddEditor):

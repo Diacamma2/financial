@@ -190,7 +190,7 @@ class BillSearch(XferSavedCriteriaSearchEditor):
     caption = _("Search bill")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == Bill.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_bill')
 class BillAddModify(XferAddEditor):
@@ -317,6 +317,7 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
         icon = XferCompImage('img')
         icon.set_location(0, 0, 1, 6)
         icon.set_value(self.icon_path())
+        icon.set_short_icon(self.short_icon)
         dlg.add_component(icon)
         lbl = XferCompLabelForm('lb_title')
         lbl.set_value_as_infocenter(_("Do you want validate '%s'?") % self.item)
@@ -557,6 +558,7 @@ class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
         icon = XferCompImage('img')
         icon.set_location(0, 0, 1, 6)
         icon.set_value(self.icon_path())
+        icon.set_short_icon(self.short_icon)
         dlg.add_component(icon)
         lbl = XferCompLabelForm('lb_title')
         lbl.set_value_as_infocenter(_("Do you want convert this quotation to order ?"))
@@ -679,6 +681,7 @@ class BillBatch(XferContainerAcknowledge):
         dlg = self.create_custom(Detail)
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0, 1, 6)
         dlg.add_component(img)
         dlg.item.set_context(dlg)
@@ -946,11 +949,11 @@ class ArticleList(XferListEditor, ArticleFilter):
         self.add_action(ArticleSearch.get_action(TITLE_SEARCH, "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
 
 
-@ActionsManage.affect_list(_("To disable"), "images/config_ext.png", short_icon = "mdi mdi-credit-card-settings-outline", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
+@ActionsManage.affect_list(_("To disable"), "images/config_ext.png", short_icon = "mdi:mdi-credit-card-settings-outline", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
 @MenuManage.describ('invoice.change_article')
 class ArticleClean(XferContainerAcknowledge, ArticleFilter):
     icon = "images/config_ext.png"
-    short_icon = "mdi mdi-credit-card-settings-outline"
+    short_icon = "mdi:mdi-credit-card-settings-outline"
     model = Article
     field_id = 'article'
     caption = _("Clean articles")
@@ -1040,7 +1043,7 @@ class ArticleShow(XferShowEditor):
                     kit_article.actions[actionid] = (action[0], action[1], action[2], action[3], params)
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus')
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus')
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES)
 @MenuManage.describ('invoice.add_article')
 class ArticleAddModify(XferAddEditor):
@@ -1132,6 +1135,7 @@ class BillStatistic(XferContainerCustom):
     def fill_header(self):
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0, 1, 2)
         self.add_component(img)
         select_year = self.getparam('fiscal_year')
@@ -1307,6 +1311,7 @@ class BillAccountChecking(XferContainerCustom):
     def fill_header(self):
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0, 1, 2)
         self.add_component(img)
         select_year = self.getparam('fiscal_year')

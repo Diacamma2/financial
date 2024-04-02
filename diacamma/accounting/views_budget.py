@@ -236,6 +236,7 @@ class BudgetImport(XferContainerAcknowledge):
             dlg = self.create_custom()
             img = XferCompImage('img')
             img.set_value(self.icon_path())
+            img.set_short_icon(self.short_icon)
             img.set_location(0, 0, 1, 3)
             dlg.add_component(img)
             lbl = XferCompLabelForm('title')

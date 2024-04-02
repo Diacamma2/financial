@@ -179,6 +179,7 @@ class ThirdDisable(XferContainerAcknowledge):
             dlg = self.create_custom()
             img = XferCompImage('img')
             img.set_value(self.icon_path())
+            img.set_short_icon(self.short_icon)
             img.set_location(0, 0, 1, 6)
             dlg.add_component(img)
             limite_date = XferCompDate('limit_date')
@@ -197,7 +198,7 @@ class ThirdDisable(XferContainerAcknowledge):
                     third.save()
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus', unique=SELECT_NONE)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', unique=SELECT_NONE)
 @MenuManage.describ('accounting.add_third')
 class ThirdAdd(ContactSelection):
     icon = "thirds.png"

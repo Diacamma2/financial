@@ -284,6 +284,7 @@ class PayableEmail(XferContainerAcknowledge):
             icon = XferCompImage('img')
             icon.set_location(0, 0, 1, 6)
             icon.set_value(self.icon_path())
+            icon.set_short_icon(self.short_icon)
             dlg.add_component(icon)
 
             subject = self.item.get_email_subject()
@@ -397,6 +398,7 @@ class PayableShow(XferContainerCustom):
         max_row = self.get_max_row() + 1
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0, 1, 6)
         self.add_component(img)
         self.fill_from_model(1, max_row, True, self.item.get_payment_fields())

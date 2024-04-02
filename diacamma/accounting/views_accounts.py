@@ -187,7 +187,7 @@ class ChartsAccountMerge(ObjectMerge):
         ObjectMerge.fillresponse(self, 'chartsaccount')
 
 
-@ActionsManage.affect_grid(_("Initial"), 'images/add.png', short_icon='mdi mdi-pencil-plus-outline', close=CLOSE_NO, unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status != 2) and (signal_and_lock.Signal.call_signal("initial_account", None) > 0))
+@ActionsManage.affect_grid(_("Initial"), 'images/add.png', short_icon='mdi:mdi-pencil-plus-outline', close=CLOSE_NO, unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status != 2) and (signal_and_lock.Signal.call_signal("initial_account", None) > 0))
 @MenuManage.describ('accounting.add_chartsaccount')
 class ChartsAccountInitial(XferContainerAcknowledge):
     icon = "account.png"
@@ -211,6 +211,7 @@ class ChartsAccountInitial(XferContainerAcknowledge):
                 dlg = self.create_custom()
                 img = XferCompImage('img')
                 img.set_value(self.icon_path())
+                img.set_short_icon(self.short_icon)
                 img.set_location(0, 0, 1, 3)
                 dlg.add_component(img)
                 lbl = XferCompLabelForm('title')
@@ -317,6 +318,7 @@ class FiscalYearClose(XferContainerAcknowledge):
             dlg = self.create_custom(self.model)
             img = XferCompImage('img')
             img.set_value(self.icon_path())
+            img.set_short_icon(self.short_icon)
             img.set_location(0, 0)
             dlg.add_component(img)
             lbl = XferCompLabelForm('title')

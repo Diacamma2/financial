@@ -456,6 +456,7 @@ class EntryAccountCostAccounting(XferContainerAcknowledge):
             icon = XferCompImage('img')
             icon.set_location(0, 0, 1, 6)
             icon.set_value(self.icon_path())
+            icon.set_short_icon(self.short_icon)
             dlg.add_component(icon)
             lbl = XferCompLabelForm('lb_costaccounting')
             lbl.set_value_as_name(_('cost accounting'))
@@ -529,7 +530,7 @@ class EntryAccountShow(XferShowEditor):
         XferShowEditor.clear_fields_in_params(self)
 
 
-@ActionsManage.affect_grid(TITLE_ADD, 'images/add.png', short_icon='mdi mdi-pencil-plus-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
+@ActionsManage.affect_grid(TITLE_ADD, 'images/add.png', short_icon='mdi:mdi-pencil-plus-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountEdit(XferAddEditor):
     icon = "entry.png"
@@ -656,7 +657,7 @@ class EntryAccountCreateLinked(XferContainerAcknowledge):
                                                                     'num_cpt_txt': current_system_account().get_cash_begin()})
 
 
-@ActionsManage.affect_grid(_("Model"), "images/add.png", short_icon='mdi mdi-pencil-plus-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
+@ActionsManage.affect_grid(_("Model"), "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountModelSelector(XferContainerAcknowledge):
     icon = "entryModel.png"
@@ -670,6 +671,7 @@ class EntryAccountModelSelector(XferContainerAcknowledge):
             dlg = self.create_custom()
             image = XferCompImage('image')
             image.set_value(self.icon_path())
+            image.set_short_icon(self.short_icon)
             image.set_location(0, 0, 1, 6)
             dlg.add_component(image)
             if journal > 0:
@@ -741,6 +743,7 @@ class EntryLineAccountEdit(XferContainerCustom):
                 self.item = line
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0, 1, 6)
         self.add_component(img)
         self.fill_from_model(1, 1, True, ['account'])

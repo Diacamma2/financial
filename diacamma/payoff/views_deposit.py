@@ -77,6 +77,7 @@ class DepositShowPayoff(XferContainerCustom):
     def fillresponse_header(self):
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0)
         self.add_component(img)
         lbl = XferCompLabelForm('title')
@@ -167,7 +168,7 @@ class DepositShowPayoff(XferContainerCustom):
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus')
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus')
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', condition=lambda xfer: xfer.item.status == DepositSlip.STATUS_BUILDING, close=CLOSE_YES)
 @MenuManage.describ('payoff.add_depositslip')
 class DepositSlipAddModify(XferAddEditor):
@@ -256,6 +257,7 @@ class DepositDetailAddModify(XferContainerCustom):
     def fill_header(self, payer, reference, date_begin, date_end):
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0)
         self.add_component(img)
         lbl = XferCompLabelForm('title')

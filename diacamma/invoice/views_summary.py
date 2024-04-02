@@ -408,6 +408,7 @@ class CurrentCart(XferContainerCustom):
         self.show_articles()
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 1, 1, 3)
         self.add_component(img)
         lbl = XferCompLabelForm('title')

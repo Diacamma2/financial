@@ -98,7 +98,7 @@ class StorageSheetSearch(XferSavedCriteriaSearchEditor):
     caption = _("Search storage sheet")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == StorageSheet.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_storagesheet')
 class StorageSheetAddModify(XferAddEditor):
@@ -144,6 +144,7 @@ class StorageSheetTransition(XferTransition):
         icon = XferCompImage('img')
         icon.set_location(0, 0, 1, 6)
         icon.set_value(self.icon_path())
+        icon.set_short_icon(self.short_icon)
         dlg.add_component(icon)
         lbl = XferCompLabelForm('lb_title')
         lbl.set_value_as_infocenter(_("Do you want validate '%s'?") % self.item)
@@ -523,7 +524,7 @@ class InventorySheetList(XferListEditor):
             self.filter &= Q(status=status_filter)
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
 @ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == StorageSheet.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_inventorysheet')
 class InventorySheetAddModify(XferAddEditor):

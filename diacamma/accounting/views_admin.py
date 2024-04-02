@@ -183,6 +183,7 @@ class FiscalYearExport(XferContainerCustom):
         destination_file = self.item.get_xml_export()
         img = XferCompImage('img')
         img.set_value(self.icon_path())
+        img.set_short_icon(self.short_icon)
         img.set_location(0, 0, 1, 6)
         self.add_component(img)
         lbl = XferCompLabelForm('title')
@@ -214,7 +215,7 @@ class FiscalYearCheckReport(XferContainerAcknowledge):
             self.item.check_report()
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus')
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus')
 @ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearAddModify(XferAddEditor):
@@ -234,7 +235,7 @@ class FiscalYearAddModify(XferAddEditor):
         XferAddEditor.fillresponse(self)
 
 
-@ActionsManage.affect_other(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus')
+@ActionsManage.affect_other(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus')
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearInitAccount(XferContainerAcknowledge):
     icon = "accountingYear.png"
