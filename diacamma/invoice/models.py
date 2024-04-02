@@ -361,20 +361,21 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_amount_from_area(self, currentqty, area):
         sum_amount = 0.0
-        if self.stockable == self.STOCKABLE_KIT:
-            for kitart in self.kit_article_set.all():
-                sum_amount += kitart.link_article.get_amount_from_area(currentqty * float(kitart.quantity), area)
-        else:
-            nb_qty = 0.0
-            for det_item in self.storagedetail_set.filter(storagesheet__status=StorageSheet.STATUS_VALID,
-                                                          storagesheet__sheet_type=StorageSheet.TYPE_RECEIPT,
-                                                          storagesheet__storagearea_id=area).order_by('-storagesheet__date'):
-                if (nb_qty + float(det_item.quantity)) < currentqty:
-                    sum_amount += float(det_item.price * det_item.quantity)
-                    nb_qty += float(det_item.quantity)
-                else:
-                    sum_amount += float(det_item.price) * (float(currentqty) - nb_qty)
-                    break
+        if self.id is not None:
+            if self.stockable == self.STOCKABLE_KIT:
+                for kitart in self.kit_article_set.all():
+                    sum_amount += kitart.link_article.get_amount_from_area(currentqty * float(kitart.quantity), area)
+            else:
+                nb_qty = 0.0
+                for det_item in self.storagedetail_set.filter(storagesheet__status=StorageSheet.STATUS_VALID,
+                                                              storagesheet__sheet_type=StorageSheet.TYPE_RECEIPT,
+                                                              storagesheet__storagearea_id=area).order_by('-storagesheet__date'):
+                    if (nb_qty + float(det_item.quantity)) < currentqty:
+                        sum_amount += float(det_item.price * det_item.quantity)
+                        nb_qty += float(det_item.quantity)
+                    else:
+                        sum_amount += float(det_item.price) * (float(currentqty) - nb_qty)
+                        break
         return sum_amount
 
     def set_context(self, xfer):
@@ -952,20 +953,23 @@ class Bill(Supporting):
 
     def get_total_excltax(self):
         val = 0
-        for detail in self.detail_set.all():
-            val += detail.get_total_excltax()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                val += detail.get_total_excltax()
         return val
 
     def get_reduce_excltax(self):
         val = 0
-        for detail in self.detail_set.all():
-            val += detail.get_reduce_excltax()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                val += detail.get_reduce_excltax()
         return val
 
     def get_vta_sum(self):
         val = 0
-        for detail in self.detail_set.all():
-            val += detail.get_vta()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                val += detail.get_vta()
         return val
 
     def get_tax_sum(self):
@@ -973,8 +977,9 @@ class Bill(Supporting):
 
     def get_total_incltax(self):
         val = 0
-        for detail in self.detail_set.all():
-            val += detail.get_total_incltax()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                val += detail.get_total_incltax()
         return val
 
     def get_total(self):
@@ -997,32 +1002,35 @@ class Bill(Supporting):
     def get_description(self):
         res = "{[table width='100%' border='1' style='border-collapse: collapse;']}\n"
         res += "{[tr]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[th]}%s{[/th]}{[/tr]}\n" % (_('designation'), _('price'), _('quantity'), _('unit'), _('reduce'), _('total'))
-        for det in self.detail_set.all():
-            res += "{[tr]}"
-            res += "{[td]}%s{[/td]}" % det.designation
-            res += "{[td]}%s{[/td]}" % get_amount_from_format_devise(det.price_txt, 5)
-            res += "{[td]}%s{[/td]}" % round(det.quantity, det.article.qtyDecimal if det.article_id is not None else 3)
-            res += "{[td]}%s{[/td]}" % det.unit
-            res += "{[td]}%s{[/td]}" % (det.reduce_txt if det.reduce_txt is not None else '',)
-            res += "{[td]}%s{[/td]}" % get_amount_from_format_devise(det.total, 5)
-            res += "{[/tr]}\n"
+        if self.id is not None:
+            for det in self.detail_set.all():
+                res += "{[tr]}"
+                res += "{[td]}%s{[/td]}" % det.designation
+                res += "{[td]}%s{[/td]}" % get_amount_from_format_devise(det.price_txt, 5)
+                res += "{[td]}%s{[/td]}" % round(det.quantity, det.article.qtyDecimal if det.article_id is not None else 3)
+                res += "{[td]}%s{[/td]}" % det.unit
+                res += "{[td]}%s{[/td]}" % (det.reduce_txt if det.reduce_txt is not None else '',)
+                res += "{[td]}%s{[/td]}" % get_amount_from_format_devise(det.total, 5)
+                res += "{[/tr]}\n"
         res += "{[/table]}\n"
         return res
 
     def get_vta_detail_list(self):
         vtas = {}
-        for detail in self.detail_set.all():
-            if abs(detail.vta_rate) > 0.001:
-                vta_txt = "%.2f" % abs(float(detail.vta_rate) * 100.0)
-                if vta_txt not in vtas.keys():
-                    vtas[vta_txt] = float(0.0)
-                vtas[vta_txt] += detail.get_vta()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                if abs(detail.vta_rate) > 0.001:
+                    vta_txt = "%.2f" % abs(float(detail.vta_rate) * 100.0)
+                    if vta_txt not in vtas.keys():
+                        vtas[vta_txt] = float(0.0)
+                    vtas[vta_txt] += detail.get_vta()
         return vtas
 
     def get_title_vta_details(self):
         vtas = []
-        for vta in self.get_vta_detail_list().keys():
-            vtas.append(_("VAT %s %%") % vta)
+        if self.id is not None:
+            for vta in self.get_vta_detail_list().keys():
+                vtas.append(_("VAT %s %%") % vta)
         return vtas
 
     def get_vta_details(self):
@@ -1039,12 +1047,13 @@ class Bill(Supporting):
 
     def get_default_costaccounting(self):
         detail_costlist = {}
-        for detail in self.detail_set.all():
-            if (detail.article is not None) and (detail.article.accountposting is not None):
-                detail_cost = detail.article.accountposting.cost_accounting
-                if detail_cost not in detail_costlist.keys():
-                    detail_costlist[detail_cost] = 0
-                detail_costlist[detail_cost] += detail.get_total_excltax() + detail.get_reduce_excltax()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                if (detail.article is not None) and (detail.article.accountposting is not None):
+                    detail_cost = detail.article.accountposting.cost_accounting
+                    if detail_cost not in detail_costlist.keys():
+                        detail_costlist[detail_cost] = 0
+                    detail_costlist[detail_cost] += detail.get_total_excltax() + detail.get_reduce_excltax()
         default_cost = None
         last_total = 0
         for detail_cost, total in detail_costlist.items():
@@ -1066,7 +1075,7 @@ class Bill(Supporting):
         info = []
         if self.status == self.STATUS_BUILDING:
             info = Supporting.get_info_state(self, current_system_account().get_customer_mask())
-        details = self.detail_set.all()
+        details = self.detail_set.all() if self.id is not None else []
         if len(details) == 0:
             info.append(str(_("no detail")))
         else:
@@ -1131,44 +1140,46 @@ class Bill(Supporting):
     def _get_detail_for_entry(self):
         remise_account = None
         detail_list = {}
-        for detail in self.detail_set.all():
-            detail_cost = None
-            if detail.article is not None:
-                if detail.article.accountposting is None:
-                    detail_code = ""
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                detail_cost = None
+                if detail.article is not None:
+                    if detail.article.accountposting is None:
+                        detail_code = ""
+                    else:
+                        detail_code = detail.article.accountposting.sell_account
+                        detail_cost = detail.article.accountposting.cost_accounting_id
                 else:
-                    detail_code = detail.article.accountposting.sell_account
-                    detail_cost = detail.article.accountposting.cost_accounting_id
-            else:
-                detail_code = Params.getvalue("invoice-default-sell-account")
-                cost_account = CostAccounting.objects.filter(status=CostAccounting.STATUS_OPENED, is_default=True).first()
-                if cost_account is not None:
-                    detail_cost = cost_account.id
-            detail_account = ChartsAccount.get_account(detail_code, self.fiscal_year)
-            if detail_account is None:
-                raise LucteriosException(IMPORTANT, _("article has code account unknown!"))
-            if (detail_code, detail_cost) not in detail_list.keys():
-                detail_list[detail_code, detail_cost] = [detail_account, 0, detail_cost]
-            detail_list[detail_code, detail_cost][1] += detail.get_total_excltax() + detail.get_reduce_excltax()
-            if detail.get_reduce_excltax() > 0.001:
-                if remise_account is None:
-                    remise_code = Params.getvalue("invoice-reduce-account")
-                    remise_account = ChartsAccount.get_account(remise_code, self.fiscal_year)
+                    detail_code = Params.getvalue("invoice-default-sell-account")
+                    cost_account = CostAccounting.objects.filter(status=CostAccounting.STATUS_OPENED, is_default=True).first()
+                    if cost_account is not None:
+                        detail_cost = cost_account.id
+                detail_account = ChartsAccount.get_account(detail_code, self.fiscal_year)
+                if detail_account is None:
+                    raise LucteriosException(IMPORTANT, _("article has code account unknown!"))
+                if (detail_code, detail_cost) not in detail_list.keys():
+                    detail_list[detail_code, detail_cost] = [detail_account, 0, detail_cost]
+                detail_list[detail_code, detail_cost][1] += detail.get_total_excltax() + detail.get_reduce_excltax()
+                if detail.get_reduce_excltax() > 0.001:
                     if remise_account is None:
-                        raise LucteriosException(IMPORTANT, _("reduce-account is not defined!"))
-                if (remise_code, detail_cost) not in detail_list.keys():
-                    detail_list[remise_code, detail_cost] = [remise_account, 0, detail_cost]
-                detail_list[remise_code, detail_cost][1] -= detail.get_reduce_excltax()
+                        remise_code = Params.getvalue("invoice-reduce-account")
+                        remise_account = ChartsAccount.get_account(remise_code, self.fiscal_year)
+                        if remise_account is None:
+                            raise LucteriosException(IMPORTANT, _("reduce-account is not defined!"))
+                    if (remise_code, detail_cost) not in detail_list.keys():
+                        detail_list[remise_code, detail_cost] = [remise_account, 0, detail_cost]
+                    detail_list[remise_code, detail_cost][1] -= detail.get_reduce_excltax()
         return detail_list
 
     def _compute_vat(self, is_bill):
         vat_val = {}
-        for detail in self.detail_set.all():
-            if (detail.article is not None) and (detail.article.vat is not None):
-                vataccount = detail.article.vat.account
-                if vataccount not in vat_val.keys():
-                    vat_val[vataccount] = 0.0
-                vat_val[vataccount] += detail.get_vta()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                if (detail.article is not None) and (detail.article.vat is not None):
+                    vataccount = detail.article.vat.account
+                    if vataccount not in vat_val.keys():
+                        vat_val[vataccount] = 0.0
+                    vat_val[vataccount] += detail.get_vta()
         for vataccount, vatamount in vat_val.items():
             if vatamount > 0.001:
                 vat_account = ChartsAccount.get_account(vataccount, self.fiscal_year)
@@ -1259,8 +1270,9 @@ class Bill(Supporting):
 
     def get_nb_area(self):
         area_set = set()
-        for detail in self.detail_set.all():
-            area_set.add(detail.storagearea)
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                area_set.add(detail.storagearea)
         return area_set
 
     @classmethod
@@ -1750,9 +1762,10 @@ class Bill(Supporting):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.bill_type = int(self.bill_type)
-        for detail in self.detail_set.all():
-            if detail.define_autoreduce():
-                detail.save()
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                if detail.define_autoreduce():
+                    detail.save()
         return Supporting.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     class Meta(object):
@@ -2051,17 +2064,19 @@ class StorageSheet(LucteriosModel):
 
     def get_total(self):
         value = 0.0
-        for detail in self.storagedetail_set.all():
-            value += float(detail.quantity) * float(detail.price)
+        if self.id is not None:
+            for detail in self.storagedetail_set.all():
+                value += float(detail.quantity) * float(detail.price)
         return value
 
     def get_info_state(self):
         info = []
-        for detail in self.storagedetail_set.all():
-            if detail.article.stockable == Article.STOCKABLE_NO:
-                info.append(_("Article %s is not stockable") % str(detail.article))
-            elif (self.sheet_type != self.TYPE_RECEIPT) and not detail.article.has_sufficiently(self.storagearea_id, detail.quantity):
-                info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
+        if self.id is not None:
+            for detail in self.storagedetail_set.all():
+                if detail.article.stockable == Article.STOCKABLE_NO:
+                    info.append(_("Article %s is not stockable") % str(detail.article))
+                elif (self.sheet_type != self.TYPE_RECEIPT) and not detail.article.has_sufficiently(self.storagearea_id, detail.quantity):
+                    info.append(_("Article %s is not sufficiently stocked") % str(detail.article))
         return info
 
     transitionname__valid = _("Validate")

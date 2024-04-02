@@ -750,12 +750,13 @@ class DepositSlip(LucteriosModel):
 
     def get_total(self):
         value = 0
-        for detail in self.depositdetail_set.all():
-            value += detail.get_amount()
+        if self.id is not None:
+            for detail in self.depositdetail_set.all():
+                value += detail.get_amount()
         return value
 
     def get_nb(self):
-        return len(self.depositdetail_set.all())
+        return len(self.depositdetail_set.all()) if self.id is not None else 0
 
     def can_delete(self):
         if self.status != 0:

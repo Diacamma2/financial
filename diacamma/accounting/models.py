@@ -788,6 +788,8 @@ class ChartsAccount(LucteriosModel):
             return get_amount_sum(self.entrylineaccount_set.filter(entry__journal__id=1).aggregate(Sum('amount')))
 
     def get_current_total(self, with_correction=True):
+        if self.id is None:
+            return None
         entrylines = self.entrylineaccount_set.all()
         if self.type_of_account in (3, 4, 5):
             entrylines = entrylines.exclude(entry__in=self.year.get_result_entries())
@@ -936,6 +938,8 @@ class AccountLink(LucteriosModel):
         return self.letter
 
     def get_letter(self):
+        if self.id is None:
+            return None
         entrylines = self.entrylineaccount_set.all()
         if len(entrylines) == 0:
             return ''
@@ -964,6 +968,8 @@ class AccountLink(LucteriosModel):
             link.fill_date()
 
     def is_validity(self):
+        if self.id is None:
+            return None
         third_info = None
         sum_amount = 0.0
         entrylines = self.entrylineaccount_set.all()
@@ -1029,6 +1035,8 @@ class AccountLink(LucteriosModel):
             new_multilink.fill_date()
 
     def clean(self):
+        if self.id is None:
+            return None
         for entry in self.entryaccount_set.all():
             entry.link = None
             if not entry.delete_if_ghost_entry():
@@ -1136,6 +1144,8 @@ class EntryAccount(LucteriosModel):
         return ((sum_customer < 0) and not self.has_cash) or ((sum_customer > 0) and self.has_cash)
 
     def reverse_entry(self):
+        if self.id is None:
+            return None
         for line in self.entrylineaccount_set.all():
             line.amount = -1 * line.amount
             line.save()
@@ -1174,7 +1184,7 @@ class EntryAccount(LucteriosModel):
 
     def get_serial(self, entrylines=None):
         if entrylines is None:
-            entrylines = self.entrylineaccount_set.all()
+            entrylines = self.entrylineaccount_set.all() if self.id is not None else []
         serial_val = ''
         for line in entrylines:
             if serial_val != '':
@@ -1239,7 +1249,7 @@ class EntryAccount(LucteriosModel):
         total_credit = 0
         total_debit = 0
         serial = self.get_entrylineaccounts(serial_vals)
-        current = self.entrylineaccount_set.all()
+        current = self.entrylineaccount_set.all() if self.id is not None else []
         no_change = len(serial) > 0
         if len(serial) == len(current):
             for idx in range(len(serial)):
@@ -1698,6 +1708,8 @@ class ModelEntry(LucteriosModel):
         return ['journal', 'designation', 'costaccounting', 'total', 'modellineentry_set']
 
     def get_total(self):
+        if self.id is None:
+            return 0.0
         try:
             value = 0.0
             for line in self.modellineentry_set.all():
