@@ -21,6 +21,7 @@ from diacamma.accounting.views_reports import CostAccountingIncomeStatement
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of costs accounting'))
 class CostAccountingList(XferListEditor):
     icon = "costAccounting.png"
+    short_icon = "mdi:mdi-home-analytics"
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Costs accounting")
@@ -54,10 +55,11 @@ class CostAccountingList(XferListEditor):
         self.get_components('costaccounting').colspan += 1
 
 
-@ActionsManage.affect_list(_("By date"), "images/print.png")
+@ActionsManage.affect_list(_("By date"), "images/print.png", short_icon='mdi:mdi-printer-outline')
 @MenuManage.describ('accounting.add_fiscalyear')
 class CostAccountingReportByDate(XferContainerAcknowledge):
     icon = "costAccounting.png"
+    short_icon = "mdi:mdi-home-analytics"
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Print by date")
@@ -88,8 +90,8 @@ class CostAccountingReportByDate(XferContainerAcknowledge):
             end_filter.description = _('end')
             dlg.add_component(end_filter)
             dlg.add_component(lbl)
-            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'))
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png', 'mdi:mdi-check'))
+            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
         else:
             list_cost = []
             for cost_item in CostAccounting.objects.filter(Q(entrylineaccount__entry__date_value__gte=begin_date) & Q(entrylineaccount__entry__date_value__lte=end_date)).distinct():
@@ -100,10 +102,11 @@ class CostAccountingReportByDate(XferContainerAcknowledge):
             self.redirect_action(CostAccountingIncomeStatement.get_action(), modal=FORMTYPE_NOMODAL, close=CLOSE_YES, params={'begin_date': begin_date, 'end_date': end_date, 'datereadonly': True, 'costaccounting': ";".join(list_cost)})
 
 
-@ActionsManage.affect_grid(_("Default"), "images/default.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
+@ActionsManage.affect_grid(_("Default"), "images/default.png", short_icon='mdi:mdi-star-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
 @MenuManage.describ('accounting.add_fiscalyear')
 class CostAccountingDefault(XferContainerAcknowledge):
     icon = "images/default.png"
+    short_icon = 'mdi:mdi-star-outline'
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Default")
@@ -113,10 +116,11 @@ class CostAccountingDefault(XferContainerAcknowledge):
         self.item.change_has_default()
 
 
-@ActionsManage.affect_grid(_("Close"), "images/ok.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
+@ActionsManage.affect_grid(_("Close"), "images/ok.png", short_icon="mdi:mdi-check", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
 @MenuManage.describ('accounting.add_fiscalyear')
 class CostAccountingClose(XferContainerAcknowledge):
     icon = "images/ok.png"
+    short_icon = "mdi:mdi-check"
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Close")
@@ -131,11 +135,12 @@ class CostAccountingClose(XferContainerAcknowledge):
                 self.item.close()
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", unique=SELECT_NONE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
 @MenuManage.describ('accounting.add_entryaccount')
 class CostAccountingAddModify(XferAddEditor):
     icon = "costAccounting.png"
+    short_icon = "mdi:mdi-home-analytics"
     model = CostAccounting
     field_id = 'costaccounting'
     caption_add = _("Add cost accounting")
@@ -149,10 +154,11 @@ class CostAccountingAddModify(XferAddEditor):
         XferAddEditor.fillresponse(self)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', 0) != 1)
 @MenuManage.describ('accounting.delete_entryaccount')
 class CostAccountingDel(XferDelete):
     icon = "costAccounting.png"
+    short_icon = "mdi:mdi-home-analytics"
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Delete cost accounting")
@@ -169,10 +175,11 @@ def condition_recreate(xfer):
     return len(cost_list) > 0
 
 
-@ActionsManage.affect_list(_("Recreate"), "images/new.png", condition=condition_recreate)
+@ActionsManage.affect_list(_("Recreate"), "images/new.png", short_icon='mdi:mdi-pencil-plus-outline', condition=condition_recreate)
 @MenuManage.describ('accounting.add_fiscalyear')
 class CostAccountingRecreate(XferContainerAcknowledge):
     icon = "images/new.png"
+    short_icon = 'mdi:mdi-pencil-plus-outline'
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Recreate")
@@ -192,55 +199,61 @@ class CostAccountingRecreate(XferContainerAcknowledge):
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of entry model'),)
 class ModelEntryList(XferListEditor):
     icon = "entryModel.png"
+    short_icon = "mdi:mdi-format-list-text"
     model = ModelEntry
     field_id = 'modelentry'
     caption = _("Models of entry")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", unique=SELECT_NONE)
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", close=CLOSE_YES)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus', unique=SELECT_NONE)
+@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES)
 @MenuManage.describ('accounting.add_entryaccount')
 class ModelEntryAddModify(XferAddEditor):
     icon = "entryModel.png"
+    short_icon = "mdi:mdi-format-list-text"
     model = ModelEntry
     field_id = 'modelentry'
     caption_add = _("Add model of entry")
     caption_modify = _("Modify model of entry")
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.change_entryaccount')
 class ModelEntryShow(XferShowEditor):
     icon = "entryModel.png"
+    short_icon = "mdi:mdi-format-list-text"
     model = ModelEntry
     field_id = 'modelentry'
     caption = _("Show Model of entry")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('accounting.delete_entryaccount')
 class ModelEntryDel(XferDelete):
     icon = "entryModel.png"
+    short_icon = "mdi:mdi-format-list-text"
     model = ModelEntry
     field_id = 'modelentry'
     caption = _("Delete Model of entry")
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", unique=SELECT_NONE)
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', unique=SELECT_NONE)
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.add_entryaccount')
 class ModelLineEntryAddModify(XferAddEditor):
     icon = "entryModel.png"
+    short_icon = "mdi:mdi-format-list-text"
     model = ModelLineEntry
     field_id = 'modellineentry'
     caption_add = _("Add model line  of entry")
     caption_modify = _("Modify model line  of entry")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('accounting.delete_entryaccount')
 class ModelLineEntryDel(XferDelete):
     icon = "entryModel.png"
+    short_icon = "mdi:mdi-format-list-text"
     model = ModelLineEntry
     field_id = 'modellineentry'
     caption = _("Delete Model line  of entry")

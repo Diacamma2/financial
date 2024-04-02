@@ -44,6 +44,7 @@ from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, Payment
 class CheckPaymentGeneric(XferContainerAbstract):
     caption = _("Payment")
     icon = "payments.png"
+    short_icon = "mdi:mdi-credit-card-outline"
     readonly = True
     methods_allowed = ('GET', )
 

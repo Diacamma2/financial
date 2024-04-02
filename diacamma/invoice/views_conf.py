@@ -60,6 +60,7 @@ def fill_params(xfer, param_lists=None, is_mini=False):
 @MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'financial.conf', _('Management of parameters and financial configuration of invoice'))
 class InvoiceConfFinancial(XferListEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = Vat
     field_id = 'vat'
     caption = _("Invoice financial configuration")
@@ -75,6 +76,7 @@ class InvoiceConfFinancial(XferListEditor):
 @MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'financial.conf', _('Management of commercial configuration of invoice'))
 class InvoiceConfCommercial(XferListEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = AutomaticReduce
     field_id = 'automaticreduce'
     caption = _("Invoice commercial configuration")
@@ -134,41 +136,45 @@ class ParamEditCart(ParamEdit):
             self.add_component(comment)
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
 class AccountPostingAddModify(XferAddEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = AccountPosting
     field_id = 'accountposting'
     caption_add = _("Add account posting code")
     caption_modify = _("Modify account posting code")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.delete_vat')
 class AccountPostingDel(XferDelete):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = AccountPosting
     field_id = 'accountposting'
     caption = _("Delete account posting code")
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
 class AutomaticReduceAddModify(XferAddEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = AutomaticReduce
     field_id = 'automaticreduce'
     caption_add = _("Add automatic reduce")
     caption_modify = _("Modify automatic reduce")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.delete_vat')
 class AutomaticReduceDel(XferDelete):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = AutomaticReduce
     field_id = 'automaticreduce'
     caption = _("Delete automatic reduce")
@@ -177,6 +183,7 @@ class AutomaticReduceDel(XferDelete):
 @MenuManage.describ('invoice.add_vat')
 class StorageAreaSaveContact(XferContainerAcknowledge):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = StorageArea
     field_id = 'storagearea'
     methods_allowed = ('PUT',)
@@ -189,6 +196,7 @@ class StorageAreaSaveContact(XferContainerAcknowledge):
 @MenuManage.describ('invoice.add_vat')
 class StorageAreaChangeContact(ContactSelection):
     icon = "thirds.png"
+    short_icon = "mdi:mdi-account-cash-outline"
     caption = _("Change manager")
     select_class = StorageAreaSaveContact
     inital_model = Individual
@@ -198,11 +206,12 @@ class StorageAreaChangeContact(ContactSelection):
     methods_allowed = ('POST', 'PUT')
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
 class StorageAreaAddModify(XferAddEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = StorageArea
     field_id = 'storagearea'
     caption_add = _("Add storage area")
@@ -222,60 +231,66 @@ class StorageAreaAddModify(XferAddEditor):
         self.move_components("designation", 0, 1)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.delete_vat')
 class StorageAreaDel(XferDelete):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = StorageArea
     field_id = 'storagearea'
     caption = _("Delete storage area")
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
 class VatAddModify(XferAddEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = Vat
     field_id = 'vat'
     caption_add = _("Add VAT")
     caption_modify = _("Modify VAT")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.delete_vat')
 class VatDel(XferDelete):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = Vat
     field_id = 'vat'
     caption = _("Delete VAT")
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
 class CategoryAddModify(XferAddEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = Category
     field_id = 'category'
     caption_add = _("Add category")
     caption_modify = _("Modify category")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.delete_vat')
 class CategoryDel(XferDelete):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = Category
     field_id = 'category'
     caption = _("Delete Category")
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png")
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
 class CategoryBillAddModify(XferAddEditor):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = CategoryBill
     field_id = 'categoryBill'
     caption_add = _("Add category")
@@ -290,20 +305,22 @@ class CategoryBillAddModify(XferAddEditor):
         XferAddEditor.fillresponse(self)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.delete_vat')
 class CategoryBillDel(XferDelete):
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = CategoryBill
     field_id = 'categoryBill'
     caption = _("Delete Category")
 
 
-@ActionsManage.affect_grid(_("Default"), "images/default.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(_("Default"), "images/default.png", short_icon='mdi:mdi-star-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_vat')
 class CategoryBillDefault(XferContainerAcknowledge):
     caption = _("Set default category")
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
     model = CategoryBill
     field_id = 'categoryBill'
 
@@ -315,6 +332,7 @@ class CategoryBillDefault(XferContainerAcknowledge):
 class ArticleImport(ObjectImport):
     caption = _("Article import")
     icon = "invoice_conf.png"
+    short_icon = "mdi mdi-credit-card-settings-outline"
 
     def get_select_models(self):
         return Article.get_select_contact_type(True)

@@ -158,8 +158,8 @@ class DefaultSystemAccounting(object):
             from lucterios.framework.tools import WrapAction, CLOSE_YES, FORMTYPE_MODAL
             custom = xfer.create_custom()
             self._create_custom_for_profit(year, custom, val_profit)
-            custom.add_action(xfer.return_action(TITLE_OK, "images/ok.png"), modal=FORMTYPE_MODAL, close=CLOSE_YES)
-            custom.add_action(WrapAction(TITLE_CANCEL, "images/cancel.png"))
+            custom.add_action(xfer.return_action(TITLE_OK, "images/ok.png", short_icon='mdi:mdi-check'), modal=FORMTYPE_MODAL, close=CLOSE_YES)
+            custom.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
             return False
         else:
             text = _("Do you want to begin '%s'? {[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your retained earnings must be completed.{[/i]}") % str(year)

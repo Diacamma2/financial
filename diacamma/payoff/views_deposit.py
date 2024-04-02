@@ -17,7 +17,7 @@ from lucterios.framework.tools import FORMTYPE_NOMODAL, CLOSE_YES, CLOSE_NO, FOR
 from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
 from lucterios.CORE.xferprint import XferPrintAction
 
-from diacamma.payoff.models import DepositSlip, DepositDetail, BankTransaction, PaymentMethod, Payoff
+from diacamma.payoff.models import DepositSlip, DepositDetail, BankTransaction, PaymentMethod
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.tools import format_with_devise
 from diacamma.payoff.payment_type import PaymentTypePayPal,\
@@ -27,6 +27,7 @@ from diacamma.payoff.payment_type import PaymentTypePayPal,\
 @MenuManage.describ('payoff.change_depositslip', FORMTYPE_NOMODAL, 'financial', _('Manage deposit of cheque'))
 class DepositSlipList(XferListEditor):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
     caption = _("Deposit slips")
@@ -64,10 +65,11 @@ class DepositSlipList(XferListEditor):
             self.filter &= Q(date__lte=year.end)
 
 
-@ActionsManage.affect_list(_('payoffs'), "images/config.png")
+@ActionsManage.affect_list(_('payoffs'), "images/config.png", short_icon = "mdi:mdi-checkbook")
 @MenuManage.describ('payoff.add_depositslip')
 class DepositShowPayoff(XferContainerCustom):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
     caption = _("payoff by cheque")
@@ -162,24 +164,26 @@ class DepositShowPayoff(XferContainerCustom):
             grid.set_value(payoffid, 'deposit', payoff['deposit'])
         grid.set_location(0, 6, 2)
         self.add_component(grid)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png")
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", condition=lambda xfer: xfer.item.status == DepositSlip.STATUS_BUILDING, close=CLOSE_YES)
+@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi mdi-pencil-plus')
+@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', condition=lambda xfer: xfer.item.status == DepositSlip.STATUS_BUILDING, close=CLOSE_YES)
 @MenuManage.describ('payoff.add_depositslip')
 class DepositSlipAddModify(XferAddEditor):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
     caption_add = _("Add deposit slip")
     caption_modify = _("Modify deposit slip")
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('payoff.change_depositslip')
 class DepositSlipShow(XferShowEditor):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
     caption = _("Show deposit slip")
@@ -203,10 +207,11 @@ class DepositSlipShow(XferShowEditor):
             self.add_component(show_support)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('payoff.delete_depositslip')
 class DepositSlipDel(XferDelete):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
     caption = _("Delete deposit slip")
@@ -216,14 +221,16 @@ class DepositSlipDel(XferDelete):
 @MenuManage.describ('payoff.add_depositslip')
 class DepositSlipTransition(XferTransition):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
 
 
-@ActionsManage.affect_show(TITLE_PRINT, "images/print.png", condition=lambda xfer: (xfer.item.status != 0) or (len(xfer.item.depositdetail_set.all()) > 0))
+@ActionsManage.affect_show(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline', condition=lambda xfer: (xfer.item.status != 0) or (len(xfer.item.depositdetail_set.all()) > 0))
 @MenuManage.describ('payoff.change_depositslip')
 class DepositSlipPrint(XferPrintAction):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
     caption = _("Deposit slip")
@@ -237,10 +244,11 @@ class DepositSlipPrint(XferPrintAction):
         return report_generator
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.status == DepositSlip.STATUS_BUILDING)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', condition=lambda xfer, gridname='': xfer.item.status == DepositSlip.STATUS_BUILDING)
 @MenuManage.describ('payoff.add_depositslip')
 class DepositDetailAddModify(XferContainerCustom):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositDetail
     field_id = 'depositdetail'
     caption = _("Add deposit detail")
@@ -307,12 +315,13 @@ class DepositDetailAddModify(XferContainerCustom):
         grid.add_action(self.request, DepositDetailSave.get_action(_("select"), "images/ok.png"), close=CLOSE_YES, unique=SELECT_MULTI)
         self.add_component(grid)
 
-        self.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+        self.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
 
 
 @MenuManage.describ('payoff.add_depositslip')
 class DepositDetailSave(XferContainerAcknowledge):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositSlip
     field_id = 'depositslip'
     caption = _("Save deposit detail")
@@ -321,10 +330,11 @@ class DepositDetailSave(XferContainerAcknowledge):
         self.item.add_payoff(entry)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.status == DepositSlip.STATUS_BUILDING)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.status == DepositSlip.STATUS_BUILDING)
 @MenuManage.describ('payoff.add_depositslip')
 class DepositDetailDel(XferDelete):
     icon = "bank.png"
+    short_icon = "mdi:mdi-checkbook"
     model = DepositDetail
     field_id = 'depositdetail'
     caption = _("Delete deposit detail")
@@ -340,15 +350,17 @@ def right_banktransaction(request):
 @MenuManage.describ(right_banktransaction, FORMTYPE_NOMODAL, 'financial', _('show bank transactions'))
 class BankTransactionList(XferListEditor):
     icon = "transfer.png"
+    short_icon = "mdi:mdi-bank-transfer-in"
     model = BankTransaction
     field_id = 'banktransaction'
     caption = _("Bank transactions")
 
 
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('payoff.change_banktransaction')
 class BankTransactionShow(XferShowEditor):
     icon = "transfer.png"
+    short_icon = "mdi:mdi-bank-transfer-in"
     model = BankTransaction
     field_id = 'banktransaction'
     caption = _("Show bank transaction")

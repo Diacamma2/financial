@@ -64,6 +64,7 @@ def current_bill_right(request):
 @MenuManage.describ(current_bill_right, FORMTYPE_MODAL, 'core.general', _('View your invoices.'))
 class CurrentBill(XferListEditor):
     icon = "bill.png"
+    short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
     caption = _("Your invoices")
@@ -216,6 +217,7 @@ def current_cart_right(request):
 @MenuManage.describ(current_cart_right, FORMTYPE_MODAL, 'core.general', _('To fill your shopping cart'))
 class CurrentCart(XferContainerCustom):
     icon = "storage.png"
+    short_icon = 'mdi:mdi-cart-variant'
     model = Bill
     field_id = 'bill'
     caption = _("Shopping cart")
@@ -416,12 +418,13 @@ class CurrentCart(XferContainerCustom):
         btn.set_location(1, 2, 4)
         btn.set_action(self.request, CurrentCartCatalog.get_action(_("Print full catalog"), "images/print.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO)
         self.add_component(btn)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 
 
 @MenuManage.describ(current_cart_right)
 class CurrentCartDel(XferContainerAcknowledge):
     icon = "images/delete.png"
+    short_icon = 'mdi:mdi-cart-variant'
     model = Bill
     field_id = 'bill'
     caption = _("Clear")
@@ -434,6 +437,7 @@ class CurrentCartDel(XferContainerAcknowledge):
 @MenuManage.describ(current_cart_right)
 class CurrentCartAddArticle(XferContainerAcknowledge):
     icon = "storage.png"
+    short_icon = 'mdi:mdi-cart-variant'
     caption = _("Add article")
     model = Bill
     field_id = 'bill'
@@ -479,6 +483,7 @@ class CurrentCartAddArticle(XferContainerAcknowledge):
 @MenuManage.describ(current_cart_right)
 class CurrentCartShow(BillShow):
     icon = "storage.png"
+    short_icon = 'mdi:mdi-cart-variant'
     caption = _("Cart")
 
     def fillresponse(self):
@@ -491,17 +496,18 @@ class CurrentCartShow(BillShow):
         detail = self.get_components("detail")
         detail.actions = []
         if self.item.status == Bill.STATUS_BUILDING:
-            detail.add_action(self.request, CurrentCartDelDetail.get_action(TITLE_DELETE, "images/delete.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE)
+            detail.add_action(self.request, CurrentCartDelDetail.get_action(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline'), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE)
         self.actions = []
         if self.item.status == Bill.STATUS_BUILDING:
             self.add_action(CurrentCartValid.get_action(Bill.transitionname__valid, "images/transition.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={"TRANSITION": "valid"})
         self.add_action(CurrentCart.get_action(caption=_("Return")), modal=FORMTYPE_MODAL, close=CLOSE_YES)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 
 
 @MenuManage.describ(current_cart_right)
 class CurrentCartCatalog(XferPrintListing):
     icon = "article.png"
+    short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
     caption = _("Full catalog")
@@ -529,6 +535,7 @@ class CurrentCartDelDetail(DetailDel):
 @MenuManage.describ(current_cart_right)
 class CurrentCartValid(XferTransition):
     icon = "bill.png"
+    short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
 
@@ -557,7 +564,7 @@ class CurrentCartValid(XferTransition):
             commentcmp.set_value(Params.getvalue('invoice-cart-default-comment'))
             dlg.add_component(commentcmp)
             dlg.add_action(self.return_action(_('Yes'), 'images/ok.png'), params={"CONFIRME": "YES"})
-            dlg.add_action(WrapAction(TITLE_NO, 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_NO, 'images/cancel.png', 'mdi:mdi-cancel'))
             return False
 
     def fill_confirm(self):
@@ -579,6 +586,7 @@ def referent_storage(request):
 @MenuManage.describ(referent_storage, FORMTYPE_MODAL, 'core.general', _('View invoices of storage managed.'))
 class CurrentBillForStorageManager(CurrentBill):
     icon = "storagesheet.png"
+    short_icon = 'mdi:mdi-store-outline'
     model = Bill
     field_id = 'bill'
     caption = _("Storage managed")

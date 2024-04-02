@@ -48,11 +48,12 @@ from diacamma.payoff.models import Payoff, Supporting, BankAccount
 from diacamma.accounting.models import Third
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.can_add_pay())
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', condition=lambda xfer, gridname='': xfer.item.can_add_pay())
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('payoff.add_payoff')
 class PayoffAddModify(XferAddEditor):
     icon = "payoff.png"
+    short_icon = 'mdi:mdi-cash-register'
     model = Payoff
     field_id = 'payoff'
     caption_add = _("Add payoff")
@@ -99,19 +100,21 @@ class PayoffAddModify(XferAddEditor):
         XferAddEditor.fillresponse(self)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('payoff.delete_payoff')
 class PayoffDel(XferDelete):
     icon = "payoff.png"
+    short_icon = 'mdi:mdi-cash-register'
     model = Payoff
     field_id = 'payoff'
     caption = _("Delete payoff")
 
 
-@ActionsManage.affect_other(_('change'), 'images/edit.png')
+@ActionsManage.affect_other(_('change'), 'images/edit.png', short_icon='mdi:mdi-pencil-outline')
 @MenuManage.describ('')
 class SupportingThird(XferListEditor):
     icon = "diacamma.accounting/images/thirds.png"
+    short_icon = "mdi:mdi-account-cash-outline"
     model = Supporting
     field_id = 'supporting'
     caption = _("Select third")
@@ -172,13 +175,14 @@ class SupportingThird(XferListEditor):
         grid.add_action(self.request, SupportingThirdValid.get_action(_('select'), 'images/ok.png'),
                         modal=FORMTYPE_MODAL, close=CLOSE_YES, unique=SELECT_SINGLE, pos_act=0)
         self.actions = []
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 
 
 @MenuManage.describ('')
 class SupportingThirdValid(XferSave):
     redirect_to_show = False
     icon = "diacamma.accounting/images/thirds.png"
+    short_icon = "mdi:mdi-account-cash-outline"
     model = Supporting
     field_id = 'supporting'
     caption = _("Select third")
@@ -225,11 +229,12 @@ class SupportingPrint(XferPrintReporting):
         XferPrintReporting.fillresponse(self)
 
 
-@ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", condition=can_send_email)
+@ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", short_icon="mdi:mdi-email-outline", condition=can_send_email)
 @MenuManage.describ('')
 class PayableEmail(XferContainerAcknowledge):
     caption = _("Send by email")
     icon = "payments.png"
+    short_icon = "mdi:mdi-account-cash-outline"
     model = Supporting
     field_id = 'supporting'
 
@@ -332,7 +337,7 @@ parent.get('model').setEnabled(persitent_mode==%d);
             sel.description = selectors[1]
             dlg.add_component(sel)
             dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"OK": "YES"})
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
         else:
             persitent_mode = self.getparam("PRINT_PERSITENT_MODE", XferContainerPrint.PRINT_REGENERATE_CODE)
             if (persitent_mode != XferContainerPrint.PRINT_REGENERATE_CODE):
@@ -371,11 +376,12 @@ def add_payment_methods(xfer, supporting, payments):
         xfer.add_component(lbl)
 
 
-@ActionsManage.affect_show(_("Payment"), "diacamma.payoff/images/payments.png", condition=lambda xfer: xfer.item.payoff_have_payment() and (len(xfer.item.get_payment_method()) > 0))
+@ActionsManage.affect_show(_("Payment"), "diacamma.payoff/images/payments.png", short_icon = "mdi:mdi-account-cash-outline", condition=lambda xfer: xfer.item.payoff_have_payment() and (len(xfer.item.get_payment_method()) > 0))
 @MenuManage.describ('')
 class PayableShow(XferContainerCustom):
     caption = _("Payment")
     icon = "diacamma.payoff/images/payments.png"
+    short_icon = "mdi:mdi-account-cash-outline"
     model = Supporting
     field_id = 'supporting'
     readonly = True
@@ -395,4 +401,4 @@ class PayableShow(XferContainerCustom):
         self.add_component(img)
         self.fill_from_model(1, max_row, True, self.item.get_payment_fields())
         add_payment_methods(self, self.item, payments)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))

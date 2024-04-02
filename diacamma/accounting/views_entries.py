@@ -69,6 +69,7 @@ def add_fiscalyear_result(xfer, col, row, colspan, year, comp_name):
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of accounting entry for current fiscal year'),)
 class EntryAccountList(XferListEditor):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = '???'
     caption = _("Accounting entries")
@@ -201,10 +202,11 @@ class EntryAccountList(XferListEditor):
         add_fiscalyear_result(self, 0, 10, 3, self.item.year, 'result')
 
 
-@ActionsManage.affect_list(TITLE_SEARCH, "diacamma.accounting/images/entry.png", modal=FORMTYPE_NOMODAL, close=CLOSE_YES, condition=lambda xfer: xfer.url_text.endswith('AccountList'))
+@ActionsManage.affect_list(TITLE_SEARCH, "diacamma.accounting/images/entry.png", short_icon='mdi:mdi-text-search-variant', modal=FORMTYPE_NOMODAL, close=CLOSE_YES, condition=lambda xfer: xfer.url_text.endswith('AccountList'))
 @MenuManage.describ('accounting.change_entryaccount')
 class EntryAccountSearch(XferSavedCriteriaSearchEditor):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = '???'
     caption = _("Search accounting entry")
@@ -238,13 +240,14 @@ class EntryAccountSearch(XferSavedCriteriaSearchEditor):
         self.actions = []
         for act, opt in ActionsManage.get_actions(ActionsManage.ACTION_IDENT_LIST, self, key=action_list_sorted):
             self.add_action(act, **opt)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 
 
-@ActionsManage.affect_list(TITLE_LISTING, "images/print.png")
+@ActionsManage.affect_list(TITLE_LISTING, "images/print.png", short_icon='mdi:mdi-printer-pos-edit-outline')
 @MenuManage.describ('accounting.change_entryaccount')
 class EntryAccountListing(XferPrintListing):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = '???'
     caption = _("Listing accounting entry")
@@ -307,10 +310,11 @@ class EntryAccountListing(XferPrintListing):
         XferPrintListing.fillresponse(self)
 
 
-@ActionsManage.affect_list(_('Import'), "images/new.png")
+@ActionsManage.affect_list(_('Import'), "images/new.png", short_icon="mdi:mdi-upload-box-outline")
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountImport(ObjectImport):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     caption = _("Accounting entries import")
 
@@ -348,10 +352,11 @@ class EntryAccountImport(ObjectImport):
             self.add_component(grid)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, 'images/delete.png', unique=SELECT_MULTI, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
+@ActionsManage.affect_grid(TITLE_DELETE, 'images/delete.png', short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
 @MenuManage.describ('accounting.delete_entryaccount')
 class EntryAccountDel(XferDelete):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = '???'
     caption = _("Delete accounting entry")
@@ -364,10 +369,11 @@ class EntryAccountDel(XferDelete):
             XferDelete._search_model(self)
 
 
-@ActionsManage.affect_grid(_("Closed"), "images/ok.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': not hasattr(xfer.item, 'year') or ((xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2)))
+@ActionsManage.affect_grid(_("Closed"), "images/ok.png", short_icon="mdi:mdi-check", unique=SELECT_MULTI, condition=lambda xfer, gridname='': not hasattr(xfer.item, 'year') or ((xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2)))
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountClose(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("Close accounting entry")
@@ -390,10 +396,11 @@ class EntryAccountClose(XferContainerAcknowledge):
             self.redirect_action(EntryAccountOpenFromLine.get_action())
 
 
-@ActionsManage.affect_grid(_("Link/Unlink"), "images/left.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': not hasattr(xfer.item, 'year') or (xfer.item.year.status in [0, 1]))
+@ActionsManage.affect_grid(_("Link/Unlink"), "images/left.png", short_icon='mdi:mdi-link-variant', unique=SELECT_MULTI, condition=lambda xfer, gridname='': not hasattr(xfer.item, 'year') or (xfer.item.year.status in [0, 1]))
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountLink(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = '???'
     caption = _("Delete accounting entry")
@@ -420,10 +427,11 @@ class EntryAccountLink(XferContainerAcknowledge):
             AccountLink.create_link(self.items)
 
 
-@ActionsManage.affect_grid(_("Cost"), "images/edit.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': len(CostAccounting.objects.filter(status=0)) > 0)
+@ActionsManage.affect_grid(_("Cost"), "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': len(CostAccounting.objects.filter(status=0)) > 0)
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountCostAccounting(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     readonly = True
     field_id = '???'
@@ -461,7 +469,7 @@ class EntryAccountCostAccounting(XferContainerAcknowledge):
             sel.set_location(1, 2)
             dlg.add_component(sel)
             dlg.add_action(self.return_action(_('Ok'), 'images/ok.png'), params={"SAVE": "YES"})
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
         else:
             if cost_accounting_id == 0:
                 new_cost = None
@@ -474,10 +482,11 @@ class EntryAccountCostAccounting(XferContainerAcknowledge):
                         item.save()
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, 'images/edit.png', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, 'images/edit.png', short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountOpenFromLine(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("accounting entries")
@@ -506,6 +515,7 @@ class EntryAccountOpenFromLine(XferContainerAcknowledge):
 @MenuManage.describ('accounting.change_entryaccount')
 class EntryAccountShow(XferShowEditor):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("Show accounting entry")
@@ -519,10 +529,11 @@ class EntryAccountShow(XferShowEditor):
         XferShowEditor.clear_fields_in_params(self)
 
 
-@ActionsManage.affect_grid(TITLE_ADD, 'images/add.png', unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
+@ActionsManage.affect_grid(TITLE_ADD, 'images/add.png', short_icon='mdi mdi-pencil-plus-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountEdit(XferAddEditor):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     redirect_to_show = 'AfterSave'
@@ -539,21 +550,21 @@ class EntryAccountEdit(XferAddEditor):
         self.actions = []
         if self.no_change:
             if self.added:
-                self.add_action(self.return_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
-                self.add_action(EntryAccountClose.get_action(_("Closed"), "images/up.png"), close=CLOSE_YES, params={"REOPEN": "YES"})
+                self.add_action(self.return_action(TITLE_MODIFY, "images/ok.png", 'mdi:mdi-pencil-outline'), params={"SAVE": "YES"})
+                self.add_action(EntryAccountClose.get_action(_("Closed"), "images/up.png", 'mdi:mdi-check'), close=CLOSE_YES, params={"REOPEN": "YES"})
             if (self.item.link is None) and self.item.has_third and not self.item.has_cash:
-                self.add_action(EntryAccountCreateLinked.get_action(_('Payment'), "images/right.png"), close=CLOSE_YES)
-            self.add_action(EntryAccountReverse.get_action(_('Reverse'), 'images/edit.png'), close=CLOSE_YES)
-            self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png'))
+                self.add_action(EntryAccountCreateLinked.get_action(_('Payment'), "images/right.png", "mdi:mdi-checkbook"), close=CLOSE_YES)
+            self.add_action(EntryAccountReverse.get_action(_('Reverse'), 'images/edit.png', 'mdi:mdi-swap-vertical'), close=CLOSE_YES)
+            self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
         else:
             if (self.debit_rest < 0.0001) and (self.credit_rest < 0.0001) and (self.nb_lines > 0):
-                self.add_action(EntryAccountValidate.get_action(TITLE_OK, 'images/ok.png'))
+                self.add_action(EntryAccountValidate.get_action(TITLE_OK, 'images/ok.png', 'mdi:mdi-check'))
             elif self.added:
-                self.add_action(self.return_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
+                self.add_action(self.return_action(TITLE_MODIFY, "images/ok.png", 'mdi:mdi-check'), params={"SAVE": "YES"})
             if self.item.id is None:
-                self.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+                self.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
             else:
-                self.add_action(EntryAccountUnlock.get_action(TITLE_CANCEL, 'images/cancel.png'))
+                self.add_action(EntryAccountUnlock.get_action(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
 
 
 @MenuManage.describ('')
@@ -570,6 +581,7 @@ class EntryAccountUnlock(XferContainerAcknowledge):
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountAfterSave(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("Modify accounting entry")
@@ -584,6 +596,7 @@ class EntryAccountAfterSave(XferContainerAcknowledge):
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountValidate(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("Validate entry line of account")
@@ -613,6 +626,7 @@ class EntryAccountValidate(XferContainerAcknowledge):
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountReverse(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("Reverse entry lines of account")
@@ -629,6 +643,7 @@ class EntryAccountReverse(XferContainerAcknowledge):
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountCreateLinked(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("Add payment entry of account")
@@ -641,10 +656,11 @@ class EntryAccountCreateLinked(XferContainerAcknowledge):
                                                                     'num_cpt_txt': current_system_account().get_cash_begin()})
 
 
-@ActionsManage.affect_grid(_("Model"), "images/add.png", unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
+@ActionsManage.affect_grid(_("Model"), "images/add.png", short_icon='mdi mdi-pencil-plus-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountModelSelector(XferContainerAcknowledge):
     icon = "entryModel.png"
+    short_icon = "mdi:mdi-format-list-text"
     model = EntryAccount
     field_id = 'entryaccount'
     caption = _("Select model of entry")
@@ -672,7 +688,7 @@ class EntryAccountModelSelector(XferContainerAcknowledge):
             fact.description = _('factor')
             dlg.add_component(fact)
             dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"SAVE": "YES"})
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
         else:
             factor = self.getparam('factor', 1.0)
             model = ModelEntry.objects.get(id=self.getparam('model', 0))
@@ -688,10 +704,11 @@ class EntryAccountModelSelector(XferContainerAcknowledge):
             self.redirect_action(EntryAccountEdit.get_action(), params={"serial_entry": serial_entry})
 
 
-@ActionsManage.affect_other(TITLE_ADD, "images/add.png", close=CLOSE_YES)
+@ActionsManage.affect_other(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', close=CLOSE_YES)
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryLineAccountAdd(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryLineAccount
     field_id = 'entrylineaccount'
     caption = _("Save entry line of account")
@@ -706,10 +723,11 @@ class EntryLineAccountAdd(XferContainerAcknowledge):
         self.redirect_action(EntryAccountEdit.get_action(), params={"serial_entry": serial_entry})
 
 
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", unique=SELECT_SINGLE, close=CLOSE_YES)
+@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, close=CLOSE_YES)
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryLineAccountEdit(XferContainerCustom):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryLineAccount
     field_id = 'entrylineaccount'
     caption = _("Modify entry line of account")
@@ -732,10 +750,11 @@ class EntryLineAccountEdit(XferContainerCustom):
         self.add_action(EntryAccountEdit.get_action(TITLE_CANCEL, 'images/cancel.png'))
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_SINGLE, close=CLOSE_YES)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_SINGLE, close=CLOSE_YES)
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryLineAccountDel(XferContainerAcknowledge):
     icon = "entry.png"
+    short_icon = "mdi:mdi-checkbook"
     model = EntryLineAccount
     field_id = 'entrylineaccount'
     caption = _("Delete entry line of account")

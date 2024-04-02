@@ -49,13 +49,14 @@ from lucterios.CORE.views import ObjectMerge
 from diacamma.accounting.models import ChartsAccount, FiscalYear, EntryAccount
 from diacamma.accounting.views_entries import add_fiscalyear_result
 
-MenuManage.add_sub("bookkeeping", "financial", "diacamma.accounting/images/accounting.png", _("Bookkeeping"), _("Manage of Bookkeeping"), 30)
+MenuManage.add_sub("bookkeeping", "financial", "diacamma.accounting/images/accounting.png", _("Bookkeeping"), _("Manage of Bookkeeping"), 30, 'mdi:mdi-bank')
 
 
-@ActionsManage.affect_other(_("Charts of account"), "images/edit.png")
+@ActionsManage.affect_other(_("Charts of account"), "images/edit.png", short_icon="mdi:mdi-bank-transfer")
 @MenuManage.describ('accounting.change_chartsaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Editing and modifying of Charts of accounts for current fiscal year'))
 class ChartsAccountList(XferListEditor):
     icon = "account.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Charts of account")
@@ -105,11 +106,12 @@ class ChartsAccountList(XferListEditor):
                 self.add_component(lbl)
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", condition=lambda xfer, gridname='': xfer.item.year.status != 2)
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", condition=lambda xfer: xfer.item.year.status != 2)
+@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', condition=lambda xfer, gridname='': xfer.item.year.status != 2)
+@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', condition=lambda xfer: xfer.item.year.status != 2)
 @MenuManage.describ('accounting.add_chartsaccount')
 class ChartsAccountAddModify(XferAddEditor):
     icon = "account.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption_add = _("Add an account")
@@ -126,28 +128,31 @@ class ChartsAccountAddModify(XferAddEditor):
         return XferAddEditor.fill_simple_fields(self)
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.change_chartsaccount')
 class ChartsAccountShow(XferShowEditor):
     icon = "account.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Show an account")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.year.status != 2)
+@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.year.status != 2)
 @MenuManage.describ('accounting.delete_chartsaccount')
 class ChartsAccountDel(XferDelete):
     icon = "account.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Delete an account")
 
 
-@ActionsManage.affect_grid(_("Import"), 'images/right.png', unique=SELECT_NONE, condition=lambda xfer, gridname: (xfer.item.year.status != 2) and (xfer.item.year.last_fiscalyear is not None))
+@ActionsManage.affect_grid(_("Import"), 'images/right.png', short_icon="mdi:mdi-upload-box-outline", unique=SELECT_NONE, condition=lambda xfer, gridname: (xfer.item.year.status != 2) and (xfer.item.year.last_fiscalyear is not None))
 @MenuManage.describ('accounting.add_chartsaccount')
 class ChartsAccountImportFiscalYear(XferContainerAcknowledge):
     icon = "accountingYear.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Import charts accounts from last fiscal year")
@@ -158,10 +163,11 @@ class ChartsAccountImportFiscalYear(XferContainerAcknowledge):
             year.import_charts_accounts()
 
 
-@ActionsManage.affect_grid(_("Merge"), "images/clone.png", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.year.status != 2)
+@ActionsManage.affect_grid(_("Merge"), "images/clone.png", short_icon='mdi:mdi-set-merge', close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.item.year.status != 2)
 @MenuManage.describ('accounting.add_chartsaccount')
 class ChartsAccountMerge(ObjectMerge):
     icon = "account.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
 
@@ -181,10 +187,11 @@ class ChartsAccountMerge(ObjectMerge):
         ObjectMerge.fillresponse(self, 'chartsaccount')
 
 
-@ActionsManage.affect_grid(_("Initial"), 'images/add.png', close=CLOSE_NO, unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status != 2) and (signal_and_lock.Signal.call_signal("initial_account", None) > 0))
+@ActionsManage.affect_grid(_("Initial"), 'images/add.png', short_icon='mdi mdi-pencil-plus-outline', close=CLOSE_NO, unique=SELECT_NONE, condition=lambda xfer, gridname='': (xfer.item.year.status != 2) and (signal_and_lock.Signal.call_signal("initial_account", None) > 0))
 @MenuManage.describ('accounting.add_chartsaccount')
 class ChartsAccountInitial(XferContainerAcknowledge):
     icon = "account.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Add initial charts of account")
@@ -214,16 +221,17 @@ class ChartsAccountInitial(XferContainerAcknowledge):
                 sel.set_select(select_list)
                 sel.set_location(1, 1)
                 dlg.add_component(sel)
-                dlg.add_action(self.return_action(TITLE_OK, "images/ok.png"), close=CLOSE_YES)
-                dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+                dlg.add_action(self.return_action(TITLE_OK, "images/ok.png", short_icon='mdi:mdi-check'), close=CLOSE_YES)
+                dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
             else:
                 ChartsAccount.import_initial(FiscalYear.get_current(self.getparam('year')), account_item)
 
 
-@ActionsManage.affect_list(TITLE_LISTING, "images/print.png")
+@ActionsManage.affect_list(TITLE_LISTING, "images/print.png", short_icon='mdi:mdi-printer-pos-edit-outline')
 @MenuManage.describ('accounting.change_chartsaccount')
 class ChartsAccountListing(XferPrintListing):
     icon = "account.png"
+    short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Listing charts of account")
@@ -253,11 +261,12 @@ class ChartsAccountListing(XferPrintListing):
         XferPrintListing.fillresponse(self)
 
 
-@ActionsManage.affect_list(_('Last fiscal year'), 'images/edit.png',
+@ActionsManage.affect_list(_('Last fiscal year'), 'images/edit.png', short_icon='mdi:mdi-calendar-arrow-right',
                            condition=lambda xfer: (xfer.item.year.status == FiscalYear.STATUS_BUILDING) and (xfer.item.year.last_fiscalyear is not None) and xfer.item.year.has_no_lastyear_entry and (xfer.item.year.last_fiscalyear.status == FiscalYear.STATUS_FINISHED))
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearReportLastYear(XferContainerAcknowledge):
     icon = "accountingYear.png"
+    short_icon = "mdi:mdi-calendar-star-four-points"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Last fiscal year import")
@@ -272,10 +281,11 @@ class FiscalYearReportLastYear(XferContainerAcknowledge):
                 self.message(warning_text, XFER_DBOX_WARNING)
 
 
-@ActionsManage.affect_list(_('Begin'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == FiscalYear.STATUS_BUILDING, intop=True)
+@ActionsManage.affect_list(_('Begin'), 'images/ok.png', short_icon='mdi:mdi-check', condition=lambda xfer: xfer.item.year.status == FiscalYear.STATUS_BUILDING, intop=True)
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearBegin(XferContainerAcknowledge):
     icon = "accountingYear.png"
+    short_icon = "mdi:mdi-calendar-star-four-points"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption_add = _("Begin fiscal year")
@@ -285,10 +295,11 @@ class FiscalYearBegin(XferContainerAcknowledge):
         current_year.editor.run_begin(self)
 
 
-@ActionsManage.affect_list(_('Closing'), 'images/ok.png', condition=lambda xfer: xfer.item.year.status == FiscalYear.STATUS_RUNNING, intop=True)
+@ActionsManage.affect_list(_('Closing'), 'images/ok.png', short_icon='mdi:mdi-check', condition=lambda xfer: xfer.item.year.status == FiscalYear.STATUS_RUNNING, intop=True)
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearClose(XferContainerAcknowledge):
     icon = "accountingYear.png"
+    short_icon = "mdi:mdi-calendar-star-four-points"
     model = ChartsAccount
     field_id = 'chartsaccount'
     caption = _("Close fiscal year")
@@ -318,7 +329,7 @@ class FiscalYearClose(XferContainerAcknowledge):
             dlg.add_component(lab)
             signal_and_lock.Signal.call_signal("finalize_year", dlg)
             dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), modal=FORMTYPE_MODAL, close=CLOSE_YES, params={'CONFIRME': 'YES'})
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png'))
+            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
         else:
             EntryAccount.clear_ghost()
             signal_and_lock.Signal.call_signal("finalize_year", self)
