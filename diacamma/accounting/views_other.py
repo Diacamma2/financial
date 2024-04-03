@@ -21,7 +21,7 @@ from diacamma.accounting.views_reports import CostAccountingIncomeStatement
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of costs accounting'))
 class CostAccountingList(XferListEditor):
     icon = "costAccounting.png"
-    short_icon = "mdi:mdi-home-analytics"
+    short_icon = "mdi:mdi-chart-box"
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Costs accounting")
@@ -59,7 +59,7 @@ class CostAccountingList(XferListEditor):
 @MenuManage.describ('accounting.add_fiscalyear')
 class CostAccountingReportByDate(XferContainerAcknowledge):
     icon = "costAccounting.png"
-    short_icon = "mdi:mdi-home-analytics"
+    short_icon = "mdi:mdi-chart-box"
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Print by date")
@@ -141,7 +141,7 @@ class CostAccountingClose(XferContainerAcknowledge):
 @MenuManage.describ('accounting.add_entryaccount')
 class CostAccountingAddModify(XferAddEditor):
     icon = "costAccounting.png"
-    short_icon = "mdi:mdi-home-analytics"
+    short_icon = "mdi:mdi-chart-box"
     model = CostAccounting
     field_id = 'costaccounting'
     caption_add = _("Add cost accounting")
@@ -159,7 +159,7 @@ class CostAccountingAddModify(XferAddEditor):
 @MenuManage.describ('accounting.delete_entryaccount')
 class CostAccountingDel(XferDelete):
     icon = "costAccounting.png"
-    short_icon = "mdi:mdi-home-analytics"
+    short_icon = "mdi:mdi-chart-box"
     model = CostAccounting
     field_id = 'costaccounting'
     caption = _("Delete cost accounting")

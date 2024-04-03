@@ -56,8 +56,9 @@ def fill_params(xfer, param_lists=None, is_mini=False):
     btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png'), close=CLOSE_NO, params={'params': param_lists})
     xfer.add_component(btn)
 
+MenuManage.add_sub("invoice.conf", "core.extensions", "", _("Invoice"), "", 5, 'mdi:mdi-invoice-outline')
 
-@MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'financial.conf', _('Management of parameters and financial configuration of invoice'))
+@MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'invoice.conf', _('Management of parameters and financial configuration of invoice'))
 class InvoiceConfFinancial(XferListEditor):
     icon = "invoice_conf.png"
     short_icon = "mdi:mdi-credit-card-settings-outline"
@@ -73,7 +74,7 @@ class InvoiceConfFinancial(XferListEditor):
         self.new_tab(_('VAT'))
 
 
-@MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'financial.conf', _('Management of commercial configuration of invoice'))
+@MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'invoice.conf', _('Management of commercial configuration of invoice'))
 class InvoiceConfCommercial(XferListEditor):
     icon = "invoice_conf.png"
     short_icon = "mdi:mdi-credit-card-settings-outline"
@@ -328,7 +329,7 @@ class CategoryBillDefault(XferContainerAcknowledge):
         self.item.change_has_default()
 
 
-@MenuManage.describ('contacts.add_article', FORMTYPE_MODAL, 'financial.conf', _('Tool to import articles from CSV file.'))
+@MenuManage.describ('contacts.add_article', FORMTYPE_MODAL, 'invoice.conf', _('Tool to import articles from CSV file.'))
 class ArticleImport(ObjectImport):
     caption = _("Article import")
     icon = "invoice_conf.png"
