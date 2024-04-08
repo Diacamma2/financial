@@ -509,6 +509,7 @@ class BillToBill(XferContainerAcknowledge):
             icon = XferCompImage('img')
             icon.set_location(0, 0, 1, 6)
             icon.set_value(self.icon_path("images/confirm.png"))
+            icon.set_short_icon(self.short_icon)
             dlg.add_component(icon)
             lbl = XferCompLabelForm('lb_title')
             lbl.set_value_as_headername(_("Do you want convert '%s' to bill?") % self.item)
