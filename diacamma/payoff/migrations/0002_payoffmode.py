@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='payoff',
             name='mode',
-            field=models.IntegerField(choices=[(0, 'cash'), (1, 'cheque'), (2, 'transfer'), (3, 'crédit card'), (4, 'other'), (5, 'levy'), (6, 'internal')], db_index=True, default=0, verbose_name='mode'),
+            field=models.IntegerField(choices=[(0, 'cash'), (1, 'cheque'), (2, 'transfer'), (3, 'credit card'), (4, 'other'), (5, 'levy'), (6, 'internal')], db_index=True, default=0, verbose_name='mode'),
         ),
     ]
