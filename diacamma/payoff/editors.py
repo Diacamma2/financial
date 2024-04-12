@@ -198,7 +198,7 @@ class PayoffEditor(LucteriosEditor):
                     xfer.change_to_readonly(prefix + "amount")
                 return
 
-    def _edit_bank_and_fee(self, xfer, prefix, supporting_list, amount_max, currency_decimal):
+    def _edit_bank_and_fee(self, xfer, prefix, show_payer, amount_max, currency_decimal):
         fee_code = ''
         if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
             xfer.remove_component(prefix + "bank_account")
@@ -212,7 +212,7 @@ class PayoffEditor(LucteriosEditor):
                     fee_code = bank_account.fee_account_code
                 except BankAccount.DoesNotExist:
                     pass
-        if not supporting_list[0].is_revenu or (self.item.mode in (Payoff.MODE_INTERNAL, )):
+        if not show_payer or (self.item.mode in (Payoff.MODE_INTERNAL, )):
             xfer.remove_component(prefix + "payer")
         if fee_code == '':
             xfer.remove_component(prefix + "bank_fee")
@@ -298,6 +298,7 @@ class PayoffEditor(LucteriosEditor):
         amount = xfer.get_components(prefix + "amount")
         if self.item.id is None:
             amount.value = min(max(amount_min, amount_sum), amount_max) if abs(amount_sum) > 1e-3 else amount_sum
+            xfer.get_components(prefix + "reference").value = xfer.getparam(prefix + 'reference', '')
             xfer.get_components(prefix + "payer").value = xfer.getparam(prefix + 'payer', str(supporting_list[0].third))
             xfer.get_components(prefix + "date").value = xfer.getparam(prefix + 'date', supporting_list[0].get_final_child().default_date())
         else:
@@ -311,7 +312,8 @@ class PayoffEditor(LucteriosEditor):
             mode.select_list = mode.select_list[:-1]
         elif self.item.mode == Payoff.MODE_INTERNAL:
             self._edit_internal_payoff(xfer, prefix, supporting_list[0].get_final_child(), linked_supportings, amount, col)
-        self._edit_bank_and_fee(xfer, prefix, supporting_list, amount_max, currency_decimal)
+        show_payer = getattr(self.item, 'show_payer', supporting_list[0].is_revenu)
+        self._edit_bank_and_fee(xfer, prefix, show_payer, amount_max, currency_decimal)
 
 
 class DepositSlipEditor(LucteriosEditor):

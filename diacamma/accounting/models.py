@@ -827,7 +827,7 @@ class ChartsAccount(LucteriosModel):
 
     @classmethod
     def get_account(cls, code, year):
-        accounts = ChartsAccount.objects.filter(year=year, code=code)
+        accounts = ChartsAccount.objects.filter(year=year if year is not None else FiscalYear.get_current(), code=code)
         if len(accounts) == 0:
             return None
         else:
@@ -1740,13 +1740,14 @@ class ModelLineEntry(LucteriosModel):
 
     debit = LucteriosVirtualField(verbose_name=_('debit'), compute_from='get_debit', format_string=lambda: format_with_devise(0))
     credit = LucteriosVirtualField(verbose_name=_('credit'), compute_from='get_credit', format_string=lambda: format_with_devise(0))
+    code_txt = LucteriosVirtualField(verbose_name=_('code'), compute_from='get_code_txt')
 
     def get_auditlog_object(self):
         return self.model.get_final_child()
 
     @classmethod
     def get_default_fields(cls):
-        return ['code', 'third', 'debit', 'credit']
+        return ['code_txt', 'third', 'debit', 'credit']
 
     @classmethod
     def get_edit_fields(cls):
@@ -1772,6 +1773,13 @@ class ModelLineEntry(LucteriosModel):
             return max((0, self.credit_debit_way() * self.amount))
         except LucteriosException:
             return 0.0
+
+    def get_code_txt(self):
+        account = ChartsAccount.get_account(self.code, None)
+        if account is None:
+            return self.code
+        else:
+            return str(account)
 
     def set_montant(self, debit_val, credit_val):
         if debit_val > 0:

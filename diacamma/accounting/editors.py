@@ -541,10 +541,29 @@ class ModelLineEntryEditor(EntryLineAccountEditor):
     def edit(self, xfer):
         xfer.params['model'] = xfer.getparam('modelentry', 0)
         code = xfer.get_components('code')
-        code.mask = current_system_account().get_general_mask()
-        code.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        if match(current_system_account().get_third_mask(), self.item.code) is not None:
-            edit_third_for_line(xfer, 1, xfer.get_max_row() + 1, self.item.code, None, False)
+        xfer.remove_component('code')
+
+        codetxt = xfer.getparam('code_txt', xfer.item.code)
+        code_txt = XferCompEdit('code_txt')
+        code_txt.set_location(code.col, code.row)
+        code_txt.set_value(codetxt)
+        code_txt.set_needed(True)
+        code_txt.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        code_txt.description = _('search code')
+        xfer.add_component(code_txt)
+        sel_val = []
+        if codetxt != '':
+            year = FiscalYear.get_current()
+            for account in year.chartsaccount_set.all().filter(code__startswith=codetxt).order_by('code'):
+                sel_val.append((account.code, str(account)))
+        sel = XferCompSelect('code')
+        sel.set_location(code.col, code.row + 1)
+        sel.set_select(sel_val)
+        sel.set_value(xfer.item.code)
+        sel.description = code.description
+        xfer.add_component(sel)
+        if match(current_system_account().get_third_mask(), sel.value) is not None:
+            edit_third_for_line(xfer, 1, xfer.get_max_row() + 1, sel.value, None, False)
         self.edit_creditdebit_for_line(xfer, 1, xfer.get_max_row() + 1)
 
     def before_save(self, xfer):

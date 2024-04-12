@@ -109,14 +109,26 @@ def get_account_total(query, account_codethird, sign_value=None):
     return total
 
 
-def get_budget_total(query, account_codethird):
+def get_budget_total(query, account_codethird, sign_value=None):
     total = 0
     account_code_and_third = account_codethird.split('#')
     extra_filter = Q(code=account_code_and_third[0])
     for data_line in Budget.objects.filter(query & extra_filter).order_by('code').values('code').annotate(data_sum=Sum('amount')):
         if abs(data_line['data_sum']) > 0.001:
-            amount = data_line['data_sum']
-            total += amount
+            amount = None
+            if sign_value is None:
+                amount = data_line['data_sum']
+            elif isinstance(sign_value, bool):
+                if sign_value:
+                    amount = credit_debit_way(data_line) * data_line['data_sum']
+                else:
+                    amount = -1 * credit_debit_way(data_line) * data_line['data_sum']
+            else:
+                amount = sign_value * credit_debit_way(data_line) * data_line['data_sum']
+                if (amount < 0):
+                    amount = None
+            if amount is not None:
+                total += amount
     return total
 
 
@@ -143,7 +155,7 @@ def add_account_without_amount(dict_account, query1, query2, query_budget_list, 
             value2 = get_account_total(query2, account.code, sign_value)
         if query_budget_list is not None:
             for query_budget_item in query_budget_list:
-                total_b.append(get_budget_total(query_budget_item, account.code))
+                total_b.append(get_budget_total(query_budget_item, account.code, sign_value))
 
         if (value2 != 0) or ((total_b != []) and (total_b != total3_initial)):
             dict_account[account.code] = [str(account), None, None] + total3_initial

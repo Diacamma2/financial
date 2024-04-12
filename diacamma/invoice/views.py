@@ -566,6 +566,7 @@ class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
         lbl.set_location(1, 1, 2)
         dlg.add_component(lbl)
         if abs(self.item.get_total_rest_topay()) > 0.0001:
+            dlg.item.show_payer = True
             check_payoff = XferCompCheck('withpayoff')
             check_payoff.set_value(withpayoff)
             check_payoff.set_location(1, 2)

@@ -1018,18 +1018,23 @@ class ModelTest(LucteriosTest):
         self.calljson('/diacamma.accounting/modelLineEntryAddModify',
                       {'modelentry': '1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'modelLineEntryAddModify')
-        self.assert_count_equal('', 4)
-        self.assert_json_equal('EDIT', 'code', '')
+        self.assert_count_equal('', 5)
+        self.assert_json_equal('EDIT', 'code_txt', '')
+        self.assert_json_equal('SELECT', 'code', '')
+        self.assert_select_equal('code', 0)
         self.assert_json_equal('FLOAT', 'credit_val', '0.00')
         self.assert_json_equal('FLOAT', 'debit_val', '0.00')
 
         self.factory.xfer = ModelLineEntryAddModify()
         self.calljson('/diacamma.accounting/modelLineEntryAddModify',
-                      {'modelentry': '1', 'code': '411'}, False)
+                      {'modelentry': '1', 'code_txt': '411'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'modelLineEntryAddModify')
-        self.assert_count_equal('', 6)
-        self.assert_json_equal('EDIT', 'code', '411')
+        self.assert_count_equal('', 7)
+        self.assert_json_equal('EDIT', 'code_txt', '411')
+        self.assert_json_equal('SELECT', 'code', '411')
+        self.assert_select_equal('code', {'411': '[411] 411'})
         self.assert_json_equal('SELECT', 'third', '0')
+        self.assert_select_equal('third', 6)
         self.assert_json_equal('FLOAT', 'credit_val', '0.00')
         self.assert_json_equal('FLOAT', 'debit_val', '0.00')
         self.assert_json_equal('BUTTON', 'new-third', '')
@@ -1037,7 +1042,7 @@ class ModelTest(LucteriosTest):
 
         self.factory.xfer = ModelLineEntryAddModify()
         self.calljson('/diacamma.accounting/modelLineEntryAddModify',
-                      {'SAVE': 'YES', 'model': '1', 'modelentry': '1', 'code': '411', 'third': '3', 'credit_val': '19.37', 'debit_val': '0.0'}, False)
+                      {'SAVE': 'YES', 'model': '1', 'modelentry': '1', 'code_txt': '411', 'code': '411', 'third': '3', 'credit_val': '19.37', 'debit_val': '0.0'}, False)
 
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'modelLineEntryAddModify')
 
@@ -1061,7 +1066,7 @@ class ModelTest(LucteriosTest):
         self.assert_json_equal('LABELFORM', 'journal', "Achats")
         self.assert_json_equal('LABELFORM', 'designation', "foo")
         self.assert_json_equal('LABELFORM', 'total', 19.37)
-        self.assert_grid_equal('modellineentry', {'code': 'code', 'third': 'tiers', 'debit': 'débit', 'credit': 'crédit'}, 1)
+        self.assert_grid_equal('modellineentry', {'code_txt': 'code', 'third': 'tiers', 'debit': 'débit', 'credit': 'crédit'}, 1)
         self.assert_json_equal('', '#modellineentry/headers/@2/@0', 'debit')
         self.assert_json_equal('', '#modellineentry/headers/@2/@2', "C2EUR")
         self.assert_json_equal('', '#modellineentry/headers/@2/@4', "{[p align='right']}%s{[/p]};;")
@@ -1069,7 +1074,7 @@ class ModelTest(LucteriosTest):
         self.assert_json_equal('', '#modellineentry/headers/@3/@2', "C2EUR")
         self.assert_json_equal('', '#modellineentry/headers/@3/@4', "{[p align='right']}%s{[/p]};;")
 
-        self.assert_json_equal('', 'modellineentry/@0/code', "411")
+        self.assert_json_equal('', 'modellineentry/@0/code_txt', "[411] 411")
         self.assert_json_equal('', 'modellineentry/@0/third', "Luke Lucky")
         self.assert_json_equal('', 'modellineentry/@0/debit', 0)
         self.assert_json_equal('', 'modellineentry/@0/credit', 19.37)
