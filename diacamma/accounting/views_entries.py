@@ -749,8 +749,8 @@ class EntryLineAccountEdit(XferContainerCustom):
         self.fill_from_model(1, 1, True, ['account'])
         self.item.editor.edit_creditdebit_for_line(self, 1, 2)
         self.item.editor.edit_extra_for_line(self, 1, 4, False)
-        self.add_action(EntryLineAccountAdd.get_action(TITLE_OK, 'images/ok.png'), params={"num_cpt": self.item.account.id})
-        self.add_action(EntryAccountEdit.get_action(TITLE_CANCEL, 'images/cancel.png'))
+        self.add_action(EntryLineAccountAdd.get_action(TITLE_OK, 'images/ok.png', 'mdi:mdi-pencil-outline'), params={"num_cpt": self.item.account.id})
+        self.add_action(EntryAccountEdit.get_action(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
 
 
 @ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_SINGLE, close=CLOSE_YES)

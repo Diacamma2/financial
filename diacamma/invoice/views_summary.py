@@ -89,9 +89,9 @@ class CurrentBill(XferListEditor):
     def fillresponse(self):
         XferListEditor.fillresponse(self)
         bill_grid = self.change_grid_action()
-        bill_grid.add_action(self.request, CurrentBillPrint.get_action(_("Print"), "images/print.png"), unique=SELECT_SINGLE, close=CLOSE_NO)
+        bill_grid.add_action(self.request, CurrentBillPrint.get_action(_("Print"), "images/print.png", 'mdi:mdi-printer-pos-edit-outline'), unique=SELECT_SINGLE, close=CLOSE_NO)
         if (len(PaymentMethod.objects.all()) > 0):
-            bill_grid.add_action(self.request, CurrentPayableShow.get_action(_("Payment"), "diacamma.payoff/images/payments.png"),
+            bill_grid.add_action(self.request, CurrentPayableShow.get_action(_("Payment"), "diacamma.payoff/images/payments.png", 'mdi:mdi-account-cash-outline'),
                                  unique=SELECT_SINGLE, close=CLOSE_NO, params={'item_name': self.field_id})
 
 
@@ -344,7 +344,7 @@ class CurrentCart(XferContainerCustom):
             self.add_component(lbl)
             btn = XferCompButton('add_article_%d' % article.id)
             btn.set_location(4, row + 2, 4, 2)
-            btn.set_action(self.request, CurrentCartAddArticle.get_action(_("add in cart"), "images/add.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'article': article.id, "bill": self.item.id})
+            btn.set_action(self.request, CurrentCartAddArticle.get_action(_("add in cart"), "images/add.png", 'mdi:mdi-pencil-plus-outline'), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'article': article.id, "bill": self.item.id})
             self.add_component(btn)
 
     def search_articles(self):
@@ -417,7 +417,7 @@ class CurrentCart(XferContainerCustom):
         self.add_component(lbl)
         btn = XferCompButton('catalog')
         btn.set_location(1, 2, 4)
-        btn.set_action(self.request, CurrentCartCatalog.get_action(_("Print full catalog"), "images/print.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO)
+        btn.set_action(self.request, CurrentCartCatalog.get_action(_("Print full catalog"), "images/print.png", 'mdi:mdi-printer-pos-edit-outline'), modal=FORMTYPE_MODAL, close=CLOSE_NO)
         self.add_component(btn)
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 
@@ -500,7 +500,7 @@ class CurrentCartShow(BillShow):
             detail.add_action(self.request, CurrentCartDelDetail.get_action(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline'), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE)
         self.actions = []
         if self.item.status == Bill.STATUS_BUILDING:
-            self.add_action(CurrentCartValid.get_action(Bill.transitionname__valid, "images/transition.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={"TRANSITION": "valid"})
+            self.add_action(CurrentCartValid.get_action(Bill.transitionname__valid, "images/transition.png", 'mdi:mdi-share'), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={"TRANSITION": "valid"})
         self.add_action(CurrentCart.get_action(caption=_("Return")), modal=FORMTYPE_MODAL, close=CLOSE_YES)
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
 

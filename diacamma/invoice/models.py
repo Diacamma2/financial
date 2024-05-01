@@ -804,7 +804,7 @@ class Bill(Supporting):
     bill_type = models.IntegerField(verbose_name=_('bill type'), choices=LIST_BILLTYPES, null=False, default=BILLTYPE_QUOTATION, db_index=True)
     num = models.IntegerField(verbose_name=_('numeros'), null=True)
     date = models.DateField(verbose_name=_('date'), null=False)
-    comment = models.TextField(_('comment'), null=False, default="")
+    comment = models.TextField(_('comment'), blank=True, default="")
     status = FSMIntegerField(verbose_name=_('status'), choices=LIST_STATUS, null=False, default=STATUS_BUILDING, db_index=True)
     entry = models.ForeignKey(EntryAccount, verbose_name=_('entry'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
     cost_accounting = models.ForeignKey(CostAccounting, verbose_name=_('cost accounting'), null=True, default=None, db_index=True, on_delete=models.PROTECT)

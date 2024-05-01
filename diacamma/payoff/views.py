@@ -172,7 +172,7 @@ class SupportingThird(XferListEditor):
                     params = {}
                 params['REDIRECT_AFTER_SAVE'] = SupportingThirdValid.url_text
                 grid.actions[action_idx] = (grid.actions[action_idx][0], grid.actions[action_idx][1], CLOSE_YES, grid.actions[action_idx][3], params)
-        grid.add_action(self.request, SupportingThirdValid.get_action(_('select'), 'images/ok.png'),
+        grid.add_action(self.request, SupportingThirdValid.get_action(_('select'), 'images/ok.png', 'mdi:mdi-check'),
                         modal=FORMTYPE_MODAL, close=CLOSE_YES, unique=SELECT_SINGLE, pos_act=0)
         self.actions = []
         self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
@@ -337,7 +337,7 @@ parent.get('model').setEnabled(persitent_mode==%d);
             sel.set_value(self.item.get_default_print_model())
             sel.description = selectors[1]
             dlg.add_component(sel)
-            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"OK": "YES"})
+            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png', 'mdi:mdi-check'), params={"OK": "YES"})
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
         else:
             persitent_mode = self.getparam("PRINT_PERSITENT_MODE", XferContainerPrint.PRINT_REGENERATE_CODE)

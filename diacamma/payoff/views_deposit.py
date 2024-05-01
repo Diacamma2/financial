@@ -314,7 +314,7 @@ class DepositDetailAddModify(XferContainerCustom):
             grid.set_value(payoffid, 'reference', payoff['reference'])
         grid.set_location(0, 3, 4)
 
-        grid.add_action(self.request, DepositDetailSave.get_action(_("select"), "images/ok.png"), close=CLOSE_YES, unique=SELECT_MULTI)
+        grid.add_action(self.request, DepositDetailSave.get_action(_("select"), "images/ok.png", 'mdi:mdi-check'), close=CLOSE_YES, unique=SELECT_MULTI)
         self.add_component(grid)
 
         self.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))

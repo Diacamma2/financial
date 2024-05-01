@@ -156,7 +156,7 @@ class StorageSheetTransition(XferTransition):
         sel.set_location(1, 2)
         sel.description = _('target area')
         dlg.add_component(sel)
-        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
+        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png', 'mdi:mdi-check'), params={"CONFIRME": "YES"})
         dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
 
     def fill_confirm(self, transition, trans):
@@ -351,7 +351,7 @@ class StorageSituation(XferListEditor):
         self.add_component(lbl)
 
         btn = XferCompButton("refreshSituation")
-        btn.set_action(self.request, self.return_action("", "images/refresh.png"), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        btn.set_action(self.request, self.return_action("", "images/refresh.png", "mdi:mdi-refresh"), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         btn.set_is_mini(True)
         btn.set_location(0, row_id + 2)
         self.add_component(btn)

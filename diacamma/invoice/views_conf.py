@@ -53,7 +53,7 @@ def fill_params(xfer, param_lists=None, is_mini=False):
     btn = XferCompButton('editparam')
     btn.set_is_mini(is_mini)
     btn.set_location(1, xfer.get_max_row() + 1, 2, 1)
-    btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png'), close=CLOSE_NO, params={'params': param_lists})
+    btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png', 'mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
     xfer.add_component(btn)
 
 MenuManage.add_sub("invoice.conf", "core.extensions", "", _("Invoice"), "", 5, 'mdi:mdi-invoice-outline')
@@ -90,7 +90,7 @@ class InvoiceConfCommercial(XferListEditor):
         btn = XferCompButton('editparam')
         btn.set_is_mini(False)
         btn.set_location(3, row, 2, 2)
-        btn.set_action(self.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png'), close=CLOSE_NO, params={'params': param_lists})
+        btn.set_action(self.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png', 'mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
         self.add_component(btn)
         self.params['basic_model'] = 'invoice.Article'
 
@@ -103,7 +103,7 @@ class InvoiceConfCommercial(XferListEditor):
         btn = XferCompButton('editcartparam')
         btn.set_is_mini(False)
         btn.set_location(1, row + 10)
-        btn.set_action(self.request, ParamEditCart.get_action(TITLE_MODIFY, 'images/edit.png'), close=CLOSE_NO, params={'params': param_lists})
+        btn.set_action(self.request, ParamEditCart.get_action(TITLE_MODIFY, 'images/edit.png', 'mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
         self.add_component(btn)
 
     def fillresponse_header(self):
@@ -227,7 +227,7 @@ class StorageAreaAddModify(XferAddEditor):
         btn = XferCompButton('change_contact')
         btn.set_is_mini(True)
         btn.set_location(comp_designation.col + 1, comp_designation.row)
-        btn.set_action(self.request, StorageAreaChangeContact.get_action(_("change"), "images/edit.png"), close=CLOSE_NO)
+        btn.set_action(self.request, StorageAreaChangeContact.get_action(_("change"), "images/edit.png", 'mdi:mdi-pencil-outline'), close=CLOSE_NO)
         self.add_component(btn)
         self.move_components("designation", 0, 1)
 

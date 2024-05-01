@@ -27,7 +27,7 @@ def fill_params(xfer, is_mini=False):
     btn = XferCompButton('editparam')
     btn.set_is_mini(is_mini)
     btn.set_location(1, xfer.get_max_row() + 1, 2, 1)
-    btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png'), close=CLOSE_NO, params={'params': param_lists})
+    btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png', 'mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
     xfer.add_component(btn)
 
 

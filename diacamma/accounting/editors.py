@@ -323,7 +323,7 @@ class EntryAccountEditor(LucteriosEditor):
                 link_grid_lines.add_action(xfer.request, ActionsManage.get_action_url('accounting.EntryAccount', 'OpenFromLine', xfer), unique=SELECT_SINGLE, close=CLOSE_YES, params={'field_id': 'entryaccount_link', 'journal': ''})
                 xfer.add_component(link_grid_lines)
         if self.added:
-            xfer.add_action(xfer.return_action(TITLE_MODIFY, "images/ok.png"), params={"SAVE": "YES"})
+            xfer.add_action(xfer.return_action(TITLE_MODIFY, "images/ok.png", 'mdi:mdi-check'), params={"SAVE": "YES"})
 
     def _entryline_editor(self, xfer, serial_vals, debit_rest, credit_rest):
         last_row = xfer.get_max_row() + 5
