@@ -30,8 +30,9 @@ from lucterios.CORE.parameters import Params
 from lucterios.documents.views import DocumentSearch
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, fill_entries_fr, set_accounting_system, add_entry,\
-    create_account, check_pdfreport
-from diacamma.accounting.views_accounts import ChartsAccountList, ChartsAccountDel, ChartsAccountShow, ChartsAccountAddModify, ChartsAccountListing, ChartsAccountImportFiscalYear
+    create_account, check_pdfreport, create_year
+from diacamma.accounting.views_accounts import ChartsAccountList, ChartsAccountDel, ChartsAccountShow, ChartsAccountAddModify, ChartsAccountListing, ChartsAccountImportFiscalYear,\
+    ChartsAccountInitial
 from diacamma.accounting.views_accounts import FiscalYearBegin, FiscalYearClose, FiscalYearReportLastYear
 from diacamma.accounting.views_entries import EntryAccountEdit, EntryAccountList
 from diacamma.accounting.models import FiscalYear
@@ -521,6 +522,36 @@ class FiscalYearWorkflowTest(PaymentTest):
         create_account(['740'], 3)  # subvention (revenu) N°19
         add_entry(1, 3, '2015-03-10', 'Subvention 1', '-1|19|0|35.500000|0|0|None|\n-2|18|0|-35.500000|0|0|None|', True)  # 23 24
         add_entry(1, 3, '2015-04-15', 'Subvention 2', '-1|19|0|99.950000|0|0|None|\n-2|18|0|-99.950000|0|0|None|', True)  # 25 26
+
+    def test_import_init(self):
+        last_year = FiscalYear.objects.get(id=1)
+        year = create_year(0, year=last_year.begin.year + 1)
+        self.assertEqual(FiscalYear.objects.get(id=year.id).status, 0)
+
+        self.factory.xfer = ChartsAccountList()
+        self.calljson('/diacamma.accounting/chartsAccountList',
+                      {'year': year.id, 'type_of_account': '-1'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
+        self.assert_count_equal('', 8)
+        self.assert_count_equal('chartsaccount', 0)
+
+        self.factory.xfer = ChartsAccountInitial()
+        self.calljson('/diacamma.accounting/chartsAccountInitial',
+                      {'year': year.id, 'type_of_account': '-1'}, False)
+        self.assert_observer('core.dialogbox', 'diacamma.accounting', 'chartsAccountInitial')
+        self.assert_json_equal('', 'text', "Voulez-vous importer des comptes initiaux ?")
+
+        self.factory.xfer = ChartsAccountInitial()
+        self.calljson('/diacamma.accounting/chartsAccountInitial',
+                      {'year': year.id, 'type_of_account': '-1', "CONFIRME": "YES"}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.accounting', 'chartsAccountInitial')
+
+        self.factory.xfer = ChartsAccountList()
+        self.calljson('/diacamma.accounting/chartsAccountList',
+                      {'year': year.id, 'type_of_account': '-1'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
+        self.assert_count_equal('', 7)
+        self.assert_count_equal('chartsaccount', 37)
 
     def test_begin_simple(self):
         self.assertEqual(FiscalYear.objects.get(id=1).status, 0)
