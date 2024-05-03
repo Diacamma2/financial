@@ -867,7 +867,7 @@ class ChartsAccount(LucteriosModel):
     def import_initial(cls, year, account_item):
         if isfile(account_item):
             with open(account_item, 'r', encoding='UTF-8') as fcsv:
-                csv_read = DictReader(fcsv, delimiter=';', quotechar='', quoting=QUOTE_NONE)
+                csv_read = DictReader(fcsv, delimiter=';', quoting=QUOTE_NONE)
                 for row in csv_read:
                     new_code = correct_accounting_code(row['code'])
                     if cls.get_account(new_code, year) is None:
