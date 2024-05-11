@@ -250,7 +250,7 @@ class CurrentCart(XferContainerCustom):
         self.add_component(btn)
         btn = XferCompButton('cart_del_btn')
         btn.set_location(5, row + 3, 0)
-        btn.set_action(self.request, CurrentCartDel.get_action(), close=CLOSE_NO, params={'bill': self.item.id})
+        btn.set_action(self.request, CurrentCartDel.get_action(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline'), close=CLOSE_NO, params={'bill': self.item.id})
         self.add_component(btn)
         lbl = XferCompLabelForm('cart_sep')
         lbl.set_location(0, row + 4, 10)
@@ -380,7 +380,7 @@ class CurrentCart(XferContainerCustom):
         btn = XferCompButton('before')
         btn.set_is_mini(True)
         btn.set_location(0, row)
-        btn.set_action(self.request, self.return_action("<", "images/left.png"), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'num_page': max(1, num_page - 1)})
+        btn.set_action(self.request, self.return_action("<", "images/left.png", 'mdi:mdi-page-previous-outline'), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'num_page': max(1, num_page - 1)})
         self.add_component(btn)
         ed_page = XferCompFloat('num_page', 1, page_max, 0)
         ed_page.set_location(1, row)
@@ -395,7 +395,7 @@ class CurrentCart(XferContainerCustom):
         btn = XferCompButton('after')
         btn.set_is_mini(True)
         btn.set_location(3, row)
-        btn.set_action(self.request, self.return_action(">", "images/right.png"), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'num_page': min(num_page + 1, page_max)})
+        btn.set_action(self.request, self.return_action(">", "images/right.png", 'mdi:mdi-page-next-outline'), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'num_page': min(num_page + 1, page_max)})
         self.add_component(btn)
         for article in self.articles[record_min: record_max]:
             row += 5
