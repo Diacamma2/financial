@@ -224,6 +224,7 @@ class PayoffEditor(LucteriosEditor):
 
     def _edit_bank_and_mode(self, xfer, prefix):
         mode = xfer.get_components(prefix + "mode")
+        mode.value = int(mode.value)
         banks = xfer.get_components(prefix + "bank_account")
         if banks.select_list[0][0] == 0:
             del banks.select_list[0]
@@ -236,7 +237,7 @@ class PayoffEditor(LucteriosEditor):
             del mode.select_list[6]
             xfer.get_components(prefix + "mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             if self.item.id is None:
-                self.item.mode = xfer.getparam(prefix + 'mode', Preference.get_value("payoff-mode", xfer.request.user))
+                self.item.mode = int(xfer.getparam(prefix + 'mode', Preference.get_value("payoff-mode", xfer.request.user)))
                 xfer.get_components(prefix + "mode").value = self.item.mode
                 xfer.get_components(prefix + "bank_account").set_value(xfer.getparam(prefix + 'bank_account', Preference.get_value("payoff-bank_account", xfer.request.user)))  # change order of payoff mode
         return mode
