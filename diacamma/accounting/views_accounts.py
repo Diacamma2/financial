@@ -69,12 +69,14 @@ class ChartsAccountList(XferListEditor):
         self.fill_from_model(0, 1, False, ['year', 'type_of_account'])
         comp_year = self.get_components('year')
         comp_year.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        comp_year.colspan = 2
         btn = XferCompButton('confyear')
-        btn.set_location(comp_year.col + 1, comp_year.row)
+        btn.set_location(comp_year.col + comp_year.colspan, comp_year.row)
         btn.set_action(self.request, ActionsManage.get_action_url(FiscalYear.get_long_name(), 'configuration', self), close=CLOSE_NO)
         btn.set_is_mini(True)
         self.add_component(btn)
         type_of_account = self.get_components('type_of_account')
+        type_of_account.colspan = 2
         type_of_account.select_list.append((-1, '---'))
         type_of_account.set_value(select_type)
         type_of_account.set_action(self.request, ChartsAccountList.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
@@ -87,6 +89,8 @@ class ChartsAccountList(XferListEditor):
 
     def fillresponse(self):
         XferListEditor.fillresponse(self)
+        chartsaccount = self.get_components('chartsaccount')
+        chartsaccount.colspan = 3
         add_fiscalyear_result(self, 0, 10, 2, self.item.year, "result")
         if self.item.year == FiscalYear.get_current():
             accompt_returned = []

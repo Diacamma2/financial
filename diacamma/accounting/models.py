@@ -23,7 +23,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
 
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from os.path import join, isfile, dirname
 from logging import getLogger
 from re import match
@@ -42,7 +42,7 @@ from django.db.models.signals import pre_save
 from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel
-from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField
+from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosScheduler
 from lucterios.framework.tools import get_date_formating, convert_date
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.filetools import read_file, xml_validator, save_file, get_user_path
@@ -552,12 +552,15 @@ class FiscalYear(LucteriosModel):
         else:
             return None
 
-    def save_reports(self):
+    @classmethod
+    def save_reports(cls, year, last_user):
+        '''Save report'''
         from diacamma.accounting.views_reports import FiscalYearBalanceSheet, FiscalYearIncomeStatement, FiscalYearLedger, FiscalYearTrialBalance
-        self.get_reports(FiscalYearBalanceSheet)
-        self.get_reports(FiscalYearIncomeStatement)
-        self.get_reports(FiscalYearLedger, {'filtercode': ''})
-        self.get_reports(FiscalYearTrialBalance, {'filtercode': ''})
+        year.last_user = last_user
+        year.get_reports(FiscalYearBalanceSheet)
+        year.get_reports(FiscalYearIncomeStatement)
+        year.get_reports(FiscalYearTrialBalance, {'filtercode': ''})
+        year.get_reports(FiscalYearLedger, {'filtercode': ''})
 
     def closed(self):
         for cost in CostAccounting.objects.filter(year=self):
@@ -570,12 +573,17 @@ class FiscalYear(LucteriosModel):
         current_system_account().finalize_year(self)
         self.status = FiscalYear.STATUS_FINISHED
         self.save()
-        self.save_reports()
+        LucteriosScheduler.add_date(FiscalYear.save_reports, datetime=datetime.now() + timedelta(seconds=10), year=self, last_user=getattr(self, 'last_user', None))
 
     def check_report(self):
-        if self.folder is None:
-            self.save()
-        signal_and_lock.Signal.call_signal("check_report", self)
+        LucteriosScheduler.add_date(FiscalYear.check_report_backend, datetime=datetime.now() + timedelta(seconds=10), year=self)
+
+    @classmethod
+    def check_report_backend(cls, year):
+        '''Check report'''
+        if year.folder is None:
+            year.save()
+        signal_and_lock.Signal.call_signal("check_report", year)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.create_folder()
@@ -2001,7 +2009,7 @@ def accounting_changecost_model(new_cost, lastcost, old_cost):
 @Signal.decorate('check_report')
 def check_report_accounting(year):
     if year.status == FiscalYear.STATUS_FINISHED:
-        year.save_reports()
+        FiscalYear.save_reports(year, last_user=None)
 
 
 @Signal.decorate('checkparam')

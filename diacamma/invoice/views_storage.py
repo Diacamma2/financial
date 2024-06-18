@@ -77,10 +77,12 @@ class StorageSheetList(XferListEditor):
         sel_status.select_list.insert(0, (-1, '---'))
         sel_status.set_value(status_filter)
         sel_status.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_status.colspan = 2
         sel_type = self.get_components('sheet_type')
         sel_type.select_list.insert(0, (-1, '---'))
         sel_type.set_value(type_filter)
         sel_type.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_type.colspan = 2
         self.filter = Q()
         if status_filter != -1:
             self.filter &= Q(status=status_filter)
@@ -519,6 +521,7 @@ class InventorySheetList(XferListEditor):
         sel_status.select_list.insert(0, (-1, '---'))
         sel_status.set_value(status_filter)
         sel_status.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        sel_status.colspan = 2
         self.filter = Q()
         if status_filter != -1:
             self.filter &= Q(status=status_filter)

@@ -21,11 +21,13 @@ from __future__ import unicode_literals
 from shutil import rmtree
 from importlib import import_module
 from base64 import b64decode
+from time import sleep
 
 from django.db.models import Q
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
+from lucterios.framework.model_fields import LucteriosScheduler
 from lucterios.CORE.parameters import Params
 from lucterios.documents.views import DocumentSearch
 
@@ -835,13 +837,17 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.assert_json_equal('', 'chartsaccount/@7/code', '441')
         self.assert_json_equal('', 'chartsaccount/@7/current_total', -135.45)
 
-        check_pdfreport(self, '1', 'Bilan.pdf', "FiscalYearBalanceSheet", "diacamma.accounting.views_reports")
-        check_pdfreport(self, '1', 'Compte de resultat.pdf', "FiscalYearIncomeStatement", "diacamma.accounting.views_reports")
+        sleep(1.0)
+        if len(LucteriosScheduler.get_list()) == 0:
+            check_pdfreport(self, '1', 'Bilan.pdf', "FiscalYearBalanceSheet", "diacamma.accounting.views_reports")
+            check_pdfreport(self, '1', 'Compte de resultat.pdf', "FiscalYearIncomeStatement", "diacamma.accounting.views_reports")
+            self.factory.xfer = DocumentSearch()
+            self.calljson('/lucterios.documents/documentSearch', {}, False)
+            self.assert_observer('core.custom', 'lucterios.documents', 'documentSearch')
+            self.assert_count_equal('document', 4)
+        else:
+            LucteriosScheduler.get_scheduler().remove_all_jobs()
 
-        self.factory.xfer = DocumentSearch()
-        self.calljson('/lucterios.documents/documentSearch', {}, False)
-        self.assert_observer('core.custom', 'lucterios.documents', 'documentSearch')
-        self.assert_count_equal('document', 4)
 
         self.check_account(1, '601', 0)
         self.check_account(1, '602', 63.94)

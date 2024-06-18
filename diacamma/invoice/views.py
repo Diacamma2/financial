@@ -97,7 +97,7 @@ def _add_type_filter_selector(xfer, row, col=0):
     edt.set_select(type_select)
     edt.description = _('Filter by type')
     edt.set_value(type_filter)
-    edt.set_location(col, row)
+    edt.set_location(col, row, colspan=2)
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     if Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_NONE:
         edt.remove_select(Bill.BILLTYPE_ORDER)
@@ -114,7 +114,7 @@ def _add_bill_filter(xfer, row, with_third=False):
         comp.is_default = True
         comp.description = _('Filtrer by third')
         comp.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
-        comp.set_location(0, row)
+        comp.set_location(0, row, colspan=2)
         xfer.add_component(comp)
         row += 1
         if third_filter != "":
@@ -128,7 +128,7 @@ def _add_bill_filter(xfer, row, with_third=False):
     edt.set_select(Bill.SELECTION_STATUS)
     edt.description = _('Filter by status')
     edt.set_value(status_filter)
-    edt.set_location(0, row)
+    edt.set_location(0, row, colspan=2)
     edt.set_action(xfer.request, xfer.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
     xfer.add_component(edt)
     bill_type, category = _add_type_filter_selector(xfer, row + 1)

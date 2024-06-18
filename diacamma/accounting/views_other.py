@@ -39,15 +39,17 @@ class CostAccountingList(XferListEditor):
             self.filter &= Q(year_id=select_year)
         if select_year == -1:
             self.filter &= Q(year__isnull=True)
-        self.fill_from_model(1, 4, False, ['status', 'year'])
+        self.fill_from_model(0, 4, False, ['status', 'year'])
         comp_year = self.get_components('year')
         comp_year.select_list.append((-1, _('- without fiscal year -')))
         comp_year.set_value(select_year)
         comp_year.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        comp_year.colspan = 2
         comp_status = self.get_components('status')
         comp_status.select_list.insert(0, (-1, None))
         comp_status.set_value(status_filter)
         comp_status.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        comp_status.colspan = 2
 
     def fillresponse(self):
         XferListEditor.fillresponse(self)

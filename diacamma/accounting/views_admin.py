@@ -112,7 +112,7 @@ def add_year_info(xfer, is_mini=False):
         xfer.add_component(lbl)
 
 
-@ActionsManage.affect_other(_("Accounting configuration"), "images/edit.png", short_icon = "mdi:mdi-calendar-star-four-points")
+@ActionsManage.affect_other(_("Accounting configuration"), "images/edit.png", short_icon="mdi:mdi-calendar-star-four-points")
 @MenuManage.describ('accounting.change_fiscalyear', FORMTYPE_MODAL, 'financial.conf', _('Management of fiscal year and financial parameters'))
 class Configuration(XferListEditor):
     icon = "accountingYear.png"
@@ -125,6 +125,10 @@ class Configuration(XferListEditor):
         self.params['basic_model'] = 'accounting.Third'
         self.new_tab(_('Fiscal year list'))
         select_account_system(self)
+
+    def get_items_from_filter(self):
+        items = XferListEditor.get_items_from_filter(self)
+        return items.order_by('-begin', '-end')
 
     def fillresponse(self):
         XferListEditor.fillresponse(self)
@@ -153,7 +157,7 @@ class ConfigurationAccountingSystem(XferContainerAcknowledge):
                 signal_and_lock.Signal.call_signal("param_change", ('accounting-system'))
 
 
-@ActionsManage.affect_grid(_("Activate"), "images/ok.png", short_icon = "mdi:mdi-check", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(_("Activate"), "images/ok.png", short_icon="mdi:mdi-check", unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearActive(XferContainerAcknowledge):
     icon = "images/ok.png"
@@ -166,7 +170,7 @@ class FiscalYearActive(XferContainerAcknowledge):
         self.item.set_has_actif()
 
 
-@ActionsManage.affect_grid(_("Export"), "diacamma.accounting/images/entry.png", short_icon = "mdi:mdi-checkbook", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(_("Export"), "diacamma.accounting/images/entry.png", short_icon="mdi:mdi-checkbook", unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.change_fiscalyear')
 class FiscalYearExport(XferContainerCustom):
     icon = "entry.png"
@@ -201,7 +205,7 @@ class FiscalYearExport(XferContainerCustom):
         self.add_component(down)
 
 
-@ActionsManage.affect_grid(_("Check"), "images/PrintReport.png", short_icon = 'mdi:mdi-finance', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(_("Check"), "images/PrintReport.png", short_icon='mdi:mdi-finance', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.add_fiscalyear')
 class FiscalYearCheckReport(XferContainerAcknowledge):
     icon = "images/PrintReport.png"
@@ -213,6 +217,7 @@ class FiscalYearCheckReport(XferContainerAcknowledge):
     def fillresponse(self):
         if self.confirme(_('Do you want to check saving reports for this year?')):
             self.item.check_report()
+            self.message(_('All registration reports will be verified within minutes'))
 
 
 @ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus')
@@ -290,7 +295,7 @@ class JournalDel(XferDelete):
     caption = _("Delete accounting journal")
 
 
-@ActionsManage.affect_grid(_("Default"), "images/default.png", short_icon = 'mdi:mdi-star-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(_("Default"), "images/default.png", short_icon='mdi:mdi-star-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.add_fiscalyear')
 class JournalDefault(XferContainerAcknowledge):
     icon = "images/default.png"
