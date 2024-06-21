@@ -848,7 +848,6 @@ class FiscalYearWorkflowTest(PaymentTest):
         else:
             LucteriosScheduler.get_scheduler().remove_all_jobs()
 
-
         self.check_account(1, '601', 0)
         self.check_account(1, '602', 63.94)
         self.check_account(1, '604', 0)

@@ -211,6 +211,7 @@ class Supporting(LucteriosModel):
         return False
 
     def add_pdf_document(self, title, user, metadata, pdf_content):
+        self.fiscal_year.create_folder()
         return self.fiscal_year.folder.add_pdf_document(title, user, metadata, pdf_content)
 
     def generate_pdfreport(self):
