@@ -1447,7 +1447,13 @@ class EntryLineAccount(LucteriosModel):
     def get_designation_ref_with_third(self):
         val = self.entry.designation
         if not self.account.is_third:
-            thirds = set([str(line.third) for line in self.entry.entrylineaccount_set.filter(third__isnull=False)])
+            thirds = set([str(line.third) for line in self.entry.entrylineaccount_set.select_related(
+                'account', 'third',
+                'third__contact',
+                'third__contact__legalentity',
+                'third__contact__individual',
+                'third__contact__individual__adherent',
+                'entry').filter(third__isnull=False)])
             if len(thirds) > 0:
                 val = "%s (%s)" % (val, ",".join(thirds))
         if (self.reference is not None) and (self.reference != ''):

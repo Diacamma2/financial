@@ -519,7 +519,13 @@ class FiscalYearLedger(FiscalYearReport):
         self.last_third = None
         self.last_total = [0.0, 0.0]
         self.last_third_total = [0.0, 0.0]
-        for line in EntryLineAccount.objects.filter(self.filter).distinct().order_by('account__code', 'third', 'entry__date_value'):
+        for line in EntryLineAccount.objects.filter(self.filter).select_related(
+            'account', 'third',
+            'third__contact',
+            'third__contact__legalentity',
+            'third__contact__individual',
+            'third__contact__individual__adherent',
+                'entry').distinct().order_by('account__code', 'third', 'entry__date_value'):
             if self.last_account != line.account:
                 self._add_total_account(True)
                 self._add_total_account(False)
