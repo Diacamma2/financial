@@ -453,7 +453,7 @@ class FiscalYearLedger(FiscalYearReport):
     def __init__(self, **kwargs):
         FiscalYearReport.__init__(self, **kwargs)
         self.last_account = None
-        self.last_third = None
+        self.last_third_id = None
         self.last_total = [0.0, 0.0]
         self.line_idx = 1
 
@@ -493,7 +493,7 @@ class FiscalYearLedger(FiscalYearReport):
 
     def _add_total_account(self, third=False):
         current_total = self.last_third_total if third else self.last_total
-        if (self.last_account is not None and not third) or (self.last_third is not None and third):
+        if (self.last_account is not None and not third) or (self.last_third_id is not None and third):
             add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', get_spaces(40 if third else 30) + "{[i]}%s{[/i]}" % (_('sub-total') if third else _('total')))
             if self.last_account.credit_debit_way() == -1:
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'debit', current_total[0], "{[i]}%s{[/i]}")
@@ -516,33 +516,26 @@ class FiscalYearLedger(FiscalYearReport):
     def calcul_table(self):
         self.line_idx = 1
         self.last_account = None
-        self.last_third = None
+        self.last_third_id = None
         self.last_total = [0.0, 0.0]
         self.last_third_total = [0.0, 0.0]
-        for line in EntryLineAccount.objects.filter(self.filter).select_related(
-            'account', 'third',
-            'third__contact',
-            'third__contact__legalentity',
-            'third__contact__individual',
-            'third__contact__individual__adherent',
-                'entry').distinct().order_by('account__code', 'third', 'entry__date_value'):
+        for line in EntryLineAccount.objects.filter(self.filter).select_related('account', 'entry').distinct().order_by('account__code', 'third', 'entry__date_value'):
             if self.last_account != line.account:
                 self._add_total_account(True)
                 self._add_total_account(False)
                 self.last_account = line.account
-                self.last_third = None
+                self.last_third_id = None
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', get_spaces(15) + "{[u]}{[b]}%s{[/b]}{[/u]}" % str(self.last_account))
                 self.line_idx += 1
-                self.last_third = None
-            if self.last_third != line.third:
+                self.last_third_id = None
+            if self.last_third_id != line.third_id:
                 self._add_total_account(True)
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, 'designation_ref_with_third', get_spaces(8) + "{[b]}%s{[/b]}" % str(line.entry_account))
                 self.line_idx += 1
-                self.last_third = line.third
+                self.last_third_id = line.third_id
             for header in self.grid.headers:
-                if hasattr(line, header.name):
-                    value = getattr(line, header.name)
-                else:
+                value = getattr(line, header.name, None)
+                if value is None:
                     value = line.evaluate('#' + header.name)
                 add_cell_in_grid(self.grid, self.line_offset + self.line_idx, header.name, value, line_ident=line.entry.id)
             if line.amount > 0:

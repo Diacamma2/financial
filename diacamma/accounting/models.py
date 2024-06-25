@@ -39,6 +39,7 @@ from django.template import engines
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import pre_save
+from django.core.cache import cache
 from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel
@@ -1432,11 +1433,19 @@ class EntryLineAccount(LucteriosModel):
             res = "???"
         return res
 
+    def get_thirdstr_in_cache(self):
+        ident = 'third_str#%d' % self.third_id
+        value = cache.get(ident)
+        if value is None:
+            value = str(self.third)
+            cache.set(ident, value)
+        return value
+
     def get_entry_account(self):
-        if self.third is None:
+        if self.third_id is None:
             return str(self.account)
         else:
-            return "[%s %s]" % (self.account.code, str(self.third))
+            return "[%s %s]" % (self.account.code, self.get_thirdstr_in_cache())
 
     def get_designation_ref(self):
         val = self.entry.designation
@@ -1447,13 +1456,7 @@ class EntryLineAccount(LucteriosModel):
     def get_designation_ref_with_third(self):
         val = self.entry.designation
         if not self.account.is_third:
-            thirds = set([str(line.third) for line in self.entry.entrylineaccount_set.select_related(
-                'account', 'third',
-                'third__contact',
-                'third__contact__legalentity',
-                'third__contact__individual',
-                'third__contact__individual__adherent',
-                'entry').filter(third__isnull=False)])
+            thirds = set([line.get_thirdstr_in_cache() for line in self.entry.entrylineaccount_set.filter(third__isnull=False)])
             if len(thirds) > 0:
                 val = "%s (%s)" % (val, ",".join(thirds))
         if (self.reference is not None) and (self.reference != ''):
