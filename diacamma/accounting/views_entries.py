@@ -80,6 +80,7 @@ class EntryAccountList(XferListEditor):
 
     def get_items_from_filter(self):
         items = XferListEditor.get_items_from_filter(self)
+        items = items.select_related('account', 'entry', 'third', 'third__contact', 'third__contact__individual', 'third__contact__legalentity', 'costaccounting', 'link', 'multilink')
         items = items.annotate(num_link=Count('entry__entrylineaccount__link'))
         items = items.annotate(cdway=Case(When(account__type_of_account__in=(0, 4), then=-1), default=1, output_field=DecimalField()))
         items = items.annotate(credit_num=ExpressionWrapper(F('amount') * F('cdway'), output_field=DecimalField()), debit_num=ExpressionWrapper(-1 * F('amount') * F('cdway'), output_field=DecimalField()))

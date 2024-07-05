@@ -62,7 +62,7 @@ class ThirdList(XferListEditor):
     caption = _("Thirds")
 
     def get_items_from_filter(self):
-        items = self.model.objects.annotate(completename=Concat('contact__individual__lastname', Value(' '), 'contact__individual__firstname')).annotate(num_entryline=Count('entrylineaccount')).filter(self.filter).distinct()
+        items = self.model.objects.select_related('contact', 'contact__individual', 'contact__legalentity').annotate(completename=Concat('contact__individual__lastname', Value(' '), 'contact__individual__firstname')).annotate(num_entryline=Count('entrylineaccount')).filter(self.filter).distinct()
         sort_third = self.getparam('GRID_ORDER%third', '')
         sort_thirdbis = self.getparam('GRID_ORDER%third+', '')
         self.params['GRID_ORDER%third'] = ""

@@ -47,7 +47,7 @@ from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport,\
     default_paymentmethod
 from diacamma.invoice.models import Bill, AccountPosting, CategoryBill
 from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_categories, default_customize, \
-    default_area, default_categorybill
+    default_area, default_categorybill, clean_cache
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillToBill, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch, \
@@ -63,6 +63,7 @@ class BillTest(InvoiceTest):
         LucteriosTest.setUp(self)
         default_compta_fr()
         default_bankaccount_fr()
+        clean_cache()
         rmtree(get_user_dir(), True)
         LucteriosUser.objects.create(username='creator', first_name='Léonard', last_name='de Vinci', email='leonardo@davinci.org')
 

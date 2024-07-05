@@ -156,6 +156,7 @@ class BillList(XferListEditor):
     def get_items_from_filter(self):
         items = self.model.objects.annotate(completename=Concat('third__contact__individual__lastname',
                                                                 Value(' '), 'third__contact__individual__firstname')).filter(self.filter)
+        items = items.select_related('fiscal_year', 'categoryBill', 'third', 'third__contact', 'third__contact__individual', 'third__contact__legalentity')
         sort_bill = self.getparam('GRID_ORDER%bill', '').split(',')
         sort_bill_third = self.getparam('GRID_ORDER%bill_third', '')
         if ((len(sort_bill) == 0) and (sort_bill_third != '')) or (sort_bill.count('third') + sort_bill.count('-third')) > 0:
@@ -894,6 +895,7 @@ class ArticleList(XferListEditor, ArticleFilter):
             items = self.model.objects.filter(self.filter).distinct()
         else:
             items = self.model.objects.all()
+        items = items.select_related('vat', 'accountposting').prefetch_related('categories')
         return self.items_filtering(items, self.categories_filter, self.show_stockable, self.show_storagearea)
 
     def fillresponse_header(self):
@@ -951,7 +953,7 @@ class ArticleList(XferListEditor, ArticleFilter):
         self.add_action(ArticleSearch.get_action(TITLE_SEARCH, "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
 
 
-@ActionsManage.affect_list(_("To disable"), "images/config_ext.png", short_icon = "mdi:mdi-credit-card-settings-outline", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
+@ActionsManage.affect_list(_("To disable"), "images/config_ext.png", short_icon="mdi:mdi-credit-card-settings-outline", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
 @MenuManage.describ('invoice.change_article')
 class ArticleClean(XferContainerAcknowledge, ArticleFilter):
     icon = "images/config_ext.png"

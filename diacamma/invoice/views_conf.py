@@ -56,7 +56,9 @@ def fill_params(xfer, param_lists=None, is_mini=False):
     btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png', 'mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
     xfer.add_component(btn)
 
+
 MenuManage.add_sub("invoice.conf", "core.extensions", "", _("Invoice"), "", 5, 'mdi:mdi-invoice-outline')
+
 
 @MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'invoice.conf', _('Management of parameters and financial configuration of invoice'))
 class InvoiceConfFinancial(XferListEditor):
@@ -83,8 +85,9 @@ class InvoiceConfCommercial(XferListEditor):
     caption = _("Invoice commercial configuration")
 
     def add_general_params(self):
-        param_lists = ['invoice-article-with-picture', 'invoice-reduce-with-ratio', 'invoice-order-mode',
-                       'invoice-asset-mode', 'invoice-default-nbpayoff', 'invoice-default-send-pdf']
+        param_lists = ['invoice-article-with-picture', 'invoice-reduce-with-ratio',
+                       'invoice-custom-field-in-bill', 'invoice-order-mode', 'invoice-asset-mode',
+                       'invoice-default-nbpayoff', 'invoice-default-send-pdf']
         row = self.get_max_row() + 1
         Params.fill(self, param_lists, 1, row)
         btn = XferCompButton('editparam')

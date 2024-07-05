@@ -37,7 +37,8 @@ from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr,
 from diacamma.accounting.models import CostAccounting
 from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod
 from diacamma.invoice.models import Article, AccountPosting
-from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting
+from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting,\
+    clean_cache
 from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel, \
     StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel, \
     CategoryBillAddModify, CategoryBillDel, CategoryBillDefault,\
@@ -53,6 +54,7 @@ class ConfigTest(LucteriosTest):
         default_compta_fr()
         default_bankaccount_fr()
         default_paymentmethod()
+        clean_cache()
         rmtree(get_user_dir(), True)
 
     def test_vat(self):
@@ -97,7 +99,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_7' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_8' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 8 + 2 + 2 + 2 + 2 + 3 + 2)
+        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 3 + 2)
 
         self.assert_grid_equal('category', {'name': "nom", 'designation': "désignation"}, 0)
 
@@ -248,7 +250,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_7' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_8' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 8 + 2 + 2 + 2 + 2 + 3 + 2)
+        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 3 + 2)
 
         self.assert_grid_equal('custom_field', {'name': "nom", 'kind_txt': "type"}, 2)
         self.assert_json_equal('', 'custom_field/@0/name', 'couleur')
@@ -263,7 +265,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_7' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_8' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 8 + 2 + 2 + 2 + 2 + 3 + 2)
+        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 3 + 2)
 
         self.assert_grid_equal('storagearea', {'name': "nom", 'designation': "désignation", 'contact': "gestionnaire"}, 0)
 
@@ -316,7 +318,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_7' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_8' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 8 + 2 + 2 + 2 + 2 + 8 + 2)
+        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 8 + 2)
 
         self.assert_grid_equal('categoryBill', {'name': "nom", 'designation': "désignation", "titles_txt": "titres", "is_default": "défaut"}, 0)
 

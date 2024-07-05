@@ -220,6 +220,18 @@ class Article(LucteriosModel, CustomizeObject):
         LucteriosModel.__init__(self, *args, **kwargs)
         self.show_storagearea = 0
 
+    @staticmethod
+    def have_category():
+        return LucteriosModel.have_class_item(Category)
+
+    @staticmethod
+    def have_storage():
+        return LucteriosModel.have_class_item(StorageArea)
+
+    @staticmethod
+    def have_provider():
+        return Provider().third_query.count() > 0
+
     def __str__(self):
         return str(self.reference)
 
@@ -250,9 +262,9 @@ class Article(LucteriosModel, CustomizeObject):
         if Params.getvalue("invoice-article-with-picture"):
             fields.append((_('image'), 'image'))
         fields.extend(["reference", "designation", "price", 'unit', "isdisabled", 'accountposting', "stockable"])
-        if len(Category.objects.all()) > 0:
+        if cls.have_category():
             fields.append('categories')
-        if len(StorageArea.objects.all()) > 0:
+        if cls.have_storage():
             fields.append('stockage_total')
             fields.append('available_total')
         return fields
@@ -260,7 +272,7 @@ class Article(LucteriosModel, CustomizeObject):
     @classmethod
     def get_edit_fields(cls):
         fields = {_('001@Description'): ["reference", "designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting",)]}
-        if len(Category.objects.all()) > 0:
+        if cls.have_category():
             fields[_('002@Extra')] = ['categories']
         return fields
 
@@ -269,10 +281,10 @@ class Article(LucteriosModel, CustomizeObject):
         fields = {'': ["reference"]}
         fields_desc = ["designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting",)]
         fields_desc.extend(cls.get_fields_to_show())
-        if len(Category.objects.all()) > 0:
+        if cls.have_category():
             fields_desc.append('categories')
         fields[_('001@Description')] = fields_desc
-        if len(Provider().third_query) > 0:
+        if cls.have_provider():
             fields[_('002@Provider')] = ['provider_set']
         return fields
 
@@ -281,11 +293,11 @@ class Article(LucteriosModel, CustomizeObject):
         fields = ["reference", "designation", "price", "unit", "qtyDecimal", "stockable", 'vat', "isdisabled", "accountposting"]
         for cf_name, cf_model in CustomField.get_fields(cls):
             fields.append((cf_name, cf_model.get_field(), 'articlecustomfield__value', Q(articlecustomfield__field__id=cf_model.id)))
-        if len(Category.objects.all()) > 0:
+        if cls.have_category():
             fields.append('categories')
             fields.append('categories.name')
             fields.append('categories.designation')
-        if len(Provider().third_query) > 0:
+        if cls.have_provider():
             fields.append('provider_set.third')
             fields.append('provider_set.reference')
         fields.append('storagedetail_set.storagesheet.storagearea')
@@ -294,9 +306,9 @@ class Article(LucteriosModel, CustomizeObject):
     @classmethod
     def get_import_fields(cls):
         fields = ["reference", "designation", "price", "unit", "accountposting", 'vat', "stockable", "isdisabled", "qtyDecimal"]
-        if len(Category.objects.all()) > 0:
+        if cls.have_category():
             fields.append('categories')
-        if len(Provider().third_query) > 0:
+        if cls.have_provider():
             fields.append(('provider.third.contact', _('provider')))
             fields.append('provider.reference')
         for cf_field in CustomField.get_fields(cls):
@@ -355,8 +367,9 @@ class Article(LucteriosModel, CustomizeObject):
 
     def get_designation(self):
         val = self.designation
-        for cf_name, cf_model in CustomField.get_fields(self.__class__):
-            val += "{[br/]} - {[u]}%s{[/u]}: {[i]}%s{[/i]}" % (cf_model.name, getattr(self, cf_name))
+        if Params.getvalue('invoice-custom-field-in-bill'):
+            for cf_name, cf_model in CustomField.get_fields(self.__class__):
+                val += "{[br/]} - {[u]}%s{[/u]}: {[i]}%s{[/i]}" % (cf_model.name, getattr(self, cf_name))
         return val
 
     def get_amount_from_area(self, currentqty, area):
@@ -382,70 +395,72 @@ class Article(LucteriosModel, CustomizeObject):
         self.show_storagearea = xfer.getparam('storagearea', 0)
 
     def get_stockage_values(self):
-        stock_list = []
-        stock = {}
-        if self.stockable in (self.STOCKABLE_YES, self.STOCKABLE_YES_WITHOUTSELL):
-            detail_filter = Q(storagesheet__status=StorageSheet.STATUS_VALID)
-            if self.show_storagearea != StorageArea.NO_AREA:
-                detail_filter &= Q(storagesheet__storagearea=self.show_storagearea)
-            for val in self.storagedetail_set.filter(detail_filter).values('storagesheet__storagearea').annotate(data_sum=Sum('quantity')):
-                if abs(val['data_sum']) > 0.001:
-                    if val['storagesheet__storagearea'] not in stock.keys():
-                        stock[val['storagesheet__storagearea']] = [str(StorageArea.objects.get(id=val['storagesheet__storagearea'])), 0.0]
-                    stock[val['storagesheet__storagearea']][1] += float(val['data_sum'])
-        if self.stockable == self.STOCKABLE_KIT:
-            for kitart in self.kit_article_set.all():
-                for areaid, area, qty, total_amount in kitart.link_article.get_stockage_values():
-                    if areaid == StorageArea.NO_AREA:
-                        continue
-                    if areaid not in stock.keys():
-                        stock[areaid] = [area, {}]
-                    stock[areaid][1][kitart.id] = round(qty / float(kitart.quantity), self.qtyDecimal)
-            for key in sorted(list(stock.keys())):
-                stock[key][1] = min(stock[key][1].values())
-        if self.stockable != self.STOCKABLE_NO:
-            total_amount = 0.0
-            total_qty = 0.0
-            for key in sorted(list(stock.keys())):
-                sum_amount = self.get_amount_from_area(stock[key][1], key)
-                stock_list.append((int(key), stock[key][0], stock[key][1], sum_amount))
-                total_qty += stock[key][1]
-                total_amount += sum_amount
-            stock_list.append((0, _('Total'), total_qty, total_amount))
-        return stock_list
+        if not hasattr(self, '_stock_list'):
+            self._stock_list = []
+            stock = {}
+            if self.stockable in (self.STOCKABLE_YES, self.STOCKABLE_YES_WITHOUTSELL):
+                detail_filter = Q(storagesheet__status=StorageSheet.STATUS_VALID)
+                if self.show_storagearea != StorageArea.NO_AREA:
+                    detail_filter &= Q(storagesheet__storagearea=self.show_storagearea)
+                for val in self.storagedetail_set.filter(detail_filter).values('storagesheet__storagearea').annotate(data_sum=Sum('quantity')):
+                    if abs(val['data_sum']) > 0.001:
+                        if val['storagesheet__storagearea'] not in stock.keys():
+                            stock[val['storagesheet__storagearea']] = [str(StorageArea.get_cache_text(val['storagesheet__storagearea'])), 0.0]
+                        stock[val['storagesheet__storagearea']][1] += float(val['data_sum'])
+            if self.stockable == self.STOCKABLE_KIT:
+                for kitart in self.kit_article_set.all():
+                    for areaid, area, qty, total_amount in kitart.link_article.get_stockage_values():
+                        if areaid == StorageArea.NO_AREA:
+                            continue
+                        if areaid not in stock.keys():
+                            stock[areaid] = [area, {}]
+                        stock[areaid][1][kitart.id] = round(qty / float(kitart.quantity), self.qtyDecimal)
+                for key in sorted(list(stock.keys())):
+                    stock[key][1] = min(stock[key][1].values())
+            if self.stockable != self.STOCKABLE_NO:
+                total_amount = 0.0
+                total_qty = 0.0
+                for key in sorted(list(stock.keys())):
+                    sum_amount = self.get_amount_from_area(stock[key][1], key)
+                    self._stock_list.append((int(key), stock[key][0], stock[key][1], sum_amount))
+                    total_qty += stock[key][1]
+                    total_amount += sum_amount
+                self._stock_list.append((0, _('Total'), total_qty, total_amount))
+        return self._stock_list
 
     def get_booking_values(self):
-        booking_list = []
-        booking = {}
-        if self.stockable in (self.STOCKABLE_YES, self.STOCKABLE_YES_WITHOUTSELL):
-            detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART, Bill.BILLTYPE_ORDER))
-            if self.show_storagearea != StorageArea.NO_AREA:
-                detail_filter &= Q(storagearea=self.show_storagearea)
-            for val in Detail.objects.filter(detail_filter).values('storagearea', 'article').annotate(data_sum=Sum('quantity')):
-                katart = RecipeKitArticle.objects.filter(link_article=self, article_id=val['article']).first()
-                if (val['article'] != self.id) and (katart is None):
-                    continue
-                if (abs(val['data_sum']) > 0.001) and (val['storagearea'] is not None):
-                    if not val['storagearea'] in booking.keys():
-                        booking[val['storagearea']] = [str(StorageArea.objects.get(id=val['storagearea'])), 0.0]
-                    booking[val['storagearea']][1] += float(val['data_sum']) * (1 if katart is None else float(katart.quantity))
-        if self.stockable == self.STOCKABLE_KIT:
-            for kitart in self.kit_article_set.all():
-                for areaid, area, qty in kitart.link_article.get_booking_values():
-                    if areaid == StorageArea.NO_AREA:
+        if not hasattr(self, '_booking_list'):
+            self._booking_list = []
+            booking = {}
+            if self.stockable in (self.STOCKABLE_YES, self.STOCKABLE_YES_WITHOUTSELL):
+                detail_filter = Q(bill__status=Bill.STATUS_VALID) & Q(bill__bill_type__in=(Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART, Bill.BILLTYPE_ORDER))
+                if self.show_storagearea != StorageArea.NO_AREA:
+                    detail_filter &= Q(storagearea=self.show_storagearea)
+                for val in Detail.objects.filter(detail_filter).values('storagearea', 'article').annotate(data_sum=Sum('quantity')):
+                    katart = RecipeKitArticle.objects.filter(link_article=self, article_id=val['article']).first()
+                    if (val['article'] != self.id) and (katart is None):
                         continue
-                    if areaid not in booking.keys():
-                        booking[areaid] = [area, {}]
-                    booking[areaid][1][kitart.id] = round(qty / float(kitart.quantity), self.qtyDecimal)
-            for key in sorted(list(booking.keys())):
-                booking[key][1] = min(booking[key][1].values())
-        if self.stockable != self.STOCKABLE_NO:
-            total_qty = 0.0
-            for key in sorted(list(booking.keys())):
-                booking_list.append((int(key), booking[key][0], booking[key][1]))
-                total_qty += booking[key][1]
-            booking_list.append((0, _('Total'), total_qty))
-        return booking_list
+                    if (abs(val['data_sum']) > 0.001) and (val['storagearea'] is not None):
+                        if not val['storagearea'] in booking.keys():
+                            booking[val['storagearea']] = [str(StorageArea.get_cache_text(val['storagearea'])), 0.0]
+                        booking[val['storagearea']][1] += float(val['data_sum']) * (1 if katart is None else float(katart.quantity))
+            if self.stockable == self.STOCKABLE_KIT:
+                for kitart in self.kit_article_set.all():
+                    for areaid, area, qty in kitart.link_article.get_booking_values():
+                        if areaid == StorageArea.NO_AREA:
+                            continue
+                        if areaid not in booking.keys():
+                            booking[areaid] = [area, {}]
+                        booking[areaid][1][kitart.id] = round(qty / float(kitart.quantity), self.qtyDecimal)
+                for key in sorted(list(booking.keys())):
+                    booking[key][1] = min(booking[key][1].values())
+            if self.stockable != self.STOCKABLE_NO:
+                total_qty = 0.0
+                for key in sorted(list(booking.keys())):
+                    self._booking_list.append((int(key), booking[key][0], booking[key][1]))
+                    total_qty += booking[key][1]
+                self._booking_list.append((0, _('Total'), total_qty))
+        return self._booking_list
 
     def has_sufficiently(self, storagearea_id, quantity):
         if self.stockable != self.STOCKABLE_NO:
@@ -989,9 +1004,10 @@ class Bill(Supporting):
         if (self.fiscal_year is None) or (self.num is None):
             return None
         elif (self.categoryBill is not None) and self.categoryBill.special_numbering and (self.categoryBill.prefix_numbering != ''):
-            return "%s-%s-%d" % (self.fiscal_year.letter, self.categoryBill.prefix_numbering, self.num)
+            value = "%s-%s-%d" % (self.fiscal_year.letter, self.categoryBill.prefix_numbering, self.num)
         else:
-            return "%s-%d" % (self.fiscal_year.letter, self.num)
+            value = "%s-%d" % (self.fiscal_year.letter, self.num)
+        return value
 
     def get_origin(self):
         if self.parentbill is not None:
@@ -2633,6 +2649,7 @@ def invoice_checkparam():
                                args="{'Multi':False}", value='',
                                meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_customer_mask()) & django.db.models.Q(year__is_actif=True)", "code", True)')
     Parameter.check_and_create(name='invoice-article-with-picture', typeparam=Parameter.TYPE_BOOL, title=_("invoice-article-with-picture"), args="{}", value='False')
+    Parameter.check_and_create(name='invoice-custom-field-in-bill', typeparam=Parameter.TYPE_BOOL, title=_("invoice-custom-field-in-bill"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-reduce-with-ratio', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-with-ratio"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-reduce-allow-article-empty', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-allow-article-empty"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-order-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-order-mode"),

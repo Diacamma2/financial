@@ -39,7 +39,6 @@ from django.template import engines
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import pre_save
-from django.core.cache import cache
 from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel
@@ -87,7 +86,7 @@ class Third(LucteriosModel, CustomizeObject):
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total', format_string=lambda: format_with_devise(5))
 
     def __str__(self):
-        return str(self.contact.get_final_child())
+        return str(self.contact.get_final_child(1))
 
     @classmethod
     def get_field_by_name(cls, fieldname):
@@ -501,7 +500,7 @@ class FiscalYear(LucteriosModel):
         setattr(self, 'last_user', xfer.request.user)
 
     @property
-    def letter(self):
+    def _letter(self):
         nb_year = FiscalYear.objects.filter(id__lt=self.id).count()
         letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         res = ''
@@ -510,6 +509,10 @@ class FiscalYear(LucteriosModel):
             res = letters[mod] + res
             nb_year = int(div) - 1
         return letters[nb_year] + res
+
+    @property
+    def letter(self):
+        return self.get_cache_text(self, '_letter')
 
     def _check_annexe(self):
         total = 0
@@ -1434,12 +1437,7 @@ class EntryLineAccount(LucteriosModel):
         return res
 
     def get_thirdstr_in_cache(self):
-        ident = 'third_str#%d' % self.third_id
-        value = cache.get(ident)
-        if value is None:
-            value = str(self.third)
-            cache.set(ident, value)
-        return value
+        return Third.get_cache_text(self.third_id)
 
     def get_entry_account(self):
         if self.third_id is None:

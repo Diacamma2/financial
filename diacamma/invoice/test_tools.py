@@ -25,6 +25,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 
 from lucterios.framework.test import LucteriosTest
+from lucterios.framework.models import LucteriosModel
 from lucterios.contacts.models import CustomField
 
 from diacamma.accounting.models import FiscalYear
@@ -45,6 +46,11 @@ def get_letters(number):
         res = letters[mod] + res
         number = int(div) - 1
     return letters[number] + res
+
+
+def clean_cache():
+    LucteriosModel.delete_class_item(Category)
+    LucteriosModel.delete_class_item(StorageArea)
 
 
 def default_accountPosting():
