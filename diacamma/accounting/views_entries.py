@@ -324,6 +324,7 @@ class EntryAccountImport(ObjectImport):
         ObjectImport._fillcontent_step3(self)
 
     def change_gui(self):
+        rowid = self.get_max_row()
         self.item = EntryAccount()
         model_name = self.get_components('modelname')
         if model_name is not None:
@@ -334,7 +335,7 @@ class EntryAccountImport(ObjectImport):
             self.item.year = FiscalYear.get_current(self.select_year)
             self.item.journal = Journal.objects.get(id=self.select_journal)
             self.item.set_context(self)
-            self.fill_from_model(1, 0, readonly, [('year', 'journal')])
+            self.fill_from_model(1, rowid + 1, readonly, [('year', 'journal')])
             if not readonly:
                 self.get_components('year').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
                 self.get_components('journal').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)

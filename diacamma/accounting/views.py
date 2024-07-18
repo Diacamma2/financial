@@ -192,7 +192,7 @@ class ThirdDisable(XferContainerAcknowledge):
             dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
         else:
             third_ids = [val_third['third'] for val_third in EntryLineAccount.objects.filter(entry__date_value__gt=limit_date, third__gt=0).values('third')]
-            for third in Third.objects.filter(status=0):
+            for third in Third.objects.filter(status=Third.STATUS_ENABLE):
                 if third.id not in third_ids:
                     third.status = Third.STATUS_DISABLE
                     third.save()

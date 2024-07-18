@@ -468,7 +468,7 @@ class CurrentCartAddArticle(XferContainerAcknowledge):
             if len(storagearea_qty) == 0:
                 return
         else:
-            storagearea_qty[0] = quantity
+            storagearea_qty[None] = quantity
         for storagearea_id, qty in storagearea_qty.items():
             det = Detail.objects.filter(bill=self.item, article=article, storagearea_id=storagearea_id).first()
             if det is None:
