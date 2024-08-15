@@ -32,9 +32,9 @@ from django.utils import formats, timezone
 from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, ActionsManage, SELECT_SINGLE, SELECT_MULTI, CLOSE_YES, \
     FORMTYPE_REFRESH, CLOSE_NO, SELECT_NONE, WrapAction, convert_date
 from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, \
-    TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE,\
+    TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE, \
     action_list_sorted, TITLE_CLOSE, TITLE_SEARCH
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheck,\
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheck, \
     XferCompCheckList, XferCompButton, XferCompDate, XferCompEdit, XferCompImage
 from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
@@ -44,14 +44,14 @@ from lucterios.CORE.xferprint import XferPrintAction, XferPrintListing
 from lucterios.CORE.views import ObjectImport
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
 
-from diacamma.accounting.tools import format_with_devise,\
+from diacamma.accounting.tools import format_with_devise, \
     get_amount_from_format_devise
-from diacamma.invoice.models import StorageSheet, StorageDetail, Category, StorageArea, InventoryDetail, InventorySheet, AccountPosting,\
+from diacamma.invoice.models import StorageSheet, StorageDetail, Category, StorageArea, InventoryDetail, InventorySheet, AccountPosting, \
     ArticleSituation, ArticleSituationSet
 from diacamma.invoice.editors import add_filters
 
 
-MenuManage.add_sub("storage", "invoice", "diacamma.invoice/images/storage.png", _("Storage"), _("Manage of storage"), 10, 'mdi:mdi-store')
+MenuManage.add_sub("storage", "invoice", short_icon='mdi:mdi-store', caption=_("Storage"), desc=_("Manage of storage"), pos=10)
 
 
 def right_to_storage(request):
@@ -63,7 +63,6 @@ def right_to_storage(request):
 
 @MenuManage.describ(right_to_storage, FORMTYPE_NOMODAL, 'storage', _('Management of storage sheet list'))
 class StorageSheetList(XferListEditor):
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageSheet
     field_id = 'storagesheet'
@@ -90,21 +89,19 @@ class StorageSheetList(XferListEditor):
             self.filter &= Q(sheet_type=type_filter)
 
 
-@ActionsManage.affect_list(TITLE_SEARCH, "diacamma.invoice/images/storagesheet.png", short_icon='mdi:mdi-text-search-variant')
+@ActionsManage.affect_list(TITLE_SEARCH, short_icon='mdi:mdi-text-search-variant')
 @MenuManage.describ('invoice.change_storagesheet')
 class StorageSheetSearch(XferSavedCriteriaSearchEditor):
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageSheet
     field_id = 'storagesheet'
     caption = _("Search storage sheet")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == StorageSheet.STATUS_BUILDING)
+@ActionsManage.affect_grid(TITLE_CREATE, short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
+@ActionsManage.affect_show(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == StorageSheet.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_storagesheet')
 class StorageSheetAddModify(XferAddEditor):
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageSheet
     field_id = 'storagesheet'
@@ -112,20 +109,18 @@ class StorageSheetAddModify(XferAddEditor):
     caption_modify = _("Modify storage sheet")
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.change_storagesheet')
 class StorageSheetShow(XferShowEditor):
     caption = _("Show storage sheet")
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageSheet
     field_id = 'storagesheet'
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', -1) != StorageSheet.STATUS_VALID)
 @MenuManage.describ('invoice.delete_storagesheet')
 class StorageSheetDel(XferDelete):
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageSheet
     field_id = 'storagesheet'
@@ -135,7 +130,6 @@ class StorageSheetDel(XferDelete):
 @ActionsManage.affect_transition("status")
 @MenuManage.describ('invoice.add_storagesheet')
 class StorageSheetTransition(XferTransition):
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageSheet
     field_id = 'storagesheet'
@@ -158,8 +152,8 @@ class StorageSheetTransition(XferTransition):
         sel.set_location(1, 2)
         sel.description = _('target area')
         dlg.add_component(sel)
-        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png', 'mdi:mdi-check'), params={"CONFIRME": "YES"})
-        dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
+        dlg.add_action(self.return_action(TITLE_OK, short_icon='mdi:mdi-check'), params={"CONFIRME": "YES"})
+        dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
 
     def fill_confirm(self, transition, trans):
         if (transition == 'valid') and (self.item.sheet_type == 2):
@@ -177,11 +171,10 @@ class StorageSheetTransition(XferTransition):
 
 
 @MenuManage.describ('invoice.change_storagesheet')
-@ActionsManage.affect_show(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline', condition=lambda xfer: int(xfer.item.status) == 1)
-@ActionsManage.affect_grid(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', -1) == StorageSheet.STATUS_VALID)
+@ActionsManage.affect_show(TITLE_PRINT, short_icon='mdi:mdi-printer-outline', condition=lambda xfer: int(xfer.item.status) == 1)
+@ActionsManage.affect_grid(TITLE_PRINT, short_icon='mdi:mdi-printer-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': xfer.getparam('status', -1) == StorageSheet.STATUS_VALID)
 class StorageSheetPrint(XferPrintAction):
     caption = _("Print storage sheet")
-    icon = "report.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageSheet
     field_id = 'bill'
@@ -189,11 +182,10 @@ class StorageSheetPrint(XferPrintAction):
     with_text_export = True
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (xfer.item.status == StorageSheet.STATUS_BUILDING))
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == StorageSheet.STATUS_BUILDING))
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline', condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (xfer.item.status == StorageSheet.STATUS_BUILDING))
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == StorageSheet.STATUS_BUILDING))
 @MenuManage.describ('invoice.add_storagesheet')
 class StorageDetailAddModify(XferAddEditor):
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageDetail
     field_id = 'storagedetail'
@@ -201,10 +193,9 @@ class StorageDetailAddModify(XferAddEditor):
     caption_modify = _("Modify storage detail")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == StorageSheet.STATUS_BUILDING))
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == StorageSheet.STATUS_BUILDING))
 @MenuManage.describ('invoice.delete_storagesheet')
 class StorageDetailDel(XferDelete):
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageDetail
     field_id = 'storagedetail'
@@ -212,10 +203,9 @@ class StorageDetailDel(XferDelete):
 
 
 @MenuManage.describ('contacts.add_vat')
-@ActionsManage.affect_grid(_('Import'), "images/up.png", short_icon="mdi:mdi-upload-box-outline", unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0))
+@ActionsManage.affect_grid(_('Import'), short_icon="mdi:mdi-upload-box-outline", unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.item, 'status') and (int(xfer.item.status) == 0))
 class StorageDetailImport(ObjectImport):
     caption = _("Storage detail import")
-    icon = "storagesheet.png"
     short_icon = 'mdi:mdi-store-outline'
     model = StorageDetail
 
@@ -248,7 +238,6 @@ class StorageDetailImport(ObjectImport):
 
 @MenuManage.describ(right_to_storage, FORMTYPE_NOMODAL, 'storage', _('Situation of storage'))
 class StorageSituation(XferListEditor):
-    icon = "storagereport.png"
     short_icon = 'mdi:mdi-storefront-outline'
     model = ArticleSituation
     field_id = 'articlesituation'
@@ -353,7 +342,7 @@ class StorageSituation(XferListEditor):
         self.add_component(lbl)
 
         btn = XferCompButton("refreshSituation")
-        btn.set_action(self.request, self.return_action("", "images/refresh.png", "mdi:mdi-refresh"), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        btn.set_action(self.request, self.return_action("", short_icon="mdi:mdi-refresh"), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
         btn.set_is_mini(True)
         btn.set_location(0, row_id + 2)
         self.add_component(btn)
@@ -372,12 +361,11 @@ class StorageSituation(XferListEditor):
         lbl.description = _('total amount')
 
         self.add_component(lbl)
-        self.add_action(StorageSituationPrint.get_action(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
+        self.add_action(StorageSituationPrint.get_action(TITLE_PRINT, short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
 
 
 @MenuManage.describ('invoice.change_storagesheet')
 class StorageSituationPrint(XferPrintListing):
-    icon = "report.png"
     short_icon = 'mdi:mdi-storefront-outline'
     model = ArticleSituation
     field_id = 'articlesituation'
@@ -407,7 +395,6 @@ class StorageSituationPrint(XferPrintListing):
 
 @MenuManage.describ(right_to_storage, FORMTYPE_NOMODAL, 'storage', _('Historic of storage'))
 class StorageHistoric(XferListEditor):
-    icon = "storagereport.png"
     short_icon = 'mdi:mdi-store-check'
     model = StorageDetail
     field_id = 'storagedetail'
@@ -485,13 +472,12 @@ class StorageHistoric(XferListEditor):
 
     def fillresponse_body(self):
         XferListEditor.fillresponse_body(self)
-        self.add_action(StorageHistoricPrint.get_action(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
+        self.add_action(StorageHistoricPrint.get_action(TITLE_PRINT, short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
 
 
 @MenuManage.describ('invoice.change_storagesheet')
 class StorageHistoricPrint(XferPrintAction):
     caption = _("Print historic")
-    icon = "report.png"
     short_icon = 'mdi:mdi-store-check'
     model = StorageSheet
     field_id = 'storagedetail'
@@ -508,7 +494,6 @@ def right_to_inventory(request):
 
 @MenuManage.describ(right_to_inventory, FORMTYPE_NOMODAL, 'storage', _('Management of inventory sheet list'))
 class InventorySheetList(XferListEditor):
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventorySheet
     field_id = 'inventorysheet'
@@ -527,11 +512,10 @@ class InventorySheetList(XferListEditor):
             self.filter &= Q(status=status_filter)
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == StorageSheet.STATUS_BUILDING)
+@ActionsManage.affect_grid(TITLE_CREATE, short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
+@ActionsManage.affect_show(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == StorageSheet.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_inventorysheet')
 class InventorySheetAddModify(XferAddEditor):
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventorySheet
     field_id = 'inventorysheet'
@@ -539,11 +523,10 @@ class InventorySheetAddModify(XferAddEditor):
     caption_modify = _("Modify storage sheet")
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.change_inventorysheet')
 class InventorySheetShow(XferListEditor):
     caption = _("Show inventory sheet")
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventorySheet
     field_id = 'inventorysheet'
@@ -616,13 +599,12 @@ class InventorySheetShow(XferListEditor):
         self.actions = []
         for act, opt in ActionsManage.get_actions(ActionsManage.ACTION_IDENT_SHOW, self, key=action_list_sorted):
             self.add_action(act, **opt)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
+        self.add_action(WrapAction(TITLE_CLOSE, short_icon='mdi:mdi-close'))
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status', -1) != InventorySheet.STATUS_VALID)
 @MenuManage.describ('invoice.delete_inventorysheet')
 class InventorySheetDel(XferDelete):
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventorySheet
     field_id = 'inventorysheet'
@@ -632,18 +614,16 @@ class InventorySheetDel(XferDelete):
 @ActionsManage.affect_transition("status")
 @MenuManage.describ('invoice.add_inventorysheet')
 class InventorySheetTransition(XferTransition):
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventorySheet
     field_id = 'inventorysheet'
 
 
 @MenuManage.describ('invoice.change_inventorysheet')
-@ActionsManage.affect_show(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline')
-@ActionsManage.affect_grid(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_show(TITLE_PRINT, short_icon='mdi:mdi-printer-outline')
+@ActionsManage.affect_grid(TITLE_PRINT, short_icon='mdi:mdi-printer-outline', unique=SELECT_SINGLE)
 class InventorySheetPrint(XferPrintAction):
     caption = _("Print inventory sheet")
-    icon = "report.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventorySheet
     field_id = 'inventorysheet'
@@ -651,10 +631,9 @@ class InventorySheetPrint(XferPrintAction):
     with_text_export = True
 
 
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING))
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING))
 @MenuManage.describ('invoice.add_inventorysheet')
 class InventoryDetailModify(XferAddEditor):
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventoryDetail
     field_id = 'inventorydetail'
@@ -666,10 +645,9 @@ class InventoryDetailModify(XferAddEditor):
         XferAddEditor.fillresponse(self)
 
 
-@ActionsManage.affect_grid(_('Copy'), "images/clone.png", short_icon='mdi:mdi-content-copy', unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING))
+@ActionsManage.affect_grid(_('Copy'), short_icon='mdi:mdi-content-copy', unique=SELECT_MULTI, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING))
 @MenuManage.describ('invoice.add_inventorysheet')
 class InventoryDetailCopy(XferContainerAcknowledge):
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventoryDetail
     field_id = 'inventorydetail'
@@ -680,10 +658,9 @@ class InventoryDetailCopy(XferContainerAcknowledge):
             item.copy_value()
 
 
-@ActionsManage.affect_grid(_('Finalize'), "images/upload.png", short_icon='mdi:mdi-upload-box-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING) and not xfer.old_item.can_valid())
+@ActionsManage.affect_grid(_('Finalize'), short_icon='mdi:mdi-upload-box-outline', unique=SELECT_NONE, condition=lambda xfer, gridname='': hasattr(xfer.old_item, 'status') and (int(xfer.old_item.status) == InventorySheet.STATUS_BUILDING) and not xfer.old_item.can_valid())
 @MenuManage.describ('invoice.add_inventorysheet')
 class InventoryDetailFinalize(XferContainerAcknowledge):
-    icon = "inventorysheet.png"
     short_icon = 'mdi:mdi-store-check-outline'
     model = InventoryDetail
     field_id = 'inventorydetail'

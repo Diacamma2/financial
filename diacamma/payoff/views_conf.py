@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 
-from lucterios.framework.xferadvance import XferListEditor, XferDelete,\
+from lucterios.framework.xferadvance import XferListEditor, XferDelete, \
     TITLE_MODIFY, TITLE_ADD, TITLE_DELETE, add_auditlogs_button
 from lucterios.framework.xferadvance import XferAddEditor
-from lucterios.framework.tools import ActionsManage, MenuManage,\
+from lucterios.framework.tools import ActionsManage, MenuManage, \
     CLOSE_NO, SELECT_SINGLE, SELECT_MULTI, FORMTYPE_REFRESH, FORMTYPE_MODAL
 from lucterios.framework.xfercomponents import XferCompButton, XferCompCheck
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
@@ -27,13 +27,12 @@ def fill_params(xfer, is_mini=False):
     btn = XferCompButton('editparam')
     btn.set_is_mini(is_mini)
     btn.set_location(1, xfer.get_max_row() + 1, 2, 1)
-    btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, 'images/edit.png', 'mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
+    btn.set_action(xfer.request, ParamEdit.get_action(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
     xfer.add_component(btn)
 
 
 @MenuManage.describ('payoff.change_bankaccount', FORMTYPE_MODAL, 'financial.conf', _('Management of parameters and configuration of payoff'))
 class PayoffConf(XferListEditor):
-    icon = "bank.png"
     short_icon = 'mdi:mdi-cash-register'
     model = BankAccount
     field_id = 'bankaccount'
@@ -61,11 +60,10 @@ class PayoffConf(XferListEditor):
         fill_params(self)
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('payoff.add_bankaccount')
 class BankAccountAddModify(XferAddEditor):
-    icon = "bank.png"
     short_icon = 'mdi:mdi-cash-register'
     model = BankAccount
     field_id = 'bankaccount'
@@ -73,20 +71,18 @@ class BankAccountAddModify(XferAddEditor):
     caption_modify = _("Modify bank code")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('payoff.delete_bankaccount')
 class BankAccountDelete(XferDelete):
-    icon = "bank.png"
     short_icon = 'mdi:mdi-cash-register'
     model = BankAccount
     field_id = 'bankaccount'
     caption = _("Delete bank code")
 
 
-@ActionsManage.affect_grid(_('Up'), "images/up.png", short_icon="mdi:mdi-arrow-up-bold-outline", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(_('Up'), short_icon="mdi:mdi-arrow-up-bold-outline", unique=SELECT_SINGLE)
 @MenuManage.describ('payoff.add_bankaccount')
 class BankAccountUp(XferContainerAcknowledge):
-    icon = "up.png"
     short_icon = 'mdi:mdi-cash-register'
     model = BankAccount
     field_id = 'bankaccount'
@@ -96,11 +92,10 @@ class BankAccountUp(XferContainerAcknowledge):
         self.item.up_order()
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('payoff.add_bankaccount')
 class PaymentMethodAddModify(XferAddEditor):
-    icon = "bank.png"
     short_icon = 'mdi:mdi-cash-register'
     model = PaymentMethod
     field_id = 'paymentmethod'
@@ -108,10 +103,9 @@ class PaymentMethodAddModify(XferAddEditor):
     caption_modify = _("Modify payment method")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('payoff.delete_bankaccount')
 class PaymentMethodDelete(XferDelete):
-    icon = "bank.png"
     short_icon = 'mdi:mdi-cash-register'
     model = PaymentMethod
     field_id = 'paymentmethod'

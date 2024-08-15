@@ -1038,7 +1038,7 @@ class ModelTest(LucteriosTest):
         self.assert_json_equal('FLOAT', 'credit_val', '0.00')
         self.assert_json_equal('FLOAT', 'debit_val', '0.00')
         self.assert_json_equal('BUTTON', 'new-third', '')
-        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'images/new.png', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '411'}))
+        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'mdi:mdi-pencil-plus', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '411'}))
 
         self.factory.xfer = ModelLineEntryAddModify()
         self.calljson('/diacamma.accounting/modelLineEntryAddModify',

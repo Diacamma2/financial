@@ -28,7 +28,7 @@ from django.utils.translation import gettext_lazy as _
 
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, XferCompSelect, XferCompLinkLabel
-from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction,\
+from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction, \
     get_url_from_request
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.parameters import Params
@@ -203,7 +203,7 @@ class PayoffEditor(LucteriosEditor):
         if self.item.mode in (Payoff.MODE_CASH, Payoff.MODE_INTERNAL):
             xfer.remove_component(prefix + "bank_account")
         elif xfer.get_components(prefix + "bank_account") is not None:
-            xfer.get_components(prefix + "bank_account").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            xfer.get_components(prefix + "bank_account").set_action(xfer.request, xfer.return_action('', short_icon=xfer.short_icon), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             bank_account_comp = xfer.get_components(prefix + "bank_account")
             fee_code = ''
             if bank_account_comp is not None:
@@ -235,7 +235,7 @@ class PayoffEditor(LucteriosEditor):
             levy = mode.select_list[5]
             mode.select_list.insert(3, levy)
             del mode.select_list[6]
-            xfer.get_components(prefix + "mode").set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+            xfer.get_components(prefix + "mode").set_action(xfer.request, xfer.return_action('', short_icon=xfer.short_icon), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
             if self.item.id is None:
                 self.item.mode = int(xfer.getparam(prefix + 'mode', Preference.get_value("payoff-mode", xfer.request.user)))
                 xfer.get_components(prefix + "mode").value = self.item.mode

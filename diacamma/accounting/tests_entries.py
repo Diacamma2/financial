@@ -179,7 +179,7 @@ class EntryTest(LucteriosTest):
         self.assert_json_equal('FLOAT', 'credit_val', '0.00')
         self.assert_json_equal('SELECT', 'third', '0')
         self.assert_json_equal('BUTTON', 'new-third', '')
-        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'images/new.png', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '401'}))
+        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'mdi:mdi-pencil-plus', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '401'}))
         self.assert_select_equal('third', 5)  # nb=5
         self.assert_count_equal('entrylineaccount_serial', 0)
         self.assertEqual(len(self.json_actions), 2)
@@ -324,7 +324,7 @@ class EntryTest(LucteriosTest):
         self.assert_json_equal('FLOAT', 'credit_val', '152.34')
         self.assert_json_equal('SELECT', 'third', '0')
         self.assert_json_equal('BUTTON', 'new-third', '')
-        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'images/new.png', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '401'}))
+        self.assert_action_equal('POST', '#new-third/action', ('Créer', 'mdi:mdi-pencil-plus', 'diacamma.accounting', 'thirdAdd', 0, 1, 1, {'new_account': '401'}))
 
         self.assert_select_equal('third', 5)  # nb=5
         self.assertEqual(self.json_actions[0]['id'], "diacamma.accounting/entryLineAccountAdd")

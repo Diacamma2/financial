@@ -31,7 +31,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 
 from lucterios.framework.editors import LucteriosEditor
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheckList, XferCompGrid, XferCompButton, XferCompEdit,\
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheckList, XferCompGrid, XferCompButton, XferCompEdit, \
     XferCompUpLoad, XferCompImage, XferCompMemo
 from lucterios.framework.tools import CLOSE_NO, FORMTYPE_REFRESH, ActionsManage, FORMTYPE_MODAL, format_to_string
 from lucterios.framework.filetools import save_from_base64, open_image_resize, get_user_path
@@ -41,7 +41,7 @@ from lucterios.CORE.parameters import Params
 from diacamma.accounting.tools import current_system_account, format_with_devise
 from diacamma.accounting.models import CostAccounting, FiscalYear, Third
 from diacamma.payoff.editors import SupportingEditor
-from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail,\
+from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail, \
     Bill, Vat, StorageSheet, StorageArea, AccountPosting, CategoryBill
 
 
@@ -471,7 +471,7 @@ class DetailFilter(object):
         init_row = sel_art.row
         xfer.move(sel_art.tab, 0, 10)
         if hasattr(sel_art, 'set_action'):
-            sel_art.set_action(xfer.request, xfer.return_action('', ''), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+            sel_art.set_action(xfer.request, xfer.return_action('', short_icon=xfer.short_icon), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
 
         btn = XferCompButton('show_art')
         btn.set_is_mini(True)

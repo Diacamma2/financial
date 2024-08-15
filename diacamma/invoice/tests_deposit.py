@@ -33,7 +33,7 @@ from lucterios.contacts.views_contacts import ResponsabilityModify
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, create_account
 from diacamma.accounting.views_entries import EntryAccountList
-from diacamma.payoff.views_deposit import DepositSlipList, DepositSlipAddModify, DepositSlipShow, DepositDetailAddModify, DepositDetailSave, DepositSlipTransition,\
+from diacamma.payoff.views_deposit import DepositSlipList, DepositSlipAddModify, DepositSlipShow, DepositDetailAddModify, DepositDetailSave, DepositSlipTransition, \
     DepositShowPayoff
 from diacamma.payoff.views import PayoffAddModify, PayableShow, PayableEmail
 from diacamma.payoff.views_conf import BankAccountAddModify
@@ -497,7 +497,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'title', "devis")
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assertEqual(len(self.json_actions), 7)
-        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'diacamma.payoff/images/payments.png', 'diacamma.payoff', 'payableShow', 0, 1, 1))
+        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 1, 'item_name': 'bill'}, False)
@@ -514,7 +514,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
         self.assertEqual(len(self.json_actions), 5)
-        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'diacamma.payoff/images/payments.png', 'diacamma.payoff', 'payableShow', 0, 1, 1))
+        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 2, 'item_name': 'bill'}, False)
@@ -570,7 +570,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
         self.assert_json_equal('LABELFORM', 'vta_sum', 4.76)
         self.assertEqual(len(self.json_actions), 5)
-        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'diacamma.payoff/images/payments.png', 'diacamma.payoff', 'payableShow', 0, 1, 1))
+        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 6, 'item_name': 'bill'}, False)
@@ -596,7 +596,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 40.0)
         self.assert_json_equal('LABELFORM', 'vta_sum', 4.76)
         self.assertEqual(len(self.json_actions), 5)
-        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'diacamma.payoff/images/payments.png', 'diacamma.payoff', 'payableShow', 0, 1, 1))
+        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 6, 'item_name': 'bill'}, False)
@@ -612,7 +612,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
         self.assertEqual(len(self.json_actions), 5)
-        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'diacamma.payoff/images/payments.png', 'diacamma.payoff', 'payableShow', 0, 1, 1))
+        self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
         self.factory.xfer = PayableShow()
         self.calljson('/diacamma.payoff/payableShow', {'bill': 4, 'item_name': 'bill'}, False)

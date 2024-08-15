@@ -41,8 +41,8 @@ from diacamma.accounting.views_entries import EntryAccountList, EntryAccountList
     EntryAccountClose, EntryAccountCostAccounting, EntryAccountSearch
 from diacamma.accounting.test_tools import default_compta_fr, initial_thirds_fr, fill_entries_fr, add_entry, create_year
 from diacamma.accounting.views_other import CostAccountingList, CostAccountingClose, CostAccountingAddModify, CostAccountingRecreate, ModelEntryList
-from diacamma.accounting.views_reports import FiscalYearBalanceSheet, FiscalYearIncomeStatement, FiscalYearLedger, FiscalYearTrialBalance,\
-    CostAccountingTrialBalance, CostAccountingLedger, CostAccountingIncomeStatement,\
+from diacamma.accounting.views_reports import FiscalYearBalanceSheet, FiscalYearIncomeStatement, FiscalYearLedger, FiscalYearTrialBalance, \
+    CostAccountingTrialBalance, CostAccountingLedger, CostAccountingIncomeStatement, \
     FiscalYearReportPrint, FiscalYearLedgerShow, CostAccountingReportPrint
 from diacamma.accounting.views_admin import FiscalYearExport
 from diacamma.accounting.models import FiscalYear, Third, CostAccounting, ModelEntry
@@ -604,12 +604,12 @@ class FiscalYearTest(EntryTest):
         self.assert_json_equal('', 'report_1/@75/designation_ref_with_third', "vente 1 (Dalton Joe)")
 
         self.assert_count_equal('#report_1/actions', 1)
-        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
+        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'mdi:mdi-text-box-outline', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
 
         self.factory.xfer = FiscalYearLedgerShow()
         self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-1'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'fiscalYearLedgerShow')
-        self.assert_action_equal('POST', self.response_json['action'], ('Editer', 'images/edit.png', "diacamma.accounting", "entryAccountOpenFromLine", "1", '1', '1', {"entryaccount": "1"}))
+        self.assert_action_equal('POST', self.response_json['action'], ('Editer', 'mdi:mdi-pencil-outline', "diacamma.accounting", "entryAccountOpenFromLine", "1", '1', '1', {"entryaccount": "1"}))
 
         self.factory.xfer = FiscalYearLedgerShow()
         self.calljson('/diacamma.accounting/fiscalYearLedgerShow', {"gridname": "report_1", "report_1": 'L0002-0'}, False)
@@ -1400,7 +1400,7 @@ class CostAccountingTest(EntryTest):
         # id L0009-0
         # id L0010-0
         # id L0011-0
-        # id L0012-0       
+        # id L0012-0
         self.assert_json_equal("", "report_2/@10/name", "")
         self.assert_json_equal("", "report_2/@10/right", "&#160;&#160;&#160;&#160;&#160;{[i]}DDD{[/i]}")
         self.assert_json_equal("", "report_2/@10/right_n", "")
@@ -1491,9 +1491,9 @@ class CostAccountingTest(EntryTest):
         self.assert_count_equal('report_1', 5)
         self.assert_count_equal('report_2', 15)
         self.assert_count_equal('#report_1/actions', 1)
-        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
+        self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'mdi:mdi-text-box-outline', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
         self.assert_count_equal('#report_2/actions', 1)
-        self.assert_action_equal('GET', '#report_2/actions/@0', ('Editer', 'images/show.png', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_2"}))
+        self.assert_action_equal('GET', '#report_2/actions/@0', ('Editer', 'mdi:mdi-text-box-outline', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_2"}))
 
         self.factory.xfer = CostAccountingLedger()
         self.calljson('/diacamma.accounting/costAccountingLedger', {'costaccounting': '2', 'begin_date': '2015-02-14', 'end_date': '2015-02-20'}, False)
@@ -1567,7 +1567,7 @@ class CostAccountingTest(EntryTest):
         self.assert_json_equal('', 'costaccounting/@5/name', 'date short 20=>21 range')
         self.assert_json_equal('', 'costaccounting/@6/name', 'without date 9872021620224')
         self.assertEqual(len(self.json_actions), 2)
-        self.assert_action_equal('POST', self.json_actions[0], ('Par date', 'images/print.png', 'diacamma.accounting', 'costAccountingReportByDate', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[0], ('Par date', 'mdi:mdi-printer-outline', 'diacamma.accounting', 'costAccountingReportByDate', 0, 1, 1))
 
         self.factory.xfer = CostAccountingList()
         self.calljson('/diacamma.accounting/costAccountingList', {'status': 0, 'year': new_year.id}, False)
@@ -1576,8 +1576,8 @@ class CostAccountingTest(EntryTest):
         self.assert_json_equal('', 'costaccounting/@0/name', 'date ok 2022')
         self.assert_json_equal('', 'costaccounting/@1/name', 'date other 2022')
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[0], ('Par date', 'images/print.png', 'diacamma.accounting', 'costAccountingReportByDate', 0, 1, 1))
-        self.assert_action_equal('POST', self.json_actions[1], ('Re-créaction', 'images/new.png', 'diacamma.accounting', 'costAccountingRecreate', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[0], ('Par date', 'mdi:mdi-printer-outline', 'diacamma.accounting', 'costAccountingReportByDate', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[1], ('Re-créaction', 'mdi:mdi-pencil-plus-outline', 'diacamma.accounting', 'costAccountingRecreate', 0, 1, 1))
 
         self.factory.xfer = CostAccountingRecreate()
         self.calljson('/diacamma.accounting/costAccountingRecreate', {'year': new_year.id}, False)

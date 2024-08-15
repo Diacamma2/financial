@@ -49,9 +49,9 @@ from lucterios.CORE.parameters import Params
 from lucterios.contacts.models import LegalEntity, Individual
 from lucterios.documents.models import DocumentContainer
 
-from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink,\
+from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink, \
     CostAccounting
-from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise,\
+from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise, \
     get_amount_from_format_devise
 from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType, PaymentTypeTransfer
 

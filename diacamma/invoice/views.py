@@ -32,12 +32,12 @@ from django.db.models.functions import Concat
 from django.db.models import Q, Value
 from django.db.models.aggregates import Sum, Count
 
-from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELETE, TITLE_MODIFY, TITLE_ADD, TITLE_CANCEL, TITLE_OK, TITLE_EDIT,\
+from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELETE, TITLE_MODIFY, TITLE_ADD, TITLE_CANCEL, TITLE_OK, TITLE_EDIT, \
     TITLE_LABEL, TITLE_CREATE, TITLE_NO, TITLE_SEARCH
 from lucterios.framework.xferadvance import XferListEditor, XferShowEditor, XferAddEditor, XferDelete, XferTransition
-from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompImage, XferCompGrid, XferCompCheck, XferCompEdit, XferCompCheckList, XferCompMemo,\
+from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompImage, XferCompGrid, XferCompCheck, XferCompEdit, XferCompCheckList, XferCompMemo, \
     XferCompButton, XferCompFloat, XferCompDate
-from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, FORMTYPE_REFRESH, CLOSE_NO, SELECT_MULTI, WrapAction,\
+from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, FORMTYPE_REFRESH, CLOSE_NO, SELECT_MULTI, WrapAction, \
     get_format_from_field
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
 from lucterios.framework.error import LucteriosException, IMPORTANT
@@ -56,7 +56,7 @@ from lucterios.CORE.views import ObjectMerge
 from lucterios.contacts.views_contacts import AbstractContactFindDouble
 from lucterios.contacts.models import Individual, LegalEntity
 
-from diacamma.invoice.models import Article, Bill, Detail, Category, Provider, StorageArea, AutomaticReduce,\
+from diacamma.invoice.models import Article, Bill, Detail, Category, Provider, StorageArea, AutomaticReduce, \
     CategoryBill, RecipeKitArticle
 from diacamma.payoff.views import PayoffAddModify, PayableEmail, can_send_email, SupportingPrint
 from diacamma.payoff.models import Payoff, DepositSlip
@@ -65,7 +65,7 @@ from diacamma.accounting.views import get_main_third
 from diacamma.accounting.views_entries import EntryAccountOpenFromLine
 from diacamma.accounting.tools import current_system_account, format_with_devise, get_amount_from_format_devise
 
-MenuManage.add_sub("invoice", None, "diacamma.invoice/images/invoice.png", _("Invoice"), _("Manage of billing"), 45, 'mdi:mdi-invoice-outline')
+MenuManage.add_sub("invoice", None, short_icon='mdi:mdi-invoice-outline', caption=_("Invoice"), desc=_("Manage of billing"), pos=45)
 
 
 def _add_type_filter_selector(xfer, row, col=0):
@@ -143,7 +143,6 @@ def _add_bill_filter(xfer, row, with_third=False):
 
 @MenuManage.describ('invoice.change_bill', FORMTYPE_NOMODAL, 'invoice', _('Management of bill list'))
 class BillList(XferListEditor):
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -184,18 +183,16 @@ class BillList(XferListEditor):
 
 @MenuManage.describ('invoice.change_bill', FORMTYPE_NOMODAL, 'invoice', _('To find a bill following a set of criteria.'))
 class BillSearch(XferSavedCriteriaSearchEditor):
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
     caption = _("Search bill")
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == Bill.STATUS_BUILDING)
+@ActionsManage.affect_grid(TITLE_CREATE, short_icon='mdi:mdi-pencil-plus', condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
+@ActionsManage.affect_show(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES, condition=lambda xfer: xfer.item.status == Bill.STATUS_BUILDING)
 @MenuManage.describ('invoice.add_bill')
 class BillAddModify(XferAddEditor):
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -203,11 +200,10 @@ class BillAddModify(XferAddEditor):
     caption_modify = _("Modify bill")
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.change_bill')
 class BillShow(XferShowEditor):
     caption = _("Show bill")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -233,7 +229,7 @@ class BillShow(XferShowEditor):
                 posx = 1
                 posy = auditlogbtn.row
             btn = XferCompButton('parentbill')
-            btn.set_action(self.request, self.return_action(_('origin'), "origin.png"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'bill': self.item.parentbill_id})
+            btn.set_action(self.request, self.return_action(_('origin'), short_icon="mdi:mdi-invoice-edit-outline"), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'bill': self.item.parentbill_id})
             btn.set_is_mini(True)
             btn.set_location(posx, posy)
             self.add_component(btn)
@@ -305,7 +301,6 @@ class BillForUserQuotation(object):
 
 
 class BillTransitionAbstract(XferTransition, BillForUserQuotation):
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -391,8 +386,8 @@ parent.get('model').setEnabled(persitent_mode==%d);
             dlg.add_component(sel)
         if self.item.bill_type == Bill.BILLTYPE_BILL:
             self.ask_user_quotation_email(dlg, sendemail_quotation)
-        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
-        dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
+        dlg.add_action(self.return_action(TITLE_OK, short_icon='mdi:mdi-check'), params={"CONFIRME": "YES"})
+        dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
 
     def fill_confirm(self, transition, trans):
         def replace_tag(text):
@@ -456,10 +451,9 @@ class BillTransitionArchive(BillTransitionAbstract):
     pass
 
 
-@ActionsManage.affect_show(_('=> Compensation'), "images/transition.png", short_icon='mdi:mdi-share', close=CLOSE_NO, condition=lambda xfer: (xfer.item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)) and (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)))
+@ActionsManage.affect_show(_('=> Compensation'), "mdi:mdi-share", short_icon='mdi:mdi-share', close=CLOSE_NO, condition=lambda xfer: (xfer.item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)) and (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)))
 @MenuManage.describ('invoice.asset_bill')
 class BillUndo(XferContainerAcknowledge):
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -470,11 +464,10 @@ class BillUndo(XferContainerAcknowledge):
             self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill_id})
 
 
-@ActionsManage.affect_grid(_('payoff'), "diacamma.payoff/images/payoff.png", short_icon='mdi:mdi-cash-register', close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) == Bill.STATUS_VALID)
+@ActionsManage.affect_grid(_('payoff'), short_icon='mdi:mdi-cash-register', close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) == Bill.STATUS_VALID)
 @MenuManage.describ('payoff.add_payoff')
 class BillMultiPay(XferContainerAcknowledge):
     caption = _("Multi-pay bill")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -492,11 +485,10 @@ def condition_bill2bill(xfer):
     return (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER))
 
 
-@ActionsManage.affect_show(_("=> Bill"), "images/ok.png", short_icon='mdi:mdi-check', close=CLOSE_YES, condition=condition_bill2bill)
+@ActionsManage.affect_show(_("=> Bill"), short_icon='mdi:mdi-check', close=CLOSE_YES, condition=condition_bill2bill)
 @MenuManage.describ('invoice.add_bill')
 class BillToBill(XferContainerAcknowledge):
     caption = _("Convert to bill")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -509,8 +501,7 @@ class BillToBill(XferContainerAcknowledge):
             dlg.caption = _("Confirmation")
             icon = XferCompImage('img')
             icon.set_location(0, 0, 1, 6)
-            icon.set_value(self.icon_path("images/confirm.png"))
-            icon.set_short_icon(self.short_icon)
+            icon.set_value(self.short_icon, '#')
             dlg.add_component(icon)
             lbl = XferCompLabelForm('lb_title')
             lbl.set_value_as_headername(_("Do you want convert '%s' to bill?") % self.item)
@@ -528,8 +519,8 @@ class BillToBill(XferContainerAcknowledge):
             commentcmp.with_hypertext = True
             commentcmp.set_value(self.item.comment)
             dlg.add_component(commentcmp)
-            dlg.add_action(self.return_action(_('Yes'), 'images/ok.png'), params={"CONFIRME": "YES"})
-            dlg.add_action(WrapAction(TITLE_NO, 'images/cancel.png', 'mdi:mdi-cancel'))
+            dlg.add_action(self.return_action(_('Yes'), short_icon='mdi:mdi-check'), params={"CONFIRME": "YES"})
+            dlg.add_action(WrapAction(TITLE_NO, short_icon='mdi:mdi-cancel'))
             return False
 
     def fillresponse(self):
@@ -545,11 +536,10 @@ def condition_bill2order(xfer):
     return (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_CONVERT) and (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION)
 
 
-@ActionsManage.affect_show(_("=> Order"), "images/ok.png", short_icon='mdi:mdi-check', close=CLOSE_YES, condition=condition_bill2order)
+@ActionsManage.affect_show(_("=> Order"), short_icon='mdi:mdi-check', close=CLOSE_YES, condition=condition_bill2order)
 @MenuManage.describ('invoice.add_bill')
 class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
     caption = _("Convert to order")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -596,8 +586,8 @@ class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
             dlg.get_components("date").name = "date_payoff"
             dlg.get_components("mode").set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.ask_user_quotation_email(dlg, sendemail_quotation)
-        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"CONFIRME": "YES"})
-        dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
+        dlg.add_action(self.return_action(TITLE_OK, short_icon='mdi:mdi-check'), params={"CONFIRME": "YES"})
+        dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
 
     def payoff_order(self, new_order):
         new_payoff = Payoff()
@@ -629,11 +619,10 @@ class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
                     self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_order.id})
 
 
-@ActionsManage.affect_show(_("=> Quotation"), "images/ok.png", short_icon='mdi:mdi-check', close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_CART))
+@ActionsManage.affect_show(_("=> Quotation"), short_icon='mdi:mdi-check', close=CLOSE_YES, condition=lambda xfer: (xfer.item.status == Bill.STATUS_VALID) and (xfer.item.bill_type == Bill.BILLTYPE_CART))
 @MenuManage.describ('invoice.add_bill')
 class BillToQuotation(XferContainerAcknowledge):
     caption = _("Convert to quotation")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -645,11 +634,10 @@ class BillToQuotation(XferContainerAcknowledge):
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 
 
-@ActionsManage.affect_show(_("=> Edit again"), "images/ok.png", short_icon='mdi:mdi-check', close=CLOSE_YES, condition=lambda xfer: (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_CANCEL, Bill.STATUS_ARCHIVE)) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
+@ActionsManage.affect_show(_("=> Edit again"), short_icon='mdi:mdi-check', close=CLOSE_YES, condition=lambda xfer: (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_CANCEL, Bill.STATUS_ARCHIVE)) and (xfer.item.bill_type == Bill.BILLTYPE_QUOTATION))
 @MenuManage.describ('invoice.add_bill')
 class BillCloneQuotation(XferContainerAcknowledge):
     caption = _("Edit again quotation")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -661,21 +649,19 @@ class BillCloneQuotation(XferContainerAcknowledge):
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @MenuManage.describ('invoice.delete_bill')
 class BillDel(XferDelete):
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
     caption = _("Delete bill")
 
 
-@ActionsManage.affect_grid(_('Batch'), "images/upload.png", short_icon="mdi:mdi-upload-box-outline", condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
+@ActionsManage.affect_grid(_('Batch'), short_icon="mdi:mdi-upload-box-outline", condition=lambda xfer, gridname='': xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_BUILDING, Bill.STATUS_BUILDING_VALID, Bill.STATUS_ALL))
 @MenuManage.describ('payoff.add_payoff')
 class BillBatch(XferContainerAcknowledge):
     caption = _("Batch bill")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -683,8 +669,7 @@ class BillBatch(XferContainerAcknowledge):
     def _fill_dlg_batch(self):
         dlg = self.create_custom(Detail)
         img = XferCompImage('img')
-        img.set_value(self.icon_path())
-        img.set_short_icon(self.short_icon)
+        img.set_value(self.short_icon, '#')
         img.set_location(0, 0, 1, 6)
         dlg.add_component(img)
         dlg.item.set_context(dlg)
@@ -714,8 +699,8 @@ class BillBatch(XferContainerAcknowledge):
         lbl.set_value_as_title(_('article'))
         lbl.set_location(1, 9, 2)
         dlg.add_component(lbl)
-        dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png'), params={"SAVE": "YES"})
-        dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
+        dlg.add_action(self.return_action(TITLE_OK, short_icon='mdi:mdi-check'), params={"SAVE": "YES"})
+        dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
 
     def fillresponse(self):
         if self.getparam("SAVE") != "YES":
@@ -755,12 +740,11 @@ def can_printing(xfer, gridname=''):
         return xfer.getparam('status_filter', Preference.get_value("invoice-status", xfer.request.user)) in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)
 
 
-@ActionsManage.affect_grid(_("Send"), "lucterios.mailing/images/email.png", short_icon="mdi:mdi-email-outline", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': can_printing(xfer) and can_send_email(xfer))
-@ActionsManage.affect_show(_("Send"), "lucterios.mailing/images/email.png", short_icon="mdi:mdi-email-outline", close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE) and can_send_email(xfer))
+@ActionsManage.affect_grid(_("Send"), short_icon="mdi:mdi-email-outline", close=CLOSE_NO, unique=SELECT_MULTI, condition=lambda xfer, gridname='': can_printing(xfer) and can_send_email(xfer))
+@ActionsManage.affect_show(_("Send"), short_icon="mdi:mdi-email-outline", close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE) and can_send_email(xfer))
 @MenuManage.describ('invoice.add_bill')
 class BillPayableEmail(XferContainerAcknowledge):
     caption = _("Send by email")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -770,11 +754,10 @@ class BillPayableEmail(XferContainerAcknowledge):
                              close=CLOSE_NO, params={'item_name': self.field_id, "modelname": Bill.get_long_name()})
 
 
-@ActionsManage.affect_grid(_("Print"), "images/print.png", short_icon='mdi:mdi-printer-pos-edit-outline', close=CLOSE_NO, unique=SELECT_MULTI, condition=can_printing)
-@ActionsManage.affect_show(_("Print"), "images/print.png", short_icon='mdi:mdi-printer-pos-edit-outline', close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))
+@ActionsManage.affect_grid(_("Print"), short_icon='mdi:mdi-printer-pos-edit-outline', close=CLOSE_NO, unique=SELECT_MULTI, condition=can_printing)
+@ActionsManage.affect_show(_("Print"), short_icon='mdi:mdi-printer-pos-edit-outline', close=CLOSE_NO, condition=lambda xfer: xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE))
 @MenuManage.describ('invoice.change_bill')
 class BillPrint(SupportingPrint):
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Bill
     field_id = 'bill'
@@ -797,11 +780,10 @@ class BillPrint(SupportingPrint):
             raise LucteriosException(IMPORTANT, _("No invoice to print!"))
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_bill')
 class DetailAddModify(XferAddEditor):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Detail
     field_id = 'detail'
@@ -809,10 +791,9 @@ class DetailAddModify(XferAddEditor):
     caption_modify = _("Modify detail")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.add_bill')
 class DetailDel(XferDelete):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Detail
     field_id = 'detail'
@@ -879,7 +860,6 @@ class ArticleFilter(object):
 
 @MenuManage.describ('invoice.change_article', FORMTYPE_NOMODAL, 'invoice', _('Management of article list'))
 class ArticleList(XferListEditor, ArticleFilter):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
@@ -950,13 +930,12 @@ class ArticleList(XferListEditor, ArticleFilter):
             self.add_component(sel_stock)
 
         self.filter = self.get_search_filter(ref_filter, show_filter, self.show_stockable, self.show_storagearea)
-        self.add_action(ArticleSearch.get_action(TITLE_SEARCH, "diacamma.invoice/images/article.png"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
+        self.add_action(ArticleSearch.get_action(TITLE_SEARCH, short_icon="mdi:mdi-invoice-list-outline"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
 
 
-@ActionsManage.affect_list(_("To disable"), "images/config_ext.png", short_icon="mdi:mdi-credit-card-settings-outline", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
+@ActionsManage.affect_list(_("To disable"), short_icon="mdi:mdi-credit-card-settings-outline", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
 @MenuManage.describ('invoice.change_article')
 class ArticleClean(XferContainerAcknowledge, ArticleFilter):
-    icon = "images/config_ext.png"
     short_icon = "mdi:mdi-credit-card-settings-outline"
     model = Article
     field_id = 'article'
@@ -987,20 +966,18 @@ class ArticleClean(XferContainerAcknowledge, ArticleFilter):
                     logging.getLogger('diacamma.invoice').exception("error for %s" % item)
 
 
-@ActionsManage.affect_list(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline', close=CLOSE_NO)
+@ActionsManage.affect_list(TITLE_PRINT, short_icon='mdi:mdi-printer-outline', close=CLOSE_NO)
 @MenuManage.describ('invoice.change_article')
 class ArticlePrint(ArticleFilter, XferPrintListing):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
     caption = _("Print articles")
 
 
-@ActionsManage.affect_list(TITLE_LABEL, "images/print.png", short_icon='mdi:mdi-printer-pos-star-outline', close=CLOSE_NO)
+@ActionsManage.affect_list(TITLE_LABEL, short_icon='mdi:mdi-printer-pos-star-outline', close=CLOSE_NO)
 @MenuManage.describ('invoice.change_article')
 class ArticleLabel(ArticleFilter, XferPrintLabel):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
@@ -1009,7 +986,6 @@ class ArticleLabel(ArticleFilter, XferPrintLabel):
 
 @MenuManage.describ('accounting.change_article')
 class ArticleSearch(XferSavedCriteriaSearchEditor):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
@@ -1018,17 +994,16 @@ class ArticleSearch(XferSavedCriteriaSearchEditor):
     def fillresponse(self):
         XferSavedCriteriaSearchEditor.fillresponse(self)
         if WrapAction.is_permission(self.request, 'invoice.add_article'):
-            self.get_components(self.field_id).add_action(self.request, ObjectMerge.get_action(_("Merge"), "images/clone.png", short_icon='mdi:mdi-set-merge'),
+            self.get_components(self.field_id).add_action(self.request, ObjectMerge.get_action(_("Merge"), short_icon='mdi:mdi-set-merge'),
                                                           close=CLOSE_NO, unique=SELECT_MULTI, params={'modelname': self.model.get_long_name(), 'field_id': self.field_id})
-        self.add_action(AbstractContactFindDouble.get_action(_("duplicate"), "images/clone.png", short_icon='mdi:mdi-content-copy'),
+        self.add_action(AbstractContactFindDouble.get_action(_("duplicate"), short_icon='mdi:mdi-content-copy'),
                         params={'modelname': self.model.get_long_name(), 'field_id': self.field_id}, pos_act=0)
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.change_article')
 class ArticleShow(XferShowEditor):
     caption = _("Show article")
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
@@ -1047,11 +1022,10 @@ class ArticleShow(XferShowEditor):
                     kit_article.actions[actionid] = (action[0], action[1], action[2], action[3], params)
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus')
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES)
+@ActionsManage.affect_grid(TITLE_CREATE, short_icon='mdi:mdi-pencil-plus')
+@ActionsManage.affect_show(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', close=CLOSE_YES)
 @MenuManage.describ('invoice.add_article')
 class ArticleAddModify(XferAddEditor):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
@@ -1059,20 +1033,18 @@ class ArticleAddModify(XferAddEditor):
     caption_modify = _("Modify article")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.delete_article')
 class ArticleDel(XferDelete):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Article
     field_id = 'article'
     caption = _("Delete article")
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_article')
 class RecipeKitArticleShowLinkArticle(XferContainerAcknowledge):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = RecipeKitArticle
     field_id = 'kit_article'
@@ -1082,11 +1054,10 @@ class RecipeKitArticleShowLinkArticle(XferContainerAcknowledge):
         self.redirect_action(ActionsManage.get_action_url('invoice.Article', 'Show', self), params={"article": self.item.link_article_id})
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_article')
 class RecipeKitArticleAddModify(XferAddEditor):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = RecipeKitArticle
     field_id = 'kit_article'
@@ -1094,21 +1065,19 @@ class RecipeKitArticleAddModify(XferAddEditor):
     caption_modify = _("Modify article of kit")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.add_article')
 class RecipeKitArticleDel(XferDelete):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = RecipeKitArticle
     field_id = 'kit_article'
     caption = _("Delete article of kit")
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline')
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('invoice.add_article')
 class ProviderAddModify(XferAddEditor):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Provider
     field_id = 'provider'
@@ -1116,10 +1085,9 @@ class ProviderAddModify(XferAddEditor):
     caption_modify = _("Modify provider")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('invoice.add_article')
 class ProviderDel(XferDelete):
-    icon = "article.png"
     short_icon = 'mdi:mdi-invoice-list-outline'
     model = Provider
     field_id = 'provider'
@@ -1128,7 +1096,6 @@ class ProviderDel(XferDelete):
 
 @MenuManage.describ('invoice.change_bill', FORMTYPE_MODAL, 'invoice', _('Statistic of selling'))
 class BillStatistic(XferContainerCustom):
-    icon = "report.png"
     short_icon = 'mdi:mdi-finance'
     model = Bill
     field_id = 'bill'
@@ -1138,8 +1105,7 @@ class BillStatistic(XferContainerCustom):
 
     def fill_header(self):
         img = XferCompImage('img')
-        img.set_value(self.icon_path())
-        img.set_short_icon(self.short_icon)
+        img.set_value(self.short_icon, '#')
         img.set_location(0, 0, 1, 2)
         self.add_component(img)
         select_year = self.getparam('fiscal_year')
@@ -1257,15 +1223,14 @@ class BillStatistic(XferContainerCustom):
         self.add_component(lbl)
         self.fill_articles(True)
 
-        self.add_action(BillAccountChecking.get_action(_('check'), "images/info.png", short_icon='mdi:mdi-information-outline'), close=CLOSE_YES)
-        self.add_action(BillStatisticPrint.get_action(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
+        self.add_action(BillAccountChecking.get_action(_('check'), short_icon='mdi:mdi-information-outline'), close=CLOSE_YES)
+        self.add_action(BillStatisticPrint.get_action(TITLE_PRINT, short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
+        self.add_action(WrapAction(TITLE_CLOSE, short_icon='mdi:mdi-close'))
 
 
 @MenuManage.describ('invoice.change_bill')
 class BillStatisticPrint(XferPrintAction):
     caption = _("Print statistic")
-    icon = "report.png"
     short_icon = 'mdi:mdi-finance'
     model = Bill
     field_id = 'bill'
@@ -1275,7 +1240,6 @@ class BillStatisticPrint(XferPrintAction):
 
 @MenuManage.describ('invoice.change_bill')
 class BillOpenEntryAccount(XferContainerAcknowledge):
-    icon = "report.png"
     short_icon = 'mdi:mdi-finance'
     model = Bill
     field_id = 'bill'
@@ -1304,7 +1268,6 @@ class BillOpenEntryAccount(XferContainerAcknowledge):
 
 @MenuManage.describ('invoice.change_bill')
 class BillAccountChecking(XferContainerCustom):
-    icon = "report.png"
     short_icon = 'mdi:mdi-finance'
     model = Bill
     field_id = 'bill'
@@ -1314,8 +1277,7 @@ class BillAccountChecking(XferContainerCustom):
 
     def fill_header(self):
         img = XferCompImage('img')
-        img.set_value(self.icon_path())
-        img.set_short_icon(self.short_icon)
+        img.set_value(self.short_icon, '#')
         img.set_location(0, 0, 1, 2)
         self.add_component(img)
         select_year = self.getparam('fiscal_year')
@@ -1352,8 +1314,8 @@ class BillAccountChecking(XferContainerCustom):
                 grid.set_value(bill.id, "status", bill.status)
                 grid.set_value(bill.id, "amount", bill.total)
                 grid.set_value(bill.id, "account", account_amount)
-        grid.add_action(self.request, BillShow.get_action(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline'), close=CLOSE_NO, unique=SELECT_SINGLE)
-        grid.add_action(self.request, BillOpenEntryAccount.get_action(_('Entry'), "diacamma.accounting/images/financial.png"), close=CLOSE_NO, unique=SELECT_SINGLE)
+        grid.add_action(self.request, BillShow.get_action(TITLE_EDIT, "mdi:mdi-text-box-outline", short_icon='mdi:mdi-text-box-outline'), close=CLOSE_NO, unique=SELECT_SINGLE)
+        grid.add_action(self.request, BillOpenEntryAccount.get_action(_('Entry'), short_icon='mdi:mdi-checkbook'), close=CLOSE_NO, unique=SELECT_SINGLE)
         grid.set_location(0, 1, 3)
         grid.set_size(400, 800)
         self.add_component(grid)
@@ -1385,8 +1347,8 @@ class BillAccountChecking(XferContainerCustom):
                 grid.set_value(payoffid, 'reference', payoff['reference'])
                 grid.set_value(payoffid, "account", account_amount)
         grid.set_location(0, 3, 4)
-        grid.add_action(self.request, BillOpenEntryAccount.get_action(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline'), close=CLOSE_NO, unique=SELECT_SINGLE, params={'showbill': True})
-        grid.add_action(self.request, BillOpenEntryAccount.get_action(_('Entry'), "diacamma.accounting/images/financial.png"), close=CLOSE_NO, unique=SELECT_SINGLE)
+        grid.add_action(self.request, BillOpenEntryAccount.get_action(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline'), close=CLOSE_NO, unique=SELECT_SINGLE, params={'showbill': True})
+        grid.add_action(self.request, BillOpenEntryAccount.get_action(_('Entry'), short_icon='mdi:mdi-checkbook'), close=CLOSE_NO, unique=SELECT_SINGLE)
         grid.set_location(0, 1, 3)
         grid.set_size(400, 800)
         self.add_component(grid)
@@ -1401,7 +1363,7 @@ class BillAccountChecking(XferContainerCustom):
                                                       entry__year=self.item.fiscal_year,
                                                       account__code__regex=current_system_account().get_customer_mask()).annotate(billcount=Count('entry__bill')).annotate(payoffcount=Count('entry__payoff'))
         grid.set_model(entry_lines.filter(billcount=0, payoffcount=0), None)
-        grid.add_action(self.request, EntryAccountOpenFromLine.get_action(_('Entry'), "diacamma.accounting/images/financial.png"), close=CLOSE_NO, unique=SELECT_SINGLE)
+        grid.add_action(self.request, EntryAccountOpenFromLine.get_action(_('Entry'), short_icon='mdi:mdi-checkbook'), close=CLOSE_NO, unique=SELECT_SINGLE)
         grid.set_location(0, 1, 3)
         grid.set_size(400, 800)
         self.add_component(grid)
@@ -1414,14 +1376,13 @@ class BillAccountChecking(XferContainerCustom):
         self.fill_payoff()
         self.new_tab(_('No bill'))
         self.fill_nobill()
-        self.add_action(BillAccountCheckingPrint.get_action(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
+        self.add_action(BillAccountCheckingPrint.get_action(TITLE_PRINT, short_icon='mdi:mdi-printer-outline'), close=CLOSE_NO)
+        self.add_action(WrapAction(TITLE_CLOSE, short_icon='mdi:mdi-close'))
 
 
 @MenuManage.describ('invoice.change_bill')
 class BillAccountCheckingPrint(XferPrintAction):
     caption = _("Print account checking")
-    icon = "report.png"
     short_icon = 'mdi:mdi-finance'
     model = Bill
     field_id = 'bill'
@@ -1432,7 +1393,6 @@ class BillAccountCheckingPrint(XferPrintAction):
 @MenuManage.describ('invoice.add_bill')
 class BillCheckAutoreduce(XferContainerAcknowledge):
     caption = _("Check auto-reduce")
-    icon = "bill.png"
     short_icon = 'mdi:mdi-invoice-edit-outline'
     model = Third
     field_id = 'third'

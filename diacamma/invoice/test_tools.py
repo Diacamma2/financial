@@ -31,8 +31,8 @@ from lucterios.contacts.models import CustomField
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.test_tools import create_account, default_costaccounting
 
-from diacamma.invoice.models import Article, Vat, Category, Provider,\
-    StorageArea, StorageSheet, StorageDetail, AccountPosting, CategoryBill,\
+from diacamma.invoice.models import Article, Vat, Category, Provider, \
+    StorageArea, StorageSheet, StorageDetail, AccountPosting, CategoryBill, \
     RecipeKitArticle
 from diacamma.invoice.views import BillTransition, DetailAddModify, BillAddModify
 from diacamma.payoff.models import PaymentMethod

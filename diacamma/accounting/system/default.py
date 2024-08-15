@@ -96,7 +96,7 @@ class DefaultSystemAccounting(object):
             type_profit = _('deficit')
         img = XferCompImage("img")
         img.set_location(0, 0)
-        img.set_value(get_icon_path("diacamma.accounting/images/account.png"))
+        img.set_value('mdi:mdi-bank-transfer', '#')
         custom.add_component(img)
         lbl = XferCompLabelForm("title")
         lbl.set_value_as_headername(_("Profit and deficit"))
@@ -158,8 +158,8 @@ class DefaultSystemAccounting(object):
             from lucterios.framework.tools import WrapAction, CLOSE_YES, FORMTYPE_MODAL
             custom = xfer.create_custom()
             self._create_custom_for_profit(year, custom, val_profit)
-            custom.add_action(xfer.return_action(TITLE_OK, "images/ok.png", short_icon='mdi:mdi-check'), modal=FORMTYPE_MODAL, close=CLOSE_YES)
-            custom.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
+            custom.add_action(xfer.return_action(TITLE_OK, short_icon='mdi:mdi-check'), modal=FORMTYPE_MODAL, close=CLOSE_YES)
+            custom.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
             return False
         else:
             text = _("Do you want to begin '%s'? {[br/]}{[br/]}{[i]}{[u]}Warning:{[/u]} Your retained earnings must be completed.{[/i]}") % str(year)

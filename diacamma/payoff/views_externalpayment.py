@@ -37,13 +37,12 @@ from lucterios.framework.xferbasic import XferContainerAbstract
 from lucterios.framework.error import LucteriosException, IMPORTANT, MINOR
 
 from diacamma.payoff.models import BankTransaction, PaymentMethod, Supporting, Payoff
-from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement,\
+from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement, \
     PaymentTypeHelloAsso
 
 
 class CheckPaymentGeneric(XferContainerAbstract):
     caption = _("Payment")
-    icon = "payments.png"
     short_icon = "mdi:mdi-credit-card-outline"
     readonly = True
     methods_allowed = ('GET', )
@@ -101,6 +100,7 @@ class CheckPaymentGeneric(XferContainerAbstract):
 
 class ValidationPaymentGeneric(XferContainerAbstract):
     model = BankTransaction
+    short_icon = "mdi:mdi-credit-card-outline"
     field_id = 'banktransaction'
     methods_allowed = ('GET', 'POST', 'PUT')
 

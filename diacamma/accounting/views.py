@@ -31,8 +31,8 @@ from django.db.models import Q, Value
 from django.utils import formats
 
 from lucterios.framework import signal_and_lock
-from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferShowEditor, XferDelete,\
-    TITLE_ADD, TITLE_EDIT, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, XferTransition,\
+from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferShowEditor, XferDelete, \
+    TITLE_ADD, TITLE_EDIT, TITLE_DELETE, TITLE_OK, TITLE_CANCEL, XferTransition, \
     TITLE_CREATE, TITLE_SEARCH, TITLE_MODIFY
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompEdit, XferCompButton, XferCompSelect, XferCompImage, XferCompDate, XferCompGrid
@@ -50,12 +50,11 @@ from diacamma.accounting.tools import correct_accounting_code, current_system_ac
 from django.db.models.aggregates import Count
 from diacamma.accounting.views_entries import add_fiscalyear_result
 
-MenuManage.add_sub("financial", None, "diacamma.accounting/images/financial.png", _("Financial"), _("Financial tools"), 50, 'mdi:mdi-bank-outline')
+MenuManage.add_sub("financial", None, short_icon='mdi:mdi-bank-outline', caption=_("Financial"), desc=_("Financial tools"), pos=50)
 
 
 @MenuManage.describ('accounting.change_third', FORMTYPE_NOMODAL, 'financial', _('Management of third account'))
 class ThirdList(XferListEditor):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = 'third'
@@ -125,10 +124,9 @@ class ThirdList(XferListEditor):
             self.filter &= Q(entrylineaccount__link__isnull=True) & Q(num_entryline__gt=0)
 
 
-@ActionsManage.affect_list(TITLE_SEARCH, "diacamma.accounting/images/thirds.png", short_icon='mdi:mdi-account-search', condition=lambda xfer: xfer.get_components('thirdtype'))
+@ActionsManage.affect_list(TITLE_SEARCH, short_icon='mdi:mdi-account-search', condition=lambda xfer: xfer.get_components('thirdtype'))
 @MenuManage.describ('accounting.change_third')
 class ThirdSearch(XferSavedCriteriaSearchEditor):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = 'third'
@@ -137,7 +135,6 @@ class ThirdSearch(XferSavedCriteriaSearchEditor):
 
 @MenuManage.describ('accounting.add_third')
 class ThirdSave(XferContainerAcknowledge):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = ''
@@ -166,11 +163,10 @@ class ThirdSave(XferContainerAcknowledge):
             self.redirect_action(WrapAction('', '', url_text=redirect_after_save), params={'third': self.item.id})
 
 
-@ActionsManage.affect_list(_('Disabled'), 'images/down.png', short_icon='mdi:mdi-account-off')
+@ActionsManage.affect_list(_('Disabled'), short_icon='mdi:mdi-account-off')
 @MenuManage.describ('accounting.add_third')
 class ThirdDisable(XferContainerAcknowledge):
     model = Third
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     caption = _("Disable third")
 
@@ -178,8 +174,7 @@ class ThirdDisable(XferContainerAcknowledge):
         if limit_date == '':
             dlg = self.create_custom()
             img = XferCompImage('img')
-            img.set_value(self.icon_path())
-            img.set_short_icon(self.short_icon)
+            img.set_value(self.short_icon, '#')
             img.set_location(0, 0, 1, 6)
             dlg.add_component(img)
             limite_date = XferCompDate('limit_date')
@@ -188,8 +183,8 @@ class ThirdDisable(XferContainerAcknowledge):
             limite_date.set_location(1, 2, 1)
             limite_date.description = _('limit date')
             dlg.add_component(limite_date)
-            dlg.add_action(self.return_action(TITLE_OK, 'images/ok.png', 'mdi:mdi-check'), params={"SAVE": "YES"})
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
+            dlg.add_action(self.return_action(TITLE_OK, short_icon='mdi:mdi-check'), params={"SAVE": "YES"})
+            dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
         else:
             third_ids = [val_third['third'] for val_third in EntryLineAccount.objects.filter(entry__date_value__gt=limit_date, third__gt=0).values('third')]
             for third in Third.objects.filter(status=Third.STATUS_ENABLE):
@@ -198,10 +193,9 @@ class ThirdDisable(XferContainerAcknowledge):
                     third.save()
 
 
-@ActionsManage.affect_grid(TITLE_CREATE, "images/new.png", short_icon='mdi:mdi-pencil-plus', unique=SELECT_NONE)
+@ActionsManage.affect_grid(TITLE_CREATE, short_icon='mdi:mdi-pencil-plus', unique=SELECT_NONE)
 @MenuManage.describ('accounting.add_third')
 class ThirdAdd(ContactSelection):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     caption = _("Add third")
     select_class = ThirdSave
@@ -216,7 +210,7 @@ class ThirdAdd(ContactSelection):
         ContactSelection.fillresponse(self)
         grid = self.get_components(self.field_id)
         for action_idx in range(0, len(grid.actions)):
-            if grid.actions[action_idx][0].icon_path.endswith('images/new.png'):
+            if grid.actions[action_idx][0].icon_path.endswith('pencil-plus-outline'):
                 params = grid.actions[action_idx][4]
                 if params is None:
                     params = {}
@@ -228,10 +222,9 @@ class ThirdAdd(ContactSelection):
                 grid.actions[action_idx] = (grid.actions[action_idx][0], grid.actions[action_idx][1], CLOSE_YES, grid.actions[action_idx][3], params)
 
 
-@ActionsManage.affect_show(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', condition=lambda xfer: len(Third.get_fields_to_show()) > 0)
+@ActionsManage.affect_show(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', condition=lambda xfer: len(Third.get_fields_to_show()) > 0)
 @MenuManage.describ('accounting.add_third')
 class ThirdEdit(XferAddEditor):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = 'third'
@@ -239,10 +232,9 @@ class ThirdEdit(XferAddEditor):
     redirect_to_show = False
 
 
-@ActionsManage.affect_grid(TITLE_EDIT, "images/show.png", short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.change_third')
 class ThirdShow(XferShowEditor):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = 'third'
@@ -252,26 +244,23 @@ class ThirdShow(XferShowEditor):
 @ActionsManage.affect_transition("status")
 @MenuManage.describ('accounting.add_third')
 class ThirdTransition(XferTransition):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = 'third'
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('accounting.delete_third')
 class ThirdDel(XferDelete):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = 'third'
     caption = _("Delete third")
 
 
-@ActionsManage.affect_list(_("Listing"), "images/print.png", short_icon='mdi:mdi-printer-pos-edit-outline')
+@ActionsManage.affect_list(_("Listing"), short_icon='mdi:mdi-printer-pos-edit-outline')
 @MenuManage.describ('accounting.change_third')
 class ThirdListing(XferPrintListing):
-    icon = "thirds.png"
     short_icon = "mdi:mdi-account-cash-outline"
     model = Third
     field_id = 'third'
@@ -327,10 +316,9 @@ class ThirdListing(XferPrintListing):
         XferPrintListing.fillresponse(self)
 
 
-@ActionsManage.affect_grid(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', unique=SELECT_NONE)
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline', unique=SELECT_NONE)
 @MenuManage.describ('accounting.add_third')
 class AccountThirdAddModify(XferAddEditor):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = AccountThird
     field_id = 'accountthird'
@@ -338,10 +326,9 @@ class AccountThirdAddModify(XferAddEditor):
     caption_modify = _("Modify account")
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
 @MenuManage.describ('accounting.add_third')
 class AccountThirdDel(XferDelete):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = AccountThird
     field_id = 'accountthird'

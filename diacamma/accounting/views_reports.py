@@ -32,7 +32,7 @@ from django.db.models import Q
 from django.db.models.aggregates import Sum
 from django.utils import formats
 
-from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, WrapAction, convert_date, ActionsManage, SELECT_MULTI,\
+from lucterios.framework.tools import MenuManage, FORMTYPE_NOMODAL, CLOSE_NO, FORMTYPE_REFRESH, WrapAction, convert_date, ActionsManage, SELECT_MULTI, \
     FORMTYPE_MODAL, SELECT_SINGLE
 from lucterios.framework.xfergraphic import XferContainerCustom, XferContainerAcknowledge
 from lucterios.framework.xfercomponents import XferCompImage, XferCompSelect, XferCompLabelForm, XferCompGrid, XferCompEdit, XferCompCheck, XferCompDate
@@ -47,11 +47,10 @@ from diacamma.accounting.tools import correct_accounting_code, current_system_ac
 from diacamma.accounting.tools_reports import get_spaces, convert_query_to_account, add_cell_in_grid, fill_grid, add_item_in_grid
 from diacamma.accounting.views_entries import add_fiscalyear_result
 
-MenuManage.add_sub("bookkeeping_report", "financial", "diacamma.accounting/images/accounting.png", _("Reports"), _("Report of Bookkeeping"), 30, 'mdi:mdi-bank-check')
+MenuManage.add_sub("bookkeeping_report", "financial", short_icon='mdi:mdi-bank-check', caption=_("Reports"), desc=_("Report of Bookkeeping"), pos=30)
 
 
 class FiscalYearReport(XferContainerCustom):
-    icon = "accountingReport.png"
     short_icon = 'mdi:mdi-finance'
     model = FiscalYear
     field_id = 'year'
@@ -111,8 +110,7 @@ class FiscalYearReport(XferContainerCustom):
             self.item.begin = new_begin
             self.item.end = new_end
         img = XferCompImage('img')
-        img.set_value(self.icon_path())
-        img.set_short_icon(self.short_icon)
+        img.set_value(self.short_icon, '#')
         img.set_location(0, 0, 1, 3)
         self.add_component(img)
 
@@ -294,9 +292,9 @@ class FiscalYearReport(XferContainerCustom):
         self.add_component(self.grid)
 
     def fill_buttons(self):
-        self.add_action(FiscalYearReportPrint.get_action(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline'),
+        self.add_action(FiscalYearReportPrint.get_action(TITLE_PRINT, short_icon='mdi:mdi-printer-outline'),
                         close=CLOSE_NO, params={'classname': self.__class__.__name__})
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
+        self.add_action(WrapAction(TITLE_CLOSE, short_icon='mdi:mdi-close'))
 
 
 @MenuManage.describ('accounting.change_fiscalyear', FORMTYPE_NOMODAL, 'bookkeeping_report', _('Show balance sheet for current fiscal year'))
@@ -489,7 +487,7 @@ class FiscalYearLedger(FiscalYearReport):
         self.grid.add_header('link_costaccounting', _('link/cost accounting'))
         self.grid.add_header('debit', _('debit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
         self.grid.add_header('credit', _('credit'), self.hfield, formatstr=';'.join([self.format_str, self.format_str, '']))
-        self.grid.add_action(self.request, FiscalYearLedgerShow.get_action(TITLE_EDIT, 'images/show.png', short_icon='mdi:mdi-text-box-outline'), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE, params={'gridname': grid_name})
+        self.grid.add_action(self.request, FiscalYearLedgerShow.get_action(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline'), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE, params={'gridname': grid_name})
 
     def _add_total_account(self, third=False):
         current_total = self.last_third_total if third else self.last_total
@@ -551,6 +549,7 @@ class FiscalYearLedger(FiscalYearReport):
 
 @MenuManage.describ('accounting.change_fiscalyear')
 class FiscalYearLedgerShow(XferContainerAcknowledge):
+    short_icon = 'mdi:mdi-finance'
     caption = _("Ledger")
     methods_allowed = ('GET', )
 
@@ -659,7 +658,6 @@ class FiscalYearTrialBalance(FiscalYearReport):
 @MenuManage.describ('accounting.change_fiscalyear')
 class FiscalYearReportPrint(XferPrintAction):
     caption = _("Print report fiscal year")
-    icon = "accountingReport.png"
     short_icon = 'mdi:mdi-finance'
     model = FiscalYear
     field_id = 'year'
@@ -710,7 +708,6 @@ class FiscalYearReportPrint(XferPrintAction):
 @MenuManage.describ('accounting.change_fiscalyear')
 class CostAccountingReportPrint(XferPrintAction):
     caption = _("Print report cost accounting")
-    icon = "accountingReport.png"
     short_icon = 'mdi:mdi-finance'
     model = CostAccounting
     field_id = 'costaccounting'
@@ -734,7 +731,6 @@ class CostAccountingReportPrint(XferPrintAction):
 
 
 class CostAccountingReport(FiscalYearReport):
-    icon = "costAccounting.png"
     short_icon = 'mdi:mdi-finance'
     model = CostAccounting
     field_id = 'costaccounting'
@@ -781,8 +777,7 @@ class CostAccountingReport(FiscalYearReport):
         self.date_begin = self.getparam("begin_date", NULL_VALUE)
         self.date_end = self.getparam("end_date", NULL_VALUE)
         img = XferCompImage('img')
-        img.set_value(self.icon_path())
-        img.set_short_icon(self.short_icon)
+        img.set_value(self.short_icon, '#')
         img.set_location(0, 0, 1, 3)
         self.add_component(img)
         if len(self.items) == 1:
@@ -824,12 +819,12 @@ class CostAccountingReport(FiscalYearReport):
         self.fill_filterCode()
 
     def fill_buttons(self):
-        self.add_action(CostAccountingReportPrint.get_action(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline'),
+        self.add_action(CostAccountingReportPrint.get_action(TITLE_PRINT, short_icon='mdi:mdi-printer-outline'),
                         close=CLOSE_NO, params={'classname': self.__class__.__name__})
-        self.add_action(WrapAction(TITLE_CLOSE, 'images/close.png', 'mdi:mdi-close'))
+        self.add_action(WrapAction(TITLE_CLOSE, short_icon='mdi:mdi-close'))
 
 
-@ActionsManage.affect_grid(_("Report"), 'images/print.png', short_icon='mdi:mdi-printer-pos-outline', unique=SELECT_MULTI, modal=FORMTYPE_NOMODAL)
+@ActionsManage.affect_grid(_("Report"), short_icon='mdi:mdi-printer-pos-outline', unique=SELECT_MULTI, modal=FORMTYPE_NOMODAL)
 @MenuManage.describ('accounting.change_entryaccount')
 class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatement):
     caption = _("Income statement of cost accounting")
@@ -941,7 +936,7 @@ class CostAccountingIncomeStatement(CostAccountingReport, FiscalYearIncomeStatem
         self.show_annexe(line_idx, Q(cost_accounting=self.item), filter_exclude)
 
 
-@ActionsManage.affect_grid(_("Ledger"), 'images/print.png', short_icon='mdi:mdi-printer-pos-outline', unique=SELECT_MULTI, modal=FORMTYPE_NOMODAL)
+@ActionsManage.affect_grid(_("Ledger"), short_icon='mdi:mdi-printer-pos-outline', unique=SELECT_MULTI, modal=FORMTYPE_NOMODAL)
 @MenuManage.describ('accounting.change_entryaccount')
 class CostAccountingLedger(CostAccountingReport, FiscalYearLedger):
     caption = _("Ledger of cost accounting")
@@ -960,7 +955,7 @@ class CostAccountingLedger(CostAccountingReport, FiscalYearLedger):
         FiscalYearReport.fill_filterCode(self)
 
 
-@ActionsManage.affect_grid(_("Trial balance"), 'images/print.png', short_icon='mdi:mdi-printer-pos-outline', unique=SELECT_MULTI, modal=FORMTYPE_NOMODAL)
+@ActionsManage.affect_grid(_("Trial balance"), short_icon='mdi:mdi-printer-pos-outline', unique=SELECT_MULTI, modal=FORMTYPE_NOMODAL)
 @MenuManage.describ('accounting.change_entryaccount')
 class CostAccountingTrialBalance(CostAccountingReport, FiscalYearTrialBalance):
     caption = _("Trial balance of cost accounting")

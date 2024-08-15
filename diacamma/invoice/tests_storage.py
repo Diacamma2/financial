@@ -36,24 +36,24 @@ from lucterios.CORE.parameters import Params
 from lucterios.contacts.test_tools import initial_contact
 from lucterios.mailing.test_tools import TestReceiver, configSMTP, decode_b64
 
-from diacamma.invoice.test_tools import InvoiceTest, default_area, default_articles, insert_storage,\
+from diacamma.invoice.test_tools import InvoiceTest, default_area, default_articles, insert_storage, \
     default_categories, create_kit
-from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr,\
+from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, \
     create_account
 from diacamma.accounting.views_entries import EntryAccountList
 from diacamma.payoff.test_tools import default_bankaccount_fr
 from diacamma.payoff.views import SupportingThirdValid
-from diacamma.invoice.views import ArticleShow, BillAddModify, DetailAddModify, BillShow, BillTransition, ArticleList,\
+from diacamma.invoice.views import ArticleShow, BillAddModify, DetailAddModify, BillShow, BillTransition, ArticleList, \
     BillList, ArticleAddModify, BillToBill
-from diacamma.invoice.views_storage import StorageSheetList, StorageSheetAddModify, StorageSheetShow, StorageDetailAddModify,\
-    StorageSheetTransition, StorageDetailImport, StorageDetailDel,\
-    StorageSituation, StorageHistoric, InventorySheetList,\
-    InventorySheetAddModify, InventorySheetShow, InventoryDetailCopy,\
+from diacamma.invoice.views_storage import StorageSheetList, StorageSheetAddModify, StorageSheetShow, StorageDetailAddModify, \
+    StorageSheetTransition, StorageDetailImport, StorageDetailDel, \
+    StorageSituation, StorageHistoric, InventorySheetList, \
+    InventorySheetAddModify, InventorySheetShow, InventoryDetailCopy, \
     InventorySheetTransition, InventoryDetailModify, InventoryDetailFinalize
-from diacamma.invoice.models import Article, StorageSheet, StorageDetail,\
+from diacamma.invoice.models import Article, StorageSheet, StorageDetail, \
     get_or_create_customer
 from lucterios.CORE.models import LucteriosUser
-from diacamma.invoice.views_summary import CurrentCart, CurrentCartAddArticle,\
+from diacamma.invoice.views_summary import CurrentCart, CurrentCartAddArticle, \
     CurrentCartDel, CurrentCartShow, CurrentCartValid
 
 
@@ -1214,8 +1214,8 @@ class StorageTest(InvoiceTest):
         self.assert_count_equal('Array', 6)
         self.assert_count_equal('#Array/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[0], (str('Retour'), 'images/left.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '0'}))
-        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '2'}))
+        self.assert_action_equal('POST', self.json_actions[0], (str('Retour'), 'mdi:mdi-page-next-outline', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '0'}))
+        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'mdi:mdi-check', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '2'}))
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 2, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
@@ -1226,7 +1226,7 @@ class StorageTest(InvoiceTest):
         self.assert_count_equal('Array', 6)
         self.assert_count_equal('#Array/actions', 0)
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'images/ok.png', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '3'}))
+        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'mdi:mdi-check', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '3'}))
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 3, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
@@ -1499,8 +1499,8 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'inventorydetail/@3/real_quantity_txt', "0")
         self.assert_json_equal('', 'inventorydetail/@3/quantity_txt', None)
         self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[0], (str('Modifier'), 'images/edit.png', 'diacamma.invoice', 'inventorySheetAddModify', 1, 1, 0))
-        self.assert_action_equal('GET', self.json_actions[1], (str('Imprimer'), 'images/print.png', 'diacamma.invoice', 'inventorySheetPrint', 0, 1, 0))
+        self.assert_action_equal('POST', self.json_actions[0], (str('Modifier'), 'mdi:mdi-pencil-outline', 'diacamma.invoice', 'inventorySheetAddModify', 1, 1, 0))
+        self.assert_action_equal('GET', self.json_actions[1], (str('Imprimer'), 'mdi:mdi-printer-outline', 'diacamma.invoice', 'inventorySheetPrint', 0, 1, 0))
 
         self.factory.xfer = InventorySheetShow()
         self.calljson('/diacamma.invoice/inventorySheetShow', {'inventorysheet': 1, 'enter_mode': 1}, False)
@@ -1544,7 +1544,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'inventorydetail/@3/real_quantity_txt', "0")
         self.assert_json_equal('', 'inventorydetail/@3/quantity_txt', "0")
         self.assertEqual(len(self.json_actions), 4)
-        self.assert_action_equal('POST', self.json_actions[0], (str('Valider'), 'images/transition.png', 'diacamma.invoice', 'inventorySheetTransition', 0, 1, 1, {'TRANSITION': 'valid'}))
+        self.assert_action_equal('POST', self.json_actions[0], (str('Valider'), 'mdi:mdi-share', 'diacamma.invoice', 'inventorySheetTransition', 0, 1, 1, {'TRANSITION': 'valid'}))
 
         self.factory.xfer = InventorySheetTransition()
         self.calljson('/diacamma.invoice/inventorySheetTransition',
@@ -1634,7 +1634,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'inventorydetail/@3/real_quantity_txt', "0")
         self.assert_json_equal('', 'inventorydetail/@3/quantity_txt', "3")
         self.assertEqual(len(self.json_actions), 4)
-        self.assert_action_equal('POST', self.json_actions[0], (str('Valider'), 'images/transition.png', 'diacamma.invoice', 'inventorySheetTransition', 0, 1, 1, {'TRANSITION': 'valid'}))
+        self.assert_action_equal('POST', self.json_actions[0], (str('Valider'), 'mdi:mdi-share', 'diacamma.invoice', 'inventorySheetTransition', 0, 1, 1, {'TRANSITION': 'valid'}))
 
         self.factory.xfer = InventorySheetTransition()
         self.calljson('/diacamma.invoice/inventorySheetTransition',
@@ -2007,7 +2007,7 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('', 'detail/@0/storagearea', 'Lieu 2')
         self.assert_json_equal('', 'detail/@0/total', 123.4)
         self.assert_count_equal('#detail/actions', 1)
-        self.assert_action_equal('DELETE', self.get_json_path('#detail/actions/@0'), ("Supprimer", "images/delete.png", "diacamma.invoice", "currentCartDelDetail", 0, 1, 0))
+        self.assert_action_equal('DELETE', self.get_json_path('#detail/actions/@0'), ("Supprimer", "mdi:mdi-delete-outline", "diacamma.invoice", "currentCartDelDetail", 0, 1, 0))
         self.assert_json_equal('LABELFORM', 'total_excltax', 752.9)
         self.assert_json_equal('LABELFORM', 'info', [])
         self.assertEqual(len(self.json_actions), 3)

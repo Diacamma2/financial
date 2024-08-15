@@ -43,7 +43,7 @@ from diacamma.accounting.models import CostAccounting, FiscalYear
 from diacamma.accounting.views import ThirdShow
 from diacamma.accounting.views_entries import EntryAccountList
 from diacamma.payoff.views import PayoffAddModify, PayoffDel, SupportingThird, SupportingThirdValid, PayableEmail
-from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport,\
+from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport, \
     default_paymentmethod
 from diacamma.invoice.models import Bill, AccountPosting, CategoryBill
 from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_categories, default_customize, \
@@ -51,7 +51,7 @@ from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_c
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillToBill, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch, \
-    BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo,\
+    BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo, \
     BillToQuotation, BillCloneQuotation, BillTransitionArchive
 
 
@@ -787,7 +787,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'title', "avoir")
         self.assert_json_equal('LABELFORM', 'date', date.today().isoformat(), True)
-        self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
+        self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "mdi:mdi-invoice-edit-outline",
                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
         self.factory.xfer = BillAddModify()
         self.calljson('/diacamma.invoice/billAddModify',
@@ -932,7 +932,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'date', '2015-04-10')
         self.assert_json_equal('LABELFORM', 'comment', 'blablabla')
-        self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "diacamma.invoice/images/origin.png",
+        self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "mdi:mdi-invoice-edit-outline",
                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
 
     def test_cart_to_quotation(self):
@@ -2772,7 +2772,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.assert_json_equal('', 'bill/@3/total', 100.00)
             self.assert_json_equal('', 'bill/@3/total_rest_topay', 100.00)
             self.assert_count_equal('#bill/actions', 6)
-            self.assert_action_equal('POST', self.get_json_path('#bill/actions/@5'), ("Envoyer", "lucterios.mailing/images/email.png", "diacamma.invoice", "billPayableEmail", 0, 1, 2))
+            self.assert_action_equal('POST', self.get_json_path('#bill/actions/@5'), ("Envoyer", "mdi:mdi-email-outline", "diacamma.invoice", "billPayableEmail", 0, 1, 2))
 
             self.factory.xfer = BillPayableEmail()
             self.calljson('/diacamma.invoice/billPayableEmail', {'status_filter': 1, 'bill': '1;2;3;4'}, False)

@@ -31,9 +31,9 @@ from lucterios.framework.model_fields import LucteriosScheduler
 from lucterios.CORE.parameters import Params
 from lucterios.documents.views import DocumentSearch
 
-from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, fill_entries_fr, set_accounting_system, add_entry,\
+from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr, fill_entries_fr, set_accounting_system, add_entry, \
     create_account, check_pdfreport, create_year
-from diacamma.accounting.views_accounts import ChartsAccountList, ChartsAccountDel, ChartsAccountShow, ChartsAccountAddModify, ChartsAccountListing, ChartsAccountImportFiscalYear,\
+from diacamma.accounting.views_accounts import ChartsAccountList, ChartsAccountDel, ChartsAccountShow, ChartsAccountAddModify, ChartsAccountListing, ChartsAccountImportFiscalYear, \
     ChartsAccountInitial
 from diacamma.accounting.views_accounts import FiscalYearBegin, FiscalYearClose, FiscalYearReportLastYear
 from diacamma.accounting.views_entries import EntryAccountEdit, EntryAccountList
@@ -41,7 +41,7 @@ from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.views import ThirdList
 from diacamma.accounting.views_budget import BudgetList, BudgetAddModify, BudgetDel
 from diacamma.payoff.test_tools import PaymentTest
-from diacamma.accounting.views_reports import FiscalYearIncomeStatement,\
+from diacamma.accounting.views_reports import FiscalYearIncomeStatement, \
     FiscalYearBalanceSheet
 from diacamma.accounting.tools_reports import get_budget_total
 
@@ -564,7 +564,7 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
         self.assert_count_equal('', 8)
         self.assertEqual(len(self.json_actions), 4)
-        self.assert_action_equal('POST', self.json_actions[0], ('Commencer', 'images/ok.png', 'diacamma.accounting', 'fiscalYearBegin', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[0], ('Commencer', 'mdi:mdi-check', 'diacamma.accounting', 'fiscalYearBegin', 0, 1, 1))
 
         self.factory.xfer = FiscalYearBegin()
         self.calljson('/diacamma.accounting/fiscalYearBegin',
@@ -584,7 +584,7 @@ class FiscalYearWorkflowTest(PaymentTest):
                       {'year': '1', 'type_of_account': '-1'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountList')
         self.assertEqual(len(self.json_actions), 4)
-        self.assert_action_equal('POST', self.json_actions[0], ('Clôture', 'images/ok.png', 'diacamma.accounting', 'fiscalYearClose', 0, 1, 1))
+        self.assert_action_equal('POST', self.json_actions[0], ('Clôture', 'mdi:mdi-check', 'diacamma.accounting', 'fiscalYearClose', 0, 1, 1))
 
     def test_begin_lastyearnovalid(self):
         self.assertEqual(FiscalYear.objects.get(id=1).status, 0)
@@ -687,7 +687,7 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.assert_count_equal('chartsaccount', 0)
         self.assert_count_equal('#chartsaccount/actions', 6)
         self.assert_action_equal('POST', '#chartsaccount/actions/@3',
-                                 ('Import', 'images/right.png', 'diacamma.accounting', 'chartsAccountImportFiscalYear', 0, 1, 1))
+                                 ('Import', 'mdi:mdi-upload-box-outline', 'diacamma.accounting', 'chartsAccountImportFiscalYear', 0, 1, 1))
 
         self.factory.xfer = ChartsAccountImportFiscalYear()
         self.calljson('/diacamma.accounting/chartsAccountImportFiscalYear',

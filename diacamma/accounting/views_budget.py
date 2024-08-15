@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 
-from lucterios.framework.xferadvance import TITLE_MODIFY, TITLE_ADD, TITLE_DELETE, TITLE_PRINT, TITLE_OK, TITLE_CANCEL,\
+from lucterios.framework.xferadvance import TITLE_MODIFY, TITLE_ADD, TITLE_DELETE, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, \
     XferSave
 from lucterios.framework.xferadvance import XferListEditor
 from lucterios.framework.xferadvance import XferAddEditor
@@ -23,7 +23,6 @@ from django.db.models.aggregates import Sum
 
 @MenuManage.describ('accounting.change_budget')
 class BudgetList(XferListEditor):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = Budget
     field_id = 'budget'
@@ -108,9 +107,8 @@ class BudgetList(XferListEditor):
 
 
 @MenuManage.describ('accounting.change_budget')
-@ActionsManage.affect_list(TITLE_PRINT, "images/print.png", short_icon='mdi:mdi-printer-outline')
+@ActionsManage.affect_list(TITLE_PRINT, short_icon='mdi:mdi-printer-outline')
 class BudgetPrint(XferPrintAction):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = Budget
     field_id = 'budget'
@@ -123,11 +121,10 @@ def condition_changebudget(xfer, gridname=''):
     return not xfer.getparam('readonly', False)
 
 
-@ActionsManage.affect_grid(TITLE_MODIFY, "images/edit.png", short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, condition=condition_changebudget)
-@ActionsManage.affect_list(TITLE_ADD, "images/add.png", short_icon='mdi:mdi-pencil-plus-outline', condition=condition_changebudget)
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE, condition=condition_changebudget)
+@ActionsManage.affect_list(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline', condition=condition_changebudget)
 @MenuManage.describ('accounting.add_budget')
 class BudgetAddModify(XferAddEditor):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = Budget
     field_id = 'budget'
@@ -173,10 +170,9 @@ class BudgetAddModify(XferAddEditor):
         XferAddEditor._search_model(self)
 
 
-@ActionsManage.affect_grid(TITLE_DELETE, "images/delete.png", short_icon='mdi:mdi-delete-outline', unique=SELECT_SINGLE, condition=condition_changebudget)
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_SINGLE, condition=condition_changebudget)
 @MenuManage.describ('accounting.delete_budget')
 class BudgetDel(XferDelete):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = Budget
     field_id = 'budget'
@@ -199,10 +195,9 @@ class BudgetDel(XferDelete):
         XferAddEditor._search_model(self)
 
 
-@ActionsManage.affect_grid(_("Budget"), "account.png", short_icon="mdi:mdi-bank-transfer", unique=SELECT_SINGLE)
+@ActionsManage.affect_grid(_("Budget"), short_icon="mdi:mdi-bank-transfer", unique=SELECT_SINGLE)
 @MenuManage.describ('accounting.change_budget')
 class CostAccountingBudget(XferContainerAcknowledge):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = CostAccounting
     field_id = 'costaccounting'
@@ -215,10 +210,9 @@ class CostAccountingBudget(XferContainerAcknowledge):
         self.redirect_action(BudgetList.get_action(), close=CLOSE_YES, params={'cost_accounting': self.item.id, 'readonly': read_only})
 
 
-@ActionsManage.affect_list(_("Import"), "account.png", short_icon="mdi:mdi-upload-box-outline", condition=lambda xfer: not xfer.getparam('readonly', False))
+@ActionsManage.affect_list(_("Import"), short_icon="mdi:mdi-upload-box-outline", condition=lambda xfer: not xfer.getparam('readonly', False))
 @MenuManage.describ('accounting.add_budget')
 class BudgetImport(XferContainerAcknowledge):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = Budget
     field_id = 'budget'
@@ -235,8 +229,7 @@ class BudgetImport(XferContainerAcknowledge):
         if self.getparam("CONFIRME", "") != "YES":
             dlg = self.create_custom()
             img = XferCompImage('img')
-            img.set_value(self.icon_path())
-            img.set_short_icon(self.short_icon)
+            img.set_value(self.short_icon, '#')
             img.set_location(0, 0, 1, 3)
             dlg.add_component(img)
             lbl = XferCompLabelForm('title')
@@ -264,8 +257,8 @@ class BudgetImport(XferContainerAcknowledge):
             lbl.set_value_as_header(_('All budget lines will be delete and income statement of select item will be import as new budget.'))
             lbl.set_location(1, 2, 2)
             dlg.add_component(lbl)
-            dlg.add_action(self.return_action(TITLE_OK, "images/ok.png", short_icon='mdi:mdi-check'), close=CLOSE_YES, params={'CONFIRME': 'YES'})
-            dlg.add_action(WrapAction(TITLE_CANCEL, 'images/cancel.png', 'mdi:mdi-cancel'))
+            dlg.add_action(self.return_action(TITLE_OK, short_icon='mdi:mdi-check'), close=CLOSE_YES, params={'CONFIRME': 'YES'})
+            dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
         else:
             currentyear = self.getparam('currentyear', 0)
             costaccounting = self.getparam('costaccounting', 0)
@@ -296,10 +289,9 @@ class BudgetImport(XferContainerAcknowledge):
                         Budget.objects.create(code=code, amount=value, year_id=year, cost_accounting_id=cost_accounting)
 
 
-@ActionsManage.affect_list(_("Budget"), "account.png", short_icon="mdi:mdi-bank-transfer")
+@ActionsManage.affect_list(_("Budget"), short_icon="mdi:mdi-bank-transfer")
 @MenuManage.describ('accounting.change_budget')
 class FiscalYearBudget(XferContainerAcknowledge):
-    icon = "account.png"
     short_icon = "mdi:mdi-bank-transfer"
     model = ChartsAccount
     field_id = 'chartsaccount'
