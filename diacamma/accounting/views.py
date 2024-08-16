@@ -160,7 +160,7 @@ class ThirdSave(XferContainerAcknowledge):
         else:
             if 'URL_TO_REDIRECT' in self.params:
                 del self.params['URL_TO_REDIRECT']
-            self.redirect_action(WrapAction('', '', url_text=redirect_after_save), params={'third': self.item.id})
+            self.redirect_action(WrapAction('', self.short_icon, url_text=redirect_after_save), params={'third': self.item.id})
 
 
 @ActionsManage.affect_list(_('Disabled'), short_icon='mdi:mdi-account-off')
@@ -210,7 +210,7 @@ class ThirdAdd(ContactSelection):
         ContactSelection.fillresponse(self)
         grid = self.get_components(self.field_id)
         for action_idx in range(0, len(grid.actions)):
-            if grid.actions[action_idx][0].icon_path.endswith('pencil-plus-outline'):
+            if grid.actions[action_idx][0].short_icon.endswith('pencil-plus-outline'):
                 params = grid.actions[action_idx][4]
                 if params is None:
                     params = {}

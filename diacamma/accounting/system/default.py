@@ -31,10 +31,10 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models.aggregates import Sum
 from django.db.models import Q
 
-from lucterios.framework.tools import get_icon_path
 from lucterios.framework.xferadvance import TITLE_OK, TITLE_CANCEL
-from diacamma.accounting.tools import get_amount_from_format_devise, correct_accounting_code
 from lucterios.framework.error import LucteriosException
+
+from diacamma.accounting.tools import get_amount_from_format_devise, correct_accounting_code
 
 
 class DefaultSystemAccounting(object):

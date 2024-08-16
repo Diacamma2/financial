@@ -449,8 +449,7 @@ class EntryAccountCostAccounting(XferContainerAcknowledge):
             dlg = self.create_custom()
             icon = XferCompImage('img')
             icon.set_location(0, 0, 1, 6)
-            icon.set_value(self.icon_path())
-            icon.set_short_icon(self.short_icon)
+            icon.set_value(self.short_icon, '#')
             dlg.add_component(icon)
             lbl = XferCompLabelForm('lb_costaccounting')
             lbl.set_value_as_name(_('cost accounting'))
@@ -570,7 +569,7 @@ class EntryAccountUnlock(XferContainerAcknowledge):
         self.item.delete_if_ghost_entry()
 
 
-@ActionsManage.affect_other('', '')
+@ActionsManage.affect_other('', short_icon="mdi:mdi-checkbook")
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountAfterSave(XferContainerAcknowledge):
     short_icon = "mdi:mdi-checkbook"
@@ -629,7 +628,7 @@ class EntryAccountReverse(XferContainerAcknowledge):
         self.redirect_action(EntryAccountEdit.get_action(), {})
 
 
-@ActionsManage.affect_show(_('Payment'), '', condition=lambda xfer: (xfer.item.entrylineaccount_set.filter(link__isnull=False).count() == 0) and xfer.item.has_third and not xfer.item.has_cash)
+@ActionsManage.affect_show(_('Payment'), short_icon='mdi:mdi-checkbook', condition=lambda xfer: (xfer.item.entrylineaccount_set.filter(link__isnull=False).count() == 0) and xfer.item.has_third and not xfer.item.has_cash)
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountCreateLinked(XferContainerAcknowledge):
     short_icon = "mdi:mdi-checkbook"
@@ -657,8 +656,7 @@ class EntryAccountModelSelector(XferContainerAcknowledge):
         if self.getparam('SAVE') is None:
             dlg = self.create_custom()
             image = XferCompImage('image')
-            image.set_value(self.icon_path())
-            image.set_short_icon(self.short_icon)
+            image.set_value(self.short_icon, "#")
             image.set_location(0, 0, 1, 6)
             dlg.add_component(image)
             if journal > 0:

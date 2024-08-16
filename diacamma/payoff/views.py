@@ -163,7 +163,7 @@ class SupportingThird(XferListEditor):
         XferListEditor.fillresponse(self)
         grid = self.get_components(self.field_id)
         for action_idx in range(0, len(grid.actions)):
-            if grid.actions[action_idx][0].icon_path.endswith('mdi:mdi-pencil-plus'):
+            if grid.actions[action_idx][0].short_icon.endswith('mdi:mdi-pencil-plus'):
                 params = grid.actions[action_idx][4]
                 if params is None:
                     params = {}
@@ -278,8 +278,7 @@ class PayableEmail(XferContainerAcknowledge):
             dlg = self.create_custom()
             icon = XferCompImage('img')
             icon.set_location(0, 0, 1, 6)
-            icon.set_value(self.icon_path())
-            icon.set_short_icon(self.short_icon)
+            icon.set_value(self.short_icon, '#')
             dlg.add_component(icon)
 
             subject = self.item.get_email_subject()

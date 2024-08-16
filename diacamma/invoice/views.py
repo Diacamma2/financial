@@ -312,8 +312,7 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
         dlg.caption = _("Confirmation")
         icon = XferCompImage('img')
         icon.set_location(0, 0, 1, 6)
-        icon.set_value(self.icon_path())
-        icon.set_short_icon(self.short_icon)
+        icon.set_value(self.short_icon, '#')
         dlg.add_component(icon)
         lbl = XferCompLabelForm('lb_title')
         lbl.set_value_as_infocenter(_("Do you want validate '%s'?") % self.item)
@@ -451,7 +450,7 @@ class BillTransitionArchive(BillTransitionAbstract):
     pass
 
 
-@ActionsManage.affect_show(_('=> Compensation'), "mdi:mdi-share", short_icon='mdi:mdi-share', close=CLOSE_NO, condition=lambda xfer: (xfer.item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)) and (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)))
+@ActionsManage.affect_show(_('=> Compensation'), short_icon='mdi:mdi-share', close=CLOSE_NO, condition=lambda xfer: (xfer.item.bill_type in (Bill.BILLTYPE_BILL, Bill.BILLTYPE_RECEIPT, Bill.BILLTYPE_ASSET)) and (xfer.item.status in (Bill.STATUS_VALID, Bill.STATUS_ARCHIVE)))
 @MenuManage.describ('invoice.asset_bill')
 class BillUndo(XferContainerAcknowledge):
     short_icon = 'mdi:mdi-invoice-edit-outline'
@@ -549,8 +548,7 @@ class BillToOrder(XferContainerAcknowledge, BillForUserQuotation):
         dlg.caption = _("Confirmation")
         icon = XferCompImage('img')
         icon.set_location(0, 0, 1, 6)
-        icon.set_value(self.icon_path())
-        icon.set_short_icon(self.short_icon)
+        icon.set_value(self.short_icon, '#')
         dlg.add_component(icon)
         lbl = XferCompLabelForm('lb_title')
         lbl.set_value_as_infocenter(_("Do you want convert this quotation to order ?"))
