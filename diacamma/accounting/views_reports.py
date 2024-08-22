@@ -289,6 +289,7 @@ class FiscalYearReport(XferContainerCustom):
     def fill_body(self):
         self.grid.no_pager = True
         self.grid.set_location(0, 10, 6)
+        self.grid.set_height(500)
         self.add_component(self.grid)
 
     def fill_buttons(self):

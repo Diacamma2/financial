@@ -302,7 +302,7 @@ class PayableEmail(XferContainerAcknowledge):
             memo.description = _('message')
             memo.set_value(message)
             memo.with_hypertext = True
-            memo.set_size(130, 450)
+            memo.set_height(150)
             memo.set_location(1, 3)
             dlg.add_component(memo)
             if len(items_with_doc) == len(self.items):

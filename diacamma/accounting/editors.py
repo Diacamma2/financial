@@ -429,7 +429,6 @@ class EntryLineAccountEditor(LucteriosEditor):
         edt = XferCompEdit('num_cpt_txt')
         edt.set_location(column, row + 1)
         edt.set_value(num_cpt_txt)
-        edt.set_size(20, 25)
         edt.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         xfer.add_component(edt)
         sel_val = []
@@ -440,7 +439,6 @@ class EntryLineAccountEditor(LucteriosEditor):
         sel = XferCompSelect('num_cpt')
         sel.set_location(column + 1, row + 1, 1)
         sel.set_select(sel_val)
-        sel.set_size(20, 150)
         sel.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         if current_account is not None:
             sel.set_value(current_account.id)
@@ -506,13 +504,11 @@ class EntryLineAccountEditor(LucteriosEditor):
         edt = XferCompFloat('debit_val', -10000000, 10000000, currency_decimal)
         edt.set_location(column, row, 2)
         edt.set_value(self.item.get_debit(with_correction=False))
-        edt.set_size(20, 75)
         edt.description = _('debit')
         xfer.add_component(edt)
         edt = XferCompFloat('credit_val', -10000000, 10000000, currency_decimal)
         edt.set_location(column, row + 1, 2)
         edt.set_value(self.item.get_credit())
-        edt.set_size(20, 75)
         edt.description = _('credit')
         xfer.add_component(edt)
 

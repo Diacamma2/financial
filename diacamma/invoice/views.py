@@ -271,7 +271,7 @@ class BillForUserQuotation(object):
             email_message = email_message.replace('#doc', self.item.get_docname())
             memo.set_value(email_message)
             memo.with_hypertext = True
-            memo.set_size(130, 450)
+            memo.set_height(100)
             memo.set_location(2, row + 4)
             dlg.add_component(memo)
             selectors = PrintModel.get_print_selector(2, self.item.__class__)[0]
@@ -360,7 +360,7 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
             memo.description = _('message')
             memo.set_value(self.item.get_email_message().replace('#name', contact.get_presentation() if contact is not None else '???'))
             memo.with_hypertext = True
-            memo.set_size(130, 450)
+            memo.set_height(150, 450)
             memo.set_location(2, row + 3)
             dlg.add_component(memo)
             if self.item.bill_type != Bill.BILLTYPE_QUOTATION:
@@ -1137,7 +1137,7 @@ class BillStatistic(XferContainerCustom):
             grid.set_value(index, "ratio", cust_val[2])
             index += 1
         grid.set_location(0, 1, 3)
-        grid.set_size(400, 800)
+        grid.set_height(350)        
         self.add_component(grid)
 
     def fill_articles(self, for_quotation):
@@ -1158,7 +1158,7 @@ class BillStatistic(XferContainerCustom):
             grid.set_value(index, "ratio", art_val[4])
             index += 1
         grid.set_location(0, 2, 3)
-        grid.set_size(400, 800)
+        grid.set_height(350)
         self.add_component(grid)
 
     def fill_month(self):
@@ -1175,7 +1175,7 @@ class BillStatistic(XferContainerCustom):
             grid.set_value(index, "ratio", month_val[2])
             index += 1
         grid.set_location(0, 1, 3)
-        grid.set_size(400, 800)
+        grid.set_height(350)
         self.add_component(grid)
 
     def fill_payoff(self, is_revenu, title):
@@ -1198,7 +1198,7 @@ class BillStatistic(XferContainerCustom):
         grid.set_location(0, self.get_max_row() + 1, 3)
         grid.description = title
         if not is_revenu:
-            grid.set_size(200, 800)
+            grid.set_height(350)
         self.add_component(grid)
 
     def fillresponse(self):
@@ -1315,7 +1315,7 @@ class BillAccountChecking(XferContainerCustom):
         grid.add_action(self.request, BillShow.get_action(TITLE_EDIT, "mdi:mdi-text-box-outline", short_icon='mdi:mdi-text-box-outline'), close=CLOSE_NO, unique=SELECT_SINGLE)
         grid.add_action(self.request, BillOpenEntryAccount.get_action(_('Entry'), short_icon='mdi:mdi-checkbook'), close=CLOSE_NO, unique=SELECT_SINGLE)
         grid.set_location(0, 1, 3)
-        grid.set_size(400, 800)
+        grid.set_height(350)
         self.add_component(grid)
 
     def fill_payoff(self):
@@ -1348,7 +1348,7 @@ class BillAccountChecking(XferContainerCustom):
         grid.add_action(self.request, BillOpenEntryAccount.get_action(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline'), close=CLOSE_NO, unique=SELECT_SINGLE, params={'showbill': True})
         grid.add_action(self.request, BillOpenEntryAccount.get_action(_('Entry'), short_icon='mdi:mdi-checkbook'), close=CLOSE_NO, unique=SELECT_SINGLE)
         grid.set_location(0, 1, 3)
-        grid.set_size(400, 800)
+        grid.set_height(350)
         self.add_component(grid)
 
     def fill_nobill(self):
@@ -1363,7 +1363,7 @@ class BillAccountChecking(XferContainerCustom):
         grid.set_model(entry_lines.filter(billcount=0, payoffcount=0), None)
         grid.add_action(self.request, EntryAccountOpenFromLine.get_action(_('Entry'), short_icon='mdi:mdi-checkbook'), close=CLOSE_NO, unique=SELECT_SINGLE)
         grid.set_location(0, 1, 3)
-        grid.set_size(400, 800)
+        grid.set_height(350)
         self.add_component(grid)
 
     def fillresponse(self):

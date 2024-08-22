@@ -141,7 +141,6 @@ class EntryAccountList(XferListEditor):
         sel.set_value(self.select_filter)
         sel.set_location(0, 4, 3)
         sel.description = _("filter")
-        sel.set_size(20, 200)
         sel.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(sel)
         if self.select_filter == 1:
@@ -345,7 +344,7 @@ class EntryAccountImport(ObjectImport):
             grid = XferCompGrid("entryline")
             grid.set_model(EntryLineAccount.objects.filter(entry_id__in=list(self.items_imported.keys())), None, None)
             grid.set_location(1, self.get_max_row() + 1, 2)
-            grid.set_size(350, 500)
+            grid.set_height(350)
             grid.description = _('entries imported')
             self.add_component(grid)
 

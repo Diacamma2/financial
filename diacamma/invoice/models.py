@@ -1807,7 +1807,7 @@ class Detail(LucteriosModel):
     storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
 
     quantity_txt = LucteriosVirtualField(verbose_name=_('quantity'), compute_from="get_quantity_txt")
-    price_txt = LucteriosVirtualField(verbose_name=_('price'), compute_from="get_price")
+    price_txt = LucteriosVirtualField(verbose_name=_('price'), compute_from="get_price", format_string=lambda: format_with_devise(5))
     reduce_txt = LucteriosVirtualField(verbose_name=_('reduce'), compute_from="get_reduce_txt")
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total_ex', format_string=lambda: format_with_devise(5))
 

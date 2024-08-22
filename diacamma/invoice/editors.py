@@ -370,7 +370,7 @@ class BillEditor(SupportingEditor):
         xfer.fill_from_model(1, 0, True, ["third"])
         comp_comment = xfer.get_components('comment')
         comp_comment.with_hypertext = True
-        comp_comment.set_size(100, 375)
+        comp_comment.set_height(150)
 
         com_cat = xfer.get_components('categoryBill')
         if com_cat is not None:
