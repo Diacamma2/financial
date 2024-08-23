@@ -360,7 +360,7 @@ class BillTransitionAbstract(XferTransition, BillForUserQuotation):
             memo.description = _('message')
             memo.set_value(self.item.get_email_message().replace('#name', contact.get_presentation() if contact is not None else '???'))
             memo.with_hypertext = True
-            memo.set_height(150, 450)
+            memo.set_height(150)
             memo.set_location(2, row + 3)
             dlg.add_component(memo)
             if self.item.bill_type != Bill.BILLTYPE_QUOTATION:
@@ -1137,7 +1137,7 @@ class BillStatistic(XferContainerCustom):
             grid.set_value(index, "ratio", cust_val[2])
             index += 1
         grid.set_location(0, 1, 3)
-        grid.set_height(350)        
+        grid.set_height(350)
         self.add_component(grid)
 
     def fill_articles(self, for_quotation):
