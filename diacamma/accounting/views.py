@@ -206,7 +206,7 @@ class ThirdAdd(ContactSelection):
     def fillresponse(self):
         third_filter = self.getparam('filter', '')
         if (third_filter != '') and (self.getparam('CRITERIA') is None):
-            self.params['CRITERIA'] = "name||5||%s//lastname||5||%s" % (third_filter, third_filter)
+            self.params['CRITERIA'] = '[["name",5,"%s"],["lastname",5,"%s"]]' % (third_filter, third_filter)
         ContactSelection.fillresponse(self)
         grid = self.get_components(self.field_id)
         for action_idx in range(0, len(grid.actions)):
