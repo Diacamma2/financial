@@ -1204,32 +1204,31 @@ class StorageTest(InvoiceTest):
         self.assert_observer('core.acknowledge', 'diacamma.invoice', 'storageSheetAddModify')
 
         self.factory.xfer = StorageDetailImport()
-        self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 1, 'modelname': 'invoice.StorageDetail', 'quotechar': "'",
+        self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 2, 'modelname': 'invoice.StorageDetail', 'quotechar': "'",
                                                                 'delimiter': ',', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent': StringIO(csv_content)}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
-        self.assert_count_equal('', 10)
+        self.assert_count_equal('', 11)
         self.assert_select_equal('fld_article', 3)  # nb=3
         self.assert_select_equal('fld_price', 3)  # nb=3
         self.assert_select_equal('fld_quantity', 3)  # nb=3
         self.assert_count_equal('Array', 6)
         self.assert_count_equal('#Array/actions', 0)
-        self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[0], (str('Retour'), 'mdi:mdi-page-next-outline', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '0'}))
-        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'mdi:mdi-check', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '2'}))
-
-        self.factory.xfer = StorageDetailImport()
-        self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 2, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
-                                                                'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
-                                                                "fld_article": "num", "fld_price": "prix", "fld_quantity": "qty", }, False)
-        self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
-        self.assert_count_equal('', 5)
-        self.assert_count_equal('Array', 6)
-        self.assert_count_equal('#Array/actions', 0)
-        self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'mdi:mdi-check', 'diacamma.invoice', 'storageDetailImport', 0, 2, 1, {'step': '3'}))
+        self.assertEqual(len(self.json_actions), 1)
+        self.assert_action_equal('POST', self.json_actions[0], ('Annuler', 'mdi:mdi-cancel'))
 
         self.factory.xfer = StorageDetailImport()
         self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 3, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
+                                                                'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
+                                                                "fld_article": "num", "fld_price": "prix", "fld_quantity": "qty", }, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')
+        self.assert_count_equal('', 6)
+        self.assert_count_equal('Array', 6)
+        self.assert_count_equal('#Array/actions', 0)
+        self.assertEqual(len(self.json_actions), 1)
+        self.assert_action_equal('POST', self.json_actions[0], ('Annuler', 'mdi:mdi-cancel'))
+
+        self.factory.xfer = StorageDetailImport()
+        self.calljson('/diacamma.invoice/storageDetailImport', {'storagesheet': "1", 'step': 4, 'modelname': 'invoice.StorageDetail', 'quotechar': "'", 'delimiter': ',',
                                                                 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                                 "fld_article": "num", "fld_price": "prix", "fld_quantity": "qty", }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'storageDetailImport')

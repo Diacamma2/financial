@@ -1041,10 +1041,10 @@ class EntryTest(LucteriosTest):
 """
 
         self.factory.xfer = EntryAccountImport()
-        self.calljson('/diacamma.accounting/entryAccountImport', {'step': 1, 'year': 1, 'journal': 5, 'quotechar': "'",
+        self.calljson('/diacamma.accounting/entryAccountImport', {'step': 2, 'year': 1, 'journal': 5, 'quotechar': "'",
                                                                   'delimiter': ';', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent': StringIO(csv_content)}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountImport')
-        self.assert_count_equal('', 15)
+        self.assert_count_equal('', 16)
         self.assert_json_equal('LABELFORM', 'year', 'Exercice du 1 janvier 2015 au 31 décembre 2015 [en création]')
         self.assert_json_equal('LABELFORM', 'journal', 'Opérations diverses')
         self.assert_select_equal('fld_entry.date_value', 8)
@@ -1059,18 +1059,18 @@ class EntryTest(LucteriosTest):
         self.assert_count_equal('#Array/actions', 0)
 
         self.factory.xfer = EntryAccountImport()
-        self.calljson('/diacamma.accounting/entryAccountImport', {'step': 2, 'year': 1, 'journal': 5, 'quotechar': "'", 'delimiter': ';',
+        self.calljson('/diacamma.accounting/entryAccountImport', {'step': 3, 'year': 1, 'journal': 5, 'quotechar': "'", 'delimiter': ';',
                                                                   'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                                   "fld_entry.date_value": "date", "fld_entry.designation": "description", "fld_account": "code",
                                                                   'fld_debit': 'debit', 'fld_credit': 'credit', 'fld_third': 'third',
                                                                   'fld_reference': 'ref', 'fld_costaccounting': 'cost'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountImport')
-        self.assert_count_equal('', 5)
+        self.assert_count_equal('', 6)
         self.assert_count_equal('Array', 17)
         self.assert_count_equal('#Array/actions', 0)
 
         self.factory.xfer = EntryAccountImport()
-        self.calljson('/diacamma.accounting/entryAccountImport', {'step': 3, 'year': 1, 'journal': 5, 'quotechar': "'", 'delimiter': ';',
+        self.calljson('/diacamma.accounting/entryAccountImport', {'step': 4, 'year': 1, 'journal': 5, 'quotechar': "'", 'delimiter': ';',
                                                                   'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                                   "fld_entry.date_value": "date", "fld_entry.designation": "description", "fld_account": "code",
                                                                   'fld_debit': 'debit', 'fld_credit': 'credit', 'fld_third': 'third',

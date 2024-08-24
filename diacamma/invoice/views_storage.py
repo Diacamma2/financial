@@ -211,9 +211,9 @@ class StorageDetailImport(ObjectImport):
     def get_select_models(self):
         return StorageDetail.get_select_contact_type(True)
 
-    def _fillcontent_step3(self):
+    def _fillcontent_import_result(self):
         self.import_driver.default_values = {'storagesheet_id': self.storagesheet}
-        ObjectImport._fillcontent_step3(self)
+        ObjectImport._fillcontent_import_result(self)
 
     def _select_fields(self):
         ObjectImport._select_fields(self)
@@ -224,7 +224,7 @@ class StorageDetailImport(ObjectImport):
     def fillresponse(self, modelname, drivername="CSV", step=0):
         self.storagesheet = self.getparam("storagesheet", 0)
         ObjectImport.fillresponse(self, modelname, drivername, step)
-        if step != 3:
+        if step != 4:
             self.move(0, 0, 1)
             self.tab = 0
             sheet = StorageSheet.objects.get(id=self.getparam("storagesheet", 0))

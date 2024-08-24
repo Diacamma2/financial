@@ -314,9 +314,9 @@ class EntryAccountImport(ObjectImport):
     model = EntryAccount
     caption = _("Accounting entries import")
 
-    def _fillcontent_step3(self):
+    def _fillcontent_import_result(self):
         self.import_driver.default_values = {'entry.year': self.select_year, 'entry.journal': self.select_journal}
-        ObjectImport._fillcontent_step3(self)
+        ObjectImport._fillcontent_import_result(self)
 
     def change_gui(self):
         rowid = self.get_max_row()
@@ -340,7 +340,7 @@ class EntryAccountImport(ObjectImport):
         self.select_journal = self.getparam('journal', 4)
         ObjectImport.fillresponse(self, "accounting.EntryLineAccount", drivername, step)
         self.change_gui()
-        if step == 3:
+        if step == 4:
             grid = XferCompGrid("entryline")
             grid.set_model(EntryLineAccount.objects.filter(entry_id__in=list(self.items_imported.keys())), None, None)
             grid.set_location(1, self.get_max_row() + 1, 2)

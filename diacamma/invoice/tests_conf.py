@@ -703,35 +703,34 @@ class ConfigTest(LucteriosTest):
         self.assert_count_equal('article', 0)
 
         self.factory.xfer = ArticleImport()
-        self.calljson('/diacamma.invoice/articleImport', {'step': 1, 'modelname': 'invoice.Article', 'quotechar': "'",
+        self.calljson('/diacamma.invoice/articleImport', {'step': 2, 'modelname': 'invoice.Article', 'quotechar': "'",
                                                           'delimiter': ',', 'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent': StringIO(csv_content)}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
-        self.assert_count_equal('', 6 + 12)
+        self.assert_count_equal('', 7 + 12)
         self.assert_select_equal('fld_reference', 10)  # nb=9
         self.assert_select_equal('fld_categories', 11)  # nb=10
         self.assert_count_equal('Array', 6)
         self.assert_count_equal('#Array/actions', 0)
-        self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[0], (str('Retour'), 'mdi:mdi-page-next-outline', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '0'}))
-        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'mdi:mdi-check', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '2'}))
+        self.assertEqual(len(self.json_actions), 1)       
+        self.assert_action_equal('POST', self.json_actions[0], ('Annuler', 'mdi:mdi-cancel'))
         self.assertEqual(len(self.json_context), 8)
 
         self.factory.xfer = ArticleImport()
-        self.calljson('/diacamma.invoice/articleImport', {'step': 2, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
+        self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
                                                           "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
                                                           "fld_vat": "", "fld_stockable": "stock?", 'fld_categories': 'categorie',
                                                           'fld_provider.third.contact': 'fournisseur', 'fld_provider.reference': 'ref', }, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleImport')
-        self.assert_count_equal('', 4)
+        self.assert_count_equal('', 5)
         self.assert_count_equal('Array', 6)
         self.assert_count_equal('#Array/actions', 0)
-        self.assertEqual(len(self.json_actions), 3)
-        self.assert_action_equal('POST', self.json_actions[1], (str('Ok'), 'mdi:mdi-check', 'diacamma.invoice', 'articleImport', 0, 2, 1, {'step': '3'}))
+        self.assertEqual(len(self.json_actions), 1)
+        self.assert_action_equal('POST', self.json_actions[0], ('Annuler', 'mdi:mdi-cancel'))
 
         self.factory.xfer = ArticleImport()
-        self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
+        self.calljson('/diacamma.invoice/articleImport', {'step': 4, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
                                                           "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
@@ -797,7 +796,7 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'provider/@1/reference', "654321")
 
         self.factory.xfer = ArticleImport()
-        self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
+        self.calljson('/diacamma.invoice/articleImport', {'step': 4, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
                                                           "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
@@ -835,7 +834,7 @@ class ConfigTest(LucteriosTest):
 """
 
         self.factory.xfer = ArticleImport()
-        self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
+        self.calljson('/diacamma.invoice/articleImport', {'step': 4, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
                                                           "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
@@ -908,7 +907,7 @@ class ConfigTest(LucteriosTest):
 """
 
         self.factory.xfer = ArticleImport()
-        self.calljson('/diacamma.invoice/articleImport', {'step': 3, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
+        self.calljson('/diacamma.invoice/articleImport', {'step': 4, 'modelname': 'invoice.Article', 'quotechar': "'", 'delimiter': ',',
                                                           'encoding': 'utf-8', 'dateformat': '%d/%m/%Y', 'importcontent0': csv_content,
                                                           "fld_reference": "num", "fld_designation": "comment", "fld_price": "prix",
                                                           "fld_unit": "unité", "fld_isdisabled": "desactif", "fld_accountposting": "compte",
