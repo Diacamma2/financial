@@ -1004,9 +1004,9 @@ class Bill(Supporting):
         if (self.fiscal_year is None) or (self.num is None):
             return None
         elif (self.categoryBill is not None) and self.categoryBill.special_numbering and (self.categoryBill.prefix_numbering != ''):
-            value = "%s-%s-%d" % (self.fiscal_year.letter, self.categoryBill.prefix_numbering, self.num)
+            value = "%s-%s-%d" % (self.fiscal_year.prefix, self.categoryBill.prefix_numbering, self.num)
         else:
-            value = "%s-%d" % (self.fiscal_year.letter, self.num)
+            value = "%s-%d" % (self.fiscal_year.prefix, self.num)
         return value
 
     def get_origin(self):

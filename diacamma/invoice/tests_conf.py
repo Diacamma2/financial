@@ -711,7 +711,7 @@ class ConfigTest(LucteriosTest):
         self.assert_select_equal('fld_categories', 11)  # nb=10
         self.assert_count_equal('Array', 6)
         self.assert_count_equal('#Array/actions', 0)
-        self.assertEqual(len(self.json_actions), 1)       
+        self.assertEqual(len(self.json_actions), 1)
         self.assert_action_equal('POST', self.json_actions[0], ('Annuler', 'mdi:mdi-cancel'))
         self.assertEqual(len(self.json_context), 8)
 

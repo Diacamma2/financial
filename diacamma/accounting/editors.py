@@ -112,6 +112,8 @@ class FiscalYearEditor(LucteriosEditor):
             if (len(fiscal_years) != 1) or (self.item.status != 0):
                 xfer.change_to_readonly('begin')
         else:  # creation
+            prefix = xfer.get_components('prefix')
+            prefix.set_value(xfer.item.get_letter())
             xfer.remove_component('folder')
             if len(fiscal_years) > 0:
                 # not the first

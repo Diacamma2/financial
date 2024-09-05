@@ -813,6 +813,36 @@ class BillTest(InvoiceTest):
         self.assert_count_equal('entryline', 10)
         self.assert_json_equal('LABELFORM', 'result', [0.00, 0.00, 0.00, 0.00, 0.00])
 
+    def test_bill_prefix_year(self):
+        year_current = FiscalYear.get_current()
+        year_current.prefix = '2015'
+        year_current.save()
+        default_articles()
+        details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
+                   {'article': 2, 'designation': 'article 2', 'price': '3.25', 'quantity': 7},
+                   {'article': 0, 'designation': 'article 3', 'price': '11.10', 'quantity': 2}]
+        self._create_bill(details, 1, '2015-04-01', 6)
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_attrib_equal('total_excltax', 'description', "total")
+        self.assert_json_equal('LABELFORM', 'total_excltax', 107.45)
+        self.assert_json_equal('LABELFORM', 'info', [])
+        self.assertEqual(len(self.json_actions), 3)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition',
+                      {'CONFIRME': 'YES', 'bill': 1, 'withpayoff': False, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_count_equal('', 13)
+        self.assert_json_equal('LABELFORM', 'num_txt', "2015-1")
+        self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assertEqual(len(self.json_actions), 4)
+
     def test_assert_mode(self):
         Params.setvalue('invoice-asset-mode', 1)
         default_articles()
@@ -3610,6 +3640,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.assert_count_equal('bill', 5)
 
     def test_with_categorybill(self):
+        self.maxDiff = None
         Params.setvalue('invoice-cart-active', True)
         default_paymentmethod()
         default_articles()
@@ -3819,7 +3850,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.assertEqual('text/plain', msg_txt.get_content_type())
             self.assertEqual('text/html', msg.get_content_type())
             self.assertEqual('base64', msg.get('Content-Transfer-Encoding', ''))
-            self.assertEqual("<html>Hello<br/>name=Jack Dalton<br/>doc=Type B A-1 - 24 juin 2015<br/><br/>Kiss<hr/><center><i><u>Moyens de paiement</u></i></center><table width='90%'><tr><td><b>virement</b></td><td><center><table width='100%'><tr>    <td><u><i>IBAN</i></u></td>    <td>123456789</td></tr><tr>    <td><u><i>BIC</i></u></td>    <td>AABBCCDD</td></tr></table></center></td></tr><tr></tr><tr><td><b>chèque</b></td><td><center><table width='100%%'>    <tr>        <td><u><i>à l'ordre de</i></u></td>        <td>Truc</td>    </tr>    <tr>        <td><u><i>adresse</i></u></td>        <td>1 rue de la Paix<newline>99000 LA-BAS</td>    </tr></table></center></td></tr><tr></tr><tr><td><b>PayPal</b></td><td><center><a href='https://www.paypal.com/cgi-bin/webscr?business=monney%40truc.org&currency_code=EUR&lc=fr&return=http%3A%2F%2Ftestserver&cancel_return=http%3A%2F%2Ftestserver&notify_url=http%3A%2F%2Ftestserver%2Fdiacamma.payoff%2FvalidationPaymentPaypal&item_name=Type+B+A-1+-+24+juin+2015&custom=2&tax=0.0&amount=100.0&cmd=_xclick&no_note=1&no_shipping=1' name='paypal' target='_blank'><img src='http://testserver/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /></a></center></td></tr><tr></tr><tr><td><b>MoneticoPaiement</b></td><td><center><a href='http://testserver/diacamma.payoff/checkPaymentMoneticoPaiement?payid=2&url=http%3A//testserver' name='moneticopaiement' target='_blank'><img src='http://testserver/static/diacamma.payoff/images/monetico_logo.png' title='MoneticoPaiement' alt='MoneticoPaiement' /></a></center></td></tr><tr></tr><tr><td><b>Hello-Asso</b></td><td><center><a href='http://testserver/diacamma.payoff/checkPaymentHelloAsso?payid=2&url=http%3A//testserver' name='hello-asso' target='_blank'><img src='http://testserver/static/diacamma.payoff/images/helloasso-logo.png' title='Hello-Asso' alt='Hello-Asso' /></a></center></td></tr><tr></tr></table></html>", decode_b64(msg.get_payload()))
+            self.assertEqual("<html>Hello<br/>name=Jack Dalton<br/>doc=Type B A-1 - 24 juin 2015<br/><br/>Kiss<hr/><center><i><u>Moyens de paiement</u></i></center><table width='90%'><tr><td><b>virement</b></td><td><center><table width='100%'><tr>    <td><u><i>IBAN</i></u></td>    <td>123456789</td></tr><tr>    <td><u><i>BIC</i></u></td>    <td>AABBCCDD</td></tr><tr>    <td><u><i>référence à rappeler</i></u></td>    <td>Type b A-1</td></tr></table></center></td></tr><tr></tr><tr><td><b>chèque</b></td><td><center><table width='100%%'>    <tr>        <td><u><i>à l'ordre de</i></u></td>        <td>Truc</td>    </tr>    <tr>        <td><u><i>adresse</i></u></td>        <td>1 rue de la Paix<newline>99000 LA-BAS</td>    </tr></table></center></td></tr><tr></tr><tr><td><b>PayPal</b></td><td><center><a href='https://www.paypal.com/cgi-bin/webscr?business=monney%40truc.org&currency_code=EUR&lc=fr&return=http%3A%2F%2Ftestserver&cancel_return=http%3A%2F%2Ftestserver&notify_url=http%3A%2F%2Ftestserver%2Fdiacamma.payoff%2FvalidationPaymentPaypal&item_name=Type+B+A-1+-+24+juin+2015&custom=2&tax=0.0&amount=100.0&cmd=_xclick&no_note=1&no_shipping=1' name='paypal' target='_blank'><img src='http://testserver/static/diacamma.payoff/images/pp_cc_mark_74x46.jpg' title='PayPal' alt='PayPal' /></a></center></td></tr><tr></tr><tr><td><b>MoneticoPaiement</b></td><td><center><a href='http://testserver/diacamma.payoff/checkPaymentMoneticoPaiement?payid=2&url=http%3A//testserver' name='moneticopaiement' target='_blank'><img src='http://testserver/static/diacamma.payoff/images/monetico_logo.png' title='MoneticoPaiement' alt='MoneticoPaiement' /></a></center></td></tr><tr></tr><tr><td><b>Hello-Asso</b></td><td><center><a href='http://testserver/diacamma.payoff/checkPaymentHelloAsso?payid=2&url=http%3A//testserver' name='hello-asso' target='_blank'><img src='http://testserver/static/diacamma.payoff/images/helloasso-logo.png' title='Hello-Asso' alt='Hello-Asso' /></a></center></td></tr><tr></tr></table></html>", decode_b64(msg.get_payload()))
 
             self.assertTrue('Type B_A-1_Dalton Jack.pdf' in msg_file.get('Content-Type', ''), msg_file.get('Content-Type', ''))
             self.save_pdf(base64_content=msg_file.get_payload(), ident=2)

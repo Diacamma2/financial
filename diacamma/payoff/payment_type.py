@@ -181,6 +181,9 @@ class PaymentTypeTransfer(PaymentType):
         formTxt += "{[/tr]}{[tr]}"
         formTxt += "    {[td]}{[u]}{[i]}%s{[/i]}{[/u]}{[/td]}" % _('BIC')
         formTxt += "    {[td]}%s{[/td]}" % items[1]
+        formTxt += "{[/tr]}{[tr]}"
+        formTxt += "    {[td]}{[u]}{[i]}%s{[/i]}{[/u]}{[/td]}" % _('Reference to remind')
+        formTxt += "    {[td]}%s{[/td]}" % supporting.reference
         formTxt += "{[/tr]}{[/table]}"
         formTxt += "{[/center]}"
         return formTxt

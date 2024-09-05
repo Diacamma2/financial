@@ -271,6 +271,7 @@ class FiscalYear(LucteriosModel):
     last_fiscalyear = models.ForeignKey('FiscalYear', verbose_name=_('last fiscal year'), related_name='next_fiscalyear', null=True, on_delete=models.SET_NULL)
 
     folder = models.ForeignKey(FolderContainer, verbose_name=_('folder'), null=True, on_delete=models.PROTECT)
+    prefix = models.CharField(verbose_name=_('prefix'), default='', null=False, max_length=10)
 
     total_result_text = LucteriosVirtualField(verbose_name='', compute_from='get_total_result_text', format_string=lambda: get_total_result_text_format())
 
@@ -319,15 +320,15 @@ class FiscalYear(LucteriosModel):
             year_item.save()
         self.is_actif = True
         self.save()
-        CostAccounting.change_in_accounting()
+        Signal.call_signal("fiscalyear_change")
 
     @classmethod
     def get_default_fields(cls):
-        return ['begin', 'end', 'status', 'is_actif']
+        return ['begin', 'end', 'status', 'prefix', 'is_actif']
 
     @classmethod
     def get_edit_fields(cls):
-        return ['status', 'begin', 'end', 'folder']
+        return ['status', 'begin', 'end', 'prefix', 'folder']
 
     def get_result_entries(self):
         if not hasattr(self, "_result_entries"):
@@ -499,9 +500,11 @@ class FiscalYear(LucteriosModel):
     def set_context(self, xfer):
         setattr(self, 'last_user', xfer.request.user)
 
-    @property
-    def _letter(self):
-        nb_year = FiscalYear.objects.filter(id__lt=self.id).count()
+    def get_letter(self):
+        if self.id is None:
+            nb_year = FiscalYear.objects.count()
+        else:
+            nb_year = FiscalYear.objects.filter(id__lt=self.id).count()
         letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         res = ''
         while nb_year >= 26:
@@ -509,10 +512,6 @@ class FiscalYear(LucteriosModel):
             res = letters[mod] + res
             nb_year = int(div) - 1
         return letters[nb_year] + res
-
-    @property
-    def letter(self):
-        return self.get_cache_text(self, '_letter')
 
     def _check_annexe(self):
         total = 0
@@ -591,6 +590,8 @@ class FiscalYear(LucteriosModel):
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.create_folder()
+        if self.prefix.strip() == '':
+            self.prefix = self.get_letter()
         return LucteriosModel.save(self, force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     class Meta(object):
@@ -703,15 +704,6 @@ class CostAccounting(LucteriosModel):
         if new_by_default is not None:
             new_by_default.change_has_default()
         return error
-
-    @classmethod
-    def change_in_accounting(cls):
-        current_year = FiscalYear.get_current()
-        for cost_item in CostAccounting.objects.filter(year=current_year, is_protected=False):
-            if cost_item.last_costaccounting is not None:
-                Signal.call_signal("costaccounting_change", cost_item, True, cost_item.last_costaccounting)
-            if cost_item.next_costaccounting.first() is not None:
-                Signal.call_signal("costaccounting_change", cost_item, False, cost_item.next_costaccounting.first())
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         if (self.id is not None) and (self.year is not None):
@@ -2002,6 +1994,16 @@ def get_meta_currency_iso():
         return None
 
 
+@Signal.decorate('fiscalyear_change')
+def change_in_accounting():
+    current_year = FiscalYear.get_current()
+    for cost_item in CostAccounting.objects.filter(year=current_year, is_protected=False):
+        if cost_item.last_costaccounting is not None:
+            Signal.call_signal("costaccounting_change", cost_item, True, cost_item.last_costaccounting)
+        if cost_item.next_costaccounting.first() is not None:
+            Signal.call_signal("costaccounting_change", cost_item, False, cost_item.next_costaccounting.first())
+
+
 @Signal.decorate('costaccounting_change')
 def accounting_changecost_model(new_cost, lastcost, old_cost):
     for model in ModelEntry.objects.filter(costaccounting=old_cost):
@@ -2080,6 +2082,11 @@ def check_multilink():
     AccountLink.fill_emptydate()
 
 
+def check_prefixyear():
+    for year in FiscalYear.objects.filter(prefix=''):
+        year.save()
+
+
 @Signal.decorate('convertdata')
 def accounting_convertdata():
     check_accountingcost()
@@ -2088,6 +2095,7 @@ def accounting_convertdata():
     check_yearaccount()
     check_third()
     check_multilink()
+    check_prefixyear()
     EntryAccount.clear_ghost()
 
 
