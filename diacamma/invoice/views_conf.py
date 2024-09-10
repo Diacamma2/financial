@@ -41,7 +41,7 @@ from lucterios.contacts.tools import ContactSelection
 
 from diacamma.accounting.tools import correct_accounting_code
 from diacamma.invoice.models import Vat, Article, Category, StorageArea, \
-    AccountPosting, AutomaticReduce, CategoryBill
+    AccountPosting, AutomaticReduce, CategoryBill, MultiPrice
 from diacamma.accounting.system import accounting_system_ident
 
 
@@ -122,6 +122,8 @@ class InvoiceConfCommercial(XferListEditor):
         self.fill_grid(self.get_max_row(), CategoryBill, 'categoryBill', CategoryBill.objects.all())
         self.new_tab(_('Cart'))
         self.add_cart_params()
+        self.new_tab(_('Multi-price'))
+        self.fill_grid(self.get_max_row(), MultiPrice, 'multiprice', MultiPrice.objects.all())
         self.new_tab(_('Automatic reduce'))
 
 
@@ -176,6 +178,26 @@ class AutomaticReduceDel(XferDelete):
     model = AutomaticReduce
     field_id = 'automaticreduce'
     caption = _("Delete automatic reduce")
+
+
+@ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline')
+@ActionsManage.affect_grid(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline', unique=SELECT_SINGLE)
+@MenuManage.describ('invoice.add_vat')
+class MultiPriceAddModify(XferAddEditor):
+    short_icon = "mdi:mdi-credit-card-settings-outline"
+    model = MultiPrice
+    field_id = 'multiprice'
+    caption_add = _("Add multi-price")
+    caption_modify = _("Modify multi-price")
+
+
+@ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI)
+@MenuManage.describ('invoice.delete_vat')
+class MultiPriceDel(XferDelete):
+    short_icon = "mdi:mdi-credit-card-settings-outline"
+    model = MultiPrice
+    field_id = 'multiprice'
+    caption = _("Delete multi-price")
 
 
 @MenuManage.describ('invoice.add_vat')

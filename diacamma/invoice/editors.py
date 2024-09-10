@@ -32,7 +32,7 @@ from django.db.models import Q
 
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheckList, XferCompGrid, XferCompButton, XferCompEdit, \
-    XferCompUpLoad, XferCompImage, XferCompMemo
+    XferCompUpLoad, XferCompImage, XferCompMemo, XferCompFloat
 from lucterios.framework.tools import CLOSE_NO, FORMTYPE_REFRESH, ActionsManage, FORMTYPE_MODAL, format_to_string
 from lucterios.framework.filetools import save_from_base64, open_image_resize, get_user_path
 from lucterios.framework.xferbasic import NULL_VALUE
@@ -42,7 +42,7 @@ from diacamma.accounting.tools import current_system_account, format_with_devise
 from diacamma.accounting.models import CostAccounting, FiscalYear, Third
 from diacamma.payoff.editors import SupportingEditor
 from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail, \
-    Bill, Vat, StorageSheet, StorageArea, AccountPosting, CategoryBill
+    Bill, Vat, StorageSheet, StorageArea, AccountPosting, CategoryBill, MultiPrice
 
 
 def add_provider_filter(xfer, init_col, init_row):
@@ -204,6 +204,18 @@ class ArticleEditor(LucteriosEditor):
             upload.add_filter('.bmp')
             upload.set_location(0, xfer.get_max_row() + 1, 2, 1)
             xfer.add_component(upload)
+        price_comp = xfer.get_components("price")
+        xfer.tab = price_comp.tab
+        for fieldname in ("qtyDecimal", "unit", "isdisabled", "stockable", 'vat', "accountposting"):
+            xfer.move_components(fieldname, 0, MultiPrice.objects.count())
+        row_num = price_comp.row + 1
+        for multiprice in MultiPrice.objects.all():
+            newprice = XferCompFloat(multiprice.get_fieldname(), 0, 9999999.999, precval=Params.getvalue("accounting-devise-prec"))
+            newprice.description = multiprice.name
+            newprice.set_value(getattr(self.item, multiprice.get_fieldname()))
+            newprice.set_location(price_comp.col, row_num, price_comp.colspan, price_comp.rowspan)
+            xfer.add_component(newprice)
+            row_num += 1
         accountposting_comp = xfer.get_components('accountposting')
         accountposting_comp.colspan = 1
         xfer.tab = accountposting_comp.tab
@@ -244,6 +256,22 @@ class ArticleEditor(LucteriosEditor):
             img.type = 'jpg'
             img.set_location(new_col, obj_ref.row, 1, 6)
             xfer.add_component(img)
+        price_comp = xfer.get_components("price")
+        xfer.tab = price_comp.tab
+        for fieldname in ("qtyDecimal", "unit", "isdisabled", "stockable", 'vat', "accountposting", "categories"):
+            xfer.move_components(fieldname, 0, MultiPrice.objects.count())
+        for custom_fields in Article.get_fields_to_show():
+            for custom_field in custom_fields:
+                xfer.move_components(custom_field, 0, MultiPrice.objects.count())
+        row_num = price_comp.row + 1
+        for multiprice in MultiPrice.objects.all():
+            newprice = XferCompLabelForm(multiprice.get_fieldname())
+            newprice.description = multiprice.name
+            newprice.set_value(getattr(self.item, multiprice.get_fieldname()))
+            newprice.set_format(format_with_devise(5))
+            newprice.set_location(price_comp.col, row_num, price_comp.colspan, price_comp.rowspan)
+            xfer.add_component(newprice)
+            row_num += 1
         if self.item.stockable == Article.STOCKABLE_KIT:
             xfer.new_tab(_("Articles of kit"))
             xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, ['kit_article_set'])

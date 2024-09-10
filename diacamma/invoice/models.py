@@ -188,6 +188,65 @@ class AccountPosting(LucteriosModel):
         default_permissions = []
 
 
+class MultiPrice(LucteriosModel):
+    name = models.CharField(_('name'), max_length=250, blank=False)
+    filtercriteria = models.ForeignKey(SavedCriteria, verbose_name=_('filter criteria'), null=True, on_delete=models.PROTECT)
+
+    PREFIX_PRICE = "price_"
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def get_default_fields(cls):
+        return ["name", "filtercriteria"]
+
+    @classmethod
+    def get_edit_fields(cls):
+        return ["name", "filtercriteria"]
+
+    @classmethod
+    def get_show_fields(cls):
+        return ["name", "filtercriteria"]
+
+    def get_fieldname(self):
+        return self.PREFIX_PRICE + "%d" % self.id
+
+    @property
+    def filtercriteria_query(self):
+        return SavedCriteria.objects.filter(modelname=Third.get_long_name())
+
+    def check_filtercriteria(self, third_id):
+        if self.filtercriteria_id is not None:
+            from lucterios.framework.xfersearch import get_search_query_from_criteria
+            filter_result, _desc = get_search_query_from_criteria(self.filtercriteria.criteria, Third)
+            third_list = Third.objects.filter(filter_result).distinct()
+            return third_list.filter(id=third_id).exists()
+        return True
+
+    class Meta(object):
+        verbose_name = _('multi-price')
+        verbose_name_plural = _('multi-prices')
+        default_permissions = []
+
+
+class MultiPriceValue(LucteriosModel):
+    article = models.ForeignKey('Article', verbose_name=_('article'), null=False, on_delete=models.CASCADE)
+    multiprice = models.ForeignKey(MultiPrice, verbose_name=_('multi-price'), null=False, on_delete=models.CASCADE)
+    price = LucteriosDecimalField(_('price'), max_digits=10, decimal_places=3,
+                                  default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5))
+
+    price_txt = LucteriosVirtualField(verbose_name=_('price'), compute_from='price', format_string=lambda: format_with_devise(5))
+
+    def get_auditlog_object(self):
+        return self.article.get_final_child()
+
+    class Meta(object):
+        verbose_name = _('multi-price value')
+        verbose_name_plural = _('multi-price values')
+        default_permissions = []
+
+
 class Article(LucteriosModel, CustomizeObject):
     STOCKABLE_NO = 0
     STOCKABLE_YES = 1
@@ -223,6 +282,10 @@ class Article(LucteriosModel, CustomizeObject):
     @staticmethod
     def have_category():
         return LucteriosModel.have_class_item(Category)
+
+    @staticmethod
+    def have_vat():
+        return LucteriosModel.have_class_item(Vat)
 
     @staticmethod
     def have_storage():
@@ -271,7 +334,11 @@ class Article(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_edit_fields(cls):
-        fields = {_('001@Description'): ["reference", "designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting",)]}
+        fields_desc = ["reference", "designation", ("price", ), ("qtyDecimal", "unit"), ("isdisabled", "stockable")]
+        if cls.have_vat():
+            fields_desc.extend([('vat', )])
+        fields_desc.extend([('accountposting', )])
+        fields = {_('001@Description'): fields_desc}
         if cls.have_category():
             fields[_('002@Extra')] = ['categories']
         return fields
@@ -279,10 +346,13 @@ class Article(LucteriosModel, CustomizeObject):
     @classmethod
     def get_show_fields(cls):
         fields = {'': ["reference"]}
-        fields_desc = ["designation", ("price", "unit"), ("qtyDecimal", "stockable"), ('vat', "isdisabled"), ("accountposting",)]
+        fields_desc = ["designation", ("price", ), ("qtyDecimal", "unit"), ("isdisabled", "stockable")]
+        if cls.have_vat():
+            fields_desc.extend([('vat', )])
+        fields_desc.extend([('accountposting', )])
         fields_desc.extend(cls.get_fields_to_show())
         if cls.have_category():
-            fields_desc.append('categories')
+            fields_desc.append(('categories',))
         fields[_('001@Description')] = fields_desc
         if cls.have_provider():
             fields[_('002@Provider')] = ['provider_set']
@@ -290,7 +360,10 @@ class Article(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_search_fields(cls):
-        fields = ["reference", "designation", "price", "unit", "qtyDecimal", "stockable", 'vat', "isdisabled", "accountposting"]
+        fields = ["reference", "designation", "price", "unit", "qtyDecimal", "stockable"]
+        if cls.have_vat():
+            fields.append('vat')
+        fields.extend(["isdisabled", "accountposting"])
         for cf_name, cf_model in CustomField.get_fields(cls):
             fields.append((cf_name, cf_model.get_field(), 'articlecustomfield__value', Q(articlecustomfield__field__id=cf_model.id)))
         if cls.have_category():
@@ -305,7 +378,10 @@ class Article(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_import_fields(cls):
-        fields = ["reference", "designation", "price", "unit", "accountposting", 'vat', "stockable", "isdisabled", "qtyDecimal"]
+        fields = ["reference", "designation", "price"]
+        for multi_price in MultiPrice.objects.all():
+            fields.append((multi_price.get_fieldname(), multi_price.name))
+        fields.extend(["unit", "accountposting", 'vat', "stockable", "isdisabled", "qtyDecimal"])
         if cls.have_category():
             fields.append('categories')
         if cls.have_provider():
@@ -539,6 +615,30 @@ class Article(LucteriosModel, CustomizeObject):
             format_txt = "N%d" % int(self.qtyDecimal)
             return format_to_string(value, format_txt, None)
         return None
+
+    def __getattr__(self, name):
+        if name == "str":
+            return str(self.get_final_child())
+        if name[:len(MultiPrice.PREFIX_PRICE)] == MultiPrice.PREFIX_PRICE:
+            if self.id is None:
+                return 0
+            else:
+                multiprice_id = int(name[len(MultiPrice.PREFIX_PRICE):])
+                multipricevalue = MultiPriceValue.objects.filter(article=self, multiprice_id=multiprice_id).first()
+                return multipricevalue.price if multipricevalue is not None else self.price
+        else:
+            return CustomizeObject.__getattr__(self, name)
+
+    def set_custom_values(self, params):
+        CustomizeObject.set_custom_values(self, params)
+        for multiprice in MultiPrice.objects.all():
+            if multiprice.get_fieldname() in params.keys():
+                multipricevalue = MultiPriceValue.objects.filter(article=self, multiprice=multiprice).first()
+                if multipricevalue is not None:
+                    multipricevalue.price = params[multiprice.get_fieldname()]
+                    multipricevalue.save()
+                else:
+                    MultiPriceValue.objects.create(article=self, multiprice=multiprice, price=params[multiprice.get_fieldname()])
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         unicity_query = Q(reference=self.reference)

@@ -27,13 +27,14 @@ from __future__ import unicode_literals
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.models import LucteriosModel
 from lucterios.contacts.models import CustomField
+from lucterios.CORE.models import SavedCriteria
 
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.test_tools import create_account, default_costaccounting
 
 from diacamma.invoice.models import Article, Vat, Category, Provider, \
     StorageArea, StorageSheet, StorageDetail, AccountPosting, CategoryBill, \
-    RecipeKitArticle
+    RecipeKitArticle, MultiPrice
 from diacamma.invoice.views import BillTransition, DetailAddModify, BillAddModify
 from diacamma.payoff.models import PaymentMethod
 
@@ -51,6 +52,7 @@ def get_letters(number):
 def clean_cache():
     LucteriosModel.delete_class_item(Category)
     LucteriosModel.delete_class_item(StorageArea)
+    LucteriosModel.delete_class_item(Vat)
 
 
 def default_accountPosting():
@@ -61,24 +63,25 @@ def default_accountPosting():
     AccountPosting.objects.create(name="code_sub", sell_account="701", provision_third_account="4191")
 
 
-def default_articles(with_provider=False, with_storage=False, lotof=False):
+def default_articles(with_provider=False, with_storage=False, lotof=False, with_vat=True):
     default_costaccounting()
     default_accountPosting()
 
     create_account(['709'], 3, FiscalYear.get_current())
     create_account(['4455'], 1, FiscalYear.get_current())
-    vat1 = Vat.objects.create(name="5%", rate=5.0, account='4455', isactif=True)
-    vat2 = Vat.objects.create(name="20%", rate=20.0, account='4455', isactif=True)
+    if with_vat:
+        vat1 = Vat.objects.create(name="5%", rate=5.0, account='4455', isactif=True)
+        vat2 = Vat.objects.create(name="20%", rate=20.0, account='4455', isactif=True)
     art1 = Article.objects.create(reference='ABC1', designation="Article 01",
                                   price="12.34", unit="kg", isdisabled=False, accountposting_id=1, vat=None, stockable=1 if with_storage else 0, qtyDecimal=3)
     art2 = Article.objects.create(reference='ABC2', designation="Article 02",
-                                  price="56.78", unit="l", isdisabled=False, accountposting_id=2, vat=vat1, stockable=1 if with_storage else 0, qtyDecimal=1)
+                                  price="56.78", unit="l", isdisabled=False, accountposting_id=2, vat=vat1 if with_vat else None, stockable=1 if with_storage else 0, qtyDecimal=1)
     art3 = Article.objects.create(reference='ABC3', designation="Article 03",
                                   price="324.97", unit="", isdisabled=False, accountposting_id=3 if not with_storage else 1, vat=None, stockable=0, qtyDecimal=0)
     art4 = Article.objects.create(reference='ABC4', designation="Article 04",
                                   price="1.31", unit="", isdisabled=False, accountposting_id=4, vat=None, stockable=2 if with_storage else 0, qtyDecimal=0)
     art5 = Article.objects.create(reference='ABC5', designation="Article 05",
-                                  price="64.10", unit="m", isdisabled=True, accountposting_id=1, vat=vat2, stockable=0, qtyDecimal=2)
+                                  price="64.10", unit="m", isdisabled=True, accountposting_id=1, vat=vat2 if with_vat else None, stockable=0, qtyDecimal=2)
     cat_list = Category.objects.all()
     if len(cat_list) > 0:
         art1.categories.set(cat_list.filter(id__in=(1,)))
@@ -117,6 +120,13 @@ def default_customize():
     CustomField.objects.create(modelname='invoice.Article', name='couleur', kind=4, args="{'list':['---','noir','blanc','rouge','bleu','jaune']}")
     CustomField.objects.create(modelname='invoice.Article', name='taille', kind=1, args="{'min':0,'max':100}")
     CustomField.objects.create(modelname='contacts.AbstractContact', name='truc', kind=0, args="{'multi':False}")
+
+
+def default_multiprice():
+    SavedCriteria.objects.create(name='Dalton', modelname='accounting.Third', criteria='[["contacts.individual.lastname",5,"Dalton"]]')
+    SavedCriteria.objects.create(name='abc', modelname='accounting.Third', criteria='[["contacts.abstractcontact.custom_3",5,"abc"]]')
+    MultiPrice.objects.create(name='price A', filtercriteria_id=1)
+    MultiPrice.objects.create(name='price B', filtercriteria_id=2)
 
 
 def default_area():
