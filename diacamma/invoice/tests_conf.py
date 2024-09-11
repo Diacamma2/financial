@@ -352,7 +352,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_8' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_9' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 8 + 2 + 2)
+        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 9 + 2 + 2)
 
         self.assert_grid_equal('categoryBill', {'name': "nom", 'designation': "désignation", "titles_txt": "titres", "is_default": "défaut"}, 0)
 
@@ -605,7 +605,7 @@ class ConfigTest(LucteriosTest):
         initial_thirds_fr()
 
         search_field_list = Article.get_search_fields()
-        self.assertEqual(9 + 2 + 3 + 2 + 1, len(search_field_list), search_field_list)  # article + art custom + category + provider
+        self.assertEqual(8 + 2 + 3 + 2 + 1, len(search_field_list), search_field_list)  # article + art custom + category + provider
 
         self.factory.xfer = ArticleSearch()
         self.calljson('/diacamma.invoice/articleSearch', {}, False)
@@ -1027,7 +1027,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ArticleAddModify()
         self.calljson('/diacamma.invoice/articleAddModify', {'article': '1'}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleAddModify')
-        self.assert_count_equal('', 14)
+        self.assert_count_equal('', 13)
         self.assert_json_equal('EDIT', 'reference', 'ABC1')
 
         self.factory.xfer = ArticleAddModify()
@@ -1057,7 +1057,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ArticleShow()
         self.calljson('/diacamma.invoice/articleShow', {'article': 6}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
-        self.assert_count_equal('', 16)
+        self.assert_count_equal('', 15)
         self.assert_json_equal('LABELFORM', 'reference', "KIT01")
         self.assert_json_equal('LABELFORM', 'designation', "My beautiful kit")
         self.assert_json_equal('LABELFORM', 'price', 68.74)
@@ -1093,7 +1093,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ArticleShow()
         self.calljson('/diacamma.invoice/articleShow', {'article': 6}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
-        self.assert_count_equal('', 16)
+        self.assert_count_equal('', 15)
         self.assert_count_equal('kit_article', 2)
         self.assert_json_equal('', 'kit_article/@0/id', 2)
         self.assert_json_equal('', 'kit_article/@0/link_article', 'ABC2')
@@ -1116,7 +1116,7 @@ class ConfigTest(LucteriosTest):
         self.factory.xfer = ArticleShow()
         self.calljson('/diacamma.invoice/articleShow', {'article': 6}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleShow')
-        self.assert_count_equal('', 16)
+        self.assert_count_equal('', 15)
         self.assert_count_equal('kit_article', 1)
         self.assert_json_equal('', 'kit_article/@0/id', 2)
         self.assert_json_equal('', 'kit_article/@0/link_article', 'ABC1')
@@ -1125,7 +1125,7 @@ class ConfigTest(LucteriosTest):
 
     def test_article_multiprice(self):
         default_categories()
-        default_articles(with_storage=True, with_vat=False)
+        default_articles(with_storage=True, vat_mode=0)
         default_customize()
         default_multiprice()
         initial_thirds_fr()

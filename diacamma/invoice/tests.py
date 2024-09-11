@@ -47,7 +47,7 @@ from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport, 
     default_paymentmethod
 from diacamma.invoice.models import Bill, AccountPosting, CategoryBill
 from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_categories, default_customize, \
-    default_area, default_categorybill, clean_cache
+    default_area, default_categorybill, clean_cache, default_multiprice
 from diacamma.invoice.views_conf import AutomaticReduceAddModify, AutomaticReduceDel
 from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddModify, DetailDel, BillTransition, BillDel, BillToBill, \
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch, \
@@ -106,6 +106,7 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assertEqual(len(self.json_actions), 2)
         self.assert_count_equal('', 12)
+        self.assert_count_equal('#detail/actions', 3)
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
@@ -1569,8 +1570,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.check_list_del_archive()
 
     def test_bill_price_with_vat(self):
-        default_articles()
-        Params.setvalue('invoice-vat-mode', '2')
+        default_articles(vat_mode=2)
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},  # code 701
                    {'article': 2, 'designation': 'article 2',  # +5% vat => 1.08 - code 707
                        'price': '3.25', 'quantity': 7},
@@ -1617,8 +1617,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.assert_grid_equal('bill', {"bill_type": "type de facture", "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total TTC", "status": "statut"}, 1)  # nb=7
 
     def test_bill_price_without_vat(self):
-        default_articles()
-        Params.setvalue('invoice-vat-mode', '1')
+        default_articles(vat_mode=1)
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
                    {'article': 2, 'designation': 'article 2',  # +5% vat => 1.14
                        'price': '3.25', 'quantity': 7},
@@ -2919,7 +2918,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
 
         search_field_list = Bill.get_search_fields()
         # bill + contact +  custom contact + custom third + third + detail + article + art custom + category + provider + storage detail + payoff
-        self.assertEqual(6 + 3 + 8 + 1 + 2 + 2 + 4 + 9 + 2 + 3 + 2 + 1 + 6,
+        self.assertEqual(6 + 3 + 8 + 1 + 2 + 2 + 4 + 8 + 2 + 3 + 2 + 1 + 6,
                          len(search_field_list), search_field_list)
 
     def test_autoreduce1(self):
@@ -3983,3 +3982,126 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
         self.assert_observer('core.custom', 'diacamma.payoff', 'payableEmail')
         self.assert_json_equal('EDIT', 'subject', 'O')
         self.assert_json_equal('MEMO', 'message', 'OO oo')
+
+    def test_bill_multiprice1(self):
+        default_customize()
+        default_articles()
+        default_multiprice()
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify',
+                      {'bill_type': 1, 'date': '2015-04-01', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assertEqual(len(self.json_actions), 2)
+        self.assert_count_equal('', 12)
+        self.assert_json_equal('LABELFORM', 'third', None)
+        self.assert_json_equal('LABELFORM', 'title', "facture")
+        self.assert_json_equal('LABELFORM', 'num_txt', None)
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'date', "2015-04-01")
+        self.assert_count_equal('#detail/actions', 0)
+        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail"])
+        self.assert_json_equal('LABELFORM', 'warning', [])
+
+        self.factory.xfer = SupportingThirdValid()
+        self.calljson('/diacamma.payoff/supportingThirdValid', {'supporting': 1, 'third': 3}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'supportingThirdValid')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LINK', 'third', "Luke Lucky")
+        self.assert_count_equal('#detail/actions', 3)
+        self.assert_json_equal('LABELFORM', 'info', ["pas de détail"])
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'article': 1, 'CHANGE_ART': 'YES'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
+        self.assert_count_equal('', 8)
+        self.assert_json_equal('SELECT', 'article', 1)
+        self.assert_json_equal('FLOAT', 'price', 12.34)
+
+    def test_bill_multiprice2(self):
+        default_customize()
+        default_articles()
+        default_multiprice()
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify',
+                      {'bill_type': 1, 'date': '2015-04-01', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assertEqual(len(self.json_actions), 2)
+        self.assert_count_equal('', 12)
+        self.assert_json_equal('LABELFORM', 'third', None)
+        self.assert_json_equal('LABELFORM', 'title', "facture")
+        self.assert_json_equal('LABELFORM', 'num_txt', None)
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'date', "2015-04-01")
+        self.assert_count_equal('#detail/actions', 0)
+        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail"])
+        self.assert_json_equal('LABELFORM', 'warning', [])
+
+        self.factory.xfer = SupportingThirdValid()
+        self.calljson('/diacamma.payoff/supportingThirdValid', {'supporting': 1, 'third': 4}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'supportingThirdValid')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LINK', 'third', "Minimum")
+        self.assert_count_equal('#detail/actions', 3)
+        self.assert_json_equal('LABELFORM', 'info', ["pas de détail"])
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'article': 1, 'CHANGE_ART': 'YES'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
+        self.assert_count_equal('', 8)
+        self.assert_json_equal('SELECT', 'article', 1)
+        self.assert_json_equal('FLOAT', 'price', 9.87)
+
+    def test_bill_multiprice3(self):
+        default_customize()
+        default_articles()
+        default_multiprice()
+        self.factory.xfer = BillAddModify()
+        self.calljson('/diacamma.invoice/billAddModify',
+                      {'bill_type': 1, 'date': '2015-04-01', 'SAVE': 'YES'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billAddModify')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assertEqual(len(self.json_actions), 2)
+        self.assert_count_equal('', 12)
+        self.assert_json_equal('LABELFORM', 'third', None)
+        self.assert_json_equal('LABELFORM', 'title', "facture")
+        self.assert_json_equal('LABELFORM', 'num_txt', None)
+        self.assert_json_equal('LABELFORM', 'status', 0)
+        self.assert_json_equal('LABELFORM', 'date', "2015-04-01")
+        self.assert_count_equal('#detail/actions', 0)
+        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail"])
+        self.assert_json_equal('LABELFORM', 'warning', [])
+
+        self.factory.xfer = SupportingThirdValid()
+        self.calljson('/diacamma.payoff/supportingThirdValid', {'supporting': 1, 'third': 5}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.payoff', 'supportingThirdValid')
+
+        self.factory.xfer = BillShow()
+        self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
+        self.assert_json_equal('LINK', 'third', "Dalton William")
+        self.assert_count_equal('#detail/actions', 3)
+        self.assert_json_equal('LABELFORM', 'info', ["pas de détail"])
+
+        self.factory.xfer = DetailAddModify()
+        self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'article': 1, 'CHANGE_ART': 'YES'}, False)
+        self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
+        self.assert_count_equal('', 8)
+        self.assert_json_equal('SELECT', 'article', 1)
+        self.assert_json_equal('FLOAT', 'price', 11.11)

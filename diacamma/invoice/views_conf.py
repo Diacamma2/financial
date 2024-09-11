@@ -98,7 +98,7 @@ class InvoiceConfCommercial(XferListEditor):
     def add_cart_params(self):
         param_lists = ['invoice-cart-active']
         if Params.getvalue('invoice-cart-active'):
-            param_lists.extend(['invoice-cart-article-filter', 'invoice-cart-timeout', 'invoice-cart-email-subject', 'invoice-cart-email-body', 'invoice-cart-default-comment'])
+            param_lists.extend(['invoice-cart-article-filter', 'invoice-cart-default-category', 'invoice-cart-timeout', 'invoice-cart-email-subject', 'invoice-cart-email-body', 'invoice-cart-default-comment'])
         row = self.get_max_row() + 1
         Params.fill(self, param_lists, 1, row)
         btn = XferCompButton('editcartparam')

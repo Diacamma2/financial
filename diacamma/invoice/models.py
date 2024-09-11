@@ -218,6 +218,8 @@ class MultiPrice(LucteriosModel):
 
     def check_filtercriteria(self, third_id):
         if self.filtercriteria_id is not None:
+            if (third_id == 0) or (third_id is None):
+                return False
             from lucterios.framework.xfersearch import get_search_query_from_criteria
             filter_result, _desc = get_search_query_from_criteria(self.filtercriteria.criteria, Third)
             third_list = Third.objects.filter(filter_result).distinct()
@@ -285,7 +287,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     @staticmethod
     def have_vat():
-        return LucteriosModel.have_class_item(Vat)
+        return (Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT) and LucteriosModel.have_class_item(Vat)
 
     @staticmethod
     def have_storage():
@@ -334,7 +336,7 @@ class Article(LucteriosModel, CustomizeObject):
 
     @classmethod
     def get_edit_fields(cls):
-        fields_desc = ["reference", "designation", ("price", ), ("qtyDecimal", "unit"), ("isdisabled", "stockable")]
+        fields_desc = ["reference", "designation", ("price", ), ("unit", "qtyDecimal"), ("stockable", "isdisabled")]
         if cls.have_vat():
             fields_desc.extend([('vat', )])
         fields_desc.extend([('accountposting', )])
@@ -346,7 +348,7 @@ class Article(LucteriosModel, CustomizeObject):
     @classmethod
     def get_show_fields(cls):
         fields = {'': ["reference"]}
-        fields_desc = ["designation", ("price", ), ("qtyDecimal", "unit"), ("isdisabled", "stockable")]
+        fields_desc = ["designation", ("price", ), ("unit", "qtyDecimal"), ("stockable", "isdisabled")]
         if cls.have_vat():
             fields_desc.extend([('vat', )])
         fields_desc.extend([('accountposting', )])
@@ -639,6 +641,13 @@ class Article(LucteriosModel, CustomizeObject):
                     multipricevalue.save()
                 else:
                     MultiPriceValue.objects.create(article=self, multiprice=multiprice, price=params[multiprice.get_fieldname()])
+
+    def get_price_from_third(self, third_id):
+        mutli_prices = [self.price]
+        for multiprice in MultiPrice.objects.all():
+            if multiprice.check_filtercriteria(third_id):
+                mutli_prices.append(getattr(self, multiprice.get_fieldname()))
+        return min(mutli_prices)
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         unicity_query = Q(reference=self.reference)
@@ -2763,6 +2772,8 @@ def invoice_checkparam():
     Parameter.check_and_create(name='invoice-cart-active', typeparam=Parameter.TYPE_BOOL, title=_("invoice-cart-active"), args='{}', value='False')
     Parameter.check_and_create(name='invoice-cart-article-filter', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-cart-article-filter"), args="{}", value='',
                                meta='("CORE","SavedCriteria","django.db.models.Q(modelname=\'%s\')", "id", False)' % Article.get_long_name())
+    Parameter.check_and_create(name='invoice-cart-default-category', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-cart-default-category"), args="{}", value='',
+                               meta='("invoice","Category","django.db.models.Q()", "id", False)')
     Parameter.check_and_create(name='invoice-cart-timeout', typeparam=Parameter.TYPE_INTEGER, title=_("invoice-cart-timeout"), args='{"Min":0,"Max":99}', value='0')
     Parameter.check_and_create(name='invoice-cart-email-subject', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-subject"), args='{}', value=_('new validated cart'))
     Parameter.check_and_create(name='invoice-cart-email-body', typeparam=Parameter.TYPE_STRING, title=_("invoice-cart-email-body"), args="{'Multi':True, 'HyperText': True}",

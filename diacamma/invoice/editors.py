@@ -192,18 +192,6 @@ class ArticleEditor(LucteriosEditor):
         xfer.get_components('price').prec = currency_decimal
         accountposting = xfer.get_components("accountposting")
         CustomField.edit_fields(xfer, accountposting.col)
-        if Params.getvalue("invoice-article-with-picture"):
-            obj_ref = xfer.get_components('reference')
-            xfer.tab = obj_ref.tab
-            upload = XferCompUpLoad('uploadlogo')
-            upload.set_value('')
-            upload.description = _('image')
-            upload.add_filter('.jpg')
-            upload.add_filter('.gif')
-            upload.add_filter('.png')
-            upload.add_filter('.bmp')
-            upload.set_location(0, xfer.get_max_row() + 1, 2, 1)
-            xfer.add_component(upload)
         price_comp = xfer.get_components("price")
         xfer.tab = price_comp.tab
         for fieldname in ("qtyDecimal", "unit", "isdisabled", "stockable", 'vat', "accountposting"):
@@ -216,6 +204,18 @@ class ArticleEditor(LucteriosEditor):
             newprice.set_location(price_comp.col, row_num, price_comp.colspan, price_comp.rowspan)
             xfer.add_component(newprice)
             row_num += 1
+        if Params.getvalue("invoice-article-with-picture"):
+            obj_ref = xfer.get_components('reference')
+            xfer.tab = obj_ref.tab
+            upload = XferCompUpLoad('uploadlogo')
+            upload.set_value('')
+            upload.description = _('image')
+            upload.add_filter('.jpg')
+            upload.add_filter('.gif')
+            upload.add_filter('.png')
+            upload.add_filter('.bmp')
+            upload.set_location(0, xfer.get_max_row() + 1, 2, 1)
+            xfer.add_component(upload)
         accountposting_comp = xfer.get_components('accountposting')
         accountposting_comp.colspan = 1
         xfer.tab = accountposting_comp.tab
@@ -257,6 +257,7 @@ class ArticleEditor(LucteriosEditor):
             img.set_location(new_col, obj_ref.row, 1, 6)
             xfer.add_component(img)
         price_comp = xfer.get_components("price")
+        price_comp.colspan = 1
         xfer.tab = price_comp.tab
         for fieldname in ("qtyDecimal", "unit", "isdisabled", "stockable", 'vat', "accountposting", "categories"):
             xfer.move_components(fieldname, 0, MultiPrice.objects.count())
@@ -427,6 +428,8 @@ class BillEditor(SupportingEditor):
         lbl.set_value_as_title(self.item.billtype)
         xfer.add_component(lbl)
         details = xfer.get_components('detail')
+        if (MultiPrice.objects.count() > 0) and (self.item.third is None):
+            details.actions = []
         if Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT:
             if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICENOVAT:
                 details.headers[2].descript = _('price excl. taxes')
@@ -452,6 +455,9 @@ class BillEditor(SupportingEditor):
 
 
 class DetailFilter(object):
+
+    def get_price(self):
+        return 0
 
     def refresh_article(self, xfer):
         if self.item.article_query.count() > 100:
@@ -482,7 +488,7 @@ class DetailFilter(object):
             if xfer.getparam('CHANGE_ART') is not None:
                 if self.item.article_id is not None:
                     self.item.designation = self.item.article.get_designation()
-                    self.item.price = self.item.article.price
+                    self.item.price = self.get_price()
                     self.item.unit = self.item.article.unit
                 else:
                     self.item.designation = ""
@@ -532,6 +538,9 @@ class DetailEditor(LucteriosEditor, DetailFilter):
         if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
             self.item.vta_rate = -1 * self.item.vta_rate
         return
+
+    def get_price(self):
+        return self.item.article.get_price_from_third(self.item.bill.third_id)
 
     def edit(self, xfer):
         sel_art = self.refresh_article(xfer)
@@ -612,6 +621,12 @@ class StorageSheetEditor(LucteriosEditor):
 
 
 class StorageDetailEditor(LucteriosEditor, DetailFilter):
+
+    def get_price(self):
+        for val in self.item.article.get_stockage_values():
+            if (val[0] == 0) and (abs(float(val[2])) > 0.01):
+                return float(val[3]) / float(val[2])
+        return self.item.article.price
 
     def edit(self, xfer):
         sel_art = self.refresh_article(xfer)

@@ -259,7 +259,7 @@ class CurrentCart(XferContainerCustom):
         row = self.get_max_row() + 1
         cat_list = Category.objects.filter(self.category_filter)
         if len(cat_list) > 0:
-            filter_cat = self.getparam('cat_filter', 0)
+            filter_cat = self.getparam('cat_filter', Params.getvalue('invoice-cart-default-category'))
             edt = XferCompSelect("cat_filter")
             edt.set_select_query(cat_list)
             edt.set_value(filter_cat)
@@ -306,7 +306,7 @@ class CurrentCart(XferContainerCustom):
         self.add_component(lbl)
         lbl = XferCompLabelForm('price_article_%d' % article.id)
         lbl.set_location(4, row + 1, 2)
-        lbl.set_value(article.price)
+        lbl.set_value(article.get_price_from_third(self.item.third_id))
         lbl.set_format(format_with_devise(5))
         lbl.description = _('price')
         self.add_component(lbl)
@@ -355,7 +355,7 @@ class CurrentCart(XferContainerCustom):
             self.category_filter, _desc = get_search_query_from_criteria(category_criteria, Category)
             filter_result, _desc = get_search_query_from_criteria(savecritera_article.criteria, Article)
             art_filter &= filter_result
-        filter_cat = self.getparam('cat_filter', 0)
+        filter_cat = self.getparam('cat_filter', Params.getvalue('invoice-cart-default-category'))
         if filter_cat != 0:
             art_filter &= Q(categories__in=[Category.objects.get(id=filter_cat)])
         for ref_filter in self.getparam('ref_filter', '').split(' '):
@@ -468,7 +468,7 @@ class CurrentCartAddArticle(XferContainerAcknowledge):
             det = Detail.objects.filter(bill=self.item, article=article, storagearea_id=storagearea_id).first()
             if det is None:
                 Detail.objects.create(bill=self.item, article=article, designation=article.designation,
-                                      price=article.price, unit=article.unit,
+                                      price=article.get_price_from_third(self.item.third_id), unit=article.unit,
                                       quantity=qty,
                                       storagearea_id=storagearea_id)
             else:
