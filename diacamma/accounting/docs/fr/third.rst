@@ -21,6 +21,8 @@ Création d'un tiers comptable
      Menu *Comptabilité/Tiers*
 
 .. image:: third_list.png
+   :height: 400px
+   :align: center
 
 La liste des tiers précédemment enregistrés s'affiche à l'écran. Dans cette liste, notez la présence des membres de votre structure.
 Vous pouvez filtrer cette liste par contact ou type de tiers et imprimer la liste obtenue.
@@ -28,6 +30,8 @@ Vous pouvez filtrer cette liste par contact ou type de tiers et imprimer la list
 Pour ajouter un nouveau tiers comptable, cliquez sur "+ Créer" et sélectionnez le contact (personne physique ou morale) associé à ce tiers comptable.
 
 .. image:: third_add.png
+   :height: 400px
+   :align: center
 
 Depuis cet écran, vous pouvez aussi créer un nouveau contact à l'aide du bouton "+ Créer" avant de le sélectionner.
 
@@ -43,6 +47,8 @@ L'onglet "Ecritures comptables" de la fiche d'un tiers vous donne une vue sur le
 avec possibilité de les filtrer.
 
 .. image:: third_state.png
+   :height: 400px
+   :align: center
 
 Champs personnalisés de tiers
 -----------------------------

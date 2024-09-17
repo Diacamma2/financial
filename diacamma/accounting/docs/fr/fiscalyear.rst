@@ -8,7 +8,17 @@ Paramétrages
 
 Ouvrez l’onglet « Paramètres » et éditez-les avec le bouton « Modifier ». Paramétrez la devise et sa précision, la taille des codes comptables. Précisez aussi si vous avez l’intention ou non de mettre en place une comptabilité analytique.
 
-    .. image:: parameters.png
+.. image:: parameters.png
+   :height: 300px
+   :align: center
+
+    
+- **Devise (iso)** : Devise utilisée dans la comptabilité (au format international
+- **Devise (précision)** : Nombre de chiffre après la virgule de la devise
+- **Taille des codes comptables** : Taille minimum des code comptables, des zéro seront ajouté en plus éventuellement.
+- **Comptabilité analytique obligatoire** : Rend obligatoire l'utilisation de code analytique sur les lignes d'écritures de produit ou de charge.
+- **Code comptable (filtre de rapport)** : Début de code comptable utiliser pour prédéfinir des filtrages dans des rapports.
+- **Date du jour pour une nouvelle écriture** : Si non coché, rend la date d'écriture non rempli, obligeant à la saisir.
 
 
 Création d'un exercice comptable
@@ -19,11 +29,15 @@ Lors de la mise en place de votre comptabilité sous *Diacamma Syndic*, vous aur
 
      Menu *Administration/Modules (conf.)/Configuration comptable* - Onglet "Liste d'exercices"
 
-    .. image:: fiscalyear_list.png
+.. image:: fiscalyear_list.png
+   :height: 400px
+   :align: center
 
 Vérifiez que le système comptable a été choisi et cliquez sur "+ Créer" afin de renseigner les bornes du nouvel exercice. 
 
-    .. image:: fiscalyear_create.png
+.. image:: fiscalyear_create.png
+   :height: 200px
+   :align: center
 
 Pour le premier exercice sous *Diacamma Syndic*, saisissez la date de début et la date de fin de l’exercice puis cliquez sur le bouton "OK". Les exercices suivants ont comme date de début le lendemain de la date de clôture de l’exercice précédent et seule la date de fin est à saisir. 
 
@@ -42,9 +56,10 @@ Maintenant, vous devez fermer la fenêtre "Configuration comptable" et créer le
 
      Menu *Comptabilité/Gestion comptable/Plan comptable*
 
-    .. image:: account_list.png
+.. image:: account_list.png
+   :height: 400px
+   :align: center
 
-     **Premier exercice comptable** : Votre structure est juste créée, vous n’avez donc pas d'à-nouveaux.
 
 Avec le bouton "+ Initiaux", générez automatiquement votre propre plan comptable général à partir du plan de comptes type fourni par le logiciel.
 Adaptez celui-ci aux besoins de votre structure avec les boutons "Ajouter" et "Supprimer".
@@ -74,7 +89,9 @@ Création, modification et édition de comptes du plan comptable
 
 A tout moment vous pouvez ajouter un nouveau compte dans votre plan comptable.
 
-    .. image:: account_new.png
+.. image:: account_new.png
+   :height: 200px
+   :align: center
 
 Référez-vous à la règlementation de votre pays. Votre structure peut avoir l'obligation de respecter certaines obligations pour ce qui est de leur plan comptable.
 
@@ -82,7 +99,9 @@ Un compte peut être modifié, tant pour ce qui est de son numéro que de son in
 
 Lorsque vous consultez un compte (bouton "Editer" ou double-clic), les écritures associées au compte sont affichées.
 
-    .. image:: account_edit.png
+.. image:: account_edit.png
+   :height: 400px
+   :align: center
 
 Il vous est aussi possible de supprimer un compte du plan comptable à la condition qu'aucune écriture ne lui soit associée.
 

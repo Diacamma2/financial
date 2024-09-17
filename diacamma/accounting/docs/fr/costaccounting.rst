@@ -21,7 +21,9 @@ Depuis cet écran vous pouvez créer, modifier ou supprimer un code analytique.
 Chaque code a un titre, un descriptif et un statut (ouvert ou clôturé).
 En mode "liste", figure le résultat comptable (les produits diminués des charges) de chaque code analytique.
 
-    .. image:: costaccount_list.png
+.. image:: costaccount_list.png
+   :height: 400px
+   :align: center
 
 Par défaut, un filtrage vous permet de ne voir que  les codes analytiques ouverts. Vous pouvez paramétrer le filtre à l'aide des boutons de liste.
 
@@ -33,7 +35,9 @@ Imputation analytique d'une charge ou d'un produit
 
 Si vous avez des codes analytiques ouverts, vous pouvez imputer une charge ou un produit sur l'un d'entre eux.
 
-    .. image:: costaccount_assign.png
+.. image:: costaccount_assign.png
+   :height: 200px
+   :align: center
 
 Que l'écriture correspondante soit validée ou non, affichez cette écriture  et éditez-la. 
 Sélectionnez le  mouvement relatif à la charge ou au produit à imputer en analytique et bouton "Modifier".

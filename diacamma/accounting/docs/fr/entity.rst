@@ -17,7 +17,9 @@ Cas général
 
      Menu *Comptabilité/Gestion comptable/Écritures comptables*
 
-    .. image:: entity_list.png
+.. image:: entity_list.png
+   :height: 400px
+   :align: center
 
 Depuis cet écran, vous avez la possibilité de visualiser les écritures précédemment saisies et vous pouvez en ajouter de nouvelles.
 A l'écran, vous pouvez aussi consulter les écritures saisies après les avoir filtrées sur l'exercice comptable, un journal (ou tous)  et/ou sur l'état des écritures :
@@ -109,7 +111,9 @@ Recherche d'écriture(s)
 
 Depuis la liste des écritures, le bouton "Recherche" vous permet de définir les critères de recherche d'écritures comptables.
 
-    .. image:: entity_search.png
+.. image:: entity_search.png
+   :height: 400px
+   :align: center
 
 En cliquant sur "Recherche", l'outil va rechercher dans la base toutes les écritures satisfaisant aux critères saisis.
 La ou les écritures extraites pourront être :
@@ -126,7 +130,9 @@ Depuis la liste des écritures, le bouton "Import" vous permet d'importer des é
 
 Après avoir sélectionné l'exercice d'import, le journal et les informations de format de votre fichier, vous devez associer les champs des écritures aux colonnes de votre document (la première ligne de votre document doit décrire la nature de chaque colonne).
 
-    .. image:: entity_import.png
+.. image:: entity_import.png
+   :height: 400px
+   :align: center
   
 Vous pouvez alors contrôler vos données avant de les valider.
 L'import réalisé, l'outil vous présentera le résultat des écritures réellement importées.
