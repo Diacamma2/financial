@@ -29,7 +29,7 @@ from lucterios.framework.xferadvance import XferListEditor, TITLE_MODIFY, TITLE_
 from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.xferadvance import XferDelete
 from lucterios.framework.tools import ActionsManage, MenuManage, CLOSE_NO, SELECT_MULTI, SELECT_SINGLE, FORMTYPE_MODAL
-from lucterios.framework.xfercomponents import XferCompButton, XferCompLabelForm
+from lucterios.framework.xfercomponents import XferCompButton, XferCompLabelForm, XferCompCheckList
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework import signal_and_lock
 from lucterios.CORE.parameters import Params
@@ -75,6 +75,23 @@ class InvoiceConfFinancial(XferListEditor):
         self.new_tab(_('VAT'))
 
 
+@MenuManage.describ('CORE.add_parameter')
+class InvoiceCommercialParamEdit(ParamEdit):
+
+    def fillresponse(self, params=(), nb_col=1):
+        ParamEdit.fillresponse(self, params=params, nb_col=nb_col)
+        comp_fields = self.get_components("invoice-custom-field-in-array")
+        if comp_fields is not None:
+            self.remove_component("invoice-custom-field-in-array")
+            new_comp_fields = XferCompCheckList("invoice-custom-field-in-array")
+            new_comp_fields.description = comp_fields.description
+            new_comp_fields.simple = 2
+            new_comp_fields.set_location(comp_fields.col, comp_fields.row, comp_fields.colspan, comp_fields.rowspan)
+            new_comp_fields.set_select([(field.get_fieldname(), field.name) for field in CustomField.get_filter(Article)])
+            new_comp_fields.set_value(Article.get_custom_fields())
+            self.add_component(new_comp_fields)
+
+
 @MenuManage.describ('invoice.change_vat', FORMTYPE_MODAL, 'invoice.conf', _('Management of commercial configuration of invoice'))
 class InvoiceConfCommercial(XferListEditor):
     short_icon = "mdi:mdi-credit-card-settings-outline"
@@ -85,13 +102,16 @@ class InvoiceConfCommercial(XferListEditor):
     def add_general_params(self):
         param_lists = ['invoice-article-with-picture', 'invoice-reduce-with-ratio',
                        'invoice-custom-field-in-bill', 'invoice-order-mode', 'invoice-asset-mode',
-                       'invoice-default-nbpayoff', 'invoice-default-send-pdf']
+                       'invoice-default-nbpayoff', 'invoice-default-send-pdf',
+                       'invoice-custom-field-in-array']
         row = self.get_max_row() + 1
         Params.fill(self, param_lists, 1, row)
+        comp_fields = self.get_components("invoice-custom-field-in-array")
+        comp_fields.set_value([field.name for field in CustomField.get_filter(Article) if field.get_fieldname() in Article.get_custom_fields()])
         btn = XferCompButton('editparam')
         btn.set_is_mini(False)
         btn.set_location(3, row, 2, 2)
-        btn.set_action(self.request, ParamEdit.get_action(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
+        btn.set_action(self.request, InvoiceCommercialParamEdit.get_action(TITLE_MODIFY, short_icon='mdi:mdi-pencil-outline'), close=CLOSE_NO, params={'params': param_lists})
         self.add_component(btn)
         self.params['basic_model'] = 'invoice.Article'
 

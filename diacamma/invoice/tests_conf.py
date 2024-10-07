@@ -99,7 +99,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_8' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_9' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 3 + 2 + 2)
+        self.assert_count_equal('', 2 + 10 + 2 + 2 + 2 + 2 + 3 + 2 + 2)
 
         self.assert_grid_equal('category', {'name': "nom", 'designation': "désignation"}, 0)
 
@@ -284,7 +284,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_8' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_9' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 3 + 2 + 2)
+        self.assert_count_equal('', 2 + 10 + 2 + 2 + 2 + 2 + 3 + 2 + 2)
 
         self.assert_grid_equal('custom_field', {'name': "nom", 'kind_txt': "type"}, 2)
         self.assert_json_equal('', 'custom_field/@0/name', 'couleur')
@@ -299,7 +299,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_8' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_9' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 3 + 2 + 2)
+        self.assert_count_equal('', 2 + 10 + 2 + 2 + 2 + 2 + 3 + 2 + 2)
 
         self.assert_grid_equal('storagearea', {'name': "nom", 'designation': "désignation", 'contact': "gestionnaire"}, 0)
 
@@ -352,7 +352,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfCommercial')
         self.assertTrue('__tab_8' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_9' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 9 + 2 + 2)
+        self.assert_count_equal('', 2 + 9 + 2 + 2 + 2 + 2 + 10 + 2 + 2)
 
         self.assert_grid_equal('categoryBill', {'name': "nom", 'designation': "désignation", "titles_txt": "titres", "is_default": "défaut"}, 0)
 
@@ -504,7 +504,7 @@ class ConfigTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
         self.assert_count_equal('', 6)
         self.assert_select_equal('stockable', 7)
-        self.assert_grid_equal('article', {'reference': "référence", 'designation': "désignation", 'price': "prix", 'unit': "unité", 'isdisabled': "désactivé ?", 'accountposting': "code d'imputation comptable", 'stockable': "stockable"}, 0)
+        self.assert_grid_equal('article', {'reference': "référence", 'designation': "désignation", 'price': "prix", 'unit': "unité", 'stockable': "stockable"}, 0)
         self.assert_count_equal('#article/actions', 3)
 
         self.factory.xfer = ArticleAddModify()
@@ -531,8 +531,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@0/designation', "My beautiful article")
         self.assert_json_equal('', 'article/@0/price', 43.72)
         self.assert_json_equal('', 'article/@0/unit', '')
-        self.assert_json_equal('', 'article/@0/isdisabled', False)
-        self.assert_json_equal('', 'article/@0/accountposting', "code4")
         self.assert_json_equal('', 'article/@0/stockable', 1)
 
         self.factory.xfer = ArticleShow()
@@ -574,7 +572,7 @@ class ConfigTest(LucteriosTest):
         self.assert_count_equal('', 7)
         self.assert_select_equal("cat_filter", 3, True)
         self.assert_grid_equal('article', {"reference": "référence", "designation": "désignation", "price": "prix", "unit": "unité",
-                                           "isdisabled": "désactivé ?", "accountposting": "code d'imputation comptable", "stockable": "stockable", "categories": "catégories"}, 0)
+                                           "stockable": "stockable", "categories": "catégories"}, 0)
 
         self.factory.xfer = ArticleAddModify()
         self.calljson('/diacamma.invoice/articleAddModify', {}, False)
@@ -796,8 +794,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@0/designation', "article N°1")
         self.assert_json_equal('', 'article/@0/price', 16.95)
         self.assert_json_equal('', 'article/@0/unit', 'Kg')
-        self.assert_json_equal('', 'article/@0/isdisabled', False)
-        self.assert_json_equal('', 'article/@0/accountposting', "code1")
         self.assert_json_equal('', 'article/@0/stockable', 1)
         self.assert_json_equal('', 'article/@0/categories', ["cat 2", "cat 3"])
 
@@ -805,8 +801,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@1/designation', "article N°2")
         self.assert_json_equal('', 'article/@1/price', 23.56)
         self.assert_json_equal('', 'article/@1/unit', 'L')
-        self.assert_json_equal('', 'article/@1/isdisabled', True)
-        self.assert_json_equal('', 'article/@1/accountposting', "code1")
         self.assert_json_equal('', 'article/@1/stockable', 1)
         self.assert_json_equal('', 'article/@1/categories', ["cat 3"])
 
@@ -814,8 +808,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@2/designation', "article N°3")
         self.assert_json_equal('', 'article/@2/price', 45.74)
         self.assert_json_equal('', 'article/@2/unit', '')
-        self.assert_json_equal('', 'article/@2/isdisabled', True)
-        self.assert_json_equal('', 'article/@2/accountposting', "code2")
         self.assert_json_equal('', 'article/@2/stockable', 0)
         self.assert_json_equal('', 'article/@2/categories', ["cat 1"])
 
@@ -823,8 +815,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@3/designation', "article N°4")
         self.assert_json_equal('', 'article/@3/price', 56.89)
         self.assert_json_equal('', 'article/@3/unit', 'm')
-        self.assert_json_equal('', 'article/@3/isdisabled', False)
-        self.assert_json_equal('', 'article/@3/accountposting', "code1")
         self.assert_json_equal('', 'article/@3/stockable', 2)
         self.assert_json_equal('', 'article/@3/categories', [])
 
@@ -899,8 +889,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@0/designation', "article N°1")
         self.assert_json_equal('', 'article/@0/price', 16.95)
         self.assert_json_equal('', 'article/@0/unit', 'Kg')
-        self.assert_json_equal('', 'article/@0/isdisabled', False)
-        self.assert_json_equal('', 'article/@0/accountposting', "code1")
         self.assert_json_equal('', 'article/@0/stockable', 1)
         self.assert_json_equal('', 'article/@0/categories', [])
 
@@ -908,8 +896,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@1/designation', "article N°2")
         self.assert_json_equal('', 'article/@1/price', 23.56)
         self.assert_json_equal('', 'article/@1/unit', 'L')
-        self.assert_json_equal('', 'article/@1/isdisabled', True)
-        self.assert_json_equal('', 'article/@1/accountposting', "code1")
         self.assert_json_equal('', 'article/@1/stockable', 1)
         self.assert_json_equal('', 'article/@1/categories', [])
 
@@ -917,8 +903,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@2/designation', "article N°3")
         self.assert_json_equal('', 'article/@2/price', 45.74)
         self.assert_json_equal('', 'article/@2/unit', '')
-        self.assert_json_equal('', 'article/@2/isdisabled', True)
-        self.assert_json_equal('', 'article/@2/accountposting', "code2")
         self.assert_json_equal('', 'article/@2/stockable', 0)
         self.assert_json_equal('', 'article/@2/categories', [])
 
@@ -926,8 +910,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@3/designation', "article N°4")
         self.assert_json_equal('', 'article/@3/price', 56.89)
         self.assert_json_equal('', 'article/@3/unit', 'm')
-        self.assert_json_equal('', 'article/@3/isdisabled', False)
-        self.assert_json_equal('', 'article/@3/accountposting', "code1")
         self.assert_json_equal('', 'article/@3/stockable', 2)
         self.assert_json_equal('', 'article/@3/categories', [])
 
@@ -972,32 +954,24 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@0/designation', "article N°1")
         self.assert_json_equal('', 'article/@0/price', 16.95)
         self.assert_json_equal('', 'article/@0/unit', 'Kg')
-        self.assert_json_equal('', 'article/@0/isdisabled', False)
-        self.assert_json_equal('', 'article/@0/accountposting', "code1")
         self.assert_json_equal('', 'article/@0/stockable', 1)
 
         self.assert_json_equal('', 'article/@1/reference', "B234")
         self.assert_json_equal('', 'article/@1/designation', "article N°2")
         self.assert_json_equal('', 'article/@1/price', 23.56)
         self.assert_json_equal('', 'article/@1/unit', 'L')
-        self.assert_json_equal('', 'article/@1/isdisabled', True)
-        self.assert_json_equal('', 'article/@1/accountposting', "code1")
         self.assert_json_equal('', 'article/@1/stockable', 1)
 
         self.assert_json_equal('', 'article/@2/reference', "C345")
         self.assert_json_equal('', 'article/@2/designation', "article N°3")
         self.assert_json_equal('', 'article/@2/price', 45.74)
         self.assert_json_equal('', 'article/@2/unit', '')
-        self.assert_json_equal('', 'article/@2/isdisabled', True)
-        self.assert_json_equal('', 'article/@2/accountposting', "code2")
         self.assert_json_equal('', 'article/@2/stockable', 0)
 
         self.assert_json_equal('', 'article/@3/reference', "D456")
         self.assert_json_equal('', 'article/@3/designation', "article N°4")
         self.assert_json_equal('', 'article/@3/price', 56.89)
         self.assert_json_equal('', 'article/@3/unit', 'm')
-        self.assert_json_equal('', 'article/@3/isdisabled', False)
-        self.assert_json_equal('', 'article/@3/accountposting', "code1")
         self.assert_json_equal('', 'article/@3/stockable', 2)
 
         self.factory.xfer = ArticleShow()
@@ -1159,8 +1133,6 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'article/@0/designation', "My beautiful article")
         self.assert_json_equal('', 'article/@0/price', 43.72)
         self.assert_json_equal('', 'article/@0/unit', '')
-        self.assert_json_equal('', 'article/@0/isdisabled', False)
-        self.assert_json_equal('', 'article/@0/accountposting', "code4")
         self.assert_json_equal('', 'article/@0/stockable', 1)
 
         self.factory.xfer = ArticleShow()

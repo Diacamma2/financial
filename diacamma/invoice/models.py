@@ -304,6 +304,11 @@ class Article(LucteriosModel, CustomizeObject):
     def kit_article_set(self):
         return RecipeKitArticle.objects.filter(article=self)
 
+    @classmethod
+    def get_custom_fields(cls):
+        fields = Params.getvalue("invoice-custom-field-in-array").split(";")
+        return fields
+
     def get_text_value(self):
         text_value = self.designation.split('{[br/]}')[0]
         if len(text_value) > 50:
@@ -326,7 +331,8 @@ class Article(LucteriosModel, CustomizeObject):
         fields = []
         if Params.getvalue("invoice-article-with-picture"):
             fields.append((_('image'), 'image'))
-        fields.extend(["reference", "designation", "price", 'unit', "isdisabled", 'accountposting', "stockable"])
+        fields.extend(["reference", "designation", "price", 'unit', "stockable"])
+        fields.extend([(field.name, field.get_fieldname()) for field in CustomField.get_filter(Article) if field.get_fieldname() in Article.get_custom_fields()])
         if cls.have_category():
             fields.append('categories')
         if cls.have_storage():
@@ -2376,7 +2382,9 @@ class ArticleSituation(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        return ['article', 'designation', 'storagearea', 'quantity_txt', 'amount', 'mean']
+        fields = ['article', 'designation']
+        fields.extend(['storagearea', 'quantity_txt', 'amount', 'mean'])
+        return fields
 
     def get_quantity_txt(self):
         if self.quantity is None:
@@ -2610,7 +2618,10 @@ class InventoryDetail(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        return ["article", "article.designation", "real_quantity_txt", "quantity_txt"]
+        fields = ["article", "article.designation"]
+        fields.extend([(field.name, "article." + field.get_fieldname()) for field in CustomField.get_filter(Article) if field.get_fieldname() in Article.get_custom_fields()])
+        fields.extend(["real_quantity_txt", "quantity_txt"])
+        return fields
 
     @classmethod
     def get_edit_fields(cls):
@@ -2759,6 +2770,7 @@ def invoice_checkparam():
                                meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_customer_mask()) & django.db.models.Q(year__is_actif=True)", "code", True)')
     Parameter.check_and_create(name='invoice-article-with-picture', typeparam=Parameter.TYPE_BOOL, title=_("invoice-article-with-picture"), args="{}", value='False')
     Parameter.check_and_create(name='invoice-custom-field-in-bill', typeparam=Parameter.TYPE_BOOL, title=_("invoice-custom-field-in-bill"), args="{}", value='True')
+    Parameter.check_and_create(name='invoice-custom-field-in-array', typeparam=Parameter.TYPE_STRING, title=_("invoice-custom-field-in-array"), args="{'Multi':False}", value='')
     Parameter.check_and_create(name='invoice-reduce-with-ratio', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-with-ratio"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-reduce-allow-article-empty', typeparam=Parameter.TYPE_BOOL, title=_("invoice-reduce-allow-article-empty"), args="{}", value='True')
     Parameter.check_and_create(name='invoice-order-mode', typeparam=Parameter.TYPE_SELECT, title=_("invoice-order-mode"),

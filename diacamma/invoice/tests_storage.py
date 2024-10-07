@@ -1176,8 +1176,7 @@ class StorageTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
         self.assert_count_equal('', 8)
         self.assert_grid_equal('article', {"reference": "référence", "designation": "désignation", "price": "prix", "unit": "unité",
-                                           "isdisabled": "désactivé ?", "accountposting": "code d'imputation comptable", "stockable": "stockable",
-                                           "categories": "catégories", "stockage_total": "quantités", "available_total": "disponible"}, 4)
+                                           "stockable": "stockable", "categories": "catégories", "stockage_total": "quantités", "available_total": "disponible"}, 4)
         self.assert_json_equal('', '#article/headers/@2/@0', "price")
         self.assert_json_equal('', '#article/headers/@2/@2', "C2EUR")
 
