@@ -6,7 +6,9 @@ Dépôts de chèques
 Grâce à ce menu, vous pouvez préparer vos remises de chèques à l'encaissement.  
 A l'écran s'affiche la liste des bordereaux de dépôt préparés que vous pouvez filtrer sur le statut.
 
-    .. image:: depositlist.png
+.. image:: depositlist.png
+   :height: 400px
+   :align: center
 
 Pour faciliter la recherche d'écritures, vous pouvez les filtrer.
 
@@ -19,7 +21,9 @@ Dans la boîte de dialogue ouverte, sélectionnez le code bancaire concerné, la
 Le détail du dépôt de chèques est complété avec le bouton "+ Ajouter".
 Sélectionnez ensuite dans la liste des créances, celles réglées et cliquez sur le bouton "Sélectionner" afin que les chèques correspondants soient repris dans le détail du bordereau.
 
-    .. image:: deposititem.png
+.. image:: deposititem.png
+   :height: 400px
+   :align: center
 
 Votre détail étant maintenant actualisé, vous devez "Clôturer" votre dépôt de chèques après l'avoir contrôlé.
 

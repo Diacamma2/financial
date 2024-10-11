@@ -5,7 +5,9 @@ Depuis un module tel que la facturation (*Menu Facturier/Facture*) ou la gestion
 
 Depuis la fiche du document, cliquez sur «ajouter» un règlement.
 
-    .. image:: payoff.png
+.. image:: payoff.png
+   :height: 400px
+   :align: center
 
 Dans la boîte de dialogue, saisissez le détail du règlement reçu du tiers en précisant le mode de paiement.  
 7 modes de paiement vous sont proposés:
@@ -32,6 +34,8 @@ Suivant le type de document sur lequel ce paiement est associé, vous pouvez avo
  - Par date : le paiement est d'abord ventilé sur la facture la plus ancienne, puis la suivante, etc.
  - Par prorata : le paiement est automatiquement ventilé sur toutes les factures sélectionnées, au prorata de leurs montants. 
 
-    .. image:: multi-payoff.png
+.. image:: multi-payoff.png
+   :height: 400px
+   :align: center
 
 Quelque soit le mode de répartition, une seule écriture comptable d'encaissement sera alors générées.

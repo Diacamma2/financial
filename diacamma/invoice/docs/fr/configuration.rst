@@ -23,25 +23,6 @@ Le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, 
 
 Si vous voulez gérer une centrale d'achat, vous pouvez ici définir les différents espace de vos articles stockables.
 
-Réduction automatique
----------------------
-
-Le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, onglet *Réduction automatique*
-
-Ce tableau de gestion de réductions comporte les champs suivants:
- - La catégorie d'article impacté.
- - Le type de réduction: en valeur, en pourcentage, en pourcentage global déjà vendu.
- - Le montant de la réduction (en valeur ou pourcentage suivant le type).
- - Le nombre d'occurrence déclenchant la réduction.
- - Un critère de filtrage du tiers à qui cette réduction s'applique. (Optionnel)
-
-Au moment d'ajout d'un article dans une facture, si le client de cette facture et ce nouvel article répond à aux critères d'une réduction,
-celle-ci s'applique alors automatiquement dans la facture.
-Si plusieurs réductions remplissent leurs conditions, c'est la réduction octroyant la plus grande réduction qui sera utilisé.
-Un article peut se retrouver vendu gratuitement, mais jamais négativement (qui reviendrait à un remboursement)
-Ce mécanisme sera également appliqué lors de la création automatique des factures (cotisation, participation à un événement)
-Ce mécanisme vérifie le critère que pour des opérations réalisés sur l'exercice financier courant de l'association (les réductions ne se cumule pas d'une année à l'autre)
-
 Catégorie de facturation
 ------------------------
 
@@ -65,6 +46,41 @@ D'autres paramètres permet d'affiner l'a fonctionnalité
  - Filtre d'article pour le panier : défini un critère de recherche sauvegardé des articles vendables par panier.
  - Temps de vie d'un panier (jours : défini le temps de conversation (en jours) d'un panier non validé. laissez "0" si vous ne voulez pas les nettoyer automatiquement.
  - sujet et message pour courriel de panier : permet de personnaliser le courriel envoyé à l'acheteur une fois le panier validé.
+
+Multi-prix
+----------
+
+Le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, onglet *Multi-prix*
+
+Vous pouvez définir, ici, des descriptions de prix multiple.
+Ajouter un nouveau sous-prix en précisant un nom et un critère de filtrage du tiers à qui ce prix s'applique.
+
+On retrouve alors, dans chaque fiche article, l'indication de ce nouveau prix.
+Par défaut, celui-ci est égal au prix générique.
+
+Ce nouveau prix est alors proposé par défaut, dans une nouvelle facture, si le tiers de la facture correspond au critère de celui-ci.
+Si plusieurs sous-prix sont valides, c'est celui qui propose un prix le plus bas qui est défini.
+
+*Remarque:* si au moins un sous-prix est configuré, il deviens obligatoir de définir le tiers d'une facture avant d'y ajouter un article.
+
+Réduction automatique
+---------------------
+
+Le menu *Administration/Modules (conf.)/Configuration commercial du facturier*, onglet *Réduction automatique*
+
+Ce tableau de gestion de réductions comporte les champs suivants:
+ - La catégorie d'article impacté.
+ - Le type de réduction: en valeur, en pourcentage, en pourcentage global déjà vendu.
+ - Le montant de la réduction (en valeur ou pourcentage suivant le type).
+ - Le nombre d'occurrence déclenchant la réduction.
+ - Un critère de filtrage du tiers à qui cette réduction s'applique. (Optionnel)
+
+Au moment d'ajout d'un article dans une facture, si le client de cette facture et ce nouvel article répond à aux critères d'une réduction,
+celle-ci s'applique alors automatiquement dans la facture.
+Si plusieurs réductions remplissent leurs conditions, c'est la réduction octroyant la plus grande réduction qui sera utilisé.
+Un article peut se retrouver vendu gratuitement, mais jamais négativement (qui reviendrait à un remboursement)
+Ce mécanisme sera également appliqué lors de la création automatique des factures (cotisation, participation à un événement)
+Ce mécanisme vérifie le critère que pour des opérations réalisés sur l'exercice financier courant de l'association (les réductions ne se cumule pas d'une année à l'autre)
  
 Codes d'imputations comptable
 -----------------------------
@@ -102,6 +118,8 @@ Menu *Administration/Modules (conf.)/Configuration financière du facturier*, on
 Vous pouvez complètement configurer la gestion de votre soumission à la TVA.
 
 .. image:: vat.png
+   :height: 400px
+   :align: center
 
 Pour commencer, vous devez définir les modalités de soumission en sélectionnant votre mode d'application:
 

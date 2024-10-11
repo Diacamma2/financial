@@ -2,6 +2,8 @@ Statistiques des ventes
 =======================
 
 .. image:: statistiques.png
+   :height: 400px
+   :align: center
 
 Vous avez la possibilité d'éditer les statistiques des ventes d'un exercice donné.
 

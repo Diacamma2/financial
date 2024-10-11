@@ -7,6 +7,8 @@ Création et modification
 Depuis le menu *Facturier/Les articles* vous avez la possibilité de définir l'ensemble de vos articles facturables.
 
 .. image:: articles_list.png
+   :height: 400px
+   :align: center
 
 Vous pouvez ajouter, modifier ou supprimer un article. La suppression n'est pas possible si l'article est utilisé dans une facture.
 
