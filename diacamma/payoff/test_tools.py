@@ -296,8 +296,10 @@ def check_pdfreport(testobj, objectname, itemid, is_saved, pdfreportB64=None):
     doc_content = b64encode(doc.content.read()).decode()
     if pdfreportB64 is None:
         pdfreportB64 = testobj.response_json['print']["content"]
+    pdfreportB64 = pdfreportB64.replace('\r', '').strip()
     pdfreportB64 = pdfreportB64.replace('\n', '').strip()
     if is_saved:
+        testobj.assertEqual(len(doc_content), len(pdfreportB64), '%s-%d : %s' % (objectname, itemid, doc.name))
         testobj.assertSequenceEqual(doc_content, pdfreportB64, '%s-%d : %s' % (objectname, itemid, doc.name))
     else:
         testobj.assertNotEqual(doc_content, pdfreportB64, '%s-%d : %s' % (objectname, itemid, doc.name))

@@ -1194,6 +1194,7 @@ class BillTest(InvoiceTest):
                                                             'reference': 'abc123', 'bank_account': 2, 'payer': "Ma'a Dalton", 'bank_fee': '0.0',
                                                             "sendemail_quotation": True, 'subject_quotation': 'sujet quotation', 'message_quotation': 'message quotation', 'model_quotation': 8}, False)
             self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billToOrder')
+            server.assert_count(1)
             msg_txt, msg, msg_file = server.check_first_message('sujet quotation', 3, {'To': 'leonardo@davinci.org'})
             self.assertEqual('text/plain', msg_txt.get_content_type())
             self.assertEqual('text/html', msg.get_content_type())
@@ -1318,7 +1319,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.assertEqual(1, len(LucteriosScheduler.get_list()))
             LucteriosScheduler.stop_scheduler()
             email_msg.sendemail(10, "http://testserver")
-            self.assertEqual(2, server.count())
+            server.assert_count(2)
             for msg_index in range(2):
                 data = {'ident': msg_index + 1}
                 _msg_txt, msg, _msg_file = server.get_msg_index(msg_index, 'Devis A-%(ident)d' % data)
@@ -1401,6 +1402,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
                                                                'nbpayoff': 0, "sendemail": False,
                                                                "sendemail_quotation": True, 'subject_quotation': 'sujet facture', 'message_quotation': 'message facture', 'model_quotation': 8}, False)
             self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+            self.assertEqual(1, server.count())
             msg_txt, msg, msg_file = server.check_first_message('sujet facture', 3, {'To': 'leonardo@davinci.org'})
             self.assertEqual('text/plain', msg_txt.get_content_type())
             self.assertEqual('text/html', msg.get_content_type())
@@ -2836,7 +2838,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.assertEqual(1, len(LucteriosScheduler.get_list()))
             LucteriosScheduler.stop_scheduler()
             email_msg.sendemail(10, "http://testserver")
-            self.assertEqual(4, server.count())
+            server.assert_count(4)
             for msg_index in range(4):
                 _msg_txt, msg, msg_file = server.get_msg_index(msg_index)
                 message = decode_b64(msg.get_payload())
@@ -2878,7 +2880,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
             self.assertEqual(1, len(LucteriosScheduler.get_list()))
             LucteriosScheduler.stop_scheduler()
             email_msg.sendemail(10, "http://testserver")
-            self.assertEqual(4, server.count())
+            server.assert_count(4)
             for msg_index in range(4):
                 _msg, _msg_txt, msg_file = server.get_msg_index(msg_index)
                 self.save_pdf(base64_content=msg_file.get_payload(), ident=msg_index + 1)
