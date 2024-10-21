@@ -25,7 +25,6 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 
 from django.utils.translation import gettext_lazy as _
-from django.db.models.query import QuerySet
 from django.db.models import Q
 from django.utils import formats, timezone
 
@@ -35,7 +34,7 @@ from lucterios.framework.xferadvance import XferListEditor, XferAddEditor, XferD
     TITLE_DELETE, TITLE_EDIT, XferTransition, TITLE_PRINT, TITLE_OK, TITLE_CANCEL, TITLE_CREATE, \
     action_list_sorted, TITLE_CLOSE, TITLE_SEARCH
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompCheck, \
-    XferCompCheckList, XferCompButton, XferCompDate, XferCompEdit, XferCompImage
+    XferCompCheckList, XferCompButton, XferCompDate, XferCompEdit, XferCompImage, GRID_ORDER
 from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework.error import LucteriosException, GRAVE
@@ -577,9 +576,12 @@ class InventorySheetShow(XferListEditor):
         if len(filter_cat) > 0:
             for cat_item in Category.objects.filter(id__in=filter_cat).distinct():
                 items = items.filter(article__categories__in=[cat_item]).distinct()
-        if (self.filter_entermode == 3):
+        if (self.filter_entermode == 3) or len([order_by for order_by in self.getparam(GRID_ORDER + 'inventorydetail', ()) if order_by.startswith('article__custom_') or order_by.startswith('-article__custom_')]) > 0:
             res = LucteriosQuerySet(model=InventoryDetail)
-            res._result_cache = [item for item in items if item.real_quantity > 1e-3]
+            if (self.filter_entermode == 3):
+                res._result_cache = [item for item in items if item.real_quantity > 1e-3]
+            else:
+                res._result_cache = items
             return res
         else:
             return items
@@ -590,6 +592,9 @@ class InventorySheetShow(XferListEditor):
         self.item = self.old_item
         inventorydetail_grid = self.get_components('inventorydetail')
         inventorydetail_grid.colspan = 3
+        for header in inventorydetail_grid.headers:
+            if header.name.startswith('article.custom_'):
+                header.orderable = 1
         if int(self.item.status) == InventorySheet.STATUS_VALID:
             inventorydetail_grid.delete_header('real_quantity_txt')
 
