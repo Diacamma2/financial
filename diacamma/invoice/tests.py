@@ -393,7 +393,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assert_count_equal('detail', 1)
-        self.assert_json_equal('LABELFORM', 'info', ["au moins un article a un compte inconnu !"])
+        self.assert_json_equal('LABELFORM', 'info', ["au moins un article a un code d'imputation invalide !"])
 
         self.factory.xfer = DetailDel()
         self.calljson('/diacamma.invoice/detailDel',
@@ -407,7 +407,7 @@ class BillTest(InvoiceTest):
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assert_count_equal('detail', 1)
-        self.assert_json_equal('LABELFORM', 'info', ["au moins un article a un compte inconnu !"])
+        self.assert_json_equal('LABELFORM', 'info', ["au moins un article a un code d'imputation invalide !"])
 
         self.factory.xfer = DetailDel()
         self.calljson('/diacamma.invoice/detailDel',
