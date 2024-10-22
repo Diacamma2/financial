@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-10-07 10:49+0000\n"
+"POT-Creation-Date: 2024-10-22 08:56+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.5\n"
 
-#: __init__.py:42 views_conf.py:425 views_conf.py:428
+#: __init__.py:42 views_conf.py:424 views_conf.py:427
 msgid "Diacamma invoice"
 msgstr "Diacamma invoice"
 
@@ -27,14 +27,14 @@ msgid "provider"
 msgstr "provider"
 
 #: editors.py:80 models.py:271 printmodel/ArticleSituation_0002.py:45
-#: printmodel/Article_0001.py:41 views.py:916 views_storage.py:308
-#: views_storage.py:320 views_storage.py:459 views_summary.py:268
+#: printmodel/Article_0001.py:41 views.py:916 views_storage.py:307
+#: views_storage.py:319 views_storage.py:458 views_summary.py:268
 #: views_summary.py:305
 msgid "categories"
 msgstr "categories"
 
-#: editors.py:89 views.py:898 views_storage.py:274 views_storage.py:315
-#: views_storage.py:449
+#: editors.py:89 views.py:898 views_storage.py:273 views_storage.py:314
+#: views_storage.py:448
 msgid "ref./designation"
 msgstr "ref./designation"
 
@@ -50,7 +50,7 @@ msgstr "image"
 msgid "Articles of kit"
 msgstr "Articles of kit"
 
-#: editors.py:280 views_storage.py:54
+#: editors.py:280 views_storage.py:53
 msgid "Storage"
 msgstr "Storage"
 
@@ -158,7 +158,7 @@ msgstr "is actif"
 msgid "vat account"
 msgstr "vat account"
 
-#: models.py:83 views_conf.py:76 views_conf.py:379 views_conf.py:428
+#: models.py:83 views_conf.py:75 views_conf.py:378 views_conf.py:427
 msgid "VAT"
 msgstr "VAT"
 
@@ -178,7 +178,7 @@ msgstr "designation"
 msgid "Category"
 msgstr "Category"
 
-#: models.py:108 models.py:905 views_conf.py:134
+#: models.py:108 models.py:905 views_conf.py:133
 msgid "Categories"
 msgstr "Categories"
 
@@ -186,7 +186,7 @@ msgstr "Categories"
 msgid "manager"
 msgstr "manager"
 
-#: models.py:135 views_conf.py:140
+#: models.py:135 views_conf.py:139
 msgid "Storage area"
 msgstr "Storage area"
 
@@ -230,11 +230,11 @@ msgstr "cost accounting"
 msgid "provision third account"
 msgstr "provision third account"
 
-#: models.py:186 views_conf.py:386
+#: models.py:186 views_conf.py:385
 msgid "Account posting code"
 msgstr "Account posting code"
 
-#: models.py:187 views_conf.py:74
+#: models.py:187 views_conf.py:73
 msgid "Account posting codes"
 msgstr "Account posting codes"
 
@@ -336,7 +336,7 @@ msgstr "Total"
 msgid "article reference is not unique !"
 msgstr "refrence of this article is not unique !"
 
-#: models.py:668 views_conf.py:377
+#: models.py:668 views_conf.py:376
 msgid "articles"
 msgstr "articles"
 
@@ -557,7 +557,7 @@ msgstr "no detail"
 
 #: models.py:1233 models.py:1290
 msgid "article has code account unknown!"
-msgstr "article has code account unknown!"
+msgstr "article has code a posting codes invalid!"
 
 #: models.py:1244 models.py:2193 models.py:2553
 #, python-format
@@ -600,11 +600,11 @@ msgstr "%s supply transfer"
 #: models.py:1564
 #, python-format
 msgid ""
-"Account entry not balanced{[br/]}total credit=%(credit)s - total debit="
-"%(debit)s%(info)s"
+"Account entry not balanced{[br/]}total credit=%(credit)s - total "
+"debit=%(debit)s%(info)s"
 msgstr ""
-"Account entry not balanced{[br/]}total credit=%(credit)s - total debit="
-"%(debit)s%(info)s"
+"Account entry not balanced{[br/]}total credit=%(credit)s - total "
+"debit=%(debit)s%(info)s"
 
 #: models.py:1789 models.py:1798
 msgid "This item can't be validated!"
@@ -674,7 +674,7 @@ msgstr "bill reference"
 msgid "bill date"
 msgstr "bill date"
 
-#: models.py:2160 views_storage.py:336 views_storage.py:360
+#: models.py:2160 views_storage.py:335 views_storage.py:359
 msgid "total amount"
 msgstr "total amount"
 
@@ -683,7 +683,7 @@ msgstr "total amount"
 msgid "Article %s is not stockable"
 msgstr "Article %s is not stockable"
 
-#: models.py:2237 models.py:2243 views_storage.py:234
+#: models.py:2237 models.py:2243 views_storage.py:233
 msgid "storage sheet"
 msgstr "storage sheet"
 
@@ -964,8 +964,8 @@ msgstr "payoff"
 msgid "payoffs"
 msgstr "payoffs"
 
-#: views.py:68 views.py:1428 views.py:1453 views.py:1482 views_conf.py:61
-#: views_conf.py:383
+#: views.py:68 views.py:1428 views.py:1453 views.py:1482 views_conf.py:60
+#: views_conf.py:382
 msgid "Invoice"
 msgstr "Invoice"
 
@@ -1035,12 +1035,12 @@ msgid ""
 msgstr ""
 "{[p]}Hello #name{[/p]}{[p]}The quotation '#doc' has been accepted.{[/p]}"
 
-#: views.py:312 views.py:500 views.py:548 views_storage.py:139
+#: views.py:312 views.py:500 views.py:548 views_storage.py:138
 #: views_summary.py:543
 msgid "Confirmation"
 msgstr "Confirmation"
 
-#: views.py:318 views_storage.py:145
+#: views.py:318 views_storage.py:144
 #, python-format
 msgid "Do you want validate '%s'?"
 msgstr "Do you want validate '%s'?"
@@ -1197,7 +1197,7 @@ msgstr "Articles"
 msgid "Only activate"
 msgstr "Only activate"
 
-#: views.py:887 views_storage.py:553
+#: views.py:887 views_storage.py:552
 msgid "All"
 msgstr "All"
 
@@ -1455,47 +1455,47 @@ msgstr ""
 msgid "Reduce"
 msgstr "Reduce"
 
-#: views_conf.py:64
+#: views_conf.py:63
 msgid "Management of parameters and financial configuration of invoice"
 msgstr "Management of parameters and financial configuration of invoice"
 
-#: views_conf.py:69
+#: views_conf.py:68
 msgid "Invoice financial configuration"
 msgstr "Invoice financial configuration"
 
-#: views_conf.py:72 views_conf.py:132 views_conf.py:425
+#: views_conf.py:71 views_conf.py:131 views_conf.py:424
 msgid "Parameters"
 msgstr "Parameters"
 
-#: views_conf.py:96
+#: views_conf.py:95
 msgid "Management of commercial configuration of invoice"
 msgstr "Management of commercial configuration of invoice"
 
-#: views_conf.py:101
+#: views_conf.py:100
 msgid "Invoice commercial configuration"
 msgstr "Invoice commercial configuration"
 
-#: views_conf.py:136
+#: views_conf.py:135
 msgid "Custom field"
 msgstr "Custom field"
 
-#: views_conf.py:142
+#: views_conf.py:141
 msgid "Category bill"
 msgstr "Category bill"
 
-#: views_conf.py:144 views_summary.py:239 views_summary.py:482
+#: views_conf.py:143 views_summary.py:239 views_summary.py:482
 msgid "Cart"
 msgstr "Cart"
 
-#: views_conf.py:146
+#: views_conf.py:145
 msgid "Multi-price"
 msgstr "Multi-price"
 
-#: views_conf.py:148
+#: views_conf.py:147
 msgid "Automatic reduce"
 msgstr "Automatic reduce"
 
-#: views_conf.py:158
+#: views_conf.py:157
 msgid ""
 "Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of "
 "proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}"
@@ -1507,271 +1507,271 @@ msgstr ""
 "name of documentation sended{[br/]} - {[b]}#nb:{[/b]}number of quotation "
 "created{[br/]}"
 
-#: views_conf.py:171
+#: views_conf.py:170
 msgid "Add account posting code"
 msgstr "Add account posting code"
 
-#: views_conf.py:172
+#: views_conf.py:171
 msgid "Modify account posting code"
 msgstr "Modify account posting code"
 
-#: views_conf.py:181
+#: views_conf.py:180
 msgid "Delete account posting code"
 msgstr "Delete account posting code"
 
-#: views_conf.py:191
+#: views_conf.py:190
 msgid "Add automatic reduce"
 msgstr "Add automatic reduce"
 
-#: views_conf.py:192
+#: views_conf.py:191
 msgid "Modify automatic reduce"
 msgstr "Modify automatic reduce"
 
-#: views_conf.py:201
+#: views_conf.py:200
 msgid "Delete automatic reduce"
 msgstr "Delete automatic reduce"
 
-#: views_conf.py:211
+#: views_conf.py:210
 msgid "Add multi-price"
 msgstr "Add multi-price"
 
-#: views_conf.py:212
+#: views_conf.py:211
 msgid "Modify multi-price"
 msgstr "Modify multi-price"
 
-#: views_conf.py:221
+#: views_conf.py:220
 msgid "Delete multi-price"
 msgstr "Delete multi-price"
 
-#: views_conf.py:239
+#: views_conf.py:238
 msgid "Change manager"
 msgstr "Change manager"
 
-#: views_conf.py:255
+#: views_conf.py:254
 msgid "Add storage area"
 msgstr "Add storage area"
 
-#: views_conf.py:256
+#: views_conf.py:255
 msgid "Modify storage area"
 msgstr "Modify storage area"
 
-#: views_conf.py:267
+#: views_conf.py:266
 msgid "change"
 msgstr "change"
 
-#: views_conf.py:278
+#: views_conf.py:277
 msgid "Delete storage area"
 msgstr "Delete storage area"
 
-#: views_conf.py:288
+#: views_conf.py:287
 msgid "Add VAT"
 msgstr "Add VAT"
 
-#: views_conf.py:289
+#: views_conf.py:288
 msgid "Modify VAT"
 msgstr "Modify VAT"
 
-#: views_conf.py:298
+#: views_conf.py:297
 msgid "Delete VAT"
 msgstr "Delete VAT"
 
-#: views_conf.py:308 views_conf.py:328
+#: views_conf.py:307 views_conf.py:327
 msgid "Add category"
 msgstr "Add category"
 
-#: views_conf.py:309 views_conf.py:329
+#: views_conf.py:308 views_conf.py:328
 msgid "Modify category"
 msgstr "Modify category"
 
-#: views_conf.py:318 views_conf.py:346
+#: views_conf.py:317 views_conf.py:345
 msgid "Delete Category"
 msgstr "Delete Category"
 
-#: views_conf.py:349
+#: views_conf.py:348
 msgid "Default"
 msgstr "Default"
 
-#: views_conf.py:352
+#: views_conf.py:351
 msgid "Set default category"
 msgstr "Set default category"
 
-#: views_conf.py:361
+#: views_conf.py:360
 msgid "Tool to import articles from CSV file."
 msgstr "Tool to import articles from CSV file."
 
-#: views_conf.py:363
+#: views_conf.py:362
 msgid "Article import"
 msgstr "Article import"
 
-#: views_conf.py:381
+#: views_conf.py:380
 msgid "parameters"
 msgstr "parameters"
 
-#: views_conf.py:425
+#: views_conf.py:424
 msgid "Configuration of parameters"
 msgstr "Define parameters for invoice"
 
-#: views_conf.py:428
+#: views_conf.py:427
 msgid "Configuration of vat"
 msgstr "Configuration of vat"
 
-#: views_storage.py:54
+#: views_storage.py:53
 msgid "Manage of storage"
 msgstr "Manage of storage"
 
-#: views_storage.py:64
+#: views_storage.py:63
 msgid "Management of storage sheet list"
 msgstr "Management of storage sheet list"
 
-#: views_storage.py:69
+#: views_storage.py:68
 msgid "Storage sheet"
 msgstr "Storage sheet"
 
-#: views_storage.py:98
+#: views_storage.py:97
 msgid "Search storage sheet"
 msgstr "Search storage sheet"
 
-#: views_storage.py:108 views_storage.py:521
+#: views_storage.py:107 views_storage.py:520
 msgid "Add storage sheet"
 msgstr "Add storage sheet"
 
-#: views_storage.py:109 views_storage.py:522
+#: views_storage.py:108 views_storage.py:521
 msgid "Modify storage sheet"
 msgstr "Modify storage sheet"
 
-#: views_storage.py:115
+#: views_storage.py:114
 msgid "Show storage sheet"
 msgstr "Show storage sheet"
 
-#: views_storage.py:127
+#: views_storage.py:126
 msgid "Delete storage sheet"
 msgstr "Delete storage sheet"
 
-#: views_storage.py:152
+#: views_storage.py:151
 msgid "target area"
 msgstr "target area"
 
-#: views_storage.py:176
+#: views_storage.py:175
 msgid "Print storage sheet"
 msgstr "Print storage sheet"
 
-#: views_storage.py:191
+#: views_storage.py:190
 msgid "Add storage detail"
 msgstr "Add storage detail"
 
-#: views_storage.py:192
+#: views_storage.py:191
 msgid "Modify storage detail"
 msgstr "Modify storage detail"
 
-#: views_storage.py:201
+#: views_storage.py:200
 msgid "Delete storage detail"
 msgstr "Delete storage detail"
 
-#: views_storage.py:205
+#: views_storage.py:204
 msgid "Import"
 msgstr "Import"
 
-#: views_storage.py:207
+#: views_storage.py:206
 msgid "Storage detail import"
 msgstr "Storage detail import"
 
-#: views_storage.py:238
+#: views_storage.py:237
 msgid "Situation of storage"
 msgstr "Situation of storage"
 
-#: views_storage.py:243 views_storage.py:371
+#: views_storage.py:242 views_storage.py:370
 msgid "Situation"
 msgstr "Situation"
 
-#: views_storage.py:292 views_storage.py:328
+#: views_storage.py:291 views_storage.py:327
 msgid "date situation"
 msgstr "date situation"
 
-#: views_storage.py:298
+#: views_storage.py:297
 msgid "hide articles without quantity"
 msgstr "hide articles without quantity"
 
-#: views_storage.py:353
+#: views_storage.py:352
 msgid "count of storage"
 msgstr "count of storage"
 
-#: views_storage.py:395
+#: views_storage.py:394
 msgid "Historic of storage"
 msgstr "Historic of storage"
 
-#: views_storage.py:400
+#: views_storage.py:399
 msgid "Historic"
 msgstr "Historic"
 
-#: views_storage.py:425
+#: views_storage.py:424
 msgid "begin date"
 msgstr "begin date"
 
-#: views_storage.py:432
+#: views_storage.py:431
 msgid "end date"
 msgstr "end date"
 
-#: views_storage.py:479
+#: views_storage.py:478
 msgid "Print historic"
 msgstr "Print historic"
 
-#: views_storage.py:494
+#: views_storage.py:493
 msgid "Management of inventory sheet list"
 msgstr "Management of inventory sheet list"
 
-#: views_storage.py:499
+#: views_storage.py:498
 msgid "Inventory sheet"
 msgstr "Inventory sheet"
 
-#: views_storage.py:528
+#: views_storage.py:527
 msgid "Show inventory sheet"
 msgstr "Show inventory sheet"
 
-#: views_storage.py:553
+#: views_storage.py:552
 msgid "Only the non-entered"
 msgstr "Only the non-entered"
 
-#: views_storage.py:553
+#: views_storage.py:552
 msgid "Only the entered"
 msgstr "Only the entered"
 
-#: views_storage.py:553
+#: views_storage.py:552
 msgid "Only with quantity"
 msgstr "Only with quantity"
 
-#: views_storage.py:556
+#: views_storage.py:555
 msgid "Filter by elements"
 msgstr "Filter by elements"
 
-#: views_storage.py:610
+#: views_storage.py:615
 msgid "Delete inventory sheet"
 msgstr "Delete inventory sheet"
 
-#: views_storage.py:625
+#: views_storage.py:630
 msgid "Print inventory sheet"
 msgstr "Print inventory sheet"
 
-#: views_storage.py:639
+#: views_storage.py:644
 msgid "Modify inventory detail"
 msgstr "Modify inventory detail"
 
-#: views_storage.py:647
+#: views_storage.py:652
 msgid "Copy"
 msgstr "Copy"
 
-#: views_storage.py:653
+#: views_storage.py:658
 msgid "Copy quantity of inventory detail"
 msgstr "Copy quantity of inventory detail"
 
-#: views_storage.py:660
+#: views_storage.py:665
 msgid "Finalize"
 msgstr "Finalize"
 
-#: views_storage.py:666
+#: views_storage.py:671
 msgid "Finalize quantity non-entered of inventory detail"
 msgstr "Finalize quantity non-entered of inventory detail"
 
-#: views_storage.py:669
+#: views_storage.py:674
 msgid ""
 "This action will report current quantity to article whose non-enterd.{[br/]}"
 "Do you want to do this action ?"
@@ -1779,7 +1779,7 @@ msgstr ""
 "This action will report current quantity to article whose non-enterd.{[br/]}"
 "Do you want to do this action ?"
 
-#: views_storage.py:675
+#: views_storage.py:680
 #, python-format
 msgid "%d articles are reported."
 msgstr "%d articles are reported."
