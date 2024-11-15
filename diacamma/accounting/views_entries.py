@@ -335,7 +335,7 @@ class EntryAccountImport(ObjectImport):
                 self.get_components('year').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
                 self.get_components('journal').set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
 
-    def fillresponse(self, drivername="CSV", step=0):
+    def fillresponse(self, drivername="CSV", step=1):
         self.select_year = self.getparam('year')
         self.select_journal = self.getparam('journal', 4)
         ObjectImport.fillresponse(self, "accounting.EntryLineAccount", drivername, step)

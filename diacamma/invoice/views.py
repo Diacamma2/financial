@@ -36,7 +36,7 @@ from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELE
     TITLE_LABEL, TITLE_CREATE, TITLE_NO, TITLE_SEARCH
 from lucterios.framework.xferadvance import XferListEditor, XferShowEditor, XferAddEditor, XferDelete, XferTransition
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompImage, XferCompGrid, XferCompCheck, XferCompEdit, XferCompCheckList, XferCompMemo, \
-    XferCompButton, XferCompFloat, XferCompDate
+    XferCompButton, XferCompFloat, XferCompDate, GRID_ORDER
 from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, FORMTYPE_REFRESH, CLOSE_NO, SELECT_MULTI, WrapAction, \
     get_format_from_field
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
@@ -874,7 +874,11 @@ class ArticleList(XferListEditor, ArticleFilter):
         else:
             items = self.model.objects.all()
         items = items.select_related('vat', 'accountposting').prefetch_related('categories')
-        return self.items_filtering(items, self.categories_filter, self.show_stockable, self.show_storagearea)
+        items = self.items_filtering(items, self.categories_filter, self.show_stockable, self.show_storagearea)
+        if len([order_by for order_by in self.getparam(GRID_ORDER + self.field_id, ()) if order_by.startswith('custom_') or order_by.startswith('-custom_')]) > 0:
+            return LucteriosQuerySet(model=self.model, initial=items)
+        else:
+            return items
 
     def fillresponse_header(self):
         show_filter = self.getparam('show_filter', self.FILTER_SHOW_ONLY_ACTIVATE)
@@ -929,6 +933,14 @@ class ArticleList(XferListEditor, ArticleFilter):
 
         self.filter = self.get_search_filter(ref_filter, show_filter, self.show_stockable, self.show_storagearea)
         self.add_action(ArticleSearch.get_action(TITLE_SEARCH, short_icon="mdi:mdi-invoice-list-outline"), modal=FORMTYPE_NOMODAL, close=CLOSE_YES)
+
+    def fillresponse_body(self):
+        XferListEditor.fillresponse_body(self)
+        grid = self.get_components(self.field_id)
+        grid.colspan = 3
+        for header in grid.headers:
+            if header.name.startswith('custom_'):
+                header.orderable = 1
 
 
 @ActionsManage.affect_list(_("To disable"), short_icon="mdi:mdi-credit-card-settings-outline", close=CLOSE_NO, condition=lambda xfer: len(StorageArea.objects.all()) > 0)
