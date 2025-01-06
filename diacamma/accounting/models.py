@@ -877,7 +877,7 @@ class ChartsAccount(LucteriosModel):
                     if cls.get_account(new_code, year) is None:
                         account_desc = current_system_account().new_charts_account(new_code)
                         if account_desc[1] >= 0:
-                            ChartsAccount.objects.create(year=year, code=new_code, name=row['name'], type_of_account=account_desc[1])
+                            ChartsAccount.objects.create(year=year, code=new_code, name=row['name'], type_of_account=account_desc[1], rubric=row['rubric'] if 'rubric' in row else '')
 
     class Meta(object):
         verbose_name = _('charts of account')
