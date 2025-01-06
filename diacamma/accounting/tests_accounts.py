@@ -22,6 +22,7 @@ from shutil import rmtree
 from importlib import import_module
 from base64 import b64decode
 from time import sleep
+from os.path import join, dirname
 
 from django.db.models import Q
 
@@ -526,6 +527,7 @@ class FiscalYearWorkflowTest(PaymentTest):
         add_entry(1, 3, '2015-04-15', 'Subvention 2', '-1|19|0|99.950000|0|0|None|\n-2|18|0|-99.950000|0|0|None|', True)  # 25 26
 
     def test_import_init(self):
+        from diacamma.asso import __file__ as asso_file
         last_year = FiscalYear.objects.get(id=1)
         year = create_year(0, year=last_year.begin.year + 1)
         self.assertEqual(FiscalYear.objects.get(id=year.id).status, 0)
@@ -540,12 +542,13 @@ class FiscalYearWorkflowTest(PaymentTest):
         self.factory.xfer = ChartsAccountInitial()
         self.calljson('/diacamma.accounting/chartsAccountInitial',
                       {'year': year.id, 'type_of_account': '-1'}, False)
-        self.assert_observer('core.dialogbox', 'diacamma.accounting', 'chartsAccountInitial')
-        self.assert_json_equal('', 'text', "Voulez-vous importer des comptes initiaux ?")
+        self.assert_observer('core.custom', 'diacamma.accounting', 'chartsAccountInitial')
+        self.assert_count_equal('', 3)
+        self.assert_select_equal('account_item', {join(dirname(asso_file), 'init_french-complet.csv'): 'complet', join(dirname(asso_file), 'init_french-simple.csv'): 'simple'})
 
         self.factory.xfer = ChartsAccountInitial()
         self.calljson('/diacamma.accounting/chartsAccountInitial',
-                      {'year': year.id, 'type_of_account': '-1', "CONFIRME": "YES"}, False)
+                      {'year': year.id, 'type_of_account': '-1', 'account_item': join(dirname(asso_file), 'init_french-simple.csv'), "CONFIRME": "YES"}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'chartsAccountInitial')
 
         self.factory.xfer = ChartsAccountList()
