@@ -273,6 +273,8 @@ class ArticleEditor(LucteriosEditor):
             newprice.set_location(price_comp.col, row_num, price_comp.colspan, price_comp.rowspan)
             xfer.add_component(newprice)
             row_num += 1
+        if self.item.stockable not in (Article.STOCKABLE_NO, Article.STOCKABLE_KIT):
+            xfer.filltab_from_model(price_comp.col, xfer.get_max_row() + 1, True, [("last_buy_price", "mean_buy_price")])
         if self.item.stockable == Article.STOCKABLE_KIT:
             xfer.new_tab(_("Articles of kit"))
             xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, ['kit_article_set'])
@@ -308,8 +310,8 @@ class ArticleEditor(LucteriosEditor):
                 grid = XferCompGrid('moving')
                 grid.set_location(1, 3)
                 grid.description = _('moving')
-                grid.set_model(self.item.storagedetail_set.filter(storagesheet__status=1).order_by('-storagesheet__date'),
-                               ['storagesheet.date', 'storagesheet.comment', 'quantity_txt'], xfer)
+                grid.set_model(self.item.storagedetail_set.filter(storagesheet__status=StorageSheet.STATUS_VALID).order_by('-storagesheet__date'),
+                               ['storagesheet.date', 'storagesheet.comment', 'price', 'quantity_txt'], xfer)
                 xfer.add_component(grid)
         if self.item.stockable in (Article.STOCKABLE_NO, Article.STOCKABLE_KIT):
             xfer.remove_component('provider')

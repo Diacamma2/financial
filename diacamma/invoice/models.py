@@ -277,6 +277,9 @@ class Article(LucteriosModel, CustomizeObject):
     available_total = LucteriosVirtualField(verbose_name=_('available'), compute_from='get_available_total')
     price_txt = LucteriosVirtualField(verbose_name=_('price'), compute_from='price', format_string=lambda: format_with_devise(5))
 
+    last_buy_price = LucteriosVirtualField(verbose_name=_('last buy price'), compute_from='get_last_buy_price', format_string=lambda: format_with_devise(5))
+    mean_buy_price = LucteriosVirtualField(verbose_name=_('mean buy price'), compute_from='get_mean_buy_price', format_string=lambda: format_with_devise(5))
+
     def __init__(self, *args, **kwargs):
         LucteriosModel.__init__(self, *args, **kwargs)
         self.show_storagearea = 0
@@ -622,6 +625,17 @@ class Article(LucteriosModel, CustomizeObject):
         if value is not None:
             format_txt = "N%d" % int(self.qtyDecimal)
             return format_to_string(value, format_txt, None)
+        return None
+
+    def get_last_buy_price(self):
+        last_buy = self.storagedetail_set.filter(storagesheet__status=StorageSheet.STATUS_VALID, storagesheet__sheet_type=StorageSheet.TYPE_RECEIPT).order_by('storagesheet__date').last()
+        if last_buy is not None:
+            return last_buy.price
+        return None
+
+    def get_mean_buy_price(self):
+        if self.get_available_total_num(0, 0) > 0:
+            return self.get_stockage_mean_price(0)
         return None
 
     def __getattr__(self, name):
@@ -2011,7 +2025,10 @@ class Detail(LucteriosModel):
         return newdetail
 
     def get_quantity_txt(self):
-        return format_value(self.quantity, "N%d" % self.article.qtyDecimal)
+        if self.article is not None:
+            return format_value(self.quantity, "N%d" % self.article.qtyDecimal)
+        else:
+            return format_value(self.quantity, "N3")
 
     def get_price(self):
         if (Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT) and (self.vta_rate > 0.001):
@@ -2243,7 +2260,7 @@ class StorageDetail(LucteriosModel):
     storagesheet = models.ForeignKey(StorageSheet, verbose_name=_('storage sheet'), null=False, db_index=True, on_delete=models.CASCADE)
     article = models.ForeignKey(Article, verbose_name=_('article'), null=False, db_index=True, on_delete=models.PROTECT)
     price = LucteriosDecimalField(verbose_name=_('buying price'), max_digits=10, decimal_places=3, default=0.0,
-                                  validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5))
+                                  validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5) + ";---;---")
     quantity = models.DecimalField(verbose_name=_('quantity'), max_digits=12, decimal_places=3, default=1.0,
                                    validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)])
     quantity_txt = LucteriosVirtualField(verbose_name=_('quantity'), compute_from="get_quantity_txt")
@@ -2618,7 +2635,7 @@ class InventoryDetail(LucteriosModel):
 
     @classmethod
     def get_default_fields(cls):
-        fields = ["article", "article.designation"]
+        fields = ["article", "article.designation", "article.last_buy_price", "article.mean_buy_price"]
         fields.extend([(field.name, "article." + field.get_fieldname()) for field in CustomField.get_filter(Article) if field.get_fieldname() in Article.get_custom_fields()])
         fields.extend(["real_quantity_txt", "quantity_txt"])
         return fields
