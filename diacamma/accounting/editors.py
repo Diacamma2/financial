@@ -473,6 +473,10 @@ class EntryLineAccountEditor(LucteriosEditor):
                 sel.set_needed(Params.getvalue('accounting-needcost'))
                 if current_costaccounting is not None:
                     sel.set_value(current_costaccounting.id)
+                elif Params.getvalue('accounting-needcost'):
+                    default_costaccointing = CostAccounting.objects.filter(Q(status=0) & (Q(year=None) | Q(year=current_year)) & Q(is_default=True)).first()
+                    if default_costaccointing is not None:
+                        sel.set_value(default_costaccointing.id)
                 if vertical:
                     sel.set_location(column, row + 1, 2)
                     lbl = XferCompLabelForm('costaccountinglbl')

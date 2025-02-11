@@ -551,10 +551,9 @@ class Article(LucteriosModel, CustomizeObject):
 
     def has_sufficiently(self, storagearea_id, quantity):
         if self.stockable != self.STOCKABLE_NO:
-            for val in self.get_stockage_values():
-                if val[0] == storagearea_id:
-                    if (float(quantity) - val[2]) < 0.001:
-                        return True
+            available_qty = self.get_available_total_num(storagearea_id, 0)
+            if (float(quantity) - available_qty) < 0.001:
+                return True
             return False
         return True
 

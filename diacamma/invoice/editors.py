@@ -567,10 +567,11 @@ class DetailEditor(LucteriosEditor, DetailFilter):
         else:
             area_list = []
             if self.item.bill.bill_type != Bill.BILLTYPE_ASSET:
-                for val in self.item.article.get_stockage_values():
-                    if (val[0] != 0) and (abs(val[2]) > 0.0001):
+                for area in StorageArea.objects.all():
+                    available_qty = self.item.article.get_available_total_num(area.id, 0)
+                    if abs(available_qty) > 0.0001:
                         format_txt = "%%.%df" % self.item.article.qtyDecimal
-                        area_list.append((val[0], "%s [%s]" % (val[1], format_txt % val[2])))
+                        area_list.append((area.id, "%s [%s]" % (area, format_txt % available_qty)))
             else:
                 for area in StorageArea.objects.all():
                     area_list.append((area.id, str(area)))
