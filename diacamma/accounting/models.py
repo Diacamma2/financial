@@ -1446,9 +1446,13 @@ class EntryLineAccount(LucteriosModel):
     def get_designation_ref_with_third(self):
         val = self.entry.designation
         if not self.account.is_third:
-            thirds = set([line.get_thirdstr_in_cache() for line in self.entry.entrylineaccount_set.filter(third__isnull=False)])
+            thirds = list(set([line.get_thirdstr_in_cache() for line in self.entry.entrylineaccount_set.filter(third__isnull=False)]))
+            thirds.sort()
             if len(thirds) > 0:
-                val = "%s (%s)" % (val, ",".join(thirds))
+                if len(thirds) <= 5:
+                    val = "%s (%s)" % (val, ",".join(thirds))
+                else:
+                    val = "%s (%s ...)" % (val, ",".join(thirds[:5]))
         if (self.reference is not None) and (self.reference != ''):
             val = "%s{[br/]}%s" % (val, self.reference)
         return val
