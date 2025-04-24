@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-05 15:20+0000\n"
+"POT-Creation-Date: 2025-04-24 15:39+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -15,7 +15,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.6\n"
 
 #: __init__.py:42 views_conf.py:166 views_conf.py:169 views_conf.py:172
 msgid "Diacamma payoff"
@@ -364,7 +364,7 @@ msgstr "règlement > compte bancaire"
 msgid "Payement methods"
 msgstr "Moyens de paiement"
 
-#: payment_type.py:147 views.py:374 views.py:377 views_externalpayment.py:45
+#: payment_type.py:147 views.py:374 views.py:377 views_externalpayment.py:47
 msgid "Payment"
 msgstr "Paiement"
 
@@ -474,8 +474,8 @@ msgstr "Hello-Asso"
 #: payment_type.py:376
 msgid "help_payoff_helloasso"
 msgstr ""
-"Depuis le portail Hello-Asso, dans le menu \"Mon compte > Intégration et API"
-"\".{[br/]}\n"
+"Depuis le portail Hello-Asso, dans le menu \"Mon compte > Intégration et "
+"API\".{[br/]}\n"
 "- Recopiez ici le {[b]}mon clientid{[/b]} et le {[b]}mon clientsecret{[/b]}."
 "{[br/]}\n"
 "- Remplissez le champ {[b]}Mon URL de callback{[/b]} par l'adresse {[b]}%s/"
@@ -730,24 +730,60 @@ msgstr "Transactions bancaires"
 msgid "Show bank transaction"
 msgstr "Voir une transaction bancaire"
 
-#: views_externalpayment.py:76
+#: views_externalpayment.py:78
 #, python-format
 msgid "It is not possible to pay-off this item with %s !"
 msgstr "Il n'est pas possible de régler cet élément avec %s !"
 
-#: views_externalpayment.py:95
+#: views_externalpayment.py:97
 msgid "This item is deleted, payed or disabled."
 msgstr "Cet élément est supprimé, réglé ou désactivé."
 
-#: views_externalpayment.py:194
+#: views_externalpayment.py:190
+msgid "Payment failure"
+msgstr "Échec de paiement"
+
+#: views_externalpayment.py:190
+#, python-format
+msgid ""
+"\n"
+"<html>\n"
+"An online payment request was received in error in <i>Diacamma</i>.<br/>\n"
+"<ul>\n"
+" <li><u>Mode:</u> %(mode)s</li>\n"
+" <li><u>Document:</u> %(doc)s</li>\n"
+" <li><u>Date:</u> %(date)s</li>\n"
+" <li><u>Amount:</u> %(amount)s</li>\n"
+" <li><u>Payer:</u> %(payer)s</li>\n"
+"<ul>\n"
+"<br/>\n"
+"%(current_name)s<br/>\n"
+"</html>\n"
+msgstr ""
+"\n"
+"<html>\n"
+"Une demande de payement en ligne a été reçu avec erreur dans <i>Diacamma</"
+"i>.<br/>\n"
+"<ul>\n"
+" <li><u>Mode:</u> %(mode)s</li>\n"
+" <li><u>Document:</u> %(doc)s</li>\n"
+" <li><u>Date:</u> %(date)s</li>\n"
+" <li><u>Montant:</u> %(amount)s</li>\n"
+" <li><u>Payeur:</u> %(payer)s</li>\n"
+"<ul>\n"
+"<br/>\n"
+"%(current_name)s<br/>\n"
+"</html>\n"
+
+#: views_externalpayment.py:216
 msgid "Payoff terminate."
 msgstr "Paiement terminé."
 
-#: views_externalpayment.py:195
+#: views_externalpayment.py:217
 msgid "Thanks you."
 msgstr "Merci de votre visite."
 
-#: views_externalpayment.py:197
+#: views_externalpayment.py:219
 msgid "Payoff aborded."
 msgstr "Paiement annulé ou invalide !"
 

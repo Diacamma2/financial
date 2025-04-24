@@ -35,6 +35,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from lucterios.framework.tools import MenuManage, toHtml, get_url_from_request
 from lucterios.framework.xferbasic import XferContainerAbstract
 from lucterios.framework.error import LucteriosException, IMPORTANT, MINOR
+from lucterios.contacts.models import LegalEntity
+from lucterios.mailing.email_functions import will_mail_send, send_email
 
 from diacamma.payoff.models import BankTransaction, PaymentMethod, Supporting, Payoff
 from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement, \
@@ -142,6 +144,11 @@ class ValidationPaymentGeneric(XferContainerAbstract):
         return ""
 
     @property
+    def sender_email(self):
+        sender_obj = LegalEntity.objects.get(id=1)
+        return sender_obj.email
+
+    @property
     def bank_fee(self):
         return 0.0
 
@@ -179,6 +186,21 @@ class ValidationPaymentGeneric(XferContainerAbstract):
             self.item.contains += "{[newline]}"
             self.item.contains += str(err)
         self.item.save()
+        if (self.item.status != BankTransaction.STATUS_SUCCESS) and will_mail_send():
+            send_email(self.sender_email, _('Payment failure'), _("""
+<html>
+An online payment request was received in error in <i>Diacamma</i>.<br/>
+<ul>
+ <li><u>Mode:</u> %(mode)s</li>
+ <li><u>Document:</u> %(doc)s</li>
+ <li><u>Date:</u> %(date)s</li>
+ <li><u>Amount:</u> %(amount)s</li>
+ <li><u>Payer:</u> %(payer)s</li>
+<ul>
+<br/>
+%(current_name)s<br/>
+</html>
+""") % {'mode': str(self.payment_meth), 'date': self.date, 'payer': self.payer, 'amount': self.amount, 'doc': str(self.supporting), 'current_name': str(LegalEntity.objects.get(id=1))})
 
     def get_response(self):
         if self.supporting is None:
@@ -224,6 +246,10 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
         return self.getparam('mc_gross', 0.0)
 
     @property
+    def sender_email(self):
+        return self.getparam('payer_email', super().sender_email)
+
+    @property
     def date(self):
         import locale
         saved = locale.setlocale(locale.LC_ALL)
@@ -249,6 +275,7 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
                 if key != 'FORMAT':
                     self.item.contains += "%s = %s{[newline]}" % (key, value)
             res = post(paypal_url, data=fields.encode(), headers={"Content-Type": "application/x-www-form-urlencoded", 'Content-Length': str(len(fields))}).text
+            logging.getLogger('diacamma.payoff').debug("Check PayPal %s: %s => %s" % (paypal_url, fields, res))
         except Exception:
             logging.getLogger('diacamma.payoff').warning(paypal_url)
             logging.getLogger('diacamma.payoff').warning(fields)
