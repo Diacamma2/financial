@@ -23,9 +23,10 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
-from datetime import date
+from datetime import date, datetime
 from _io import BytesIO
 from logging import getLogger
+from json import loads, dumps, JSONDecodeError
 
 from django.db import models
 from django.db.models import Q
@@ -59,6 +60,7 @@ from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType, PaymentT
 class Supporting(LucteriosModel):
     third = models.ForeignKey(Third, verbose_name=_('third'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
     is_revenu = models.BooleanField(verbose_name=_('is revenu'), default=True)
+    internal_info = models.TextField(_('internal info'), blank=True, default="{}")
 
     total_payed = LucteriosVirtualField(verbose_name=_('total payed'), compute_from='get_total_payed', format_string=lambda: format_with_devise(5))
     total_rest_topay = LucteriosVirtualField(verbose_name=_('rest to pay'), compute_from='get_total_rest_topay', format_string=lambda: format_with_devise(5))
@@ -258,6 +260,7 @@ class Supporting(LucteriosModel):
         if fct_mailing_mod.will_mail_send():
             fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)],
                                        cclist=self.get_cclist(), bcclist=self.get_bcclist(), withcopy=True)
+            self.set_internal_value("email", datetime.today().isoformat())
 
     def get_document_filename(self):
         return remove_accent(self.get_payment_name(), True)
@@ -370,6 +373,23 @@ class Supporting(LucteriosModel):
 
     def adding_payoff(self, payoff):
         return
+
+    def get_internal_value(self, name):
+        value = ""
+        try:
+            value = loads(self.internal_info)[name]
+        except (JSONDecodeError, KeyError):
+            pass
+        return value
+
+    def set_internal_value(self, name, value):
+        try:
+            internal_json = loads(self.internal_info)
+        except JSONDecodeError:
+            internal_json = {}
+        internal_json[name] = value
+        self.internal_info = dumps(internal_json)
+        self.save()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.is_revenu = self.get_final_child().payoff_is_revenu()

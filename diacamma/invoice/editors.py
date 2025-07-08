@@ -453,6 +453,7 @@ class BillEditor(SupportingEditor):
             details.actions = []
             if self.item.bill_type not in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART):
                 SupportingEditor.show(self, xfer)
+            self.add_email_status(xfer)
         return
 
 

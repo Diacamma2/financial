@@ -29,7 +29,7 @@ from django.utils.translation import gettext_lazy as _
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, XferCompSelect, XferCompLinkLabel
 from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction, \
-    get_url_from_request
+    get_url_from_request, get_date_formating
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.models import Preference
@@ -38,9 +38,20 @@ from lucterios.contacts.models import LegalEntity
 from diacamma.payoff.models import Supporting, Payoff, BankAccount
 from diacamma.accounting.models import FiscalYear
 from diacamma.accounting.tools import current_system_account
+from datetime import datetime
 
 
 class SupportingEditor(LucteriosEditor):
+
+    def add_email_status(self, xfer):
+        email_info = self.item.get_internal_value('email')
+        if email_info != '':
+            lbl = XferCompLabelForm('XferCompLabelForm')
+            lbl.set_color('blue')
+            lbl.set_italic()
+            lbl.set_location(1, xfer.get_max_row() + 1, 4)
+            lbl.set_value(_('Email sended at %s') % get_date_formating(datetime.fromisoformat(email_info)))
+            xfer.add_component(lbl)
 
     def show_third(self, xfer, right=''):
         xfer.params['supporting'] = self.item.id

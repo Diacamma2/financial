@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-08 13:57+0000\n"
+"POT-Creation-Date: 2025-07-08 14:44+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -38,7 +38,7 @@ msgstr "catégories"
 msgid "ref./designation"
 msgstr "réf./désignation"
 
-#: editors.py:179 editors.py:525
+#: editors.py:179 editors.py:526
 msgid "Modify filter to reduce articles list."
 msgstr "Modifier le filtrage pour afficher une liste d'articles utilisables."
 
@@ -137,7 +137,7 @@ msgstr "total TTC"
 msgid "VTA sum"
 msgstr "total TVA"
 
-#: editors.py:647
+#: editors.py:648
 msgid "max quantity"
 msgstr "quantité max."
 
