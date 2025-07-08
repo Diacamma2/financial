@@ -24,9 +24,10 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
 from shutil import rmtree
-from datetime import date
+from datetime import date, datetime
 from base64 import b64decode
 from os.path import isfile, join
+from unittest.mock import patch
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -111,7 +112,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'date', "2014-04-01")
-        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse dans l'exercice"])
+        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse un exercice valide"])
         self.assert_json_equal('LABELFORM', 'warning', [])
 
         self.factory.xfer = BillAddModify()
@@ -227,7 +228,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'date', "2014-04-01")
-        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse dans l'exercice"])
+        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse un exercice valide"])
         self.assert_json_equal('LABELFORM', 'warning', [])
 
         self.factory.xfer = BillAddModify()
@@ -966,7 +967,9 @@ class BillTest(InvoiceTest):
         self.assert_action_equal('GET', self.get_json_path('#parentbill/action'), ("origine", "mdi:mdi-invoice-edit-outline",
                                                                                    "diacamma.invoice", "billShow", 0, 1, 1, {'bill': 1}))
 
-    def test_cart_to_quotation(self):
+    @patch("django.utils.timezone.now")
+    def test_cart_to_quotation(self, mock_now):
+        mock_now.return_value = datetime(year=2015, month=4, day=1)
         Params.setvalue('invoice-cart-active', True)
         Params.setvalue('invoice-order-mode', 1)
         default_articles()
@@ -1091,7 +1094,9 @@ class BillTest(InvoiceTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('entryline', 0)
 
-    def test_quotation_to_order(self):
+    @patch("django.utils.timezone.now")
+    def test_quotation_to_order(self, mock_now):
+        mock_now.return_value = datetime(year=2015, month=4, day=1)
         Params.setvalue('invoice-order-mode', 1)
         default_articles()
         self._create_bill([{'article': 1, 'designation': 'article 1',
@@ -1158,7 +1163,9 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('', 'entryline/@1/debit', -30.0)
         self.assert_json_equal('', 'entryline/@1/link', None)
 
-    def test_quotation_to_order_with_user(self):
+    @patch("django.utils.timezone.now")
+    def test_quotation_to_order_with_user(self, mock_now):
+        mock_now.return_value = datetime(year=2015, month=4, day=1)
         Params.setvalue('invoice-order-mode', 1)
         default_articles()
         self._create_bill([{'article': 1, 'designation': 'article 1',
@@ -1205,7 +1212,9 @@ class BillTest(InvoiceTest):
         finally:
             server.stop()
 
-    def test_quotation_to_order_by_link(self):
+    @patch("django.utils.timezone.now")
+    def test_quotation_to_order_by_link(self, mock_now):
+        mock_now.return_value = datetime(year=2015, month=4, day=1)
         Params.setvalue('invoice-order-mode', 2)
         default_articles()
         self._create_bill([{'article': 1, 'designation': 'article 1',

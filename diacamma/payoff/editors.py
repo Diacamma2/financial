@@ -29,7 +29,7 @@ from django.utils.translation import gettext_lazy as _
 from lucterios.framework.editors import LucteriosEditor
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompButton, XferCompSelect, XferCompLinkLabel
 from lucterios.framework.tools import ActionsManage, CLOSE_NO, FORMTYPE_REFRESH, FORMTYPE_MODAL, WrapAction, \
-    get_url_from_request, get_date_formating
+    get_url_from_request, get_date_formating, convert_date
 from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.CORE.parameters import Params
 from lucterios.CORE.models import Preference
@@ -172,7 +172,7 @@ class PayoffEditor(LucteriosEditor):
         prefix = getattr(xfer, "payoff_prefix", "")
         if abs(float(self.item.amount)) < 0.0001:
             raise LucteriosException(IMPORTANT, _("payoff null!"))
-        info = self.item.supporting.check_date_current_year(self.item.date)
+        info = self.item.supporting.check_date_year_valid(convert_date(self.item.date))
         if len(info) > 0:
             raise LucteriosException(IMPORTANT, info[0])
         if int(self.item.mode) == Payoff.MODE_CASH:

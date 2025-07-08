@@ -25,7 +25,8 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from shutil import rmtree
 from _io import StringIO
-from datetime import timedelta
+from datetime import timedelta, datetime
+from unittest.mock import patch
 
 from django.contrib.auth.models import Permission
 from django.utils import timezone
@@ -1898,7 +1899,9 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'price_article_4', 1.31)
         self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
 
-    def test_cart_advance(self):
+    @patch("django.utils.timezone.now")
+    def test_cart_advance(self, mock_now):
+        mock_now.return_value = datetime(year=2015, month=4, day=1)
         self.maxDiff = 2000
         Params.setvalue('invoice-cart-active', True)
         Params.setvalue('invoice-cart-email-subject', 'Nouveau panier')

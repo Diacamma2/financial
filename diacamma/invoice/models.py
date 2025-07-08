@@ -1233,6 +1233,12 @@ class Bill(Supporting):
                 if (detail.article_id is not None) and not detail.article.has_sufficiently(detail.storagearea_id, detail.quantity):
                     if (detail.article.accountposting is not None) and (detail.article.accountposting.provision_third_account != ''):
                         warning.append(_("Article %s is not sufficiently stocked") % str(detail.article))
+        if self.bill_type not in (self.BILLTYPE_QUOTATION, self.BILLTYPE_CART, self.BILLTYPE_ORDER):
+            try:
+                if len(self.check_date_year_valid(self.date)) == 0:
+                    warning.extend(self.check_date_current_year(self.date.isoformat()))
+            except LucteriosException:
+                pass
         return warning
 
     def get_info_state(self):
@@ -1265,11 +1271,11 @@ class Bill(Supporting):
                 if detail_account is None:
                     info.append(str(_("article has code account unknown!")))
                     break
-        if self.bill_type not in (self.BILLTYPE_QUOTATION, self.BILLTYPE_CART, self.BILLTYPE_ORDER):
-            try:
-                info.extend(self.check_date_current_year(self.date.isoformat()))
-            except LucteriosException:
-                pass
+        try:
+            self.date = convert_date(self.date)
+            info.extend(self.check_date_year_valid(self.date))
+        except LucteriosException:
+            pass
         return info
 
     def can_delete(self):
@@ -1383,7 +1389,11 @@ class Bill(Supporting):
 
     def affect_num(self):
         if self.num is None:
-            self.fiscal_year = FiscalYear.get_current()
+            self.date = convert_date(self.date)
+            info = self.check_date_year_valid(self.date)
+            if len(info) == 1:
+                raise LucteriosException(GRAVE, info[0])
+            self.fiscal_year = FiscalYear.get_current(self.date)
             num_filter = Q(bill_type=self.bill_type) & Q(fiscal_year=self.fiscal_year)
             if (self.categoryBill is not None) and self.categoryBill.special_numbering:
                 num_filter &= Q(categoryBill=self.categoryBill)
