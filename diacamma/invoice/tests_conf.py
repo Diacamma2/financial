@@ -28,7 +28,7 @@ from _io import StringIO
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
-from lucterios.CORE.models import SavedCriteria
+from lucterios.CORE.models import SavedCriteria, PrintModel, LucteriosUser
 from lucterios.CORE.views import ObjectMerge
 from lucterios.CORE.parameters import Params
 
@@ -45,6 +45,8 @@ from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommerc
     StorageAreaChangeContact, StorageAreaSaveContact, MultiPriceAddModify, MultiPriceDel
 from diacamma.invoice.views import ArticleList, ArticleAddModify, ArticleDel, ArticleShow, ArticleSearch, ArticlePrint, ArticleLabel, \
     RecipeKitArticleAddModify, RecipeKitArticleDel
+from base64 import b64decode
+from lucterios.contacts.models import Individual
 
 
 class ConfigTest(LucteriosTest):
@@ -1150,3 +1152,60 @@ class ConfigTest(LucteriosTest):
         self.assert_json_equal('', 'accountposting', "code4")
         self.assert_json_equal('', 'stockable', '1')
         self.assert_json_equal('', 'qtyDecimal', '1')
+
+    def get_print_model(self):
+        print_model = PrintModel.objects.create(name="Listing", kind="0", modelname="invoice.Article")
+        print_model.value = """210
+297
+10//reference//#reference
+40//designation//#designation
+10//price//#current_price_txt
+15//categories//#categories
+10//quantities//#stockage_total
+"""
+        print_model.save()
+        return print_model
+
+    def test_article_print_multiprice_nothird(self):
+        default_categories()
+        default_articles(with_storage=True, vat_mode=0)
+        default_customize()
+        default_multiprice()
+        initial_thirds_fr()
+        print_model = self.get_print_model()
+
+        self.factory.xfer = ArticlePrint()
+        self.factory.user = LucteriosUser.objects.filter(username='admin').first()
+        self.calljson('/diacamma.invoice/articlePrint', {'MODEL': print_model.id, 'PRINT_MODE': 4}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articlePrint')
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
+        content_csv = csv_value.split('\n')
+        self.assertEqual(len(content_csv), 17, str(content_csv))
+        self.assertEqual(content_csv[7], '"ABC1";"Article 01";"12,34 €";"cat 1";"0,000";')
+        self.assertEqual(content_csv[8], '"ABC2";"Article 02";"56,78 €";"cat 2";"0,0";')
+        self.assertEqual(content_csv[9], '"ABC3";"Article 03";"324,97 €";"cat 2,cat 3";"---";')
+        self.assertEqual(content_csv[10], '"ABC4";"Article 04";"1,31 €";"cat 3";"0";')
+
+    def test_article_print_multiprice_third(self):
+        default_categories()
+        default_articles(with_storage=True, vat_mode=0)
+        default_customize()
+        default_multiprice()
+        initial_thirds_fr()
+        print_model = self.get_print_model()
+
+        contact = Individual.objects.filter(third__id=5).first()
+        contact.user = LucteriosUser.objects.create(username=contact.create_username(), is_superuser=True)
+        contact.save()
+
+        self.factory.xfer = ArticlePrint()
+        self.factory.user = contact.user
+        self.calljson('/diacamma.invoice/articlePrint', {'MODEL': print_model.id, 'PRINT_MODE': 4}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'articlePrint')
+        csv_value = b64decode(str(self.response_json['print']['content'])).decode("utf-8")
+        content_csv = csv_value.split('\n')
+        self.assertEqual(len(content_csv), 17, str(content_csv))
+        self.assertEqual(content_csv[7], '"ABC1";"Article 01";"11,11 €";"cat 1";"0,000";')
+        self.assertEqual(content_csv[8], '"ABC2";"Article 02";"51,10 €";"cat 2";"0,0";')
+        self.assertEqual(content_csv[9], '"ABC3";"Article 03";"292,47 €";"cat 2,cat 3";"---";')
+        self.assertEqual(content_csv[10], '"ABC4";"Article 04";"1,18 €";"cat 3";"0";')

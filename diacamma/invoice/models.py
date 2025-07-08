@@ -276,6 +276,7 @@ class Article(LucteriosModel, CustomizeObject):
     booking_total = LucteriosVirtualField(verbose_name=_('booking'), compute_from='get_booking_total')
     available_total = LucteriosVirtualField(verbose_name=_('available'), compute_from='get_available_total')
     price_txt = LucteriosVirtualField(verbose_name=_('price'), compute_from='price', format_string=lambda: format_with_devise(5))
+    current_price_txt = LucteriosVirtualField(verbose_name=_('current price'), compute_from='get_current_price', format_string=lambda: format_with_devise(5))
 
     last_buy_price = LucteriosVirtualField(verbose_name=_('last buy price'), compute_from='get_last_buy_price', format_string=lambda: format_with_devise(5))
     mean_buy_price = LucteriosVirtualField(verbose_name=_('mean buy price'), compute_from='get_mean_buy_price', format_string=lambda: format_with_devise(5))
@@ -283,6 +284,14 @@ class Article(LucteriosModel, CustomizeObject):
     def __init__(self, *args, **kwargs):
         LucteriosModel.__init__(self, *args, **kwargs)
         self.show_storagearea = 0
+        self.current_third = None
+
+    def set_context(self, xfer):
+        self.show_storagearea = xfer.getparam('storagearea', 0)
+        if not xfer.request.user.is_anonymous:
+            contact = Individual.objects.filter(user=xfer.request.user).first()
+            if contact is not None:
+                self.current_third = Third.objects.filter(contact=contact).first()
 
     @staticmethod
     def have_category():
@@ -388,6 +397,14 @@ class Article(LucteriosModel, CustomizeObject):
         return fields
 
     @classmethod
+    def get_print_fields(cls):
+        fields = super(Article, cls).get_print_fields()
+        if MultiPrice.objects.count() > 0:
+            price_index = fields.index("price")
+            fields.insert(price_index + 1, "current_price_txt")
+        return fields
+
+    @classmethod
     def get_import_fields(cls):
         fields = ["reference", "designation", "price"]
         for multi_price in MultiPrice.objects.all():
@@ -477,9 +494,6 @@ class Article(LucteriosModel, CustomizeObject):
                         sum_amount += float(det_item.price) * (float(currentqty) - nb_qty)
                         break
         return sum_amount
-
-    def set_context(self, xfer):
-        self.show_storagearea = xfer.getparam('storagearea', 0)
 
     def get_stockage_values(self):
         if not hasattr(self, '_stock_list'):
@@ -667,6 +681,12 @@ class Article(LucteriosModel, CustomizeObject):
             if multiprice.check_filtercriteria(third_id):
                 mutli_prices.append(getattr(self, multiprice.get_fieldname()))
         return min(mutli_prices)
+
+    def get_current_price(self):
+        if self.current_third is not None:
+            return self.get_price_from_third(self.current_third.id)
+        else:
+            return self.price
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         unicity_query = Q(reference=self.reference)
