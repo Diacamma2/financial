@@ -46,7 +46,7 @@ class SupportingEditor(LucteriosEditor):
     def add_email_status(self, xfer):
         email_info = self.item.get_internal_value('email')
         if email_info != '':
-            lbl = XferCompLabelForm('XferCompLabelForm')
+            lbl = XferCompLabelForm('lbl_email_info')
             lbl.set_color('blue')
             lbl.set_italic()
             lbl.set_location(1, xfer.get_max_row() + 1, 4)
@@ -172,7 +172,7 @@ class PayoffEditor(LucteriosEditor):
         prefix = getattr(xfer, "payoff_prefix", "")
         if abs(float(self.item.amount)) < 0.0001:
             raise LucteriosException(IMPORTANT, _("payoff null!"))
-        info = self.item.supporting.check_date(self.item.date)
+        info = self.item.supporting.check_date_current_year(self.item.date)
         if len(info) > 0:
             raise LucteriosException(IMPORTANT, info[0])
         if int(self.item.mode) == Payoff.MODE_CASH:

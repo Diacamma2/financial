@@ -149,11 +149,18 @@ class Supporting(LucteriosModel):
                     info.append(str(err))
         return info
 
-    def check_date(self, date):
+    def check_date_current_year(self, date):
         info = []
         fiscal_year = FiscalYear.get_current()
         if (fiscal_year.begin.isoformat() > date) or (fiscal_year.end.isoformat() < date):
             info.append(str(_("date not include in current fiscal year")))
+        return info
+
+    def check_date_year_valid(self, date):
+        info = []
+        fiscal_year = FiscalYear.get_current(date)
+        if (fiscal_year is None) or (fiscal_year.status == FiscalYear.STATUS_FINISHED):
+            info.append(str(_("date not include in a valid fiscal year")))
         return info
 
     def get_third_account(self, third_mask, fiscalyear, third=None):
@@ -260,7 +267,10 @@ class Supporting(LucteriosModel):
         if fct_mailing_mod.will_mail_send():
             fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)],
                                        cclist=self.get_cclist(), bcclist=self.get_bcclist(), withcopy=True)
-            self.set_internal_value("email", datetime.today().isoformat())
+            self.email_sended()
+
+    def email_sended(self):
+        self.set_internal_value("email", datetime.today().isoformat())
 
     def get_document_filename(self):
         return remove_accent(self.get_payment_name(), True)

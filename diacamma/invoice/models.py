@@ -1267,7 +1267,7 @@ class Bill(Supporting):
                     break
         if self.bill_type not in (self.BILLTYPE_QUOTATION, self.BILLTYPE_CART, self.BILLTYPE_ORDER):
             try:
-                info.extend(self.check_date(self.date.isoformat()))
+                info.extend(self.check_date_current_year(self.date.isoformat()))
             except LucteriosException:
                 pass
         return info
