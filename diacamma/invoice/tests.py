@@ -112,7 +112,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'date', "2014-04-01")
-        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse un exercice valide"])
+        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse dans un exercice valide"])
         self.assert_json_equal('LABELFORM', 'warning', [])
 
         self.factory.xfer = BillAddModify()
@@ -228,7 +228,7 @@ class BillTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'num_txt', None)
         self.assert_json_equal('LABELFORM', 'status', 0)
         self.assert_json_equal('LABELFORM', 'date', "2014-04-01")
-        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse un exercice valide"])
+        self.assert_json_equal('LABELFORM', 'info', ["aucun tiers sélectionné", "pas de détail", "la date n'est pas incluse dans un exercice valide"])
         self.assert_json_equal('LABELFORM', 'warning', [])
 
         self.factory.xfer = BillAddModify()

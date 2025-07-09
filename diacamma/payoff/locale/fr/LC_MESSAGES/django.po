@@ -84,7 +84,7 @@ msgstr "la date n'est pas incluse dans l'exercice courant"
 
 #: models.py:163
 msgid "date not include in a valid fiscal year"
-msgstr "la date n'est pas incluse un exercice valide"
+msgstr "la date n'est pas incluse dans un exercice valide"
 
 #: models.py:256
 msgid "saved PDF report not found !"
