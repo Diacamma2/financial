@@ -157,6 +157,14 @@ class BillList(XferListEditor):
                                                                 Value(' '), 'third__contact__individual__firstname')).filter(self.filter)
         items = items.select_related('fiscal_year', 'categoryBill', 'third', 'third__contact', 'third__contact__individual', 'third__contact__legalentity')
         sort_bill = self.getparam('GRID_ORDER%bill', '').split(',')
+        if (sort_bill.count('num_txt') + sort_bill.count('-num_txt')) > 0:
+            if sort_bill.count('num_txt') > 0:
+                sort_bill.append("num")
+                sort_bill.remove("num_txt")
+            if sort_bill.count('-num_txt') > 0:
+                sort_bill.append("-num")
+                sort_bill.remove("-num_txt")
+            self.params['GRID_ORDER%bill'] = ",".join(sort_bill)
         sort_bill_third = self.getparam('GRID_ORDER%bill_third', '')
         if ((len(sort_bill) == 0) and (sort_bill_third != '')) or (sort_bill.count('third') + sort_bill.count('-third')) > 0:
             self.params['GRID_ORDER%bill'] = ""
@@ -175,10 +183,20 @@ class BillList(XferListEditor):
         XferListEditor.fillresponse(self)
         grid = self.get_components(self.field_id)
         grid.colspan = 3
+        grid.get_header('num_txt').orderable = 1
         if Params.getvalue("invoice-vat-mode") == 1:
             grid.headers[5].descript = _('total excl. taxes')
         elif Params.getvalue("invoice-vat-mode") == 2:
             grid.headers[5].descript = _('total incl. taxes')
+        sort_bill = self.getparam('GRID_ORDER%bill', '').split(',')
+        if (sort_bill.count('num') + sort_bill.count('-num')) > 0:
+            if sort_bill.count('num') > 0:
+                sort_bill.append("num_txt")
+                sort_bill.remove("num")
+            if sort_bill.count('-num') > 0:
+                sort_bill.append("-num_txt")
+                sort_bill.remove("-num")
+            self.params['GRID_ORDER%bill'] = ",".join(sort_bill)
 
 
 @MenuManage.describ('invoice.change_bill', FORMTYPE_NOMODAL, 'invoice', _('To find a bill following a set of criteria.'))

@@ -25,6 +25,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
 import logging
+from json import dumps
 
 from django.utils import timezone
 from django.conf import settings
@@ -217,6 +218,7 @@ An online payment request was received in error in <i>Diacamma</i>.<br/>
                 dictionary['content2'] = _("Thanks you.")
             else:
                 dictionary['content1'] = _("Payoff aborded.")
+                logging.getLogger('diacamma.payoff').warning("Aborded : %s" % dumps(self.params))
             return render(self.request, 'info.html', context=dictionary)
         else:
             return HttpResponse(self.reponse_content)

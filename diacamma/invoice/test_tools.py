@@ -135,6 +135,7 @@ def default_multiprice():
             mpA.get_fieldname(): float(art.price) * 0.9,
             mpB.get_fieldname(): float(art.price) * 0.8
         })
+    return mpA, mpB
 
 
 def default_area():
