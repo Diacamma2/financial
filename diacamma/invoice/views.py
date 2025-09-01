@@ -734,11 +734,13 @@ class BillBatch(XferContainerAcknowledge):
             detail_comp._initialize(self.request)
             detail_comp.item.id = 0
             billtype = get_value_if_choices(bill_comp.item.bill_type, bill_comp.item.get_field_by_name('bill_type'))
+            detail_comp.item.bill = Bill(third=None, bill_type=bill_comp.item.bill_type, date=bill_comp.item.date, comment=bill_comp.item.comment)
             if self.confirme(_('Do you want create this invoice "%(type)s" of %(amount)s for %(nbthird)s cutomers ?') % {'type': billtype,
                                                                                                                          'amount': get_amount_from_format_devise(detail_comp.item.total, 7),
                                                                                                                          'nbthird': len(thirds_list)}):
+                category_bill = CategoryBill.objects.filter(is_default=True).first()
                 for third in thirds_list:
-                    new_bill = Bill(third=third, bill_type=bill_comp.item.bill_type, date=bill_comp.item.date, comment=bill_comp.item.comment)
+                    new_bill = Bill(third=third, bill_type=bill_comp.item.bill_type, date=bill_comp.item.date, comment=bill_comp.item.comment, categoryBill=category_bill)
                     new_bill.save()
                     new_detail = detail_comp.item
                     new_detail.id = None

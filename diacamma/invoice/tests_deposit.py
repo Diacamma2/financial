@@ -568,7 +568,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
-        self.assert_json_equal('LABELFORM', 'vta_sum', 4.76)
+        self.assert_json_equal('LABELFORM', 'vta_desc', ['TVA 5.00 % = 4,76\xa0€', '{[b]}Total = 4,76\xa0€{[/b]}'])
         self.assertEqual(len(self.json_actions), 5)
         self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
@@ -594,7 +594,7 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'status', 1)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 40.0)
-        self.assert_json_equal('LABELFORM', 'vta_sum', 4.76)
+        self.assert_json_equal('LABELFORM', 'vta_desc', ['TVA 5.00 % = 4,76\xa0€', '{[b]}Total = 4,76\xa0€{[/b]}'])
         self.assertEqual(len(self.json_actions), 5)
         self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 

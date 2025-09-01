@@ -440,7 +440,7 @@ class BillEditor(SupportingEditor):
                 details.headers[2].descript = _('price incl. taxes')
                 details.headers[7].descript = _('total incl. taxes')
             xfer.get_components('total_excltax').description = _('total excl. taxes')
-            xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, [((_('VTA sum'), 'vta_sum'), (_('total incl. taxes'), 'total_incltax'))])
+            xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, [('vta_desc', 'total_incltax')])
         if self.item.status == Bill.STATUS_BUILDING:
             SupportingEditor.show_third(self, xfer, 'invoice.add_bill')
             xfer.get_components('date').colspan += 1
@@ -535,11 +535,12 @@ class DetailFilter(object):
 class DetailEditor(LucteriosEditor, DetailFilter):
 
     def before_save(self, xfer):
-        self.item.vta_rate = Vat.MODE_NOVAT
-        if (Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT) and (self.item.article is not None) and (self.item.article.vat is not None):
-            self.item.vta_rate = float(self.item.article.vat.rate / 100)
-        if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
-            self.item.vta_rate = -1 * self.item.vta_rate
+        self.item.vta_rate = 0.0
+        if (self.item.article is not None) and (self.item.article.vat is not None):
+            if self.item.article.get_vat_mode() == Vat.MODE_PRICENOVAT:
+                self.item.vta_rate = float(self.item.article.vat.rate / 100)
+            if self.item.article.get_vat_mode() == Vat.MODE_PRICEWITHVAT:
+                self.item.vta_rate = -1 * float(self.item.article.vat.rate / 100)
         return
 
     def get_price(self):
