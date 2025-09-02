@@ -88,6 +88,9 @@ class DefaultSystemAccounting(object):
     def new_charts_account(self, code):
         return '', -1
 
+    def get_einvoice_format(self):
+        return ''
+
     def _create_custom_for_profit(self, year, custom, val_profit):
         from lucterios.framework.xfercomponents import XferCompImage, XferCompLabelForm, XferCompSelect
         if val_profit > 0.0001:

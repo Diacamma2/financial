@@ -220,6 +220,9 @@ class FrenchSystemAcounting(DefaultSystemAccounting):
     def get_annexe_mask(self):
         return r'^8[0-9][0-9][0-9a-zA-Z]*$'
 
+    def get_einvoice_format(self):
+        return 'facturX'
+
     def new_charts_account(self, code):
         code = code.strip()
         if code == '':

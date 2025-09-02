@@ -29,6 +29,7 @@ from datetime import timedelta
 from logging import getLogger
 from json import dumps, loads
 from json.decoder import JSONDecodeError
+from facturx.facturx import generate_from_binary
 
 from django.db import models
 from django.db.models.query import QuerySet
@@ -49,7 +50,7 @@ from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirt
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.filetools import get_user_path, readimage_to_base64, remove_accent
-from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, convert_date, format_value
+from lucterios.framework.tools import same_day_months_after, get_date_formating, format_to_string, convert_date, format_value, toHtml
 from lucterios.framework.auditlog import auditlog
 from lucterios.CORE.models import Parameter, SavedCriteria, LucteriosGroup, Preference, LucteriosUser, PrintModel
 from lucterios.CORE.parameters import Params
@@ -1077,7 +1078,9 @@ class Bill(Supporting):
         return self.get_billtype().upper()
 
     def show_vat(self):
-        return Params.getvalue("invoice-vat-mode")
+        if not hasattr(self, "_show_vat"):
+            self._show_vat = Params.getvalue("invoice-vat-mode")
+        return self._show_vat
 
     def get_total_ex(self):
         if self.show_vat() == Vat.MODE_PRICEWITHVAT:
@@ -1214,6 +1217,18 @@ class Bill(Supporting):
                 vtas.append("%s = %s" % (_("VAT %s %%") % vta, get_amount_from_format_devise(val, 7)))
         vtas.append("{[b]}%s = %s{[/b]}" % (_('Total'), get_amount_from_format_devise(self.get_vta_sum(), 7)))
         return vtas
+
+    @property
+    def vat_list_info(self):
+        vats = {}
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                vat_txt = "%.2f" % abs(float(detail.vta_rate) * 100.0)
+                if vat_txt not in vats.keys():
+                    vats[vat_txt] = [float(0.0), float(0.0)]
+                vats[vat_txt][0] += detail.get_vta()
+                vats[vat_txt][1] += detail.get_total_excltax()
+        return [(vat_txt, vat_val[0], vat_val[1]) for vat_txt, vat_val in vats.items()]
 
     def payoff_is_revenu(self):
         return self.bill_type not in (self.BILLTYPE_QUOTATION, self.BILLTYPE_CART, self.BILLTYPE_ASSET)
@@ -1523,6 +1538,15 @@ class Bill(Supporting):
         if self.bill_type == self.BILLTYPE_CART:
             self.send_card_email()
             self.convert_to_quotation()
+
+    def add_pdf_document(self, title, user, metadata, pdf_content):
+        from diacamma.invoice.einvoice import facturX_generator
+        if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and (self.bill_type in (Bill.BILLTYPE_BILL,)):
+            if current_system_account().get_einvoice_format() == 'facturX':
+                einvoice_content = facturX_generator(self)
+                if einvoice_content:
+                    pdf_content = generate_from_binary(pdf_content, einvoice_content, flavor='factur-x')
+        return Supporting.add_pdf_document(self, title, user, metadata, pdf_content)
 
     def generate_pdfreport(self):
         if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and not (self.bill_type in (Bill.BILLTYPE_QUOTATION, self.BILLTYPE_CART, Bill.BILLTYPE_ORDER)):
@@ -2067,6 +2091,17 @@ class Detail(LucteriosModel):
         newdetail.editor.before_save(None)
         newdetail.save()
         return newdetail
+
+    def get_designation_txt(self):
+        from html2text import HTML2Text
+        h2txt = HTML2Text()
+        h2txt.ignore_links = False
+        h2txt.wrap_links = False
+        body_txt = h2txt.handle(toHtml(self.designation))
+        return ' '.join(body_txt.split('\n'))
+
+    def get_vta_rate_percent(self):
+        return "%.2f" % (abs(self.vta_rate) * 100)
 
     def get_quantity_txt(self):
         if self.article is not None:

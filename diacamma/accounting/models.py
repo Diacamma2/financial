@@ -151,6 +151,20 @@ class Third(LucteriosModel, CustomizeObject):
         other_sum = get_amount_sum(EntryLineAccount.objects.filter(current_filter & Q(account__type_of_account__gt=1)).aggregate(Sum('amount')))
         return passive_sum - active_sum + other_sum
 
+    @property
+    def legal_identification(self):
+        if hasattr(self.contact, 'identify_number'):
+            return self.contact.identify_number
+        else:
+            return ""
+
+    @property
+    def vat_identification(self):
+        if hasattr(self.contact, 'identify_number'):
+            return "FRXXXXXXXXXXXXXXXX"
+        else:
+            return ""
+
     def merge_objects(self, alias_objects=[]):
         LucteriosModel.merge_objects(self, alias_objects=alias_objects)
         last_code = []

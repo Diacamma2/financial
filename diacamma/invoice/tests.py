@@ -25,7 +25,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from shutil import rmtree
 from datetime import date, datetime
-from base64 import b64decode
+from base64 import b64decode, b64encode
 from os.path import isfile, join
 from unittest.mock import patch
 
@@ -55,6 +55,8 @@ from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddM
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch, \
     BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo, \
     BillToQuotation, BillCloneQuotation, BillTransitionArchive
+import logging
+from lucterios.documents.models import DocumentContainer
 
 
 class BillAbstractTest(InvoiceTest):
@@ -4308,3 +4310,30 @@ class BillVATTest(BillAbstractTest):
         self.assert_json_equal('LABELFORM', 'total_incltax', 133.27)
         self.assert_json_equal('LABELFORM', 'vta_desc', ['TVA 5.00 % = 1,14\xa0€', 'TVA 20.00 % = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
         self.assert_json_equal('LABELFORM', 'total_excltax', 128.02)
+
+    def test_einvoice(self):
+        from facturx.facturx import get_facturx_xml_from_pdf, logger
+        default_articles(vat_mode=2)
+        details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},  # code 701 - no VAT
+                   {'article': 2, 'designation': 'article 2',  # +5% vat => 1.08 - code 707
+                       'price': '3.25', 'quantity': 7},
+                   {'article': 0, 'designation': 'article 3',
+                       'price': '11.10', 'quantity': 2},  # code 709 - no VAT
+                   {'article': 5, 'designation': 'article 4', 'price': '6.33', 'quantity': 3.25}]  # +20% vat => 3.43  - code 701
+        self._create_bill(details, 1, '2015-04-01', 6)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition',
+                      {'CONFIRME': 'YES', 'bill': 1, 'withpayoff': False, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        logger.setLevel(logging.DEBUG)
+        hdl = logging.StreamHandler()
+        logger.addHandler(hdl)
+        doc = DocumentContainer.objects.filter(metadata='Bill-1').first()
+        self.assertTrue(doc is not None)
+        facturx_extract = get_facturx_xml_from_pdf(doc.content)
+        self.assertEqual(len(facturx_extract), 2)
+        self.assertEqual(facturx_extract[0], 'factur-x.xml')
+        logger.setLevel(logging.INFO)
+        logger.removeHandler(hdl)

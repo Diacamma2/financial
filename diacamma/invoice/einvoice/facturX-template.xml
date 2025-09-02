@@ -1,0 +1,143 @@
+<rsm:CrossIndustryInvoice
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:qdt="urn:un:unece:uncefact:data:standard:QualifiedDataType:100"
+    xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100"
+    xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
+    xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100">
+    
+    <rsm:ExchangedDocumentContext>
+        <ram:GuidelineSpecifiedDocumentContextParameter>
+            <ram:ID>urn:cen.eu:en16931#compliant#factur-x.eu:1p0:basic</ram:ID>
+        </ram:GuidelineSpecifiedDocumentContextParameter>
+    </rsm:ExchangedDocumentContext>
+
+    <rsm:ExchangedDocument>
+        <ram:ID>{{ bill.num_txt }}</ram:ID>
+        <ram:TypeCode>380</ram:TypeCode>
+        <ram:IssueDateTime>
+            <udt:DateTimeString format="102">{{ bill.date|date:"Ymd" }}</udt:DateTimeString>
+        </ram:IssueDateTime>
+    </rsm:ExchangedDocument>
+    
+    <rsm:SupplyChainTradeTransaction>
+        {% for detail in bill.detail_set.all %}
+        <ram:IncludedSupplyChainTradeLineItem>
+            <ram:AssociatedDocumentLineDocument>
+                <ram:LineID>{{ detail.id }}</ram:LineID>
+            </ram:AssociatedDocumentLineDocument>
+            <ram:SpecifiedTradeProduct>
+                <ram:GlobalID schemeID ="ID SCHEME">{{ detail.article.reference }}</ram:GlobalID>
+                <ram:Name>{{ detail.get_designation_txt }}</ram:Name>
+            </ram:SpecifiedTradeProduct>
+            <ram:SpecifiedLineTradeAgreement>
+                <ram:NetPriceProductTradePrice>
+                    <ram:ChargeAmount>{{ detail.price_txt }}</ram:ChargeAmount>
+                </ram:NetPriceProductTradePrice>
+            </ram:SpecifiedLineTradeAgreement>
+            <ram:SpecifiedLineTradeDelivery>
+                <ram:BilledQuantity unitCode ="C62" >{{ detail.quantity_txt }}</ram:BilledQuantity>
+            </ram:SpecifiedLineTradeDelivery>
+            <ram:SpecifiedLineTradeSettlement>
+                <ram:ApplicableTradeTax>
+                    <ram:TypeCode>VAT</ram:TypeCode>
+                    <ram:CategoryCode>S</ram:CategoryCode>
+                    <ram:RateApplicablePercent>{{ detail.get_vta_rate_percent }}</ram:RateApplicablePercent>
+                </ram:ApplicableTradeTax>
+                <ram:SpecifiedTradeAllowanceCharge>
+                    <ram:ChargeIndicator>
+                        <udt:Indicator>false</udt:Indicator>
+                    </ram:ChargeIndicator>
+                    <ram:ActualAmount>{{ detail.get_reduce }}</ram:ActualAmount>
+                </ram:SpecifiedTradeAllowanceCharge>
+                <ram:SpecifiedTradeSettlementLineMonetarySummation>
+                    <ram:LineTotalAmount>{{ detail.total_incltax }}</ram:LineTotalAmount>
+                </ram:SpecifiedTradeSettlementLineMonetarySummation>
+            </ram:SpecifiedLineTradeSettlement>
+        </ram:IncludedSupplyChainTradeLineItem>                    
+        {% endfor %}
+        
+        <ram:ApplicableHeaderTradeAgreement>
+            <ram:SellerTradeParty>
+                <ram:Name>{{ seller }}</ram:Name>
+                <ram:SpecifiedLegalOrganization>
+                    <ram:ID schemeID='0002'>{{ seller.legal_identification }}</ram:ID>
+                </ram:SpecifiedLegalOrganization>
+                <ram:PostalTradeAddress>
+                    <ram:PostcodeCode>{{ seller.contact.postal_code }}</ram:PostcodeCode>
+                    <ram:LineOne>{{ seller.contact.address_list.0 }}</ram:LineOne>
+                    <ram:LineTwo>{{ seller.contact.address_list.1 }}</ram:LineTwo>
+                    <ram:LineThree>{{ seller.contact.address_list.2 }}</ram:LineThree>
+                    <ram:CityName>{{ seller.contact.city }}</ram:CityName>
+                    <ram:CountryID>{{ seller.contact.country_id }}</ram:CountryID>
+                    <ram:CountrySubDivisionName>{{ seller.contact.country_id }}</ram:CountrySubDivisionName>
+                </ram:PostalTradeAddress>
+                <ram:URIUniversalCommunication>
+                    <ram:URIID schemeID='EM'>{{ seller.contact.email }}</ram:URIID>
+                </ram:URIUniversalCommunication>
+                <ram:SpecifiedTaxRegistration>
+                    <ram:ID schemeID='VA'>{{ seller.vat_identification }}</ram:ID>
+                </ram:SpecifiedTaxRegistration>
+            </ram:SellerTradeParty>
+            <ram:BuyerTradeParty>
+                <ram:Name>{{ bill.third }}</ram:Name>
+                <ram:SpecifiedLegalOrganization>
+                    <ram:ID schemeID='0002'>{{ bill.third.legal_identification }}</ram:ID>
+                </ram:SpecifiedLegalOrganization>
+                <ram:PostalTradeAddress>
+                    <ram:PostcodeCode>{{ bill.third.contact.postal_code }}</ram:PostcodeCode>
+                    <ram:LineOne>{{ bill.third.contact.address_list.0 }}</ram:LineOne>
+                    <ram:LineTwo>{{ bill.third.contact.address_list.1 }}</ram:LineTwo>
+                    <ram:LineThree>{{ bill.third.contact.address_list.2 }}</ram:LineThree>
+                    <ram:CityName>{{ bill.third.contact.city }}</ram:CityName>
+                    <ram:CountryID>{{ bill.third.contact.country_id }}</ram:CountryID>
+                    <ram:CountrySubDivisionName>{{ bill.third.contact.country_id }}</ram:CountrySubDivisionName>
+                </ram:PostalTradeAddress>
+                <ram:URIUniversalCommunication>
+                    <ram:URIID schemeID='EM'>{{ bill.third.contact.email }}</ram:URIID>
+                </ram:URIUniversalCommunication>
+                <ram:SpecifiedTaxRegistration>
+                    <ram:ID schemeID='VA'>{{ bill.third.vat_identification }}</ram:ID>
+                </ram:SpecifiedTaxRegistration>
+            </ram:BuyerTradeParty>
+            <ram:BuyerOrderReferencedDocument>
+                <ram:IssuerAssignedID>{{ bill.origin }}</ram:IssuerAssignedID>
+            </ram:BuyerOrderReferencedDocument>
+        </ram:ApplicableHeaderTradeAgreement>
+
+        <ram:ApplicableHeaderTradeDelivery>
+            <ram:ShipToTradeParty>
+                <ram:Name>{{ bill.third }}</ram:Name>
+                <ram:PostalTradeAddress>
+                    <ram:PostcodeCode>{{ bill.third.contact.postal_code }}</ram:PostcodeCode>
+                    <ram:LineOne>{{ bill.third.contact.address_list.0 }}</ram:LineOne>
+                    <ram:LineTwo>{{ bill.third.contact.address_list.1 }}</ram:LineTwo>
+                    <ram:LineThree>{{ bill.third.contact.address_list.2 }}</ram:LineThree>
+                    <ram:CityName>{{ bill.third.contact.city }}</ram:CityName>
+                    <ram:CountryID>{{ bill.third.contact.country_id }}</ram:CountryID>
+                    <ram:CountrySubDivisionName>{{ bill.third.contact.country_id }}</ram:CountrySubDivisionName>
+                </ram:PostalTradeAddress>
+            </ram:ShipToTradeParty>
+        </ram:ApplicableHeaderTradeDelivery>                    
+
+        <ram:ApplicableHeaderTradeSettlement>
+            <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+            {% for vat_item in bill.vat_list_info %}
+            <ram:ApplicableTradeTax>
+                <ram:CalculatedAmount>{{ vat_item.1 }}</ram:CalculatedAmount>
+                <ram:TypeCode>VAT</ram:TypeCode>
+                <ram:BasisAmount>{{ vat_item.2 }}</ram:BasisAmount>
+                <ram:CategoryCode>S</ram:CategoryCode>
+                <ram:RateApplicablePercent>{{ vat_item.0 }}</ram:RateApplicablePercent>
+            </ram:ApplicableTradeTax>
+            {% endfor %}
+            <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+                <ram:LineTotalAmount>{{ bill.get_total_excltax }}</ram:LineTotalAmount>
+                <ram:TaxBasisTotalAmount>{{ bill.get_total_excltax }}</ram:TaxBasisTotalAmount>
+                <ram:TaxTotalAmount currencyID='EUR'>{{ bill.get_tax_sum }}</ram:TaxTotalAmount>
+                <ram:GrandTotalAmount>{{ bill.get_total_incltax }}</ram:GrandTotalAmount>
+                <ram:TotalPrepaidAmount>{{ bill.total_payed }}</ram:TotalPrepaidAmount>
+                <ram:DuePayableAmount>{{ bill.total_rest_topay }}</ram:DuePayableAmount>
+            </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        </ram:ApplicableHeaderTradeSettlement>
+    </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>
