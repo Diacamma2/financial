@@ -102,13 +102,13 @@ value = """
     </rows>
 </table>
 <text height="15.0" width="100.0" top="220.0" left="00.0" padding="1.0" spacing="0.0" border_color="black" border_style="" border_width="0.2" text_align="right" line_height="9" font_family="sans-serif" font_weight="" font_size="9">
-{[i]}#title_vta_details{[/i]}{[br/]}
+{[i]}#title_vat_details{[/i]}{[br/]}
 {[i]}%(total VAT)s{[/i]}{[br/]}
 {[i]}%(total excl. taxes)s{[/i]}{[br/]}
 </text>
 <text height="15.0" width="15.0" top="220.0" left="100.0" padding="1.0" spacing="0.0" border_color="black" border_style="" border_width="0.2" text_align="right" line_height="9" font_family="sans-serif" font_weight="" font_size="9">
-#vta_details{[br/]}
-#vta_sum{[br/]}
+#vat_details{[br/]}
+#vat_sum{[br/]}
 #total_excltax{[br/]}
 </text>
 <text height="15.0" width="30.0" top="220.0" left="140.0" padding="1.0" spacing="0.0" border_color="black" border_style="" border_width="0.2" text_align="right" line_height="9" font_family="sans-serif" font_weight="" font_size="9">

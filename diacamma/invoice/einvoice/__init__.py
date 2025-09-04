@@ -5,6 +5,7 @@ from django.utils import translation
 from django.template import Template, Context
 
 from lucterios.contacts.models import LegalEntity
+from lucterios.CORE.parameters import Params
 from diacamma.invoice.models import Vat
 from diacamma.accounting.models import Third
 
@@ -13,7 +14,11 @@ def _generic_generator(template_name, bill):
     with open(join(dirname(__file__), template_name), "r", encoding="utf-8") as xml_hdl:
         template = Template(xml_hdl.read())
     bill._show_vat = Vat.MODE_PRICENOVAT
-    return template.render(Context({"bill": bill, "seller": Third(contact=LegalEntity.objects.get(id=1))}))
+    return template.render(Context({
+        "bill": bill,
+        "seller": Third(contact=LegalEntity.objects.get(id=1)),
+        "currency_code" : Params.getvalue("accounting-devise-iso"),
+    }))
 
 
 def facturX_generator(bill):

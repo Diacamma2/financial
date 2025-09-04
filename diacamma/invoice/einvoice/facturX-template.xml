@@ -41,7 +41,7 @@
                 <ram:ApplicableTradeTax>
                     <ram:TypeCode>VAT</ram:TypeCode>
                     <ram:CategoryCode>S</ram:CategoryCode>
-                    <ram:RateApplicablePercent>{{ detail.get_vta_rate_percent }}</ram:RateApplicablePercent>
+                    <ram:RateApplicablePercent>{{ detail.get_vat_rate_percent }}</ram:RateApplicablePercent>
                 </ram:ApplicableTradeTax>
                 <ram:SpecifiedTradeAllowanceCharge>
                     <ram:ChargeIndicator>
@@ -120,7 +120,7 @@
         </ram:ApplicableHeaderTradeDelivery>                    
 
         <ram:ApplicableHeaderTradeSettlement>
-            <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+            <ram:InvoiceCurrencyCode>{{ currency_code }}</ram:InvoiceCurrencyCode>
             {% for vat_item in bill.vat_list_info %}
             <ram:ApplicableTradeTax>
                 <ram:CalculatedAmount>{{ vat_item.1 }}</ram:CalculatedAmount>
@@ -133,7 +133,7 @@
             <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
                 <ram:LineTotalAmount>{{ bill.get_total_excltax }}</ram:LineTotalAmount>
                 <ram:TaxBasisTotalAmount>{{ bill.get_total_excltax }}</ram:TaxBasisTotalAmount>
-                <ram:TaxTotalAmount currencyID='EUR'>{{ bill.get_tax_sum }}</ram:TaxTotalAmount>
+                <ram:TaxTotalAmount currencyID='{{ currency_code }}'>{{ bill.get_tax_sum }}</ram:TaxTotalAmount>
                 <ram:GrandTotalAmount>{{ bill.get_total_incltax }}</ram:GrandTotalAmount>
                 <ram:TotalPrepaidAmount>{{ bill.total_payed }}</ram:TotalPrepaidAmount>
                 <ram:DuePayableAmount>{{ bill.total_rest_topay }}</ram:DuePayableAmount>

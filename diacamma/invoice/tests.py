@@ -4124,11 +4124,11 @@ class BillVATTest(BillAbstractTest):
         self.assert_json_equal('LABELFORM', 'info', [])
         self.assert_attrib_equal('total_incltax', 'description', "total TTC")
         self.assert_json_equal('LABELFORM', 'total_incltax', 128.02)
-        self.assert_json_equal('LABELFORM', 'vta_desc', ['TVA 5.00 % = 1,08\xa0€', 'TVA 20.00 % = 3,43\xa0€', '{[b]}Total = 4,51\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,08\xa0€', 'TVA 20.00 % = 3,43\xa0€', '{[b]}Total = 4,51\xa0€{[/b]}'])
         self.assert_json_equal('LABELFORM', 'total_excltax', 123.51)
         self.assert_json_equal('', '#total_incltax/formatnum', "C2EUR")
-        self.assert_json_equal('', '#vta_desc/formatnum', "")
-        self.assert_json_equal('', '#vta_desc/formatstr', "{[p align='right']}%s{[/p]}")
+        self.assert_json_equal('', '#vat_desc/formatnum', "")
+        self.assert_json_equal('', '#vat_desc/formatstr', "{[p align='right']}%s{[/p]}")
         self.assert_json_equal('', '#total_excltax/formatnum', "C2EUR")
 
         self.assertEqual(len(self.json_actions), 3)
@@ -4187,7 +4187,7 @@ class BillVATTest(BillAbstractTest):
         self.assert_json_equal('', 'detail/@3/reduce_txt', None)
         self.assert_json_equal('', 'detail/@3/total', 17.14)
         self.assert_json_equal('LABELFORM', 'total_incltax', 128.02)
-        self.assert_json_equal('LABELFORM', 'vta_desc', ['TVA 5.00 % = 1,08\xa0€', 'TVA 20.00 % = 3,43\xa0€', '{[b]}Total = 4,51\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,08\xa0€', 'TVA 20.00 % = 3,43\xa0€', '{[b]}Total = 4,51\xa0€{[/b]}'])
         self.assert_json_equal('LABELFORM', 'total_excltax', 123.51)
 
     def test_without_vat(self):
@@ -4240,7 +4240,7 @@ class BillVATTest(BillAbstractTest):
         self.assert_json_equal('LABELFORM', 'info', [])
         self.assert_attrib_equal('total_incltax', 'description', "total TTC")
         self.assert_json_equal('LABELFORM', 'total_incltax', 133.27)
-        self.assert_json_equal('LABELFORM', 'vta_desc', ['TVA 5.00 % = 1,14\xa0€', 'TVA 20.00 % = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,14\xa0€', 'TVA 20.00 % = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
         self.assert_json_equal('LABELFORM', 'total_excltax', 128.02)
 
         self.assertEqual(len(self.json_actions), 3)
@@ -4308,7 +4308,7 @@ class BillVATTest(BillAbstractTest):
         self.assert_json_equal('', 'detail/@3/reduce_txt', None)
         self.assert_json_equal('', 'detail/@3/total', 24.68)
         self.assert_json_equal('LABELFORM', 'total_incltax', 133.27)
-        self.assert_json_equal('LABELFORM', 'vta_desc', ['TVA 5.00 % = 1,14\xa0€', 'TVA 20.00 % = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,14\xa0€', 'TVA 20.00 % = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
         self.assert_json_equal('LABELFORM', 'total_excltax', 128.02)
 
     def test_einvoice(self):

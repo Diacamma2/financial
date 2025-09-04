@@ -981,12 +981,12 @@ class Bill(Supporting):
     total = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total_ex', format_string=lambda: format_with_devise(5))
     num_txt = LucteriosVirtualField(verbose_name=_('numeros'), compute_from='get_num_txt')
     total_excltax = LucteriosVirtualField(verbose_name=_('total'), compute_from='get_total_excltax', format_string=lambda: format_with_devise(5))
-    vta_sum = LucteriosVirtualField(verbose_name=_('VTA sum'), compute_from='get_vta_sum', format_string=lambda: format_with_devise(5))
+    vat_sum = LucteriosVirtualField(verbose_name=_('VTA sum'), compute_from='get_vat_sum', format_string=lambda: format_with_devise(5))
     total_incltax = LucteriosVirtualField(verbose_name=_('total incl. taxes'), compute_from='get_total_incltax', format_string=lambda: format_with_devise(5))
 
-    title_vta_details = LucteriosVirtualField(verbose_name='', compute_from='get_title_vta_details')
-    vta_details = LucteriosVirtualField(verbose_name='', compute_from='get_vta_details', format_string=lambda: format_with_devise(5))
-    vta_desc = LucteriosVirtualField(verbose_name=_('VTA'), compute_from='get_vta_desc', format_string=lambda: ";{[p align='right']}%s{[/p]}")
+    title_vat_details = LucteriosVirtualField(verbose_name='', compute_from='get_title_vat_details')
+    vat_details = LucteriosVirtualField(verbose_name='', compute_from='get_vat_details', format_string=lambda: format_with_devise(5))
+    vat_desc = LucteriosVirtualField(verbose_name=_('VTA'), compute_from='get_vat_desc', format_string=lambda: ";{[p align='right']}%s{[/p]}")
 
     origin = LucteriosVirtualField(verbose_name=_('origin'), compute_from='get_origin')
     description = LucteriosVirtualField(verbose_name='', compute_from='get_description')
@@ -1055,7 +1055,7 @@ class Bill(Supporting):
     def get_print_fields(cls):
         print_fields = [(_("bill type"), "type_bill"), "num_txt", "date", "third", "detail_set"]
         print_fields.extend(Supporting.get_print_fields())
-        print_fields.extend(["comment", "status", 'total_excltax', 'vta_sum', 'total_incltax', 'origin'])
+        print_fields.extend(["comment", "status", 'total_excltax', 'vat_sum', 'total_incltax', 'origin'])
         print_fields.append('OUR_DETAIL')
         print_fields.append('DEFAULT_DOCUMENTS')
         return print_fields
@@ -1138,15 +1138,15 @@ class Bill(Supporting):
                 val += detail.get_reduce_excltax()
         return val
 
-    def get_vta_sum(self):
+    def get_vat_sum(self):
         val = 0
         if self.id is not None:
             for detail in self.detail_set.all():
-                val += float(detail.get_vta())
+                val += float(detail.get_vat())
         return currency_round(val)
 
     def get_tax_sum(self):
-        return self.get_vta_sum()
+        return self.get_vat_sum()
 
     def get_total_incltax(self):
         val = 0
@@ -1189,34 +1189,34 @@ class Bill(Supporting):
         res += "{[/table]}\n"
         return res
 
-    def get_vta_detail_list(self):
-        vtas = {}
+    def get_vat_detail_list(self):
+        vats = {}
         if self.id is not None:
             for detail in self.detail_set.all():
                 if abs(detail.vta_rate) > 0.001:
-                    vta_txt = "%.2f" % abs(float(detail.vta_rate) * 100.0)
-                    if vta_txt not in vtas.keys():
-                        vtas[vta_txt] = float(0.0)
-                    vtas[vta_txt] += detail.get_vta()
-        return vtas
+                    vat_txt = "%.2f" % abs(float(detail.vta_rate) * 100.0)
+                    if vat_txt not in vats.keys():
+                        vats[vat_txt] = float(0.0)
+                    vats[vat_txt] += detail.get_vat()
+        return vats
 
-    def get_title_vta_details(self):
-        vtas = []
+    def get_title_vat_details(self):
+        vats = []
         if self.id is not None:
-            for vta in self.get_vta_detail_list().keys():
-                vtas.append(_("VAT %s %%") % vta)
-        return vtas
+            for vat in self.get_vat_detail_list().keys():
+                vats.append(_("VAT %s %%") % vat)
+        return vats
 
-    def get_vta_details(self):
-        return list(self.get_vta_detail_list().values())
+    def get_vat_details(self):
+        return list(self.get_vat_detail_list().values())
 
-    def get_vta_desc(self):
-        vtas = []
+    def get_vat_desc(self):
+        vats = []
         if self.id is not None:
-            for vta, val in self.get_vta_detail_list().items():
-                vtas.append("%s = %s" % (_("VAT %s %%") % vta, get_amount_from_format_devise(val, 7)))
-        vtas.append("{[b]}%s = %s{[/b]}" % (_('Total'), get_amount_from_format_devise(self.get_vta_sum(), 7)))
-        return vtas
+            for vat, val in self.get_vat_detail_list().items():
+                vats.append("%s = %s" % (_("VAT %s %%") % vat, get_amount_from_format_devise(val, 7)))
+        vats.append("{[b]}%s = %s{[/b]}" % (_('Total'), get_amount_from_format_devise(self.get_vat_sum(), 7)))
+        return vats
 
     @property
     def vat_list_info(self):
@@ -1226,7 +1226,7 @@ class Bill(Supporting):
                 vat_txt = "%.2f" % abs(float(detail.vta_rate) * 100.0)
                 if vat_txt not in vats.keys():
                     vats[vat_txt] = [float(0.0), float(0.0)]
-                vats[vat_txt][0] += detail.get_vta()
+                vats[vat_txt][0] += detail.get_vat()
                 vats[vat_txt][1] += detail.get_total_excltax()
         return [(vat_txt, vat_val[0], vat_val[1]) for vat_txt, vat_val in vats.items()]
 
@@ -1379,12 +1379,12 @@ class Bill(Supporting):
                     vataccount = detail.article.vat.account
                     if vataccount not in vat_val.keys():
                         vat_val[vataccount] = 0.0
-                    vat_val[vataccount] += detail.get_vta()
+                    vat_val[vataccount] += detail.get_vat()
         for vataccount, vatamount in vat_val.items():
             if vatamount > 0.001:
                 vat_account = ChartsAccount.get_account(vataccount, self.fiscal_year)
                 if vat_account is None:
-                    raise LucteriosException(IMPORTANT, _("vta-account is not defined!"))
+                    raise LucteriosException(IMPORTANT, _("vat account is not defined!"))
                 EntryLineAccount.objects.create(account=vat_account, amount=is_bill * vatamount, entry=self.entry)
 
     def generate_entry(self):
@@ -1999,7 +1999,7 @@ class Detail(LucteriosModel):
                                      default=1.0, validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string="N3")
     reduce = LucteriosDecimalField(verbose_name=_('reduce'), max_digits=10, decimal_places=3,
                                    default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(9999999.999)], format_string=lambda: format_with_devise(5))
-    vta_rate = LucteriosDecimalField(_('vta rate'), max_digits=6, decimal_places=4,
+    vta_rate = LucteriosDecimalField(_('vat rate'), max_digits=6, decimal_places=4,
                                      default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(1.0)], format_string=lambda: format_with_devise(5))
     storagearea = models.ForeignKey(StorageArea, verbose_name=_('storage area'), null=True, default=None, db_index=True, on_delete=models.PROTECT)
 
@@ -2013,7 +2013,7 @@ class Detail(LucteriosModel):
 
     total_excltax = LucteriosVirtualField(verbose_name=_('total'), compute_from="get_total_excltax", format_string=lambda: format_with_devise(5))
     total_incltax = LucteriosVirtualField(verbose_name=_('total incl. taxes'), compute_from="get_total_incltax", format_string=lambda: format_with_devise(5))
-    price_vta = LucteriosVirtualField(verbose_name=_('VTA sum'), compute_from="get_vta", format_string=lambda: format_with_devise(5))
+    price_vat = LucteriosVirtualField(verbose_name=_('VAT sum'), compute_from="get_vat", format_string=lambda: format_with_devise(5))
 
     article_fake = LucteriosVirtualField(verbose_name=_('article'), compute_from=lambda _this: "article fake")
 
@@ -2100,9 +2100,6 @@ class Detail(LucteriosModel):
         body_txt = h2txt.handle(toHtml(self.designation))
         return ' '.join(body_txt.split('\n'))
 
-    def get_vta_rate_percent(self):
-        return "%.2f" % (abs(self.vta_rate) * 100)
-
     def get_quantity_txt(self):
         if self.article is not None:
             return format_value(self.quantity, "N%d" % self.article.qtyDecimal)
@@ -2148,45 +2145,6 @@ class Detail(LucteriosModel):
         else:
             return None
 
-    def get_total_ex(self):
-        if self.bill.show_vat() == Vat.MODE_PRICEWITHVAT:
-            return self.get_total_incltax()
-        elif self.bill.show_vat() == Vat.MODE_PRICENOVAT:
-            return self.get_total_excltax()
-        else:
-            return self.get_total()
-
-    def get_total(self):
-        if self.id is None:
-            return 0
-        return currency_round(float(self.price) * float(self.quantity) - float(self.reduce))
-
-    def get_vta(self):
-        if self.id is None:
-            return 0
-        val = 0
-        if self.vta_rate > 0.001:
-            val = currency_round((float(self.price) * float(self.quantity) - float(self.reduce)) * float(self.vta_rate))
-        elif self.vta_rate < -0.001:
-            val = currency_round((float(self.price) * float(self.quantity) - float(self.reduce)) * -1 * float(self.vta_rate) / (1 - float(self.vta_rate)))
-        return val
-
-    def get_total_excltax(self):
-        if self.id is None:
-            return 0
-        if self.vta_rate < -0.001:
-            return currency_round(float(self.get_total()) - float(self.get_vta()))
-        else:
-            return self.get_total()
-
-    def get_total_incltax(self):
-        if self.id is None:
-            return 0
-        if self.vta_rate > 0.001:
-            return currency_round(float(self.get_total()) + float(self.get_vta()))
-        else:
-            return self.get_total()
-
     def get_reduce_vat(self):
         if self.id is None:
             return 0
@@ -2204,6 +2162,48 @@ class Detail(LucteriosModel):
             return currency_round(self.reduce) - self.get_reduce_vat()
         else:
             return currency_round(self.reduce)
+
+    def get_vat_rate_percent(self):
+        return "%.2f" % (abs(self.vta_rate) * 100)
+
+    def get_vat(self):
+        if self.id is None:
+            return 0
+        val = 0
+        if self.vta_rate > 0.001:
+            val = currency_round((float(self.price) * float(self.quantity) - float(self.reduce)) * float(self.vta_rate))
+        elif self.vta_rate < -0.001:
+            val = currency_round((float(self.price) * float(self.quantity) - float(self.reduce)) * -1 * float(self.vta_rate) / (1 - float(self.vta_rate)))
+        return val
+
+    def get_total_ex(self):
+        if self.bill.show_vat() == Vat.MODE_PRICEWITHVAT:
+            return self.get_total_incltax()
+        elif self.bill.show_vat() == Vat.MODE_PRICENOVAT:
+            return self.get_total_excltax()
+        else:
+            return self.get_total()
+
+    def get_total(self):
+        if self.id is None:
+            return 0
+        return currency_round(float(self.price) * float(self.quantity) - float(self.reduce))
+
+    def get_total_excltax(self):
+        if self.id is None:
+            return 0
+        if self.vta_rate < -0.001:
+            return currency_round(float(self.get_total()) - float(self.get_vat()))
+        else:
+            return self.get_total()
+
+    def get_total_incltax(self):
+        if self.id is None:
+            return 0
+        if self.vta_rate > 0.001:
+            return currency_round(float(self.get_total()) + float(self.get_vat()))
+        else:
+            return self.get_total()
 
     def define_autoreduce(self):
         if (self.bill.third_id is not None) and (self.bill.status in (Bill.STATUS_BUILDING, Bill.STATUS_VALID)) and (float(self.reduce) < 0.0001):

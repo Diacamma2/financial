@@ -153,15 +153,15 @@ class Third(LucteriosModel, CustomizeObject):
 
     @property
     def legal_identification(self):
-        if hasattr(self.contact, 'identify_number'):
-            return self.contact.identify_number
+        if hasattr(self.contact, 'legal_identification'):
+            return self.contact.legal_identification
         else:
             return ""
 
     @property
     def vat_identification(self):
-        if hasattr(self.contact, 'identify_number'):
-            return "FRXXXXXXXXXXXXXXXX"
+        if hasattr(self.contact, 'vat_identification'):
+            return self.contact.vat_identification
         else:
             return ""
 

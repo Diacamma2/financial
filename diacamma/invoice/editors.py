@@ -440,7 +440,7 @@ class BillEditor(SupportingEditor):
                 details.headers[2].descript = _('price incl. taxes')
                 details.headers[7].descript = _('total incl. taxes')
             xfer.get_components('total_excltax').description = _('total excl. taxes')
-            xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, [('vta_desc', 'total_incltax')])
+            xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, [('vat_desc', 'total_incltax')])
         if self.item.status == Bill.STATUS_BUILDING:
             SupportingEditor.show_third(self, xfer, 'invoice.add_bill')
             xfer.get_components('date').colspan += 1
