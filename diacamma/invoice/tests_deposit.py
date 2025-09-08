@@ -558,6 +558,7 @@ class MethodTest(InvoiceTest, PaymentTest):
             server.stop()
 
     def test_payment_bill_with_tax(self):
+        Parameter.change_value('accounting-VAT-arrangements', '1')
         Parameter.change_value('invoice-vat-mode', '2')
         Params.clear()
         details = [{'article': 2, 'designation': 'Article 02', 'price': '100.00', 'quantity': 1}]
@@ -567,8 +568,10 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'status', 1)
-        self.assert_json_equal('LABELFORM', 'total_rest_topay', 100.0)
-        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 4,76\xa0€', '{[b]}Total = 4,76\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'total_excltax', 100.0)
+        self.assert_json_equal('LABELFORM', 'total_incltax', 105.0)
+        self.assert_json_equal('LABELFORM', 'total_rest_topay', 105.0)
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5,00% = 5,00\xa0€', '{[b]}Total = 5,00\xa0€{[/b]}'])
         self.assertEqual(len(self.json_actions), 5)
         self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 
@@ -576,12 +579,13 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.calljson('/diacamma.payoff/payableShow', {'bill': 6, 'item_name': 'bill'}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'payableShow')
         self.assert_json_equal('LABELFORM', 'num_txt', 'A-2')
-        self.check_payment(6, 'facture A-2 - 2 avril 2015', '95.24', '4.76')
+        self.check_payment(6, 'facture A-2 - 2 avril 2015', '100.0', '5.0')
 
     def test_payment_billpartial_with_tax(self):
+        Parameter.change_value('accounting-VAT-arrangements', '1')
         Parameter.change_value('invoice-vat-mode', '2')
         Params.clear()
-        details = [{'article': 2, 'designation': 'Article 02', 'price': '100.00', 'quantity': 1}]
+        details = [{'article': 2, 'designation': 'Article 02', 'price': '95.24', 'quantity': 1}]
         self._create_bill(details, 1, '2015-04-02', 4, True)
         self.factory.xfer = PayoffAddModify()
         self.calljson('/diacamma.payoff/payoffAddModify', {'SAVE': 'YES', 'supporting': 6, 'amount': '60.0',
@@ -593,8 +597,10 @@ class MethodTest(InvoiceTest, PaymentTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'billShow')
         self.assert_json_equal('LABELFORM', 'title', "facture")
         self.assert_json_equal('LABELFORM', 'status', 1)
+        self.assert_json_equal('LABELFORM', 'total_excltax', 95.24)
+        self.assert_json_equal('LABELFORM', 'total_incltax', 100.0)
         self.assert_json_equal('LABELFORM', 'total_rest_topay', 40.0)
-        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 4,76\xa0€', '{[b]}Total = 4,76\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5,00% = 4,76\xa0€', '{[b]}Total = 4,76\xa0€{[/b]}'])
         self.assertEqual(len(self.json_actions), 5)
         self.assert_action_equal('GET', self.json_actions[0], ('Règlements', 'mdi:mdi-account-cash-outline', 'diacamma.payoff', 'payableShow', 0, 1, 1))
 

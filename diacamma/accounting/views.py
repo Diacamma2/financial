@@ -46,7 +46,8 @@ from lucterios.CORE.parameters import Params
 from lucterios.contacts.tools import ContactSelection
 from lucterios.contacts.models import AbstractContact
 
-from diacamma.accounting.models import Third, AccountThird, FiscalYear, EntryLineAccount, ModelLineEntry, ChartsAccount, ModelEntry
+from diacamma.accounting.models import Third, AccountThird, FiscalYear, EntryLineAccount, ModelLineEntry, ChartsAccount, ModelEntry,\
+    is_with_VAT
 from diacamma.accounting.views_admin import Configuration, add_year_info
 from diacamma.accounting.tools import correct_accounting_code, current_system_account
 from django.db.models.aggregates import Count
@@ -399,7 +400,7 @@ def comptenofound_accounting(known_codes, accompt_returned, cost_returned):
     model_badcost = ModelEntry.objects.filter(costaccounting__isnull=False, costaccounting__year__isnull=False, costaccounting__year__is_actif=False)
     if (len(model_badcost) > 0):
         cost_returned.append("- {[i]}{[u]}%s{[/u]}: %s{[/i]}" % (_('Model of entry'), ",".join(set([str(model) for model in model_badcost]))))
-    if Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE:
+    if is_with_VAT():
         vat_no_found = []
         if not account_exist(known_codes, current_system_account().get_vat_collected_mask()):
             vat_no_found.append(str(_('collected VAT')))

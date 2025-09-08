@@ -41,7 +41,7 @@
                 <ram:ApplicableTradeTax>
                     <ram:TypeCode>VAT</ram:TypeCode>
                     <ram:CategoryCode>S</ram:CategoryCode>
-                    <ram:RateApplicablePercent>{{ detail.get_vat_rate_percent }}</ram:RateApplicablePercent>
+                    <ram:RateApplicablePercent>{{ detail.get_vat_rate_value }}</ram:RateApplicablePercent>
                 </ram:ApplicableTradeTax>
                 <ram:SpecifiedTradeAllowanceCharge>
                     <ram:ChargeIndicator>

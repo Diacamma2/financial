@@ -1938,6 +1938,14 @@ class Budget(LucteriosModel):
         ordering = ['code']
 
 
+def is_with_VAT():
+    return Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE
+
+
+def add_vat_info():
+    return _(' (duty free)') if is_with_VAT() else ''
+
+
 def check_accountingcost():
     for entry in EntryAccount.objects.filter(costaccounting_id__gt=0, year__status__in=(FiscalYear.STATUS_BUILDING, FiscalYear.STATUS_RUNNING)):
         try:
@@ -2055,7 +2063,7 @@ def accounting_checkparam():
                                meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_third_mask()) & django.db.models.Q(year__is_actif=True)", "code", False)')
     Parameter.check_and_create(name='accounting-datecurrent', typeparam=Parameter.TYPE_BOOL, title=_("accounting-datecurrent"), args="{}", value='True')
     Parameter.check_and_create(name='accounting-VAT-arrangements', typeparam=Parameter.TYPE_SELECT, title=_("accounting-VAT-arrangements"),
-                               args="{'Enum':2}", value='-1', param_titles=(_("accounting-VAT-arrangements.0"), _("accounting-VAT-arrangements.1")))
+                               args="{'Enum':2, 'Min':-1}", value='-1', param_titles=(_("accounting-VAT-arrangements.0"), _("accounting-VAT-arrangements.1")))
 
     LucteriosGroup.redefine_generic(_("# accounting (administrator)"), FiscalYear.get_permission(True, True, True),
                                     ChartsAccount.get_permission(True, True, True), Budget.get_permission(True, True, True),

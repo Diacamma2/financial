@@ -60,6 +60,7 @@ class ConfigTest(LucteriosTest):
         rmtree(get_user_dir(), True)
 
     def test_vat(self):
+        Params.setvalue('accounting-VAT-arrangements', 1)
         self.factory.xfer = InvoiceConfFinancial()
         self.calljson('/diacamma.invoice/invoiceConfFinancial', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'invoiceConfFinancial')

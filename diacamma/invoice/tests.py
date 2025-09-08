@@ -70,6 +70,8 @@ class BillAbstractTest(InvoiceTest):
         clean_cache()
         rmtree(get_user_dir(), True)
         LucteriosUser.objects.create(username='creator', first_name='Léonard', last_name='de Vinci', email='leonardo@davinci.org')
+        Params.setvalue('accounting-VAT-arrangements', 0)
+        Params.setvalue('invoice-vat-mode', 1)
 
     def _add_create_log(self, bill_id):
         new_bill = Bill.objects.get(id=bill_id)
@@ -187,7 +189,7 @@ class BillMainTest(BillAbstractTest):
         self.assert_count_equal('detail', 1)
         self.assert_json_equal('', 'detail/@0/article', 'ABC1')
         self.assert_json_equal('', 'detail/@0/designation', 'My article')
-        self.assert_json_equal('', 'detail/@0/price_txt', 43.72)
+        self.assert_json_equal('', 'detail/@0/price', 43.72)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '2,000')
         self.assert_json_equal('', 'detail/@0/reduce_txt', None)
@@ -2053,7 +2055,7 @@ En cliquant ici, vous acceptez ce devis, merci de nous envoyer votre règlement 
 
         search_field_list = Bill.get_search_fields()
         # bill + contact +  custom contact + custom third + third + detail + article + art custom + category + provider + storage detail + payoff
-        self.assertEqual(6 + 3 + 8 + 1 + 2 + 2 + 4 + 8 + 2 + 3 + 2 + 1 + 6,
+        self.assertEqual(6 + 3 + 8 + 1 + 2 + 2 + 5 + 8 + 2 + 3 + 2 + 1 + 6,
                          len(search_field_list), search_field_list)
 
     def test_valid_multiple(self):
@@ -2608,10 +2610,10 @@ class BillAutoReduceTest(BillAbstractTest):
         self.assert_count_equal('detail', 1)
         self.assert_json_equal('', 'detail/@0/article', 'ABC5')
         self.assert_json_equal('', 'detail/@0/designation', 'article 5')
-        self.assert_json_equal('', 'detail/@0/price_txt', 100.00)
+        self.assert_json_equal('', 'detail/@0/price', 100.00)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '1,00')
-        self.assert_json_equal('', 'detail/@0/reduce_txt', '30,00 €(30.00%)')
+        self.assert_json_equal('', 'detail/@0/reduce_txt', '30,00 €(30,00%)')
         self.assert_json_equal('', 'detail/@0/total', 70.00)
 
     def test_step2(self):
@@ -2660,10 +2662,10 @@ class BillAutoReduceTest(BillAbstractTest):
         self.assert_count_equal('detail', 1)
         self.assert_json_equal('', 'detail/@0/article', 'ABC5')
         self.assert_json_equal('', 'detail/@0/designation', 'article 5')
-        self.assert_json_equal('', 'detail/@0/price_txt', 50.00)
+        self.assert_json_equal('', 'detail/@0/price', 50.00)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '1,00')
-        self.assert_json_equal('', 'detail/@0/reduce_txt', '5,00 €(10.00%)')
+        self.assert_json_equal('', 'detail/@0/reduce_txt', '5,00 €(10,00%)')
         self.assert_json_equal('', 'detail/@0/total', 45.00)
 
         self.factory.xfer = SupportingThirdValid()
@@ -2722,7 +2724,7 @@ class BillAutoReduceTest(BillAbstractTest):
         self.assert_count_equal('detail', 1)
         self.assert_json_equal('', 'detail/@0/article', 'ABC5')
         self.assert_json_equal('', 'detail/@0/designation', 'article 5')
-        self.assert_json_equal('', 'detail/@0/price_txt', 15.00)
+        self.assert_json_equal('', 'detail/@0/price', 15.00)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '7,00')
         self.assert_json_equal('', 'detail/@0/reduce_txt', '45,00 €')
@@ -4070,7 +4072,7 @@ class BillMultipriceTest(BillAbstractTest):
         self.factory.xfer = DetailAddModify()
         self.calljson('/diacamma.invoice/detailAddModify', {'bill': 1, 'article': art_kit.id, 'CHANGE_ART': 'YES'}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'detailAddModify')
-        self.assert_count_equal('', 9)
+        self.assert_count_equal('', 8)
         self.assert_json_equal('SELECT', 'article', art_kit.id)
         self.assert_json_equal('FLOAT', 'price', 54.99)
 
@@ -4079,53 +4081,56 @@ class BillVATTest(BillAbstractTest):
 
     def test_with_vat(self):
         default_articles(vat_mode=2)
+        Params.setvalue('accounting-VAT-arrangements', 1)
+        Params.setvalue('invoice-vat-mode', 2)
+
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},  # code 701 - no VAT
                    {'article': 2, 'designation': 'article 2',  # +5% vat => 1.08 - code 707
-                       'price': '3.25', 'quantity': 7},
+                       'price': '3.10', 'quantity': 7},
                    {'article': 0, 'designation': 'article 3',
                        'price': '11.10', 'quantity': 2},  # code 709 - no VAT
-                   {'article': 5, 'designation': 'article 4', 'price': '6.33', 'quantity': 3.25}]  # +20% vat => 3.43  - code 701
+                   {'article': 5, 'designation': 'article 4', 'price': '5.18', 'quantity': 3.25}]  # +20% vat => 3.43  - code 701
         self._create_bill(details, 1, '2015-04-01', 6)
 
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
-        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price_txt": "prix TTC", "unit": "unité",
-                                          "quantity_txt": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total TTC"}, 4)  # nb=8
+        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price_incltax": "prix (TTC)", "vat_rate_txt": "taux TVA", "unit": "unité",
+                                          "quantity_txt": "quantité", "reduce_txt_incltax": "réduction (TTC)", "total_incltax": "total (TTC)"}, 4)  # nb=8
         self.assert_json_equal('', 'detail/@0/article', 'ABC1')
         self.assert_json_equal('', 'detail/@0/designation', 'article 1')
-        self.assert_json_equal('', 'detail/@0/price_txt', 22.50)
+        self.assert_json_equal('', 'detail/@0/price_incltax', 22.50)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '3,000')
-        self.assert_json_equal('', 'detail/@0/reduce_txt', "5,00 €(7.41%)")
-        self.assert_json_equal('', 'detail/@0/total', 62.5)
+        self.assert_json_equal('', 'detail/@0/reduce_txt_incltax', "5,00 €(7,41%)")
+        self.assert_json_equal('', 'detail/@0/total_incltax', 62.5)
         self.assert_json_equal('', 'detail/@1/article', 'ABC2')
         self.assert_json_equal('', 'detail/@1/designation', 'article 2')
-        self.assert_json_equal('', 'detail/@1/price_txt', 3.25)
+        self.assert_json_equal('', 'detail/@1/price_incltax', 3.25)
         self.assert_json_equal('', 'detail/@1/unit', '')
         self.assert_json_equal('', 'detail/@1/quantity_txt', '7,0')
-        self.assert_json_equal('', 'detail/@1/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@1/total', 22.75)
+        self.assert_json_equal('', 'detail/@1/reduce_txt_incltax', None)
+        self.assert_json_equal('', 'detail/@1/total_incltax', 22.79)
         self.assert_json_equal('', 'detail/@2/article', None)
         self.assert_json_equal('', 'detail/@2/designation', 'article 3')
-        self.assert_json_equal('', 'detail/@2/price_txt', 11.10)
+        self.assert_json_equal('', 'detail/@2/price_incltax', 11.10)
         self.assert_json_equal('', 'detail/@2/unit', '')
         self.assert_json_equal('', 'detail/@2/quantity_txt', '2,000')
-        self.assert_json_equal('', 'detail/@2/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@2/total', 22.2)
+        self.assert_json_equal('', 'detail/@2/reduce_txt_incltax', None)
+        self.assert_json_equal('', 'detail/@2/total_incltax', 22.2)
         self.assert_json_equal('', 'detail/@3/article', 'ABC5')
         self.assert_json_equal('', 'detail/@3/designation', 'article 4')
-        self.assert_json_equal('', 'detail/@3/price_txt', 6.33)
+        self.assert_json_equal('', 'detail/@3/price_incltax', 6.22)
         self.assert_json_equal('', 'detail/@3/unit', '')
         self.assert_json_equal('', 'detail/@3/quantity_txt', '3,25')
-        self.assert_json_equal('', 'detail/@3/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@3/total', 20.57)
+        self.assert_json_equal('', 'detail/@3/reduce_txt_incltax', None)
+        self.assert_json_equal('', 'detail/@3/total_incltax', 20.21)
 
-        self.assert_attrib_equal('total_excltax', 'description', "total HT")
+        self.assert_attrib_equal('total_excltax', 'description', "total (HT)")
         self.assert_json_equal('LABELFORM', 'info', [])
-        self.assert_attrib_equal('total_incltax', 'description', "total TTC")
-        self.assert_json_equal('LABELFORM', 'total_incltax', 128.02)
-        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,08\xa0€', 'TVA 20.00 % = 3,43\xa0€', '{[b]}Total = 4,51\xa0€{[/b]}'])
-        self.assert_json_equal('LABELFORM', 'total_excltax', 123.51)
+        self.assert_attrib_equal('total_incltax', 'description', "total (TTC)")
+        self.assert_json_equal('LABELFORM', 'total_incltax', 127.70)
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5,00% = 1,08\xa0€', 'TVA 20,00% = 3,37\xa0€', '{[b]}Total = 4,45\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'total_excltax', 123.25)
         self.assert_json_equal('', '#total_incltax/formatnum', "C2EUR")
         self.assert_json_equal('', '#vat_desc/formatnum', "")
         self.assert_json_equal('', '#vat_desc/formatstr', "{[p align='right']}%s{[/p]}")
@@ -4145,53 +4150,57 @@ class BillVATTest(BillAbstractTest):
         self.assert_count_equal('entryline', 6)
         self.assert_json_equal('', 'entryline/@0/entry_account', "[411 Dalton Jack]")
         self.assert_json_equal('', 'entryline/@1/entry_account', "[4455] 4455")
-        self.assert_json_equal('', 'entryline/@1/credit', 4.51)
-        self.assert_json_equal('LABELFORM', 'result', [123.51, 0.00, 123.51, 0.00, 0.00])
+        self.assert_json_equal('', 'entryline/@1/credit', 4.46)
+        self.assert_json_equal('LABELFORM', 'result', [123.24, 0.00, 123.24, 0.00, 0.00])
 
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
-        self.assert_grid_equal('bill', {"bill_type": "type de facture", "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total TTC", "status": "statut"}, 1)  # nb=7
+        self.assert_grid_equal('bill', {"bill_type": "type de facture", "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total_incltax": "total (TTC)", "status": "statut"}, 1)  # nb=7
 
+        Params.setvalue('accounting-VAT-arrangements', 1)
         Params.setvalue('invoice-vat-mode', 1)
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
-        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price_txt": "prix HT", "unit": "unité",
-                                          "quantity_txt": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total HT"}, 4)  # nb=8
+        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price": "prix (HT)", "unit": "unité", "vat_rate_txt": "taux TVA", "unit": "unité",
+                                          "quantity_txt": "quantité", "reduce_txt": "réduction (HT)", "total": "total (HT)"}, 4)  # nb=8
         self.assert_json_equal('', 'detail/@0/article', 'ABC1')
         self.assert_json_equal('', 'detail/@0/designation', 'article 1')
-        self.assert_json_equal('', 'detail/@0/price_txt', 22.50)
+        self.assert_json_equal('', 'detail/@0/price', 22.50)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '3,000')
-        self.assert_json_equal('', 'detail/@0/reduce_txt', "5,00 €(7.41%)")
+        self.assert_json_equal('', 'detail/@0/reduce_txt', "5,00 €(7,41%)")
         self.assert_json_equal('', 'detail/@0/total', 62.5)
         self.assert_json_equal('', 'detail/@1/article', 'ABC2')
         self.assert_json_equal('', 'detail/@1/designation', 'article 2')
-        self.assert_json_equal('', 'detail/@1/price_txt', 3.10)  # +5%
+        self.assert_json_equal('', 'detail/@1/price', 3.10)  # +5%
         self.assert_json_equal('', 'detail/@1/unit', '')
         self.assert_json_equal('', 'detail/@1/quantity_txt', '7,0')
         self.assert_json_equal('', 'detail/@1/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@1/total', 21.67)
+        self.assert_json_equal('', 'detail/@1/total', 21.7)
         self.assert_json_equal('', 'detail/@2/article', None)
         self.assert_json_equal('', 'detail/@2/designation', 'article 3')
-        self.assert_json_equal('', 'detail/@2/price_txt', 11.10)
+        self.assert_json_equal('', 'detail/@2/price', 11.10)
         self.assert_json_equal('', 'detail/@2/unit', '')
         self.assert_json_equal('', 'detail/@2/quantity_txt', '2,000')
         self.assert_json_equal('', 'detail/@2/reduce_txt', None)
         self.assert_json_equal('', 'detail/@2/total', 22.2)
         self.assert_json_equal('', 'detail/@3/article', 'ABC5')
         self.assert_json_equal('', 'detail/@3/designation', 'article 4')
-        self.assert_json_equal('', 'detail/@3/price_txt', 5.28)  # +20%
+        self.assert_json_equal('', 'detail/@3/price', 5.18)  # +20%
         self.assert_json_equal('', 'detail/@3/unit', '')
         self.assert_json_equal('', 'detail/@3/quantity_txt', '3,25')
         self.assert_json_equal('', 'detail/@3/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@3/total', 17.14)
-        self.assert_json_equal('LABELFORM', 'total_incltax', 128.02)
-        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,08\xa0€', 'TVA 20.00 % = 3,43\xa0€', '{[b]}Total = 4,51\xa0€{[/b]}'])
-        self.assert_json_equal('LABELFORM', 'total_excltax', 123.51)
+        self.assert_json_equal('', 'detail/@3/total', 16.84)
+        self.assert_json_equal('LABELFORM', 'total_incltax', 127.70)
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5,00% = 1,08\xa0€', 'TVA 20,00% = 3,37\xa0€', '{[b]}Total = 4,45\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'total_excltax', 123.25)
 
     def test_without_vat(self):
         default_articles(vat_mode=1)
+        Params.setvalue('accounting-VAT-arrangements', 1)
+        Params.setvalue('invoice-vat-mode', 1)
+
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},
                    {'article': 2, 'designation': 'article 2',  # +5% vat => 1.14
                        'price': '3.25', 'quantity': 7},
@@ -4202,45 +4211,45 @@ class BillVATTest(BillAbstractTest):
 
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
-        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price_txt": "prix HT", "unit": "unité",
-                                          "quantity_txt": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total HT"}, 4)  # nb=8
-        self.assert_json_equal('', '#detail/headers/@2/@0', "price_txt")
+        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price": "prix (HT)", "unit": "unité", "vat_rate_txt": "taux TVA",
+                                          "quantity_txt": "quantité", "reduce_txt": "réduction (HT)", "total": "total (HT)"}, 4)  # nb=8
+        self.assert_json_equal('', '#detail/headers/@2/@0', "price")
         self.assert_json_equal('', '#detail/headers/@2/@2', "C2EUR")
         self.assert_json_equal('', '#detail/headers/@7/@0', "total")
         self.assert_json_equal('', '#detail/headers/@7/@2', "C2EUR")
         self.assert_json_equal('', 'detail/@0/article', 'ABC1')
         self.assert_json_equal('', 'detail/@0/designation', 'article 1')
-        self.assert_json_equal('', 'detail/@0/price_txt', 22.50)
+        self.assert_json_equal('', 'detail/@0/price', 22.50)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '3,000')
-        self.assert_json_equal('', 'detail/@0/reduce_txt', "5,00 €(7.41%)")
+        self.assert_json_equal('', 'detail/@0/reduce_txt', "5,00 €(7,41%)")
         self.assert_json_equal('', 'detail/@0/total', 62.5)
         self.assert_json_equal('', 'detail/@1/article', 'ABC2')
         self.assert_json_equal('', 'detail/@1/designation', 'article 2')
-        self.assert_json_equal('', 'detail/@1/price_txt', 3.25)
+        self.assert_json_equal('', 'detail/@1/price', 3.25)
         self.assert_json_equal('', 'detail/@1/unit', '')
         self.assert_json_equal('', 'detail/@1/quantity_txt', '7,0')
         self.assert_json_equal('', 'detail/@1/reduce_txt', None)
         self.assert_json_equal('', 'detail/@1/total', 22.75)
         self.assert_json_equal('', 'detail/@2/article', None)
         self.assert_json_equal('', 'detail/@2/designation', 'article 3')
-        self.assert_json_equal('', 'detail/@2/price_txt', 11.10)
+        self.assert_json_equal('', 'detail/@2/price', 11.10)
         self.assert_json_equal('', 'detail/@2/unit', '')
         self.assert_json_equal('', 'detail/@2/quantity_txt', '2,000')
         self.assert_json_equal('', 'detail/@2/reduce_txt', None)
         self.assert_json_equal('', 'detail/@2/total', 22.2)
         self.assert_json_equal('', 'detail/@3/article', 'ABC5')
         self.assert_json_equal('', 'detail/@3/designation', 'article 4')
-        self.assert_json_equal('', 'detail/@3/price_txt', 6.33)
+        self.assert_json_equal('', 'detail/@3/price', 6.33)
         self.assert_json_equal('', 'detail/@3/unit', '')
         self.assert_json_equal('', 'detail/@3/quantity_txt', '3,25')
         self.assert_json_equal('', 'detail/@3/reduce_txt', None)
         self.assert_json_equal('', 'detail/@3/total', 20.57)
-        self.assert_attrib_equal('total_excltax', 'description', "total HT")
+        self.assert_attrib_equal('total_excltax', 'description', "total (HT)")
         self.assert_json_equal('LABELFORM', 'info', [])
-        self.assert_attrib_equal('total_incltax', 'description', "total TTC")
+        self.assert_attrib_equal('total_incltax', 'description', "total (TTC)")
         self.assert_json_equal('LABELFORM', 'total_incltax', 133.27)
-        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,14\xa0€', 'TVA 20.00 % = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5,00% = 1,14\xa0€', 'TVA 20,00% = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
         self.assert_json_equal('LABELFORM', 'total_excltax', 128.02)
 
         self.assertEqual(len(self.json_actions), 3)
@@ -4272,43 +4281,44 @@ class BillVATTest(BillAbstractTest):
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
-        self.assert_grid_equal('bill', {"bill_type": "type de facture", "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total HT", "status": "statut"}, 1)  # nb=7
+        self.assert_grid_equal('bill', {"bill_type": "type de facture", "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total (HT)", "status": "statut"}, 1)  # nb=7
 
+        Params.setvalue('accounting-VAT-arrangements', 1)
         Params.setvalue('invoice-vat-mode', 2)
         self.factory.xfer = BillShow()
         self.calljson('/diacamma.invoice/billShow', {'bill': 1}, False)
-        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price_txt": "prix TTC", "unit": "unité",
-                                          "quantity_txt": "quantité", "storagearea": "lieu de stockage", "reduce_txt": "réduction", "total": "total TTC"}, 4)  # nb=8
+        self.assert_grid_equal('detail', {"article": "article", "designation": "désignation", "price_incltax": "prix (TTC)", "unit": "unité", "vat_rate_txt": "taux TVA",
+                                          "quantity_txt": "quantité", "reduce_txt_incltax": "réduction (TTC)", "total_incltax": "total (TTC)"}, 4)  # nb=8
         self.assert_json_equal('', 'detail/@0/article', 'ABC1')
         self.assert_json_equal('', 'detail/@0/designation', 'article 1')
-        self.assert_json_equal('', 'detail/@0/price_txt', 22.50)
+        self.assert_json_equal('', 'detail/@0/price_incltax', 22.50)
         self.assert_json_equal('', 'detail/@0/unit', '')
         self.assert_json_equal('', 'detail/@0/quantity_txt', '3,000')
-        self.assert_json_equal('', 'detail/@0/reduce_txt', "5,00 €(7.41%)")
-        self.assert_json_equal('', 'detail/@0/total', 62.5)
+        self.assert_json_equal('', 'detail/@0/reduce_txt_incltax', "5,00 €(7,41%)")
+        self.assert_json_equal('', 'detail/@0/total_incltax', 62.5)
         self.assert_json_equal('', 'detail/@1/article', 'ABC2')
         self.assert_json_equal('', 'detail/@1/designation', 'article 2')
-        self.assert_json_equal('', 'detail/@1/price_txt', 3.41)  # +5%
+        self.assert_json_equal('', 'detail/@1/price_incltax', 3.41)  # +5%
         self.assert_json_equal('', 'detail/@1/unit', '')
         self.assert_json_equal('', 'detail/@1/quantity_txt', '7,0')
-        self.assert_json_equal('', 'detail/@1/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@1/total', 23.89)
+        self.assert_json_equal('', 'detail/@1/reduce_txt_incltax', None)
+        self.assert_json_equal('', 'detail/@1/total_incltax', 23.89)
         self.assert_json_equal('', 'detail/@2/article', None)
         self.assert_json_equal('', 'detail/@2/designation', 'article 3')
-        self.assert_json_equal('', 'detail/@2/price_txt', 11.10)
+        self.assert_json_equal('', 'detail/@2/price_incltax', 11.10)
         self.assert_json_equal('', 'detail/@2/unit', '')
         self.assert_json_equal('', 'detail/@2/quantity_txt', '2,000')
-        self.assert_json_equal('', 'detail/@2/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@2/total', 22.2)
+        self.assert_json_equal('', 'detail/@2/reduce_txt_incltax', None)
+        self.assert_json_equal('', 'detail/@2/total_incltax', 22.2)
         self.assert_json_equal('', 'detail/@3/article', 'ABC5')
         self.assert_json_equal('', 'detail/@3/designation', 'article 4')
-        self.assert_json_equal('', 'detail/@3/price_txt', 7.60)  # +20%
+        self.assert_json_equal('', 'detail/@3/price_incltax', 7.60)  # +20%
         self.assert_json_equal('', 'detail/@3/unit', '')
         self.assert_json_equal('', 'detail/@3/quantity_txt', '3,25')
-        self.assert_json_equal('', 'detail/@3/reduce_txt', None)
-        self.assert_json_equal('', 'detail/@3/total', 24.68)
+        self.assert_json_equal('', 'detail/@3/reduce_txt_incltax', None)
+        self.assert_json_equal('', 'detail/@3/total_incltax', 24.68)
         self.assert_json_equal('LABELFORM', 'total_incltax', 133.27)
-        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5.00 % = 1,14\xa0€', 'TVA 20.00 % = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
+        self.assert_json_equal('LABELFORM', 'vat_desc', ['TVA 5,00% = 1,14\xa0€', 'TVA 20,00% = 4,11\xa0€', '{[b]}Total = 5,25\xa0€{[/b]}'])
         self.assert_json_equal('LABELFORM', 'total_excltax', 128.02)
 
     def test_einvoice(self):

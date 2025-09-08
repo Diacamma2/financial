@@ -60,7 +60,8 @@ from diacamma.invoice.models import Article, Bill, Detail, Category, Provider, S
     CategoryBill, RecipeKitArticle
 from diacamma.payoff.views import PayoffAddModify, PayableEmail, can_send_email, SupportingPrint
 from diacamma.payoff.models import Payoff, DepositSlip
-from diacamma.accounting.models import FiscalYear, Third, EntryLineAccount, EntryAccount
+from diacamma.accounting.models import FiscalYear, Third, EntryLineAccount, EntryAccount,\
+    is_with_VAT, add_vat_info
 from diacamma.accounting.views import get_main_third
 from diacamma.accounting.views_entries import EntryAccountOpenFromLine
 from diacamma.accounting.tools import current_system_account, format_with_devise, get_amount_from_format_devise
@@ -184,10 +185,10 @@ class BillList(XferListEditor):
         grid = self.get_components(self.field_id)
         grid.colspan = 3
         grid.get_header('num_txt').orderable = 1
-        if Params.getvalue("invoice-vat-mode") == 1:
-            grid.headers[5].descript = _('total excl. taxes')
-        elif Params.getvalue("invoice-vat-mode") == 2:
-            grid.headers[5].descript = _('total incl. taxes')
+        for col_name in ['total', 'total_excltax']:
+            col_header = grid.get_header(col_name)
+            if col_header is not None:
+                col_header.descript += add_vat_info()
         sort_bill = self.getparam('GRID_ORDER%bill', '').split(',')
         if (sort_bill.count('num') + sort_bill.count('-num')) > 0:
             if sort_bill.count('num') > 0:
@@ -235,9 +236,17 @@ class BillShow(XferShowEditor):
                 elif self.item.bill_type == Bill.BILLTYPE_BILL:
                     action.caption = '=> ' + str(_('asset')).capitalize()
 
+    def rename_column(self):
+        detail = self.get_components('detail')
+        for col_name in ['price', 'reduce_txt', 'total', 'total_excltax', 'reduce_amount', 'reduce_amount_txt']:
+            col_header = detail.get_header(col_name)
+            if col_header is not None:
+                col_header.descript += add_vat_info()
+
     def fillresponse(self):
         XferShowEditor.fillresponse(self)
         self.rename_button()
+        self.rename_column()
         if self.item.parentbill is not None:
             auditlogbtn = self.get_components('auditlogbtn')
             if auditlogbtn is None:

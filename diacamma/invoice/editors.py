@@ -39,10 +39,11 @@ from lucterios.framework.xferbasic import NULL_VALUE
 from lucterios.CORE.parameters import Params
 
 from diacamma.accounting.tools import current_system_account, format_with_devise
-from diacamma.accounting.models import CostAccounting, FiscalYear, Third
+from diacamma.accounting.models import CostAccounting, FiscalYear, Third,\
+    is_with_VAT, add_vat_info
 from diacamma.payoff.editors import SupportingEditor
 from diacamma.invoice.models import Provider, Category, CustomField, Article, InventoryDetail, \
-    Bill, Vat, StorageSheet, StorageArea, AccountPosting, CategoryBill, MultiPrice
+    Bill, StorageSheet, StorageArea, AccountPosting, CategoryBill, MultiPrice
 
 
 def add_provider_filter(xfer, init_col, init_row):
@@ -94,6 +95,13 @@ def add_filters(xfer, init_col, init_row, has_select):
         add_provider_filter(xfer, init_col, init_row + 2)
         has_filter = True
     return has_filter
+
+
+def change_comp(xfer, comp_list):
+    for comp_name in comp_list:
+        comp = xfer.get_components(comp_name)
+        if comp is not None:
+            comp.description += add_vat_info()
 
 
 class VatEditor(LucteriosEditor):
@@ -199,7 +207,7 @@ class ArticleEditor(LucteriosEditor):
         row_num = price_comp.row + 1
         for multiprice in MultiPrice.objects.all():
             newprice = XferCompFloat(multiprice.get_fieldname(), 0, 9999999.999, precval=Params.getvalue("accounting-devise-prec"))
-            newprice.description = multiprice.name
+            newprice.description = multiprice.name + add_vat_info()
             newprice.set_value(getattr(self.item, multiprice.get_fieldname()))
             newprice.set_location(price_comp.col, row_num, price_comp.colspan, price_comp.rowspan)
             xfer.add_component(newprice)
@@ -224,6 +232,7 @@ class ArticleEditor(LucteriosEditor):
         btn.set_is_mini(True)
         btn.set_action(xfer.request, ActionsManage.get_action_url(AccountPosting.get_long_name(), 'AddModify', xfer), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'accountposting': NULL_VALUE})
         xfer.add_component(btn)
+        change_comp(xfer, ['price'])
 
     def saving(self, xfer):
         if Params.getvalue("invoice-article-with-picture"):
@@ -267,7 +276,7 @@ class ArticleEditor(LucteriosEditor):
         row_num = price_comp.row + 1
         for multiprice in MultiPrice.objects.all():
             newprice = XferCompLabelForm(multiprice.get_fieldname())
-            newprice.description = multiprice.name
+            newprice.description = multiprice.name + add_vat_info()
             newprice.set_value(getattr(self.item, multiprice.get_fieldname()))
             newprice.set_format(format_with_devise(5))
             newprice.set_location(price_comp.col, row_num, price_comp.colspan, price_comp.rowspan)
@@ -316,6 +325,7 @@ class ArticleEditor(LucteriosEditor):
         if self.item.stockable in (Article.STOCKABLE_NO, Article.STOCKABLE_KIT):
             xfer.remove_component('provider')
             xfer.del_tab(_('002@Provider'))
+        change_comp(xfer, ['price'])
 
 
 class CategoryBillEditor(SupportingEditor):
@@ -416,6 +426,7 @@ class BillEditor(SupportingEditor):
         com_type.remove_select(Bill.BILLTYPE_ORDER)
         com_type.remove_select(Bill.BILLTYPE_CART)
         com_type.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        change_comp(xfer, ['total', 'total_excltax'])
 
     def show(self, xfer):
         try:
@@ -432,15 +443,6 @@ class BillEditor(SupportingEditor):
         details = xfer.get_components('detail')
         if (MultiPrice.objects.count() > 0) and (self.item.third is None):
             details.actions = []
-        if Params.getvalue("invoice-vat-mode") != Vat.MODE_NOVAT:
-            if Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICENOVAT:
-                details.headers[2].descript = _('price excl. taxes')
-                details.headers[7].descript = _('total excl. taxes')
-            elif Params.getvalue("invoice-vat-mode") == Vat.MODE_PRICEWITHVAT:
-                details.headers[2].descript = _('price incl. taxes')
-                details.headers[7].descript = _('total incl. taxes')
-            xfer.get_components('total_excltax').description = _('total excl. taxes')
-            xfer.filltab_from_model(1, xfer.get_max_row() + 1, True, [('vat_desc', 'total_incltax')])
         if self.item.status == Bill.STATUS_BUILDING:
             SupportingEditor.show_third(self, xfer, 'invoice.add_bill')
             xfer.get_components('date').colspan += 1
@@ -454,6 +456,7 @@ class BillEditor(SupportingEditor):
             if self.item.bill_type not in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_CART):
                 SupportingEditor.show(self, xfer)
             self.add_email_status(xfer)
+        change_comp(xfer, ['total', 'total_excltax'])
         return
 
 
@@ -530,17 +533,15 @@ class DetailFilter(object):
             lbl.set_value("{[hr/]}")
             lbl.set_location(sel_art.col, init_row + 9, 2)
             xfer.add_component(lbl)
+        change_comp(xfer, ['price', 'total_excltax'])
 
 
 class DetailEditor(LucteriosEditor, DetailFilter):
 
     def before_save(self, xfer):
         self.item.vta_rate = 0.0
-        if (self.item.article is not None) and (self.item.article.vat is not None):
-            if self.item.article.get_vat_mode() == Vat.MODE_PRICENOVAT:
-                self.item.vta_rate = float(self.item.article.vat.rate / 100)
-            if self.item.article.get_vat_mode() == Vat.MODE_PRICEWITHVAT:
-                self.item.vta_rate = -1 * float(self.item.article.vat.rate / 100)
+        if is_with_VAT() and (self.item.article is not None) and (self.item.article.vat is not None):
+            self.item.vta_rate = float(self.item.article.vat.rate / 100)
         return
 
     def get_price(self):
@@ -578,8 +579,10 @@ class DetailEditor(LucteriosEditor, DetailFilter):
                 for area in StorageArea.objects.all():
                     area_list.append((area.id, str(area)))
             sel_area = xfer.get_components('storagearea')
-            sel_area.set_needed(True)
-            sel_area.set_select(area_list)
+            if sel_area is not None:
+                sel_area.set_needed(True)
+                sel_area.set_select(area_list)
+        change_comp(xfer, ['price', 'reduce'])
 
 
 class StorageSheetEditor(LucteriosEditor):

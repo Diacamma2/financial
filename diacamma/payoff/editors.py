@@ -36,7 +36,7 @@ from lucterios.CORE.models import Preference
 from lucterios.contacts.models import LegalEntity
 
 from diacamma.payoff.models import Supporting, Payoff, BankAccount
-from diacamma.accounting.models import FiscalYear
+from diacamma.accounting.models import FiscalYear, is_with_VAT
 from diacamma.accounting.tools import current_system_account
 from datetime import datetime
 
@@ -232,7 +232,7 @@ class PayoffEditor(LucteriosEditor):
             bank_fee.prec = currency_decimal
             bank_fee.min = 0.0
             bank_fee.max = float(amount_max)
-            if Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE:
+            if is_with_VAT():
                 bank_fee.description = bank_fee.description + _(' (duty free)')
 
     def _edit_bank_and_mode(self, xfer, prefix):

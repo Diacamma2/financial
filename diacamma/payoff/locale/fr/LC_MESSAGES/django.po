@@ -36,7 +36,7 @@ msgstr "associé"
 
 #: editors.py:236
 msgid " (duty free)"
-msgstr " (hors taxe)"
+msgstr " (HT)"
 
 #: editors.py:268 models.py:654
 msgid "No-valid selection!"

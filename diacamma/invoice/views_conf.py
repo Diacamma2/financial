@@ -43,12 +43,16 @@ from diacamma.accounting.tools import correct_accounting_code
 from diacamma.invoice.models import Vat, Article, Category, StorageArea, \
     AccountPosting, AutomaticReduce, CategoryBill, MultiPrice
 from diacamma.accounting.system import accounting_system_ident
+from diacamma.accounting.models import is_with_VAT
 
 
 def fill_params(xfer, param_lists=None, is_mini=False):
     if param_lists is None:
-        param_lists = ['invoice-vat-mode', 'invoice-default-sell-account', 'invoice-reduce-account',
-                       'invoice-account-third', 'invoice-reduce-allow-article-empty']
+        param_lists = []
+        if is_with_VAT():
+            param_lists.append('invoice-vat-mode')
+        param_lists.extend(['invoice-default-sell-account', 'invoice-reduce-account',
+                            'invoice-account-third', 'invoice-reduce-allow-article-empty'])
     Params.fill(xfer, param_lists, 1, xfer.get_max_row() + 1)
     btn = XferCompButton('editparam')
     btn.set_is_mini(is_mini)
@@ -72,7 +76,12 @@ class InvoiceConfFinancial(XferListEditor):
         fill_params(self)
         self.new_tab(_('Account posting codes'))
         self.fill_grid(self.get_max_row(), AccountPosting, 'accountposting', AccountPosting.objects.all())
-        self.new_tab(_('VAT'))
+        if is_with_VAT():
+            self.new_tab(_('VAT'))
+
+    def fillresponse_body(self):
+        if is_with_VAT():
+            XferListEditor.fillresponse_body(self)
 
 
 @MenuManage.describ('CORE.add_parameter')

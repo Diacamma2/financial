@@ -67,6 +67,7 @@ def default_accountPosting():
 def default_articles(with_provider=False, with_storage=False, lotof=False, vat_mode=0):
     default_costaccounting()
     default_accountPosting()
+    Params.setvalue('accounting-VAT-arrangements', 1 if vat_mode > 0 else 0)
     Params.setvalue('invoice-vat-mode', vat_mode)
 
     create_account(['709'], 3, FiscalYear.get_current())

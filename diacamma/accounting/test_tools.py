@@ -189,6 +189,7 @@ def get_accounting_system():
 def default_compta_fr(status=0, with12=True, with8=False, with_rubric=False):
     from diacamma.payoff.views_conf import paramchange_payoff
     paramchange_payoff([])
+    Params.setvalue('accounting-VAT-arrangements', 0)
     set_accounting_system('FR')
     year = create_year(status)
     fill_accounts_fr(year, with12, with8, with_rubric)

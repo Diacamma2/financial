@@ -51,7 +51,7 @@ from lucterios.contacts.models import LegalEntity, Individual
 from lucterios.documents.models import DocumentContainer
 
 from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink, \
-    CostAccounting
+    CostAccounting, is_with_VAT
 from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise, \
     get_amount_from_format_devise, current_system_account
 from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType, PaymentTypeTransfer
@@ -432,7 +432,7 @@ class BankAccount(LucteriosModel):
     @classmethod
     def get_edit_fields(cls):
         fields = ["designation", "reference", ("account_code", "bank_journal"), ("temporary_account_code", "temporary_journal")]
-        if Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE:
+        if is_with_VAT():
             fields.append(("fee_account_code", "vat_rate"))
         else:
             fields.append("fee_account_code")
@@ -576,7 +576,7 @@ class Payoff(LucteriosModel):
                     cost_accounting = supporting.get_default_costaccounting()
                 EntryLineAccount.objects.create(account=fee_account, amount=-1 * is_revenu * float(self.bank_fee), entry=entry, costaccounting=cost_accounting)
                 amount_to_bank -= float(self.bank_fee)
-                if (Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE) and (self.bank_account.vat_rate > 0.001):
+                if (is_with_VAT()) and (self.bank_account.vat_rate > 0.001):
                     vat_account = ChartsAccount.objects.filter(year=entry.year, code__regex=current_system_account().get_vat_collected_mask()).last()
                     if vat_account is None:
                         raise LucteriosException(IMPORTANT, _('collected VAT account not found !'))
