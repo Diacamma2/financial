@@ -232,6 +232,8 @@ class PayoffEditor(LucteriosEditor):
             bank_fee.prec = currency_decimal
             bank_fee.min = 0.0
             bank_fee.max = float(amount_max)
+            if Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE:
+                bank_fee.description = bank_fee.description + _(' (duty free)')
 
     def _edit_bank_and_mode(self, xfer, prefix):
         mode = xfer.get_components(prefix + "mode")

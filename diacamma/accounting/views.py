@@ -24,6 +24,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import unicode_literals
 from datetime import timedelta, date
+import re
 
 from django.utils.translation import gettext_lazy as _
 from django.db.models.functions import Concat
@@ -41,6 +42,7 @@ from lucterios.framework.error import LucteriosException, IMPORTANT
 from lucterios.framework.models import LucteriosQuerySet
 from lucterios.CORE.xferprint import XferPrintListing
 from lucterios.CORE.editors import XferSavedCriteriaSearchEditor
+from lucterios.CORE.parameters import Params
 from lucterios.contacts.tools import ContactSelection
 from lucterios.contacts.models import AbstractContact
 
@@ -373,6 +375,16 @@ def summary_accounting(xfer):
         return False
 
 
+def account_exist(code_list, account_mask):
+    account_compile = re.compile(account_mask)
+    if (account_compile is None) or (account_mask == ''):
+        return True
+    for code_item in code_list:
+        if account_compile.match(code_item):
+            return True
+    return False
+
+
 @signal_and_lock.Signal.decorate('compte_no_found')
 def comptenofound_accounting(known_codes, accompt_returned, cost_returned):
     third_unknown = AccountThird.objects.filter(third__status=0).exclude(code__in=known_codes).values_list('code', flat=True)
@@ -387,6 +399,16 @@ def comptenofound_accounting(known_codes, accompt_returned, cost_returned):
     model_badcost = ModelEntry.objects.filter(costaccounting__isnull=False, costaccounting__year__isnull=False, costaccounting__year__is_actif=False)
     if (len(model_badcost) > 0):
         cost_returned.append("- {[i]}{[u]}%s{[/u]}: %s{[/i]}" % (_('Model of entry'), ",".join(set([str(model) for model in model_badcost]))))
+    if Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE:
+        vat_no_found = []
+        if not account_exist(known_codes, current_system_account().get_vat_collected_mask()):
+            vat_no_found.append(str(_('collected VAT')))
+        if not account_exist(known_codes, current_system_account().get_vat_deductible_mask()):
+            vat_no_found.append(str(_('deductible VAT')))
+        if not account_exist(known_codes, current_system_account().get_vat_intracommunity_mask()):
+            vat_no_found.append(str(_('intracommunity VAT liability')))
+        if len(vat_no_found) > 0:
+            accompt_returned.append("- {[i]}{[u]}%s{[/u]}: %s{[/i]}" % (_('VAT'), ",".join(vat_no_found)))
     return True
 
 

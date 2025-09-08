@@ -105,7 +105,7 @@ class VatEditor(LucteriosEditor):
         sel_code = XferCompSelect("account")
         sel_code.description = old_account.description
         sel_code.set_location(old_account.col, old_account.row, old_account.colspan, old_account.rowspan)
-        for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_third_mask()).order_by('code'):
+        for item in FiscalYear.get_current().chartsaccount_set.all().filter(code__regex=current_system_account().get_vat_collected_mask()).order_by('code'):
             sel_code.select_list.append((item.code, str(item)))
         sel_code.set_value(self.item.account)
         xfer.add_component(sel_code)

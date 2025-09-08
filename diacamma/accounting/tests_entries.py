@@ -112,6 +112,14 @@ class EntryTest(LucteriosTest):
 
     def test_add_entry_bad_date(self):
         self.factory.xfer = EntryAccountEdit()
+        self.calljson('/diacamma.accounting/entryAccountEdit', {'year': '1', 'journal': '2'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountEdit')
+        self.assert_count_equal('', 4)
+        self.assert_json_equal('SELECT', 'journal', '2')
+        self.assert_json_equal('DATE', 'date_value', '2015-12-31')
+        self.assert_json_equal('EDIT', 'designation', '')
+
+        self.factory.xfer = EntryAccountEdit()
         self.calljson('/diacamma.accounting/entryAccountEdit', {'SAVE': 'YES', 'year': '1', 'journal': '2',
                                                                 'date_value': '2017-04-20', 'designation': 'Truc'}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountEdit')

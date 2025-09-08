@@ -273,6 +273,9 @@ def get_total_result_text_format():
 
 
 class FiscalYear(LucteriosModel):
+    VAT_ARRANGEMENTS_NOT_APPLICABLE = 0
+    VAT_ARRANGEMENTS_SIMPLE = 1
+
     STATUS_BUILDING = 0
     STATUS_RUNNING = 1
     STATUS_FINISHED = 2
@@ -2051,6 +2054,8 @@ def accounting_checkparam():
     Parameter.check_and_create(name="accounting-lettering-check", typeparam=Parameter.TYPE_STRING, title=_("accounting-lettering-check"), args="{'Multi':True}", value='',
                                meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_third_mask()) & django.db.models.Q(year__is_actif=True)", "code", False)')
     Parameter.check_and_create(name='accounting-datecurrent', typeparam=Parameter.TYPE_BOOL, title=_("accounting-datecurrent"), args="{}", value='True')
+    Parameter.check_and_create(name='accounting-VAT-arrangements', typeparam=Parameter.TYPE_SELECT, title=_("accounting-VAT-arrangements"),
+                               args="{'Enum':2}", value='-1', param_titles=(_("accounting-VAT-arrangements.0"), _("accounting-VAT-arrangements.1")))
 
     LucteriosGroup.redefine_generic(_("# accounting (administrator)"), FiscalYear.get_permission(True, True, True),
                                     ChartsAccount.get_permission(True, True, True), Budget.get_permission(True, True, True),
@@ -2105,6 +2110,16 @@ def check_prefixyear():
         year.save()
 
 
+def check_vat_arrangements():
+    if Params.getvalue("accounting-VAT-arrangements") == -1:
+        vat_arrangements_ret = []
+        Signal.call_signal("vat_arrangements", vat_arrangements_ret)
+        if len(vat_arrangements_ret) != 1:
+            Params.setvalue("accounting-VAT-arrangements", FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE)
+        else:
+            Params.setvalue("accounting-VAT-arrangements", vat_arrangements_ret[0])
+
+
 @Signal.decorate('convertdata')
 def accounting_convertdata():
     check_accountingcost()
@@ -2115,6 +2130,7 @@ def accounting_convertdata():
     check_multilink()
     check_prefixyear()
     EntryAccount.clear_ghost()
+    check_vat_arrangements()
 
 
 @Signal.decorate('auditlog_register')

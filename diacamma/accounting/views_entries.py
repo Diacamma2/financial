@@ -653,7 +653,7 @@ class EntryAccountModelSelector(XferContainerAcknowledge):
 
     def fillresponse(self, journal=0):
         if self.getparam('SAVE') is None:
-            dlg = self.create_custom()
+            dlg = self.create_custom(self.model)
             image = XferCompImage('image')
             image.set_value(self.short_icon, "#")
             image.set_location(0, 0, 1, 6)
@@ -668,9 +668,14 @@ class EntryAccountModelSelector(XferContainerAcknowledge):
             sel.set_select_query(mod_query)
             sel.description = _('model name')
             dlg.add_component(sel)
+            dlg.item.check_date()
+            dlg.fill_from_model(1, 1, False, ['date_value'])
+            if not Params.getvalue('accounting-datecurrent'):
+                date_cmp = dlg.get_components('date_value')
+                date_cmp.value = None
             fact = XferCompFloat('factor', 0.00, 1000000.0, 2)
             fact.set_value(1.0)
-            fact.set_location(1, 1)
+            fact.set_location(1, 2)
             fact.description = _('factor')
             dlg.add_component(fact)
             dlg.add_action(self.return_action(TITLE_OK, short_icon='mdi:mdi-check'), params={"SAVE": "YES"})

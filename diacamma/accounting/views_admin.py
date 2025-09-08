@@ -69,6 +69,7 @@ def fill_params(xfer, is_mini=False):
     xfer.params['params'] = ['accounting-devise-iso', 'accounting-devise-prec']
     if current_system_account().has_minium_code_size():
         xfer.params['params'].append('accounting-sizecode')
+    xfer.params['params'].append('accounting-VAT-arrangements')
     xfer.params['params'].append('accounting-needcost')
     xfer.params['params'].append('accounting-code-report-filter')
     xfer.params['params'].append('accounting-datecurrent')

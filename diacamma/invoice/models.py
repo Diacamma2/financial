@@ -2900,6 +2900,13 @@ def invoice_checkparam():
                                 args="{'Multi':False}", value=Bill.BILLTYPE_ALL, meta='("","","import diacamma.invoice.models;[(str(bill_type), title) for bill_type, title in diacamma.invoice.models.Bill.SELECTION_BILLTYPES]+[(\'%d|%d\' % (cat_bill.id, type_num), \'[%s]%s\' % (cat_bill.name, type_value)) for cat_bill in diacamma.invoice.models.CategoryBill.objects.all() for type_num, _description, type_value in cat_bill.get_title_info()]","",False)')
 
 
+@Signal.decorate('vat_arrangements')
+def invoice_vat_arrangements(vat_arrangements_ret):
+    if Params.getvalue("accounting-VAT-arrangements") == -1:
+        print('TODO : VAT arrangements in invoice')
+        vat_arrangements_ret.append(FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE if Params.getvalue("invoice-order-mode") == 0 else FiscalYear.VAT_ARRANGEMENTS_SIMPLE)
+
+
 @Signal.decorate('convertdata')
 def invoice_convertdata():
     convert_articles()

@@ -88,6 +88,15 @@ class DefaultSystemAccounting(object):
     def new_charts_account(self, code):
         return '', -1
 
+    def get_vat_deductible_mask(self):
+        return ''
+
+    def get_vat_collected_mask(self):
+        return ''
+
+    def get_vat_intracommunity_mask(self):
+        return ''
+
     def get_einvoice_format(self):
         return ''
 

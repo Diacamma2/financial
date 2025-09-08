@@ -998,6 +998,18 @@ class BelgiumSystemAcounting(DefaultSystemAccounting):
     def get_annexe_mask(self):
         return r'X'
 
+    def get_vat_deductible_mask(self):
+        return r'^411[0-9a-zA-Z]*$'
+
+    def get_vat_collected_mask(self):
+        return r'^451[0-9a-zA-Z]*$'
+
+    def get_vat_intracommunity_mask(self):
+        return ''
+
+    def get_einvoice_format(self):
+        return 'UBL'
+
     def new_charts_account(self, code):
         code = code.strip()
         if code == '':

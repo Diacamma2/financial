@@ -90,7 +90,8 @@ GENERAL_CHARTS_ACCOUNT = [
     ("442", "44299999", "État - Impôts et taxes recouvrables sur des tiers", 1),
     ("443", "44399999", "Opérations particulières avec l'État, les collectivités publiques, les organismes internationaux", 0),
     ("444", "44499999", "État - Impôts sur les bénéfices", 1),
-    ("445", "44549999", "État - Taxes sur le chiffre d'affaires", 1),
+    ("445", "44509999", "État - Taxes sur le chiffre d'affaires", 1),
+    ("4452", "44529999", "TVA due intracommunautaire", 1),
     ("4455", "44559999", "TVA à décaisser", 1),
     ("4456", "44561999", "TVA déductible", 1),
     ("44562", "44562999", "TVA déductible sur immobilisations", 1),
@@ -219,6 +220,15 @@ class FrenchSystemAcounting(DefaultSystemAccounting):
 
     def get_annexe_mask(self):
         return r'^8[0-9][0-9][0-9a-zA-Z]*$'
+
+    def get_vat_deductible_mask(self):
+        return r'^4456[0-9a-zA-Z]*$'
+
+    def get_vat_collected_mask(self):
+        return r'^4457[0-9a-zA-Z]*$'
+
+    def get_vat_intracommunity_mask(self):
+        return r'^4452[0-9a-zA-Z]*$'
 
     def get_einvoice_format(self):
         return 'facturX'

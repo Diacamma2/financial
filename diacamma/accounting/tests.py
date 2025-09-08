@@ -686,7 +686,7 @@ class AdminTest(LucteriosTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
         self.assertTrue('__tab_4' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_5' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 4 + 5 + 2 + 7)
+        self.assert_count_equal('', 4 + 5 + 2 + 8)
         self.assert_grid_equal('fiscalyear', {"begin": "début", "end": "fin", "status": "statut", "is_actif": "actif", "prefix": "prefix"}, 0)  # nb=4
 
         self.assert_grid_equal('journal', {'name': "nom", "is_default": "défaut"}, 5)  # nb=1
@@ -703,6 +703,7 @@ class AdminTest(LucteriosTest):
 
         self.assert_json_equal('LABELFORM', 'accounting-devise-iso', 'Euro Member Countries (EUR / €)')
         self.assert_json_equal('LABELFORM', 'accounting-devise-prec', '2')
+        self.assert_json_equal('LABELFORM', 'accounting-VAT-arrangements', 'Non applicable')
         self.assert_json_equal('LABELFORM', 'accounting-sizecode', '3')
         self.assert_json_equal('LABELFORM', 'accounting-needcost', 'Non')
         self.assert_json_equal('LABELFORM', 'accounting-code-report-filter', '')
@@ -1087,27 +1088,41 @@ class ModelTest(LucteriosTest):
     def test_selector(self):
         add_models()
         self.factory.xfer = EntryAccountModelSelector()
-        self.calljson('/diacamma.accounting/entryAccountModelSelector', {}, False)
+        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'year': 1}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountModelSelector')
-        self.assert_count_equal('', 3)
+        self.assert_count_equal('', 4)
         self.assert_select_equal('model', 3)  # nb=2
+        self.assert_json_equal('DATE', 'date_value', '2015-12-31')
         self.assert_json_equal('FLOAT', 'factor', '1.00')
 
         self.factory.xfer = EntryAccountModelSelector()
-        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'journal': 2}, False)
+        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'year': 1, 'journal': 2}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountModelSelector')
-        self.assert_count_equal('', 3)
+        self.assert_count_equal('', 4)
         self.assert_select_equal('model', 2)  # nb=1
+        self.assert_json_equal('FLOAT', 'factor', '1.00')
+
+    def test_selector_nodate(self):
+        Params.setvalue('accounting-datecurrent', False)
+        add_models()
+        self.factory.xfer = EntryAccountModelSelector()
+        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'year': 1}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountModelSelector')
+        self.assert_count_equal('', 4)
+        self.assert_select_equal('model', 3)
+        self.assert_json_equal('DATE', 'date_value', None)
         self.assert_json_equal('FLOAT', 'factor', '1.00')
 
     def test_insert(self):
         add_models()
         self.factory.xfer = EntryAccountModelSelector()
-        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'SAVE': 'YES', 'journal': '2', 'model': 1, 'factor': 2.50}, False)
+        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'SAVE': 'YES', 'year': 1, 'journal': '2', 'date_value': '2015-10-21', 'model': 1, 'factor': 2.50}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountModelSelector')
-        self.assertEqual(len(self.json_context), 2)
+        self.assertEqual(len(self.json_context), 4)
+        self.assertEqual(self.json_context['year'], '1')
         self.assertEqual(self.json_context['entryaccount'], 1)
         self.assertEqual(self.json_context['journal'], '2')
+        self.assertEqual(self.json_context['date_value'], '2015-10-21')
         self.assertEqual(self.response_json["action"]["id"], "diacamma.accounting/entryAccountEdit")
         self.assertEqual(len(self.response_json["action"]["params"]), 1)
         serial_entry = self.response_json["action"]["params"]['serial_entry'].split('\n')
@@ -1117,11 +1132,13 @@ class ModelTest(LucteriosTest):
     def test_insert_with_costaccounting(self):
         add_models()
         self.factory.xfer = EntryAccountModelSelector()
-        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'SAVE': 'YES', 'journal': '2', 'model': 3, 'factor': 1.00}, False)
+        self.calljson('/diacamma.accounting/entryAccountModelSelector', {'SAVE': 'YES', 'year': 1, 'journal': '2', 'date_value': '2015-10-21', 'model': 3, 'factor': 1.00}, False)
         self.assert_observer('core.acknowledge', 'diacamma.accounting', 'entryAccountModelSelector')
-        self.assertEqual(len(self.json_context), 2)
+        self.assertEqual(len(self.json_context), 4)
+        self.assertEqual(self.json_context['year'], '1')
         self.assertEqual(self.json_context['entryaccount'], 1)
         self.assertEqual(self.json_context['journal'], '2')
+        self.assertEqual(self.json_context['date_value'], '2015-10-21')
         self.assertEqual(self.response_json["action"]["id"], "diacamma.accounting/entryAccountEdit")
         self.assertEqual(len(self.response_json["action"]["params"]), 1)
         serial_entry = self.response_json["action"]["params"]['serial_entry'].split('\n')

@@ -27,6 +27,7 @@ from shutil import rmtree
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
+from lucterios.CORE.parameters import Params
 
 from lucterios.contacts.test_tools import change_ourdetail
 
@@ -57,6 +58,14 @@ class PayoffTest(LucteriosTest):
         self.calljson('/diacamma.payoff/bankAccountAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'bankAccountAddModify')
         self.assert_count_equal('', 9)
+        self.assert_json_equal('MEMO', 'designation', '')
+        self.assert_json_equal('EDIT', 'reference', '')
+        self.assert_json_equal('SELECT', 'account_code', '512')
+        self.assert_json_equal('SELECT', 'bank_journal', 4)
+        self.assert_json_equal('SELECT', 'temporary_account_code', '')
+        self.assert_json_equal('SELECT', 'temporary_journal', 4)
+        self.assert_json_equal('SELECT', 'fee_account_code', '')
+        self.assert_json_equal('CHECK', 'is_disabled', 0)
 
         self.factory.xfer = BankAccountAddModify()
         self.calljson('/diacamma.payoff/bankAccountAddModify',
@@ -112,6 +121,21 @@ class PayoffTest(LucteriosTest):
         self.assert_json_equal('', 'bankaccount/@0/account_code', '512')
         self.assert_json_equal('', 'bankaccount/@0/temporary_account_code', '581')
         self.assert_json_equal('', 'bankaccount/@0/fee_account_code', '627')
+
+        Params.setvalue('accounting-VAT-arrangements', 1)
+        self.factory.xfer = BankAccountAddModify()
+        self.calljson('/diacamma.payoff/bankAccountAddModify', {}, False)
+        self.assert_observer('core.custom', 'diacamma.payoff', 'bankAccountAddModify')
+        self.assert_count_equal('', 10)
+        self.assert_json_equal('MEMO', 'designation', '')
+        self.assert_json_equal('EDIT', 'reference', '')
+        self.assert_json_equal('SELECT', 'account_code', '512')
+        self.assert_json_equal('SELECT', 'bank_journal', 4)
+        self.assert_json_equal('SELECT', 'temporary_account_code', '')
+        self.assert_json_equal('SELECT', 'temporary_journal', 4)
+        self.assert_json_equal('SELECT', 'fee_account_code', '')
+        self.assert_json_equal('FLOAT', 'vat_rate', 0.0)
+        self.assert_json_equal('CHECK', 'is_disabled', 0)
 
     def test_method(self):
         self.factory.xfer = BankAccountAddModify()

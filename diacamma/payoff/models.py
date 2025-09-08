@@ -53,7 +53,7 @@ from lucterios.documents.models import DocumentContainer
 from diacamma.accounting.models import EntryAccount, FiscalYear, Third, Journal, ChartsAccount, EntryLineAccount, AccountLink, \
     CostAccounting
 from diacamma.accounting.tools import currency_round, correct_accounting_code, format_with_devise, \
-    get_amount_from_format_devise
+    get_amount_from_format_devise, current_system_account
 from diacamma.payoff.payment_type import PAYMENTTYPE_LIST, PaymentType, PaymentTypeTransfer
 
 
@@ -422,6 +422,8 @@ class BankAccount(LucteriosModel):
     temporary_journal = models.ForeignKey(Journal, verbose_name=_('temporary journal'), null=False, default=Journal.DEFAULT_PAYMENT, on_delete=models.PROTECT, related_name='temporary_journal')
 
     fee_account_code = models.CharField(_('fee account'), max_length=50, null=False, default='')
+    vat_rate = models.DecimalField(_('vat rate'), max_digits=6, decimal_places=2,
+                                   default=0.0, validators=[MinValueValidator(0.0), MaxValueValidator(99.9)])
 
     @classmethod
     def get_default_fields(cls):
@@ -429,7 +431,13 @@ class BankAccount(LucteriosModel):
 
     @classmethod
     def get_edit_fields(cls):
-        return ["designation", "reference", ("account_code", "bank_journal"), ("temporary_account_code", "temporary_journal"), "fee_account_code", "is_disabled"]
+        fields = ["designation", "reference", ("account_code", "bank_journal"), ("temporary_account_code", "temporary_journal")]
+        if Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE:
+            fields.append(("fee_account_code", "vat_rate"))
+        else:
+            fields.append("fee_account_code")
+        fields.append("is_disabled")
+        return fields
 
     def __str__(self):
         return self.designation
@@ -568,6 +576,14 @@ class Payoff(LucteriosModel):
                     cost_accounting = supporting.get_default_costaccounting()
                 EntryLineAccount.objects.create(account=fee_account, amount=-1 * is_revenu * float(self.bank_fee), entry=entry, costaccounting=cost_accounting)
                 amount_to_bank -= float(self.bank_fee)
+                if (Params.getvalue("accounting-VAT-arrangements") != FiscalYear.VAT_ARRANGEMENTS_NOT_APPLICABLE) and (self.bank_account.vat_rate > 0.001):
+                    vat_account = ChartsAccount.objects.filter(year=entry.year, code__regex=current_system_account().get_vat_collected_mask()).last()
+                    if vat_account is None:
+                        raise LucteriosException(IMPORTANT, _('collected VAT account not found !'))
+                    vat_amount = float(self.bank_fee) * float(self.bank_account.vat_rate) / 100
+                    EntryLineAccount.objects.create(account=vat_account, amount=is_revenu * vat_amount, entry=entry, costaccounting=cost_accounting)
+                    amount_to_bank -= float(vat_amount)
+
         return amount_to_bank, is_revenu
 
     def _get_bankinfo(self, new_entry):
