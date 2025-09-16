@@ -39,13 +39,14 @@ from lucterios.mailing.tests import configSMTP, TestReceiver, decode_b64
 from lucterios.mailing.models import Message
 from lucterios.contacts.models import CustomField
 
-from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr
+from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr,\
+    initial_thirds_be, default_compta_be
 from diacamma.accounting.models import CostAccounting, FiscalYear
 from diacamma.accounting.views import ThirdShow
 from diacamma.accounting.views_entries import EntryAccountList
 from diacamma.payoff.views import PayoffAddModify, PayoffDel, SupportingThird, SupportingThirdValid, PayableEmail
 from diacamma.payoff.test_tools import default_bankaccount_fr, check_pdfreport, \
-    default_paymentmethod
+    default_paymentmethod, default_bankaccount_be
 from diacamma.invoice.models import Bill, AccountPosting, CategoryBill
 from diacamma.invoice.test_tools import default_articles, InvoiceTest, default_categories, default_customize, \
     default_area, default_categorybill, clean_cache, default_multiprice,\
@@ -4149,7 +4150,7 @@ class BillVATTest(BillAbstractTest):
         self.assert_observer('core.custom', 'diacamma.accounting', 'entryAccountList')
         self.assert_count_equal('entryline', 6)
         self.assert_json_equal('', 'entryline/@0/entry_account', "[411 Dalton Jack]")
-        self.assert_json_equal('', 'entryline/@1/entry_account', "[4455] 4455")
+        self.assert_json_equal('', 'entryline/@1/entry_account', "[4457] 4457")
         self.assert_json_equal('', 'entryline/@1/credit', 4.46)
         self.assert_json_equal('LABELFORM', 'result', [123.24, 0.00, 123.24, 0.00, 0.00])
 
@@ -4266,7 +4267,7 @@ class BillVATTest(BillAbstractTest):
         self.assert_count_equal('entryline', 6)
         self.assert_json_equal('', 'entryline/@0/entry_account', "[411 Dalton Jack]")
         self.assert_json_equal('', 'entryline/@0/debit', -133.27)
-        self.assert_json_equal('', 'entryline/@1/entry_account', "[4455] 4455")
+        self.assert_json_equal('', 'entryline/@1/entry_account', "[4457] 4457")
         self.assert_json_equal('', 'entryline/@1/credit', 5.25)
         self.assert_json_equal('', 'entryline/@2/entry_account', "[701] 701")
         self.assert_json_equal('', 'entryline/@2/credit', 88.07)
@@ -4347,3 +4348,41 @@ class BillVATTest(BillAbstractTest):
         self.assertEqual(facturx_extract[0], 'factur-x.xml')
         logger.setLevel(logging.INFO)
         logger.removeHandler(hdl)
+
+
+class BillBETest(InvoiceTest):
+
+    def setUp(self):
+        self.maxDiff = 4000
+        LucteriosTest.setUp(self)
+        default_compta_be()
+        initial_thirds_be()
+        default_bankaccount_be()
+        clean_cache()
+        rmtree(get_user_dir(), True)
+        LucteriosUser.objects.create(username='creator', first_name='Léonard', last_name='de Vinci', email='leonardo@davinci.org')
+        Params.setvalue('accounting-VAT-arrangements', 0)
+        Params.setvalue('invoice-vat-mode', 1)
+
+    def test_einvoice(self):
+        default_articles(vat_mode=2)
+        details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},  # code 701 - no VAT
+                   {'article': 2, 'designation': 'article 2',  # +5% vat => 1.08 - code 707
+                       'price': '3.25', 'quantity': 7},
+                   {'article': 0, 'designation': 'article 3',
+                       'price': '11.10', 'quantity': 2},  # code 709 - no VAT
+                   {'article': 5, 'designation': 'article 4', 'price': '6.33', 'quantity': 3.25}]  # +20% vat => 3.43  - code 701
+        self._create_bill(details, 1, '2015-04-01', 6)
+
+        self.factory.xfer = BillTransition()
+        self.calljson('/diacamma.invoice/billTransition',
+                      {'CONFIRME': 'YES', 'bill': 1, 'withpayoff': False, 'TRANSITION': 'valid'}, False)
+        self.assert_observer('core.acknowledge', 'diacamma.invoice', 'billTransition')
+
+        self.factory.xfer = BillPrint()
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '1', 'PRINT_PERSITENT_MODE': 0, 'PRINT_MODE': 3, 'MODEL': 8}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'billPrint')
+        self.save_pdf()
+
+        doc = DocumentContainer.objects.filter(metadata='Bill-1').first()
+        self.assertTrue(doc is not None)

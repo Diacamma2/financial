@@ -29,7 +29,6 @@ from datetime import timedelta
 from logging import getLogger
 from json import dumps, loads
 from json.decoder import JSONDecodeError
-from facturx.facturx import generate_from_binary
 
 from django.db import models
 from django.db.models.query import QuerySet
@@ -287,7 +286,7 @@ class Article(LucteriosModel, CustomizeObject):
     def set_context(self, xfer):
         self.show_storagearea = xfer.getparam('storagearea', 0)
         if not xfer.request.user.is_anonymous:
-            contact = Individual.objects.filter(user=xfer.request.user).first()
+            contact = Individual.objects.filter(user_id=xfer.request.user.id if xfer.request.user is not None else None).first()
             if contact is not None:
                 self.current_third = Third.objects.filter(contact=contact).first()
 
@@ -1127,6 +1126,13 @@ class Bill(Supporting):
                 val += float(detail.get_total())
         return val
 
+    def get_total_without_reduce_excltax(self):
+        val = 0
+        if self.id is not None:
+            for detail in self.detail_set.all():
+                val += float(detail.get_total_without_reduce())
+        return val
+
     def get_reduce_excltax(self):
         val = 0
         if self.id is not None:
@@ -1543,12 +1549,12 @@ class Bill(Supporting):
             self.convert_to_quotation()
 
     def add_pdf_document(self, title, user, metadata, pdf_content):
-        from diacamma.invoice.einvoice import facturX_generator
+        import diacamma.invoice.einvoice
         if (self.status not in (self.STATUS_BUILDING, self.STATUS_CANCEL)) and (self.bill_type in (Bill.BILLTYPE_BILL,)):
-            if current_system_account().get_einvoice_format() == 'facturX':
-                einvoice_content = facturX_generator(self)
-                if einvoice_content:
-                    pdf_content = generate_from_binary(pdf_content, einvoice_content, flavor='factur-x')
+            einvoice_format = current_system_account().get_einvoice_format()
+            einvoice_funct = getattr(diacamma.invoice.einvoice, "%s_PDF_generator" % einvoice_format, None)
+            if (einvoice_funct is not None) and callable(einvoice_funct):
+                pdf_content = einvoice_funct(pdf_content, self)
         return Supporting.add_pdf_document(self, title, user, metadata, pdf_content)
 
     def generate_pdfreport(self):

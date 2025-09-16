@@ -195,7 +195,7 @@ class PayoffTest(LucteriosTest):
         self.assert_count_equal('', 6)
         self.assert_attrib_equal('item_1', 'description', 'adresse web')
         self.assert_json_equal('EDIT', 'item_1', '')
-        self.assert_attrib_equal('item_2', 'description', 'information')
+        self.assert_attrib_equal('item_2', 'description', 'info')
         self.assert_json_equal('MEMO', 'item_2', '')
         self.assert_json_equal('LABELFORM', 'help_payoff', "Indiquez le lien internet vers votre site de règlement.")
 
@@ -277,7 +277,7 @@ De plus, vous devez déclarer à la plateforme cet adresse de retour {[b]}http:/
 
         self.assert_json_equal('', 'paymentmethod/@3/paytype', 3)
         self.assert_json_equal('', 'paymentmethod/@3/bank_account', "My bank")
-        self.assert_json_equal('', 'paymentmethod/@3/info', '{[b]}adresse web{[/b]}{[br/]}http://payement.online.com{[br/]}{[b]}information{[/b]}{[br/]}Précisez le N° de devis ou de facture{[br/]}')
+        self.assert_json_equal('', 'paymentmethod/@3/info', '{[b]}adresse web{[/b]}{[br/]}http://payement.online.com{[br/]}{[b]}info{[/b]}{[br/]}Précisez le N° de devis ou de facture{[br/]}')
 
         self.assert_json_equal('', 'paymentmethod/@4/paytype', 4)
         self.assert_json_equal('', 'paymentmethod/@4/bank_account', "My bank")

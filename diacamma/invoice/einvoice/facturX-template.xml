@@ -50,7 +50,7 @@
                     <ram:ActualAmount>{{ detail.get_reduce }}</ram:ActualAmount>
                 </ram:SpecifiedTradeAllowanceCharge>
                 <ram:SpecifiedTradeSettlementLineMonetarySummation>
-                    <ram:LineTotalAmount>{{ detail.total_incltax }}</ram:LineTotalAmount>
+                    <ram:LineTotalAmount>{{ detail.total_excltax }}</ram:LineTotalAmount>
                 </ram:SpecifiedTradeSettlementLineMonetarySummation>
             </ram:SpecifiedLineTradeSettlement>
         </ram:IncludedSupplyChainTradeLineItem>                    

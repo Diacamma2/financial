@@ -31,7 +31,8 @@ from lucterios.CORE.models import SavedCriteria
 from lucterios.CORE.parameters import Params
 
 from diacamma.accounting.models import FiscalYear
-from diacamma.accounting.test_tools import create_account, default_costaccounting
+from diacamma.accounting.test_tools import create_account, default_costaccounting,\
+    get_accounting_system
 
 from diacamma.invoice.models import Article, Vat, Category, Provider, \
     StorageArea, StorageSheet, StorageDetail, AccountPosting, CategoryBill, \
@@ -56,7 +57,10 @@ def clean_cache():
     LucteriosModel.delete_class_item(Vat)
 
 
-def default_accountPosting():
+def default_accountPosting_fr():
+    Params.setvalue("invoice-default-sell-account", "706")
+    Params.setvalue("invoice-reduce-account", '709')
+    Params.setvalue("invoice-account-third", '411')
     AccountPosting.objects.create(name="code1", sell_account="701", provision_third_account="")
     AccountPosting.objects.create(name="code2", sell_account="707", provision_third_account="")
     AccountPosting.objects.create(name="code3", sell_account="601", provision_third_account="")
@@ -64,16 +68,32 @@ def default_accountPosting():
     AccountPosting.objects.create(name="code_sub", sell_account="701", provision_third_account="4191")
 
 
+def default_accountPosting_be():
+    Params.setvalue("invoice-default-sell-account", "701000")
+    Params.setvalue("invoice-reduce-account", '708000')
+    Params.setvalue("invoice-account-third", '400000')
+    AccountPosting.objects.create(name="code1", sell_account="700000", provision_third_account="")
+    AccountPosting.objects.create(name="code2", sell_account="705000", provision_third_account="")
+    AccountPosting.objects.create(name="code3", sell_account="601000", provision_third_account="")
+    AccountPosting.objects.create(name="code4", sell_account="708000", provision_third_account="")
+    AccountPosting.objects.create(name="code_sub", sell_account="700000", provision_third_account="419100")
+
+
 def default_articles(with_provider=False, with_storage=False, lotof=False, vat_mode=0):
     default_costaccounting()
-    default_accountPosting()
+    if get_accounting_system() == "FR":
+        default_accountPosting_fr()
+        special_sell, vat_account = "709", "4457"
+    if get_accounting_system() == "BE":
+        default_accountPosting_be()
+        special_sell, vat_account = "708000", "451000"
     Params.setvalue('accounting-VAT-arrangements', 1 if vat_mode > 0 else 0)
     Params.setvalue('invoice-vat-mode', vat_mode)
 
-    create_account(['709'], 3, FiscalYear.get_current())
-    create_account(['4455'], 1, FiscalYear.get_current())
-    vat1 = Vat.objects.create(name="5%", rate=5.0, account='4455', isactif=True)
-    vat2 = Vat.objects.create(name="20%", rate=20.0, account='4455', isactif=True)
+    create_account([special_sell], 3, FiscalYear.get_current())
+    create_account([vat_account], 1, FiscalYear.get_current())
+    vat1 = Vat.objects.create(name="5%", rate=5.0, account=vat_account, isactif=True)
+    vat2 = Vat.objects.create(name="20%", rate=20.0, account=vat_account, isactif=True)
     art1 = Article.objects.create(reference='ABC1', designation="Article 01",
                                   price="12.34", unit="kg", isdisabled=False, accountposting_id=1, vat=None, stockable=1 if with_storage else 0, qtyDecimal=3)
     art2 = Article.objects.create(reference='ABC2', designation="Article 02",
