@@ -25,9 +25,12 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from shutil import rmtree
 from datetime import date, datetime
-from base64 import b64decode, b64encode
+from base64 import b64decode
 from os.path import isfile, join
 from unittest.mock import patch
+from io import BytesIO
+from pypdf import PdfReader
+import logging
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -38,6 +41,7 @@ from lucterios.CORE.parameters import Params
 from lucterios.mailing.tests import configSMTP, TestReceiver, decode_b64
 from lucterios.mailing.models import Message
 from lucterios.contacts.models import CustomField
+from lucterios.documents.models import DocumentContainer
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr,\
     initial_thirds_be, default_compta_be
@@ -56,8 +60,6 @@ from diacamma.invoice.views import BillList, BillAddModify, BillShow, DetailAddM
     BillStatistic, BillStatisticPrint, BillPrint, BillMultiPay, BillSearch, \
     BillCheckAutoreduce, BillPayableEmail, BillBatch, BillToOrder, BillUndo, \
     BillToQuotation, BillCloneQuotation, BillTransitionArchive
-import logging
-from lucterios.documents.models import DocumentContainer
 
 
 class BillAbstractTest(InvoiceTest):
@@ -4365,6 +4367,7 @@ class BillBETest(InvoiceTest):
         Params.setvalue('invoice-vat-mode', 1)
 
     def test_einvoice(self):
+        from diacamma.accounting.system.ubl_xsd import validateUBL
         default_articles(vat_mode=2)
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},  # code 701 - no VAT
                    {'article': 2, 'designation': 'article 2',  # +5% vat => 1.08 - code 707
@@ -4386,3 +4389,8 @@ class BillBETest(InvoiceTest):
 
         doc = DocumentContainer.objects.filter(metadata='Bill-1').first()
         self.assertTrue(doc is not None)
+        pdf_doc = PdfReader(stream=doc.content)
+        self.assertIn('UBL.xml', dict(pdf_doc.attachments).keys())
+        ubl_content = pdf_doc.attachments['UBL.xml']
+        self.assertEqual(1, len(ubl_content))
+        self.assertTrue(validateUBL(ubl_content[0]))

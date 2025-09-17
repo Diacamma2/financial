@@ -1,6 +1,7 @@
 from os.path import join, dirname
 from locale import getlocale, setlocale, LC_ALL
 from io import BytesIO
+from warnings import warn
 
 from django.utils import translation
 from django.template import Template, Context
@@ -9,6 +10,7 @@ from lucterios.contacts.models import LegalEntity
 from lucterios.CORE.parameters import Params
 from diacamma.invoice.models import Vat
 from diacamma.accounting.models import Third
+from lucterios.framework.error import LucteriosException, GRAVE
 
 
 def _generic_generator(template_name, bill):
@@ -54,12 +56,16 @@ def UBL_generator(bill):
 
 
 def UBL_PDF_generator(pdf_content, bill):
+    from diacamma.accounting.system.ubl_xsd import validateUBL
     from pypdf import PdfWriter, PdfReader
     einvoice_content = UBL_generator(bill)
     if einvoice_content:
-        pdf_out = BytesIO()
-        pdf_writer = PdfWriter(clone_from=PdfReader(stream=BytesIO(pdf_content)))
-        pdf_writer.add_attachment(filename="UBL.xml", data=einvoice_content)
-        pdf_writer.write_stream(pdf_out)
-        pdf_content = pdf_out.getvalue()
+        if not validateUBL(einvoice_content):
+            warn("Bad UBL XML")
+        else:
+            pdf_out = BytesIO()
+            pdf_writer = PdfWriter(clone_from=PdfReader(stream=BytesIO(pdf_content)))
+            pdf_writer.add_attachment(filename="UBL.xml", data=einvoice_content.encode())
+            pdf_writer.write_stream(pdf_out)
+            pdf_content = pdf_out.getvalue()
     return pdf_content

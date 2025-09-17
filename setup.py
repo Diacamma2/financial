@@ -59,7 +59,7 @@ setup(
     packages=["diacamma", "diacamma.accounting", "diacamma.invoice", "diacamma.payoff"],
     package_data={
         "diacamma.accounting.migrations": ['*'],
-        "diacamma.accounting.system": ['*', 'locale/*/*/*'],
+        "diacamma.accounting.system": ['*', 'locale/*/*/*', 'ubl_xsd/*/*'],
         "diacamma.accounting": ['build', 'images/*', 'locale/*/*/*', 'help/*'],
         "diacamma.invoice.migrations": ['*'],
         "diacamma.invoice": ['build', 'images/*', 'locale/*/*/*', 'help/*'],
