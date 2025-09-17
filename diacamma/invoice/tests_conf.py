@@ -37,7 +37,7 @@ from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr,
 from diacamma.accounting.models import CostAccounting
 from diacamma.payoff.test_tools import default_bankaccount_fr, default_paymentmethod
 from diacamma.invoice.models import Article, AccountPosting
-from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting, \
+from diacamma.invoice.test_tools import default_articles, default_categories, default_customize, default_accountPosting_fr, \
     clean_cache, default_multiprice
 from diacamma.invoice.views_conf import InvoiceConfFinancial, InvoiceConfCommercial, VatAddModify, VatDel, CategoryAddModify, CategoryDel, ArticleImport, StorageAreaDel, \
     StorageAreaAddModify, AccountPostingAddModify, AccountPostingDel, AutomaticReduceAddModify, AutomaticReduceDel, \
@@ -501,7 +501,7 @@ class ConfigTest(LucteriosTest):
         self.assert_count_equal('categoryBill', 1)
 
     def test_article(self):
-        default_accountPosting()
+        default_accountPosting_fr()
         self.factory.xfer = ArticleList()
         self.calljson('/diacamma.invoice/articleList', {}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'articleList')
@@ -733,7 +733,7 @@ class ConfigTest(LucteriosTest):
     def test_article_import1(self):
         initial_thirds_fr()
         default_categories()
-        default_accountPosting()
+        default_accountPosting_fr()
         csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref','desactif',
 'A123','article N°1','','Kg','code1','stockable','cat 2','Dalton Avrel','POIYT','non',
 'B234','article N°2','23,56','L','code1','stockable','cat 3','','','Oui',
@@ -861,7 +861,7 @@ class ConfigTest(LucteriosTest):
     def test_article_import2(self):
         initial_thirds_fr()
         default_categories()
-        default_accountPosting()
+        default_accountPosting_fr()
         csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref','desactif'
 'A123','article N°1','ssdqs','Kg','code1','stockable','cat 2','Avrel','POIYT',0
 'B234','article N°2','23.56','L','code1','stockable','cat 3','','',1
@@ -926,7 +926,7 @@ class ConfigTest(LucteriosTest):
 
     def test_article_import3(self):
         default_customize()
-        default_accountPosting()
+        default_accountPosting_fr()
         csv_content = """'num','comment','prix','unité','compte','stock?','categorie','fournisseur','ref','color','size','desactif'
 'A123','article N°1','12.45','Kg','code1','stockable','cat 2','Avrel','POIYT','---','10','False'
 'B234','article N°2','23.56','L','code1','stockable','cat 3','','','noir','25','True'
