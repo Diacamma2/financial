@@ -34,9 +34,9 @@ from django.db.models.aggregates import Sum, Max
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.utils.module_loading import import_module
-from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field
+from lucterios.framework.model_fields import FSMIntegerField, transition
 from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField
 from lucterios.framework.tools import get_date_formating, get_url_from_request
 from lucterios.framework.error import LucteriosException, IMPORTANT

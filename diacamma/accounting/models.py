@@ -39,9 +39,9 @@ from django.template import engines
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 from django.db.models.signals import pre_save
-from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel
+from lucterios.framework.model_fields import FSMIntegerField, transition
 from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosScheduler
 from lucterios.framework.tools import get_date_formating, convert_date
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE

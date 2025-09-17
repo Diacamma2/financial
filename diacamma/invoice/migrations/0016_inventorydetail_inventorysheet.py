@@ -3,7 +3,7 @@
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-import django_fsm
+import lucterios.framework.model_fields
 
 
 class Migration(migrations.Migration):
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date', models.DateField(verbose_name='date')),
                 ('comment', models.TextField(verbose_name='comment')),
-                ('status', django_fsm.FSMIntegerField(choices=[(0, 'building'), (1, 'valid')], db_index=True, default=0, verbose_name='status')),
+                ('status', lucterios.framework.model_fields.FSMIntegerField(choices=[(0, 'building'), (1, 'valid')], db_index=True, default=0, verbose_name='status')),
                 ('stockexit', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='exit_storagesheet', to='invoice.StorageSheet', verbose_name='stock exit')),
                 ('stockreceipt', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='receipt_storagesheet', to='invoice.StorageSheet', verbose_name='stock receipt')),
                 ('storagearea', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='invoice.StorageArea', verbose_name='storage area')),

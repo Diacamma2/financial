@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import django_fsm
+import lucterios.framework.model_fields
 
 
 class Migration(migrations.Migration):
@@ -20,6 +20,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='depositslip',
             name='status',
-            field=django_fsm.FSMIntegerField(choices=[(0, 'building deposit'), (1, 'closed deposit'), (2, 'valid deposit')], db_index=True, default=0, verbose_name='status'),
+            field=lucterios.framework.model_fields.FSMIntegerField(choices=[(0, 'building deposit'), (1, 'closed deposit'), (2, 'valid deposit')], db_index=True, default=0, verbose_name='status'),
         ),
     ]

@@ -42,9 +42,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.utils.dateformat import DateFormat
 from django.utils import timezone
-from django_fsm import FSMIntegerField, transition
 
 from lucterios.framework.models import LucteriosModel, correct_db_field, LucteriosLogEntry
+from lucterios.framework.model_fields import FSMIntegerField, transition
 from lucterios.framework.model_fields import get_value_if_choices, LucteriosVirtualField, LucteriosDecimalField, get_obj_contains
 from lucterios.framework.error import LucteriosException, IMPORTANT, GRAVE
 from lucterios.framework.signal_and_lock import Signal
