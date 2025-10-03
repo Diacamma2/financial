@@ -191,11 +191,8 @@ class Third(LucteriosModel, CustomizeObject):
         if len(accounts) == 0:
             raise LucteriosException(IMPORTANT, _("third has not correct account"))
         third_account = None
-        while third_account is None:
-            for account in accounts:
-                third_account = ChartsAccount.get_account(account.code, fiscal_year)
-                if third_account is not None:
-                    break
+        for account in accounts:
+            third_account = ChartsAccount.get_account(account.code, fiscal_year)
             if third_account is not None:
                 break
         if third_account is None:
@@ -1220,7 +1217,8 @@ class EntryAccount(LucteriosModel):
             if serial_val != '':
                 new_line = EntryLineAccount.get_entrylineaccount(serial_val)
                 new_line.entry = self
-                res._result_cache.append(new_line)
+                if new_line.account.year == self.year:
+                    res._result_cache.append(new_line)
         return res
 
     def save_entrylineaccounts(self, serial_vals, check_integrity=True):

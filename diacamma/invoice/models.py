@@ -1636,19 +1636,21 @@ class Bill(Supporting):
         return nb_link_created
 
     def convert_payoff(self, new_bill):
-        serial_vals = []
+        payoff_lines = []
         amount = 0.0
-        third_account = self.get_third_account(current_system_account().get_customer_mask(), self.fiscal_year)
+        third_account = self.get_third_account(current_system_account().get_customer_mask(), new_bill.fiscal_year)
         for payoff in self.payoff_set.all():
             for third_line in payoff.entry.entrylineaccount_set.filter(account__code__regex=self.get_third_mask()):
-                if third_line.account != third_account:
-                    amount += third_line.amount
-                    third_line.amount = -1 * third_line.amount
-                    third_line.id = 0
-                    serial_vals.append(third_line.get_serial())
-        if len(serial_vals) > 0:
-            serial_vals.append(EntryLineAccount.add_serial(third_account.id, amount if amount < -0.001 else 0, amount if amount > 0.001 else 0, self.third.id))
+                if (third_line.third.id == self.third.id) and (third_line.account.code != third_account.code):
+                    amount += third_line.amount * third_line.account.credit_debit_way()
+                    payoff_lines.append([third_line.account.code, third_line.amount * third_line.account.credit_debit_way()])
+        if len(payoff_lines) > 0:
+            serial_vals = []
+            serial_vals.append(EntryLineAccount.add_serial(third_account.id, abs(amount) if amount < -0.001 else 0, abs(amount) if amount > 0.001 else 0, self.third.id))
             new_entry = EntryAccount.objects.create(year=FiscalYear.get_current(new_bill.date), date_value=new_bill.date, designation=_('%s supply transfer') % self, journal=Journal.objects.get(id=Journal.DEFAULT_OTHER))
+            for payoff_line in payoff_lines:
+                current_third_account = self.get_third_account(payoff_line[0], new_bill.fiscal_year)
+                serial_vals.append(EntryLineAccount.add_serial(current_third_account.id, abs(payoff_line[1]) if payoff_line[1] > -0.001 else 0, abs(payoff_line[1]) if payoff_line[1] < 0.001 else 0, self.third.id))
             serial_vals = "\n".join(serial_vals)
             _no_change, debit_rest, credit_rest = new_entry.serial_control(serial_vals)
             if abs(debit_rest - credit_rest) >= 0.001:

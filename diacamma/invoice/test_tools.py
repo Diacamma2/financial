@@ -79,7 +79,7 @@ def default_accountPosting_be():
     AccountPosting.objects.create(name="code_sub", sell_account="700000", provision_third_account="419100")
 
 
-def default_articles(with_provider=False, with_storage=False, lotof=False, vat_mode=0):
+def default_articles(with_provider=False, with_storage=False, lotof=False, vat_mode=0, with_provision=False):
     default_costaccounting()
     if get_accounting_system() == "FR":
         default_accountPosting_fr()
@@ -104,6 +104,10 @@ def default_articles(with_provider=False, with_storage=False, lotof=False, vat_m
                                   price="1.31", unit="", isdisabled=False, accountposting_id=4, vat=None, stockable=2 if with_storage else 0, qtyDecimal=0)
     art5 = Article.objects.create(reference='ABC5', designation="Article 05",
                                   price="64.10", unit="m", isdisabled=True, accountposting_id=1, vat=vat2, stockable=0, qtyDecimal=2)
+    if with_provision:
+        create_account(['4191'], 1)
+        Article.objects.create(reference='ABC6', designation="Article 06",
+                               price="25.0", unit="", isdisabled=False, accountposting_id=5, vat=None, stockable=0, qtyDecimal=0)
     cat_list = Category.objects.all()
     if len(cat_list) > 0:
         art1.categories.set(cat_list.filter(id__in=(1,)))
