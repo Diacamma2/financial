@@ -2219,7 +2219,7 @@ class Detail(LucteriosModel):
     def get_vat(self):
         if self.id is None:
             return 0
-        val = currency_round((float(self.price) * float(self.quantity) - float(self.reduce)) * self.get_real_vat_rate())
+        val = currency_round((float(self.price) * float(self.quantity) - float(self.reduce)) * float(self.vta_rate))
         return val
 
     # TOTAL

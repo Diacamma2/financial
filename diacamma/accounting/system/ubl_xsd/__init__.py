@@ -8,10 +8,12 @@ from io import BytesIO
 from functools import partial
 from warnings import warn
 from os.path import dirname, join, isfile
+from logging import getLogger
 
 prefix_ns_map = {
     # Main
-    "inv": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+    "ubl": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
+    "int": "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2",
     # Common
     "cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2",
     "cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
@@ -39,4 +41,7 @@ def validateUBL(xml_content):
         return False
     with open(schema_path, "rb") as stream:
         schema = etree.XMLSchema(file=stream)
-    return schema.validate(tree)
+    ret_val = schema.validate(tree)
+    if not ret_val:
+        getLogger("diacamma.accounting").error(schema.error_log)
+    return ret_val

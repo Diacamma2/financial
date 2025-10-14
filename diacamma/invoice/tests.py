@@ -39,7 +39,7 @@ from lucterios.CORE.models import SavedCriteria, LucteriosUser
 from lucterios.CORE.parameters import Params
 from lucterios.mailing.tests import configSMTP, TestReceiver, decode_b64
 from lucterios.mailing.models import Message
-from lucterios.contacts.models import CustomField
+from lucterios.contacts.models import CustomField, LegalEntity
 from lucterios.documents.models import DocumentContainer
 
 from diacamma.accounting.test_tools import initial_thirds_fr, default_compta_fr,\
@@ -4601,6 +4601,11 @@ class BillVATTest(BillAbstractTest):
         logger.setLevel(logging.INFO)
         logger.removeHandler(hdl)
 
+        self.factory.xfer = BillPrint()
+        self.calljson('/diacamma.invoice/billPrint', {'bill': '1', 'PRINT_PERSITENT_MODE': 0, 'PRINT_MODE': 3, 'MODEL': 8}, False)
+        self.assert_observer('core.print', 'diacamma.invoice', 'billPrint')
+        self.save_pdf()
+
 
 class BillBETest(InvoiceTest):
 
@@ -4618,6 +4623,9 @@ class BillBETest(InvoiceTest):
 
     def test_einvoice(self):
         from diacamma.accounting.system.ubl_xsd import validateUBL
+        current_legal = LegalEntity.objects.get(id=1)
+        current_legal.legal_identification = "123456789"
+        current_legal.save()
         default_articles(vat_mode=2)
         details = [{'article': 1, 'designation': 'article 1', 'price': '22.50', 'quantity': 3, 'reduce': '5.0'},  # code 701 - no VAT
                    {'article': 2, 'designation': 'article 2',  # +5% vat => 1.08 - code 707
@@ -4644,3 +4652,6 @@ class BillBETest(InvoiceTest):
         ubl_content = pdf_doc.attachments['UBL.xml']
         self.assertEqual(1, len(ubl_content))
         self.assertTrue(validateUBL(ubl_content[0]))
+        filename = self._get_pdf_filename(None).replace(".pdf", "_UBL.xml")
+        with open(filename, "w") as ubl_writer:
+            ubl_writer.write(ubl_content[0].decode())
