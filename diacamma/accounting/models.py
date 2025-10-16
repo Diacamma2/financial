@@ -2061,7 +2061,7 @@ def accounting_checkparam():
                                meta='("accounting","ChartsAccount","import diacamma.accounting.tools;django.db.models.Q(code__regex=diacamma.accounting.tools.current_system_account().get_third_mask()) & django.db.models.Q(year__is_actif=True)", "code", False)')
     Parameter.check_and_create(name='accounting-datecurrent', typeparam=Parameter.TYPE_BOOL, title=_("accounting-datecurrent"), args="{}", value='True')
     Parameter.check_and_create(name='accounting-VAT-arrangements', typeparam=Parameter.TYPE_SELECT, title=_("accounting-VAT-arrangements"),
-                               args="{'Enum':2, 'Min':-1}", value='-1', param_titles=(_("accounting-VAT-arrangements.0"), _("accounting-VAT-arrangements.1")))
+                               args="{'Enum':2, 'Min':0}", value='-1', param_titles=(_("accounting-VAT-arrangements.-1"), _("accounting-VAT-arrangements.0"), _("accounting-VAT-arrangements.1")))
 
     LucteriosGroup.redefine_generic(_("# accounting (administrator)"), FiscalYear.get_permission(True, True, True),
                                     ChartsAccount.get_permission(True, True, True), Budget.get_permission(True, True, True),
