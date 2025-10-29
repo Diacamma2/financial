@@ -28,7 +28,7 @@ from django.utils.translation import gettext_lazy as _
 
 from diacamma.invoice.models import Bill
 
-name = _("bill")
+name = _("bill with VAT")
 kind = 2
 modelname = Bill.get_long_name()
 value = """
@@ -69,7 +69,7 @@ value = """
     {[b]}%(designation)s{[/b]}
     </columns>
     <columns width="20.0" display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="center" line_height="10" font_family="sans-serif" font_weight="" font_size="9">
-    {[b]}%(price)s{[/b]}
+    {[b]}%(pre-tax price)s{[/b]}
     </columns>
     <columns width="15.0" display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="center" line_height="10" font_family="sans-serif" font_weight="" font_size="9">
     {[b]}%(Qty)s{[/b]}
@@ -77,8 +77,11 @@ value = """
     <columns width="20.0" display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="center" line_height="10" font_family="sans-serif" font_weight="" font_size="9">
     {[b]}%(reduce)s{[/b]}
     </columns>
+    <columns width="10.0" display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="center" line_height="10" font_family="sans-serif" font_weight="" font_size="9">
+    {[b]}%(VAT)s{[/b]}
+    </columns>
     <columns width="20.0" display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="center" line_height="10" font_family="sans-serif" font_weight="" font_size="9">
-    {[b]}%(total)s{[/b]}
+    {[b]}%(total incl. taxes)s{[/b]}
     </columns>
     <rows data="detail_set">
         <cell display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="start" line_height="7" font_family="sans-serif" font_weight="" font_size="7">
@@ -97,15 +100,25 @@ value = """
 #reduce_txt
         </cell>
         <cell display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="end" line_height="7" font_family="sans-serif" font_weight="" font_size="7">
-#total
+#vat_rate_txt
+        </cell>
+        <cell display_align="center" border_color="black" border_style="solid" border_width="0.2" text_align="end" line_height="7" font_family="sans-serif" font_weight="" font_size="7">
+#total_incltax
         </cell>
     </rows>
 </table>
-<text height="15.0" width="120.0" top="220.0" left="00.0" padding="1.0" spacing="0.0" border_color="black" border_style="" border_width="0.2" text_align="right" line_height="9" font_family="sans-serif" font_weight="" font_size="9">
-{[i]}%(VAT not applicable)s{[/i]}{[br/]}
+<text height="15.0" width="100.0" top="220.0" left="00.0" padding="1.0" spacing="0.0" border_color="black" border_style="" border_width="0.2" text_align="right" line_height="9" font_family="sans-serif" font_weight="" font_size="9">
+{[i]}#title_vat_details{[/i]}{[br/]}
+{[i]}%(total VAT)s{[/i]}{[br/]}
+{[i]}%(total excl. taxes)s{[/i]}{[br/]}
+</text>
+<text height="15.0" width="15.0" top="220.0" left="100.0" padding="1.0" spacing="0.0" border_color="black" border_style="" border_width="0.2" text_align="right" line_height="9" font_family="sans-serif" font_weight="" font_size="9">
+#vat_details{[br/]}
+#vat_sum{[br/]}
+#total_excltax{[br/]}
 </text>
 <text height="15.0" width="30.0" top="220.0" left="140.0" padding="1.0" spacing="0.0" border_color="black" border_style="" border_width="0.2" text_align="right" line_height="9" font_family="sans-serif" font_weight="" font_size="9">
-{[u]}{[b]}%(total)s{[/b]}{[/u]}{[br/]}
+{[u]}{[b]}%(total incl. taxes)s{[/b]}{[/u]}{[br/]}
 {[u]}{[b]}%(total payed)s{[/b]}{[/u]}{[br/]}
 {[u]}{[b]}%(rest to pay)s{[/b]}{[/u]}{[br/]}
 </text>
@@ -122,11 +135,14 @@ value = """
 """ % {
         'article': _('article'),
         'designation': _('designation'),
-        'price': _('price'),
+        'pre-tax price': _('pre-tax price'),
         'Qty': _('Qty'),
+        'VAT': _('VAT'),
         'reduce': ('reduce'),
         'total': ('total'),
-        'VAT not applicable': _('VAT not applicable'),
+        'total VAT': _('total VAT'),
+        'total excl. taxes': _('total excl. taxes'),
+        'total incl. taxes': _('total incl. taxes'),
         'total payed': _('total payed'),
         'rest to pay': _('rest to pay')
 }

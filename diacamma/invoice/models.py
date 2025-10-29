@@ -1364,6 +1364,8 @@ class Bill(Supporting):
                     cost_account = CostAccounting.objects.filter(status=CostAccounting.STATUS_OPENED, is_default=True).first()
                     if cost_account is not None:
                         detail_cost = cost_account.id
+                if (detail_cost is None) and Params.getvalue("accounting-needcost"):
+                    raise LucteriosException(IMPORTANT, _("Cost accounting is mandatory !"))
                 detail_account = ChartsAccount.get_account(detail_code, self.fiscal_year)
                 if detail_account is None:
                     raise LucteriosException(IMPORTANT, _("article has code account unknown!"))
