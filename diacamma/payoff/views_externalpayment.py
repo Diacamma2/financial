@@ -23,7 +23,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
-from datetime import datetime, timedelta
+from datetime import datetime, timezone as tzdatetime, timedelta, tzinfo
 import logging
 from json import dumps
 
@@ -257,9 +257,12 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
         saved = locale.setlocale(locale.LC_ALL)
         locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
         try:
-            payoff_date = datetime.strptime(self.getparam("payment_date", '').replace('PDT', 'GMT'), '%H:%M:%S %b %d, %Y %Z')
-            payoff_date += timedelta(hours=7)
-            return timezone.make_aware(payoff_date)
+            payment_date = self.getparam("payment_date", '')
+            payoff_date = datetime.strptime(payment_date.replace('PDT', 'GMT'), '%H:%M:%S %b %d, %Y %Z')
+            if 'PDT' in payment_date:
+                payoff_date += timedelta(hours=7)
+            ret_date = timezone.make_aware(payoff_date, timezone=tzdatetime.utc)
+            return ret_date
         except Exception:
             logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.getparam("payment_date", ''))
             return timezone.now()
@@ -341,7 +344,7 @@ class ValidationPaymentMoneticoPaiement(ValidationPaymentGeneric):
     def date(self):
         try:
             payoff_date = datetime.strptime(self.getparam("date", ''), '%d/%m/%Y_a_%H:%M:%S')
-            return timezone.make_aware(payoff_date)
+            return timezone.make_aware(payoff_date, timezone=tzdatetime.utc)
         except Exception:
             logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.getparam("date", ''))
             return timezone.now()
@@ -419,7 +422,8 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
     @property
     def date(self):
         try:
-            return datetime.strptime(self.helloasso_data['date'][:19], '%Y-%m-%dT%H:%M:%S')
+            payoff_date = datetime.strptime(self.helloasso_data['date'][:19], '%Y-%m-%dT%H:%M:%S')
+            return timezone.make_aware(payoff_date, timezone=tzdatetime.utc)
         except Exception:
             logging.getLogger('diacamma.payoff').exception("problem of date %s" % self.helloasso_data['date'])
             return timezone.now()

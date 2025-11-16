@@ -46,11 +46,15 @@ class SupportingEditor(LucteriosEditor):
     def add_email_status(self, xfer):
         email_info = self.item.get_internal_value('email')
         if email_info != '':
+            email_text = _('Email sended at %s') % get_date_formating(datetime.fromisoformat(email_info))
+            username = self.item.get_internal_value('username')
+            if username != '':
+                email_text += _(' by %s') % username
             lbl = XferCompLabelForm('lbl_email_info')
             lbl.set_color('blue')
             lbl.set_italic()
             lbl.set_location(1, xfer.get_max_row() + 1, 4)
-            lbl.set_value(_('Email sended at %s') % get_date_formating(datetime.fromisoformat(email_info)))
+            lbl.set_value(email_text)
             xfer.add_component(lbl)
 
     def show_third(self, xfer, right=''):

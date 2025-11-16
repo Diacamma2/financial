@@ -238,6 +238,7 @@ class PayableEmail(XferContainerAcknowledge):
         html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
         html_message += self.item.get_email_footer(self.request)
         html_message += "</html>"
+        self.item.set_context(self)
         self.item.send_email(subject, html_message, model)
 
     def fillresponse_sendmultimessages(self, subject, message, model):

@@ -541,7 +541,7 @@ class BillToBill(XferContainerAcknowledge):
             commentcmp = XferCompMemo('comment')
             commentcmp.description = _('comment')
             commentcmp.set_location(1, 2)
-            commentcmp.set_needed(True)
+            commentcmp.set_needed(False)
             commentcmp.with_hypertext = True
             commentcmp.set_value(self.item.comment)
             dlg.add_component(commentcmp)
@@ -551,7 +551,7 @@ class BillToBill(XferContainerAcknowledge):
 
     def fillresponse(self):
         if (self.item.bill_type in (Bill.BILLTYPE_QUOTATION, Bill.BILLTYPE_ORDER)) and (self.item.status == Bill.STATUS_VALID) and self.confirme_with_date():
-            new_bill = self.item.convert_to_bill(self.getparam("billdate"), self.getparam("comment"))
+            new_bill = self.item.convert_to_bill(self.getparam("billdate"), self.getparam("comment", ""))
             if new_bill is not None:
                 self.redirect_action(ActionsManage.get_action_url('invoice.Bill', 'Show', self), params={self.field_id: new_bill.id})
 

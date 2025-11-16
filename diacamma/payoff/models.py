@@ -204,7 +204,7 @@ class Supporting(LucteriosModel):
         return None
 
     def set_context(self, xfer):
-        setattr(self, 'last_user', xfer.request.user)
+        self.last_user = xfer.request.user
 
     def get_saved_pdfreport(self, recreate):
         metadata = '%s-%d' % (self.__class__.__name__, self.id)
@@ -270,7 +270,10 @@ class Supporting(LucteriosModel):
             self.email_sended()
 
     def email_sended(self):
-        self.set_internal_value("email", datetime.today().isoformat())
+        self.set_internal_value("email", datetime.utcnow().isoformat())
+        last_user = getattr(self, 'last_user', None)
+        if (last_user is not None) and (last_user.id is not None) and last_user.is_authenticated:
+            self.set_internal_value("username", last_user.username)
 
     def get_document_filename(self):
         return remove_accent(self.get_payment_name(), True)

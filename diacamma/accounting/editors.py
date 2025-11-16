@@ -62,9 +62,9 @@ class ThirdEditor(LucteriosEditor):
         xfer.tab = 0
         old_item = xfer.item
         xfer.item = self.item.contact.get_final_child()
-        xfer.filltab_from_model(1, 1, True, ['address', ('postal_code', 'city'), 'country', ('tel1', 'tel2')])
+        xfer.filltab_from_model(1, 1, True, ['address', ('postal_code', 'city'), 'country', ('tel1', 'tel2'), 'email'])
         btn = XferCompButton('show')
-        btn.set_location(2, 5, 3, 1)
+        btn.set_location(3, 4, 3, 2)
         modal_name = xfer.item.__class__.get_long_name()
         field_id = xfer.item.__class__.__name__.lower()
         if field_id == 'legalentity':
