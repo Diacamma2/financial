@@ -477,6 +477,13 @@ class FiscalYearLedger(FiscalYearReport):
                 third_mask = third_mask[:num_letter]
                 self.params['filtercode'] = third_mask
         FiscalYearReport.fill_filterCode(self)
+        self.full_description = self.getparam('full_description', False)
+        edt = XferCompCheck('full_description')
+        edt.set_value(self.full_description)
+        edt.set_location(1, self.get_max_row() + 1)
+        edt.description = _("full description")
+        edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        self.add_component(edt)
 
     def define_gridheader(self):
         grid_name = 'report_%d' % self.item.id
@@ -519,6 +526,7 @@ class FiscalYearLedger(FiscalYearReport):
         self.last_total = [0.0, 0.0]
         self.last_third_total = [0.0, 0.0]
         for line in EntryLineAccount.objects.filter(self.filter).select_related('account', 'entry').distinct().order_by('account__code', 'third', 'entry__date_value'):
+            line.full_eval = self.full_description
             if self.last_account != line.account:
                 self._add_total_account(True)
                 self._add_total_account(False)

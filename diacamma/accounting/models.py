@@ -1460,7 +1460,7 @@ class EntryLineAccount(LucteriosModel):
 
     def get_designation_ref_with_third(self):
         val = self.entry.designation
-        if not self.account.is_third:
+        if getattr(self, 'full_eval', False) and not self.account.is_third:
             thirds = list(set([line.get_thirdstr_in_cache() for line in self.entry.entrylineaccount_set.filter(third__isnull=False)]))
             thirds.sort()
             if len(thirds) > 0:
