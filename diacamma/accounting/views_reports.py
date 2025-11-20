@@ -456,6 +456,15 @@ class FiscalYearLedger(FiscalYearReport):
         self.last_total = [0.0, 0.0]
         self.line_idx = 1
 
+    def _add_full_description(self):
+        self.full_description = self.getparam('full_description', False)
+        edt = XferCompCheck('full_description')
+        edt.set_value(self.full_description)
+        edt.set_location(1, self.get_max_row() + 1)
+        edt.description = _("full description")
+        edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        self.add_component(edt)
+
     def fill_filterCode(self):
         row = self.get_max_row() + 1
         self.only_nonull = self.getparam('only_nolink', False)
@@ -477,13 +486,7 @@ class FiscalYearLedger(FiscalYearReport):
                 third_mask = third_mask[:num_letter]
                 self.params['filtercode'] = third_mask
         FiscalYearReport.fill_filterCode(self)
-        self.full_description = self.getparam('full_description', False)
-        edt = XferCompCheck('full_description')
-        edt.set_value(self.full_description)
-        edt.set_location(1, self.get_max_row() + 1)
-        edt.description = _("full description")
-        edt.set_action(self.request, self.__class__.get_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
-        self.add_component(edt)
+        self._add_full_description()
 
     def define_gridheader(self):
         grid_name = 'report_%d' % self.item.id
@@ -962,6 +965,7 @@ class CostAccountingLedger(CostAccountingReport, FiscalYearLedger):
 
     def fill_filterCode(self):
         FiscalYearReport.fill_filterCode(self)
+        self._add_full_description()
 
 
 @ActionsManage.affect_grid(_("Trial balance"), short_icon='mdi:mdi-printer-pos-outline', unique=SELECT_MULTI, modal=FORMTYPE_NOMODAL)

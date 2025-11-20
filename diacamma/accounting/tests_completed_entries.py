@@ -596,12 +596,12 @@ class FiscalYearTest(EntryTest):
         self.assert_json_equal('', 'report_1/@40/id', 'L0041-0')
         self.assert_json_equal('', 'report_1/@40/designation_ref_with_third', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[512] 512{[/b]}{[/u]}')
         self.assert_json_equal('', 'report_1/@42/id', 'L0043-3')
-        self.assert_json_equal('', 'report_1/@42/designation_ref_with_third', "regement depense 1 (Minimum){[br/]}ch N\u00b034543")
+        self.assert_json_equal('', 'report_1/@42/designation_ref_with_third', "regement depense 1{[br/]}ch N\u00b034543")
 
         self.assert_json_equal('', 'report_1/@74/id', 'L0075-0')
         self.assert_json_equal('', 'report_1/@74/designation_ref_with_third', '&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;{[u]}{[b]}[707] 707{[/b]}{[/u]}')
         self.assert_json_equal('', 'report_1/@75/id', 'L0076-7')
-        self.assert_json_equal('', 'report_1/@75/designation_ref_with_third', "vente 1 (Dalton Joe)")
+        self.assert_json_equal('', 'report_1/@75/designation_ref_with_third', "vente 1")
 
         self.assert_count_equal('#report_1/actions', 1)
         self.assert_action_equal('GET', '#report_1/actions/@0', ('Editer', 'mdi:mdi-text-box-outline', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_1"}))
@@ -618,8 +618,11 @@ class FiscalYearTest(EntryTest):
 
     def test_ledger_filter(self):
         self.factory.xfer = FiscalYearLedger()
-        self.calljson('/diacamma.accounting/fiscalYearLedger', {'begin': '2015-02-22', 'end': '2015-02-28'}, False)
+        self.calljson('/diacamma.accounting/fiscalYearLedger', {'begin': '2015-02-22', 'end': '2015-02-28', 'full_description': True}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'fiscalYearLedger')
+        self.assert_count_equal('report_1', 22)
+        self.assert_json_equal('', 'report_1/@13/id', 'L0014-8')
+        self.assert_json_equal('', 'report_1/@13/designation_ref_with_third', "regement vente 1 (Dalton Joe){[br/]}BP N°654321")
         self._check_result_with_filter()
 
     def test_ledger_print(self):
@@ -1485,7 +1488,7 @@ class CostAccountingTest(EntryTest):
         self.factory.xfer = CostAccountingLedger()
         self.calljson('/diacamma.accounting/costAccountingLedger', {'costaccounting': '1;2'}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingLedger')
-        self.assert_count_equal('', 4 + 2 * 2)
+        self.assert_count_equal('', 5 + 2 * 2)
         self.assertTrue('__tab_2' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_3' in self.json_data.keys(), self.json_data.keys())
         self.assert_count_equal('report_1', 5)
@@ -1496,9 +1499,9 @@ class CostAccountingTest(EntryTest):
         self.assert_action_equal('GET', '#report_2/actions/@0', ('Editer', 'mdi:mdi-text-box-outline', "diacamma.accounting", "fiscalYearLedgerShow", "0", '1', '0', {"gridname": "report_2"}))
 
         self.factory.xfer = CostAccountingLedger()
-        self.calljson('/diacamma.accounting/costAccountingLedger', {'costaccounting': '2', 'begin_date': '2015-02-14', 'end_date': '2015-02-20'}, False)
+        self.calljson('/diacamma.accounting/costAccountingLedger', {'costaccounting': '2', 'begin_date': '2015-02-14', 'end_date': '2015-02-20', "full_description": True}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'costAccountingLedger')
-        self.assert_count_equal('', 5 + 2 * 1)
+        self.assert_count_equal('', 6 + 2 * 1)
         self.assertTrue('__tab_1' in self.json_data.keys(), self.json_data.keys())
         self.assertFalse('__tab_2' in self.json_data.keys(), self.json_data.keys())
         self.assert_count_equal('report_2', 5)
