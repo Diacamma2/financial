@@ -204,7 +204,8 @@ class Supporting(LucteriosModel):
         return None
 
     def set_context(self, xfer):
-        self.last_user = xfer.request.user
+        if (xfer.request.user is not None) and (xfer.request.user.id is not None):
+            self.last_user = xfer.request.user
 
     def get_saved_pdfreport(self, recreate):
         metadata = '%s-%d' % (self.__class__.__name__, self.id)
