@@ -77,16 +77,16 @@ def _add_type_filter_selector(xfer, row, col=0):
         category = int(category)
         bill_type = int(bill_type)
     else:
-        category = None
+        category = 0
         bill_type = int(type_filter)
-    if bill_type == Bill.BILLTYPE_CART:
+    if (bill_type == Bill.BILLTYPE_CART) or (Params.getvalue('invoice-cart-active') and (bill_type == Bill.BILLTYPE_ALL)):
         Bill.clean_timeout_cart()
     has_allready_cart = False
     type_select = [(str(bill_type), title) for bill_type, title in Bill.SELECTION_BILLTYPES if Params.getvalue('invoice-cart-active') or bill_type != Bill.BILLTYPE_CART]
     for cat_bill in CategoryBill.objects.all().order_by('is_default'):
         type_pos = 1
-        for type_num, _description, type_value in cat_bill.get_title_info():
-            type_select.insert(type_pos, ("%d|%d" % (cat_bill.id, type_num), "[%s]%s" % (cat_bill.name, type_value)))
+        for type_num, _description, type_value in cat_bill.get_title_info(add_all=True):
+            type_select.insert(type_pos, ("%d|%d" % (cat_bill.id, type_num), "[%s] %s" % (cat_bill.name, type_value)))
             has_allready_cart = has_allready_cart or type_num == Bill.BILLTYPE_CART
             type_pos += 1
     if has_allready_cart:
@@ -138,7 +138,9 @@ def _add_bill_filter(xfer, row, with_third=False):
     elif status_filter != Bill.STATUS_ALL:
         current_filter &= Q(status=status_filter)
     if bill_type != Bill.BILLTYPE_ALL:
-        current_filter &= Q(bill_type=bill_type) & Q(categoryBill_id=category)
+        current_filter &= Q(bill_type=bill_type)
+    if category != 0:
+        current_filter &= Q(categoryBill_id=category)
     return current_filter, status_filter
 
 

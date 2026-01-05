@@ -916,12 +916,14 @@ class CategoryBill(LucteriosModel):
         multi_emailinfo[str(type_num)]['message'] = emailmessage
         self.multi_emailinfo = dumps(multi_emailinfo)
 
-    def get_title_info(self):
+    def get_title_info(self, add_all=False):
         list_types = [type_item for type_item in Bill.LIST_BILLTYPES if (type_item[0] != Bill.BILLTYPE_RECEIPT) and ((Params.getvalue('invoice-cart-active') and self.is_default) or (type_item[0] != Bill.BILLTYPE_CART))]
         if (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_NONE) or (self.workflow_order == self.WORKFLOWS_NEVER_ORDER):
             list_types = [type_item for type_item in list_types if type_item[0] != Bill.BILLTYPE_ORDER]
         for type_num, type_title in list_types:
             yield type_num, type_title, self.get_title(type_num)
+        if add_all:
+            yield Bill.BILLTYPE_ALL, '---', '---'
 
     def get_titles_txt(self):
         result = []
@@ -1500,6 +1502,12 @@ class Bill(Supporting):
                 query_cart &= Q(third=third)
             for bill_cart in Bill.objects.filter(query_cart):
                 bill_cart.delete()
+        if third is None:
+            for bill_cart in Bill.objects.filter(Q(status=Bill.STATUS_BUILDING) & Q(bill_type=Bill.BILLTYPE_CART)):
+                if bill_cart.detail_set.count() == 0:
+                    user = bill_cart.third.contact.individual.user if bill_cart.third.contact.individual is not None else None
+                    if (user is not None) and (user.last_login is not None) and ((user.last_login + timedelta(hours=1)) < timezone.now()):
+                        bill_cart.delete()
 
     def send_card_email(self):
         from diacamma.payoff.views import can_send_email
@@ -2939,7 +2947,7 @@ def invoice_checkparam():
     Preference.check_and_create(name="invoice-status", typeparam=Preference.TYPE_INTEGER, title=_("invoice-status"),
                                 args="{'Multi':False}", value=Bill.STATUS_BUILDING_VALID, meta='("","","%s","",False)' % (Bill.SELECTION_STATUS,))
     Preference.check_and_create(name="invoice-billtype", typeparam=Preference.TYPE_STRING, title=_("invoice-billtype"),
-                                args="{'Multi':False}", value=Bill.BILLTYPE_ALL, meta='("","","import diacamma.invoice.models;[(str(bill_type), title) for bill_type, title in diacamma.invoice.models.Bill.SELECTION_BILLTYPES]+[(\'%d|%d\' % (cat_bill.id, type_num), \'[%s]%s\' % (cat_bill.name, type_value)) for cat_bill in diacamma.invoice.models.CategoryBill.objects.all() for type_num, _description, type_value in cat_bill.get_title_info()]","",False)')
+                                args="{'Multi':False}", value=Bill.BILLTYPE_ALL, meta='("","","import diacamma.invoice.models;[(str(bill_type), title) for bill_type, title in diacamma.invoice.models.Bill.SELECTION_BILLTYPES]+[(\'%d|%d\' % (cat_bill.id, type_num), \'[%s]%s\' % (cat_bill.name, type_value)) for cat_bill in diacamma.invoice.models.CategoryBill.objects.all() for type_num, _description, type_value in cat_bill.get_title_info(add_all=True)]","",False)')
 
 
 @Signal.decorate('vat_arrangements')

@@ -1798,7 +1798,7 @@ class StorageTest(InvoiceTest):
         self.factory.xfer = BillList()
         self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
-        self.assert_count_equal('bill', 1)
+        self.assert_count_equal('bill', 0)
 
         self.factory.xfer = CurrentCart()
         self.calljson('/diacamma.invoice/currentCart', {}, False)
@@ -1819,16 +1819,6 @@ class StorageTest(InvoiceTest):
         self.assert_json_equal('LABELFORM', 'ref_article_4', "ABC4")
         self.assert_json_equal('LABELFORM', 'price_article_4', 1.31)
         self.assert_json_equal('LABELFORM', 'no_article_4', "épuisé")
-
-        self.factory.xfer = BillList()
-        self.calljson('/diacamma.invoice/billList', {'status_filter': -1, 'type_filter': -1}, False)
-        self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
-        self.assert_count_equal('bill', 1)
-        self.assert_json_equal('', 'bill/@0/id', 2)
-        self.assert_json_equal('', 'bill/@0/bill_type', 5)
-        self.assert_json_equal('', 'bill/@0/third', "MISTER jack")
-        self.assert_json_equal('', 'bill/@0/total', 0.00)
-        self.assert_json_equal('', 'bill/@0/status', 0)
 
         self.factory.xfer = CurrentCartAddArticle()
         self.calljson('/diacamma.invoice/currentCartAddArticle', {'article': 1, "bill": 2, "qty_article_1": 10}, False)

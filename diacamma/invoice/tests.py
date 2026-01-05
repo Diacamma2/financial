@@ -1934,8 +1934,8 @@ class BillMainTest(BillAbstractTest):
         self.assert_observer('core.custom', 'diacamma.invoice', 'billList')
         self.assert_select_equal('type_filter', {'-1': None,
                                                  '0': "devis", '4': "commande", '1': "facture", '2': "avoir", '3': "reçu",
-                                                 '2|5': "[2nd type]Type C", '2|0': "[2nd type]Type Q", '2|1': "[2nd type]Type B", '2|2': "[2nd type]Type A",
-                                                 '1|0': "[1st type]QQQ", '1|1': "[1st type]BBB", '1|2': "[1st type]AAA",
+                                                 '2|5': "[2nd type] Type C", '2|0': "[2nd type] Type Q", '2|1': "[2nd type] Type B", '2|2': "[2nd type] Type A", '2|-1': "[2nd type] ---",
+                                                 '1|0': "[1st type] QQQ", '1|1': "[1st type] BBB", '1|2': "[1st type] AAA", '1|-1': "[1st type] ---",
                                                  })
         self.assert_grid_equal('bill', {"bill_type": "type de facture", 'billtype': 'titre du type', "num_txt": "N°", "date": "date", "third": "tiers", "comment": "commentaire", "total": "total", "status": "statut"}, 1)
         self.assert_json_equal('', 'bill/@0/bill_type', 0)

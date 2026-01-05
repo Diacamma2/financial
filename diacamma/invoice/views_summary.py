@@ -301,7 +301,10 @@ class CurrentCart(XferContainerCustom):
         self.add_component(lbl)
         lbl = XferCompLabelForm('categories_article_%d' % article.id)
         lbl.set_location(2, row + 1)
-        lbl.set_value([str(cat) for cat in article.categories.all()])
+        cats_text = []
+        for cat in article.categories.all():
+            cats_text.append(str(cat))
+        lbl.set_value(cats_text)
         lbl.description = _('categories')
         self.add_component(lbl)
         lbl = XferCompLabelForm('price_article_%d' % article.id)
