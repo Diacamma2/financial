@@ -344,10 +344,10 @@ class CategoryBillEditor(SupportingEditor):
         xfer.move_components('with_multi_emailinfo', 0, 20)
         comp_with_multi_emailinfo = xfer.get_components('with_multi_emailinfo')
         comp_with_multi_emailinfo.set_action(xfer.request, xfer.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
+        row = comp_with_multi_emailinfo.row + 2
         if xfer.item.with_multi_emailinfo:
             xfer.remove_component('emailsubject')
             xfer.remove_component('emailmessage')
-            row = comp_with_multi_emailinfo.row + 2
             for type_num, type_title, _type_value in xfer.item.get_title_info():
                 if type_num == Bill.BILLTYPE_CART:
                     continue
@@ -372,6 +372,7 @@ class CategoryBillEditor(SupportingEditor):
             xfer.move_components('emailmessage', 0, 21)
             comp_emailmessage = xfer.get_components('emailmessage')
             comp_emailmessage.with_hypertext = True
+        xfer.move_components('no_email_copy', 0, 30 + row - comp_with_multi_emailinfo.row)
 
         comp_special = xfer.get_components('special_numbering')
         comp_special.java_script = """

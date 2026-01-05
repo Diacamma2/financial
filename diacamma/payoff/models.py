@@ -263,11 +263,11 @@ class Supporting(LucteriosModel):
             pdf_file = BytesIO(ReportingGenerator.createpdf_from_model(self.get_send_email_objects(), model_value.value, model_value.mode, XferContainerPrint.PRINT_DUPLICATA if doc is not None else ''))
             return (pdf_name, pdf_file)
 
-    def send_email(self, subject, message, model):
+    def send_email(self, subject, message, model, withcopy=True):
         fct_mailing_mod = import_module('lucterios.mailing.email_functions')
         if fct_mailing_mod.will_mail_send():
             fct_mailing_mod.send_email(self.third.contact.email, subject, message, [self.get_pdfreport(model)],
-                                       cclist=self.get_cclist(), bcclist=self.get_bcclist(), withcopy=True)
+                                       cclist=self.get_cclist(), bcclist=self.get_bcclist(), withcopy=withcopy)
             self.email_sended()
 
     def email_sended(self):

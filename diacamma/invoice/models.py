@@ -808,6 +808,7 @@ class CategoryBill(LucteriosModel):
     payment_method = models.ManyToManyField(PaymentMethod, verbose_name=_('payment method'), blank=True)
     with_multi_emailinfo = models.BooleanField(verbose_name=_('with multi emailinfo'), default=False)
     multi_emailinfo = models.TextField(_('multi emailinfo'), default='')
+    no_email_copy = models.BooleanField(verbose_name=_('no email copy'), default=False)
 
     titles_txt = LucteriosVirtualField(verbose_name=_('titles'), compute_from='get_titles_txt')
 
@@ -823,7 +824,7 @@ class CategoryBill(LucteriosModel):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
         if Params.getvalue('invoice-order-mode') != Bill.INVOICE_ORDER_NONE:
             fields.append('workflow_order')
-        fields.extend(['payment_method', ('printmodel', 'printmodel_sold'), 'with_multi_emailinfo', 'emailsubject', 'emailmessage', ])
+        fields.extend(['payment_method', ('printmodel', 'printmodel_sold'), 'with_multi_emailinfo', 'emailsubject', 'emailmessage', 'no_email_copy'])
         return fields
 
     @classmethod
@@ -831,7 +832,7 @@ class CategoryBill(LucteriosModel):
         fields = ["name", "designation", ('special_numbering', 'prefix_numbering')]
         if Params.getvalue('invoice-order-mode') != Bill.INVOICE_ORDER_NONE:
             fields.append('workflow_order')
-        fields.extend([('printmodel', 'printmodel_sold'), 'payment_method', 'emailsubject', 'emailmessage'])
+        fields.extend([('printmodel', 'printmodel_sold'), 'payment_method', 'emailsubject', 'emailmessage', 'no_email_copy'])
         return fields
 
     def change_has_default(self):
@@ -1541,6 +1542,9 @@ class Bill(Supporting):
         html_message += message.replace('{[newline]}', '<br/>\n').replace('{[', '<').replace(']}', '>')
         html_message += "</html>"
         self.send_email(replace_tag(contact, subject), replace_tag(contact, html_message), self.get_default_print_model())
+
+    def send_email(self, subject, message, model):
+        super().send_email(subject, message, model, withcopy=not self.categoryBill.no_email_copy if self.categoryBill_id is not None else True)
 
     transitionname__valid = _("Validate")
 
