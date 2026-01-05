@@ -165,6 +165,8 @@ class ValidationPaymentGeneric(XferContainerAbstract):
             self.item.payer = self.payer
             self.item.amount = self.amount
             self.item.date = self.date
+            if self.item.date is None:
+                self.item.date = timezone.now()
             if self.confirm():
                 bank_account = self.payment_meth.bank_account
                 if bank_account is None:

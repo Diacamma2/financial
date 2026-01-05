@@ -349,6 +349,75 @@ class EntryAccountImport(ObjectImport):
             self.add_component(grid)
 
 
+@ActionsManage.affect_list(_('Multi-close'), short_icon="mdi:mdi-checkbook")
+@MenuManage.describ('accounting.add_entryaccount')
+class EntryAccountBatchClose(XferContainerAcknowledge):
+    short_icon = "mdi:mdi-checkbook"
+    model = EntryAccount
+    caption = _("Close a set of entries")
+
+    def fillresponse(self, ):
+        select_year = self.getparam('year')
+        self.item.year = FiscalYear.get_current(select_year)
+        select_journal = self.getparam('journal', 0)
+        date_begin = max(self.item.year.begin, convert_date(self.getparam("date_begin"), self.item.year.begin))
+        if date_begin > self.item.year.end:
+            date_begin = self.item.year.begin
+        date_end = min(self.item.year.end, convert_date(self.getparam("date_end"), self.item.year.end))
+        if date_end < self.item.year.begin:
+            date_end = self.item.year.end
+        entry_filter = Q(date_value__gte=date_begin) & Q(date_value__lte=date_end) & Q(close=False)
+        if select_journal != 0:
+            entry_filter &= Q(journal__id=select_journal)
+        entries = self.model.objects.filter(entry_filter)
+        if self.getparam("CONFIRME") is None:
+            dlg = self.create_custom(model=self.model)
+            icon = XferCompImage('img')
+            icon.set_location(0, 0, 1, 6)
+            icon.set_value(self.short_icon, '#')
+            dlg.add_component(icon)
+
+            dlg.fill_from_model(1, 2, False, ['journal'])
+            journal = dlg.get_components('journal')
+            journal.select_list.append((0, '---'))
+            journal.set_value(select_journal)
+            journal.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            journal.colspan = 3
+
+            dt_begin = XferCompDate('date_begin')
+            dt_begin.set_value(date_begin)
+            dt_begin.set_needed(True)
+            dt_begin.set_location(1, 3)
+            dt_begin.description = _("date begin")
+            dt_begin.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            dlg.add_component(dt_begin)
+            dt_end = XferCompDate('date_end')
+            dt_end.set_value(date_end)
+            dt_end.set_needed(True)
+            dt_end.set_location(2, 3)
+            dt_end.description = _("date end")
+            dt_end.set_action(self.request, self.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+            dlg.add_component(dt_end)
+
+            lbl = XferCompLabelForm('lb_nbentries')
+            lbl.set_value_as_name(entries.count())
+            lbl.description = _('number of entries impacted')
+            lbl.set_location(1, 4, 3)
+            dlg.add_component(lbl)
+
+            dlg.add_action(self.return_action(_('Ok'), short_icon='mdi:mdi-check'), params={"CONFIRME": "YES"})
+            dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
+        else:
+            success, error = 0,0
+            for entry in entries:
+                try:
+                    entry.closed()
+                    success += 1
+                except LucteriosException:
+                    error +=1
+            self.message(_("%d entries were correctly closed and %d were failed") % (success, error))
+
+
 @ActionsManage.affect_grid(TITLE_DELETE, short_icon='mdi:mdi-delete-outline', unique=SELECT_MULTI, condition=lambda xfer, gridname='': (xfer.item.year.status in [0, 1]) and (xfer.getparam('filter', 0) != 2))
 @MenuManage.describ('accounting.delete_entryaccount')
 class EntryAccountDel(XferDelete):
