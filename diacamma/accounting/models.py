@@ -739,12 +739,12 @@ class CostAccounting(LucteriosModel):
 
 class ChartsAccount(LucteriosModel):
 
-    TYPE_ASSET = 0
-    TYPE_LIABILITY = 1
-    TYPE_EQUITY = 2
-    TYPE_REVENUE = 3
-    TYPE_EXPENSE = 4
-    TYPE_CONTRAACCOUNTS = 5
+    TYPE_ASSET = 0  # actif
+    TYPE_LIABILITY = 1  # passif
+    TYPE_EQUITY = 2  # capitaux
+    TYPE_REVENUE = 3  # produit
+    TYPE_EXPENSE = 4  # charge
+    TYPE_CONTRAACCOUNTS = 5  # autres
 
     LIST_TYPES = (
         (TYPE_ASSET, _('Asset')),
