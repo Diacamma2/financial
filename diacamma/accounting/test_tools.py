@@ -125,10 +125,9 @@ def initial_thirds_be():
 
 
 def fill_accounts_fr(year=None, with12=True, with8=False, with_rubric=False):
-    Parameter.change_value('accounting-sizecode', 3)
-    Params.clear()
-    create_account(['411'], 0, year)  # 1 2 3
-    create_account(['512', '531'], 0, year)  # 1 2 3
+    Params.setvalue('accounting-sizecode', 3)
+    create_account(['411'], 0, year)  # 1
+    create_account(['512', '531'], 0, year)  # 2 3
     create_account(['401'], 1, year)  # 4
     create_account(['106', '110', '119'], 2, year)  # 5 6 7
     create_account(['701', '706', '707'], 3, year, "DDD" if with_rubric else "")  # 8 9 10
@@ -141,15 +140,17 @@ def fill_accounts_fr(year=None, with12=True, with8=False, with_rubric=False):
 
 
 def fill_accounts_be(year=None, with12=True, with8=False):
-    Parameter.change_value('accounting-sizecode', 6)
-    Params.clear()
+    Params.setvalue('accounting-sizecode', 6)
     create_account(['400000', '550000', '570000'], 0, year)  # 1 2 3
     create_account(['440000'], 1, year)  # 4
 
     create_account(['130000', '140000', '141000'], 2, year)  # 5 6 7
     create_account(['700000', '701000', '705000'], 3, year)  # 8 9 10
     create_account(['600000', '601000', '602000', '603000', '604000'], 4, year)  # 11 12 13 14 15
-    # TODO: add account for with12 & with8
+    if with12:
+        create_account(['790000'], 3, year)  # 16
+        create_account(['690000'], 4, year)  # 17
+    # TODO: add account for with8
 
 
 def default_costaccounting():
@@ -239,6 +240,37 @@ def fill_entries_fr(yearid, withyear=False):
     Budget.objects.create(year_id=yearid, code='601', amount=8.19)
     Budget.objects.create(year_id=yearid, code='602', amount=7.35)
     Budget.objects.create(year_id=yearid, code='604', amount=6.24)
+    AccountLink.create_link(list(entry2.get_thirds()) + list(entry3.get_thirds()))
+    AccountLink.create_link(list(entry4.get_thirds()) + list(entry5.get_thirds()))
+    AccountLink.create_link(list(entry7.get_thirds()) + list(entry8.get_thirds()))
+
+
+def fill_entries_be(yearid, withyear=False):
+
+    default_costaccounting()
+    # cost id=1: dep=12.34 / rec=0.00 => res=-12.34
+    # cost id=2: dep=258.02 / rec=70.64 => res=-187.38
+    if withyear:
+        currentyear = str(FiscalYear.objects.get(id=yearid).begin.year)
+    else:
+        currentyear = '2015'
+
+    _ = add_entry(yearid, 1, '%s-02-01' % currentyear, 'Report à nouveau', '-1|5|0|1250.380000|0|0|None|\n-2|2|0|1135.930000|0|0|None|\n-3|3|0|114.450000|0|0|None|', True)  # 1 2 3
+    entry2 = add_entry(yearid, 2, '%s-02-14' % currentyear, 'depense 1', '-1|12|0|63.940000|2|0|None|\n-2|4|4|63.940000|0|0|None|', True)  # 4 5 - cost 2
+    entry3 = add_entry(yearid, 4, '%s-02-15' % currentyear, 'regement depense 1', '-1|2|0|-63.940000|0|0|ch N°34543|\n-2|4|4|-63.940000|0|0|None|', True)  # 6 7
+    entry4 = add_entry(yearid, 2, '%s-02-13' % currentyear, 'depense 2', '-1|14|0|194.080000|2|0|None|\n-2|4|1|194.080000|0|0|None|')  # 8 9 - cost 2
+    entry5 = add_entry(yearid, 4, '%s-02-17' % currentyear, 'regement depense 2', '-1|3|0|-194.080000|0|0|ch N°34545|\n-2|4|1|-194.080000|0|0|None|')  # 10 11
+    _ = add_entry(yearid, 2, '%s-02-20' % currentyear, 'depense 3', '-1|11|0|78.240000|0|0|None|\n-2|4|2|78.240000|0|0|None|')  # 12 13
+    entry7 = add_entry(yearid, 3, '%s-02-21' % currentyear, 'vente 1', '-1|10|0|70.640000|2|0|None|\n-2|1|7|70.640000|0|0|None|', True)  # 14 15 - cost 2
+    entry8 = add_entry(yearid, 4, '%s-02-22' % currentyear, 'regement vente 1', '-1|2|0|70.640000|0|0|BP N°654321|\n-2|1|7|-70.640000|0|0|None|', True)  # 16 17
+    _ = add_entry(yearid, 3, '%s-02-21' % currentyear, 'vente 2', '-1|10|0|125.970000|0|0|None|\n-2|1|5|125.970000|0|0|None|', True)  # 18 19
+    _ = add_entry(yearid, 3, '%s-02-24' % currentyear, 'vente 3', '-1|10|0|34.010000|0|0|None|\n-2|1|4|34.010000|0|0|None|')  # 20 21
+    _ = add_entry(yearid, 5, '%s-02-20' % currentyear, 'Frais bancaire', '-1|2|0|-12.340000|0|0|None|\n-2|15|0|12.340000|1|0|None|', True)  # 22 23 - cost 1
+    Budget.objects.create(year_id=yearid, code='700000', amount=67.89)
+    Budget.objects.create(year_id=yearid, code='705000', amount=123.45)
+    Budget.objects.create(year_id=yearid, code='600000', amount=8.19)
+    Budget.objects.create(year_id=yearid, code='601000', amount=7.35)
+    Budget.objects.create(year_id=yearid, code='602000', amount=6.24)
     AccountLink.create_link(list(entry2.get_thirds()) + list(entry3.get_thirds()))
     AccountLink.create_link(list(entry4.get_thirds()) + list(entry5.get_thirds()))
     AccountLink.create_link(list(entry7.get_thirds()) + list(entry8.get_thirds()))

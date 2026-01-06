@@ -45,6 +45,51 @@ class DefaultSystemAccounting(object):
     NEGATIF_ACCOUNT = ""
     POSITIF_ACCOUNT = ""
 
+    GENERAL_CHARTS_ACCOUNT = []
+
+    GENERAL_MASK = r'X'
+
+    CASH_MASK = r'X'
+
+    CASH_MASK_BEGIN = ''
+
+    PROVIDER_MASK = r'X'
+
+    CUSTOMER_MASK = r'X'
+
+    EMPLOYED_MASK = r'X'
+
+    SOCIETARY_MASK = r'X'
+
+    REVENUE_MASK = r'X'
+
+    EXPENSE_MASK = r'X'
+
+    # THIRD_MASK = "%s|%s|%s|%s" % (PROVIDER_MASK, CUSTOMER_MASK, EMPLOYED_MASK, SOCIETARY_MASK)
+    THIRD_MASK = r'X'
+
+    ANNEXE_MASK = r'X'
+
+    VAT_DEDUCTIVE_MASK = r'-'
+    VAT_COLLECTED_MASK = r'-'
+    VAT_INTRACOMMUNITY_MASK = r''
+    EINVOICE = ''
+
+    @classmethod
+    def find_charts(cls, code):
+        current_charts = None
+        for chart_item in cls.GENERAL_CHARTS_ACCOUNT:
+            if chart_item[1] is None:
+                if code[:len(chart_item[0])] == chart_item[0]:
+                    current_charts = chart_item
+                elif current_charts is not None:
+                    break
+            else:
+                if (chart_item[0] <= code) and (code <= chart_item[1]):
+                    current_charts = chart_item
+                    break
+        return current_charts
+
     @property
     def result_accounting_codes(self):
         return (correct_accounting_code(self.NEGATIF_ACCOUNT), correct_accounting_code(self.POSITIF_ACCOUNT))
@@ -53,52 +98,60 @@ class DefaultSystemAccounting(object):
         return True
 
     def get_general_mask(self):
-        return ''
+        return self.GENERAL_MASK
 
     def get_cash_mask(self):
-        return ''
+        return self.CASH_MASK
 
     def get_cash_begin(self):
-        return ''
+        return self.CASH_MASK_BEGIN
 
     def get_provider_mask(self):
-        return ''
+        return self.PROVIDER_MASK
 
     def get_customer_mask(self):
-        return ''
+        return self.CUSTOMER_MASK
 
     def get_employed_mask(self):
-        return ''
+        return self.EMPLOYED_MASK
 
     def get_societary_mask(self):
-        return ''
-
-    def get_revenue_mask(self):
-        return ''
-
-    def get_expence_mask(self):
-        return ''
+        return self.SOCIETARY_MASK
 
     def get_third_mask(self):
-        return ''
+        return self.THIRD_MASK
+
+    def get_revenue_mask(self):
+        return self.REVENUE_MASK
+
+    def get_expence_mask(self):
+        return self.EXPENSE_MASK
 
     def get_annexe_mask(self):
-        return ''
-
-    def new_charts_account(self, code):
-        return '', -1
+        return self.ANNEXE_MASK
 
     def get_vat_deductible_mask(self):
-        return ''
+        return self.VAT_DEDUCTIVE_MASK
 
     def get_vat_collected_mask(self):
-        return ''
+        return self.VAT_COLLECTED_MASK
 
     def get_vat_intracommunity_mask(self):
-        return ''
+        return self.VAT_INTRACOMMUNITY_MASK
 
     def get_einvoice_format(self):
-        return ''
+        return self.EINVOICE
+
+    def new_charts_account(self, code):
+        code = code.strip()
+        if code == '':
+            return '', -1
+        pattern = re.compile(self.GENERAL_MASK)
+        if pattern.match(code):
+            current_charts = self.find_charts(code)
+            if current_charts is not None:
+                return current_charts[-2], current_charts[-1]
+        return '', -2
 
     def _create_custom_for_profit(self, year, custom, val_profit):
         from lucterios.framework.xfercomponents import XferCompImage, XferCompLabelForm, XferCompSelect
