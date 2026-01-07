@@ -927,8 +927,8 @@ class BelgiumSystemAcounting(DefaultSystemAccounting):
         ("793", None, "Perte à reporter", 3),
         ("794", None, "Intervention d'associés (ou du propriétaire) dans la perte", 3)]
 
-    NEGATIF_ACCOUNT = "690"
-    POSITIF_ACCOUNT = "790"
+    NEGATIF_ACCOUNT = "141"
+    POSITIF_ACCOUNT = "140"
 
     GENERAL_MASK = r'^[0-8][0-9][0-9a-zA-Z]*$'
 

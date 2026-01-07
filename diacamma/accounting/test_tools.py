@@ -139,18 +139,17 @@ def fill_accounts_fr(year=None, with12=True, with8=False, with_rubric=False):
         create_account(['860', '870'], 5, year)  # 18 19
 
 
-def fill_accounts_be(year=None, with12=True, with8=False):
+def fill_accounts_be(year=None, with14=True):
     Params.setvalue('accounting-sizecode', 6)
     create_account(['400000', '550000', '570000'], 0, year)  # 1 2 3
     create_account(['440000'], 1, year)  # 4
 
-    create_account(['130000', '140000', '141000'], 2, year)  # 5 6 7
+    create_account(['130000', '132000', '133000'], 2, year)  # 5 6 7
     create_account(['700000', '701000', '705000'], 3, year)  # 8 9 10
     create_account(['600000', '601000', '602000', '603000', '604000'], 4, year)  # 11 12 13 14 15
-    if with12:
-        create_account(['790000'], 3, year)  # 16
-        create_account(['690000'], 4, year)  # 17
-    # TODO: add account for with8
+    if with14:
+        create_account(['140000'], 2, year)  # 16
+        create_account(['141000'], 2, year)  # 17
 
 
 def default_costaccounting():
@@ -196,12 +195,12 @@ def default_compta_fr(status=0, with12=True, with8=False, with_rubric=False):
     fill_accounts_fr(year, with12, with8, with_rubric)
 
 
-def default_compta_be(status=0, with12=True, with8=False):
+def default_compta_be(status=0, with14=True):
     from diacamma.payoff.views_conf import paramchange_payoff
     paramchange_payoff([])
     set_accounting_system('BE')
     year = create_year(status)
-    fill_accounts_be(year, with12, with8)
+    fill_accounts_be(year, with14)
 
 
 def add_entry(yearid, journalid, date_value, designation, serial_entry, closed=False):

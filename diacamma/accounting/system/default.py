@@ -92,7 +92,8 @@ class DefaultSystemAccounting(object):
 
     @property
     def result_accounting_codes(self):
-        return (correct_accounting_code(self.NEGATIF_ACCOUNT), correct_accounting_code(self.POSITIF_ACCOUNT))
+        from diacamma.accounting.models import ChartsAccount
+        return tuple({correct_accounting_code(chart_account.code) for chart_account in ChartsAccount.objects.filter(Q(code__startswith=self.NEGATIF_ACCOUNT) | Q(code__startswith=self.POSITIF_ACCOUNT))})
 
     def has_minium_code_size(self):
         return True
@@ -243,9 +244,11 @@ class DefaultSystemAccounting(object):
             new_entry = EntryAccount.objects.create(year=year, journal_id=5, designation=self.CLOSE_TITLE_RESULT, date_value=year.end)
             self._add_total_income_entrylines(year, new_entry)
             if expense > revenue:
-                new_entry.add_entry_line(revenue - expense, self.NEGATIF_ACCOUNT)
+                chart_negatif = year.chartsaccount_set.filter(code__startswith=self.NEGATIF_ACCOUNT).first()
+                new_entry.add_entry_line(revenue - expense, chart_negatif.code if chart_negatif is not None else self.NEGATIF_ACCOUNT)
             elif abs(expense - revenue) > 1e-4:
-                new_entry.add_entry_line(revenue - expense, self.POSITIF_ACCOUNT)
+                chart_positive = year.chartsaccount_set.filter(code__startswith=self.POSITIF_ACCOUNT).first()
+                new_entry.add_entry_line(revenue - expense, chart_positive.code if chart_positive is not None else self.POSITIF_ACCOUNT)
             new_entry.closed(check_needcost=False)
 
     def _add_sumline_in_account(self, last_account_id, sum_account, new_entry):
