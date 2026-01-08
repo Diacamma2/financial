@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-05 11:38+0100\n"
+"POT-Creation-Date: 2026-01-08 18:17+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -238,11 +238,11 @@ msgstr "running"
 msgid "finished year"
 msgstr "finished"
 
-#: models.py:281 views_other.py:84 views_reports.py:822
+#: models.py:281 views_other.py:98 views_reports.py:822
 msgid "begin"
 msgstr "begin"
 
-#: models.py:282 views_other.py:90 views_reports.py:823
+#: models.py:282 views_other.py:104 views_reports.py:823
 msgid "end"
 msgstr "end"
 
@@ -366,7 +366,7 @@ msgstr "result"
 msgid "This cost accounting is closed!"
 msgstr "This cost accounting is closed!"
 
-#: models.py:642 views_other.py:130 views_other.py:150
+#: models.py:642 views_other.py:144 views_other.py:164
 msgid "This cost accounting is protected by other modules!"
 msgstr "This cost accounting is protected by other modules!"
 
@@ -608,7 +608,7 @@ msgstr "entry lines of account"
 msgid "Model of entry"
 msgstr "Model of entry"
 
-#: models.py:1757 views_other.py:199
+#: models.py:1757 views_other.py:213
 msgid "Models of entry"
 msgstr "Models of entry"
 
@@ -641,63 +641,63 @@ msgstr "Budget lines"
 msgid " (duty free)"
 msgstr " (duty free)"
 
-#: models.py:2053
+#: models.py:2062
 msgid "accounting-devise-iso"
 msgstr "Currency (iso)"
 
-#: models.py:2055
+#: models.py:2064
 msgid "accounting-devise-prec"
 msgstr "Currency (precision)"
 
-#: models.py:2056
+#: models.py:2065
 msgid "accounting-system"
 msgstr "accounting system"
 
-#: models.py:2057
+#: models.py:2066
 msgid "accounting-sizecode"
 msgstr "Accounting code size"
 
-#: models.py:2058
+#: models.py:2067
 msgid "accounting-needcost"
 msgstr "Cost accounting mandatory"
 
-#: models.py:2059
+#: models.py:2068
 msgid "accounting-code-report-filter"
 msgstr "Accounting code (report filter)"
 
-#: models.py:2060
+#: models.py:2069
 msgid "accounting-lettering-check"
 msgstr "account no-lettering check"
 
-#: models.py:2062
+#: models.py:2071
 msgid "accounting-datecurrent"
 msgstr "Current date for new entry"
 
-#: models.py:2063
+#: models.py:2072
 msgid "accounting-VAT-arrangements"
 msgstr "VAT arrangements"
 
-#: models.py:2064
+#: models.py:2073
 msgid "accounting-VAT-arrangements.-1"
 msgstr "???"
 
-#: models.py:2064
+#: models.py:2073
 msgid "accounting-VAT-arrangements.0"
 msgstr "Not applicable"
 
-#: models.py:2064
+#: models.py:2073
 msgid "accounting-VAT-arrangements.1"
 msgstr "Simple arrangements"
 
-#: models.py:2066
+#: models.py:2075
 msgid "# accounting (administrator)"
 msgstr "# accounting (administrator)"
 
-#: models.py:2069
+#: models.py:2078
 msgid "# accounting (editor)"
 msgstr "# accounting (editor)"
 
-#: models.py:2072
+#: models.py:2081
 msgid "# accounting (shower)"
 msgstr "# accounting (shower)"
 
@@ -854,7 +854,7 @@ msgstr "deductible VAT"
 msgid "intracommunity VAT liability"
 msgstr "intracommunity VAT liability"
 
-#: views.py:412
+#: views.py:412 views_other.py:425
 msgid "VAT"
 msgstr "VAT"
 
@@ -1105,7 +1105,7 @@ msgstr "Add accounting journal"
 msgid "Delete accounting journal"
 msgstr "Delete accounting journal"
 
-#: views_admin.py:290 views_admin.py:296 views_other.py:105 views_other.py:111
+#: views_admin.py:290 views_admin.py:296 views_other.py:119 views_other.py:125
 msgid "Default"
 msgstr "Default"
 
@@ -1352,105 +1352,193 @@ msgstr "Modify entry line of account"
 msgid "Delete entry line of account"
 msgstr "Delete entry line of account"
 
-#: views_other.py:21
+#: views_other.py:35
 msgid "Edition of costs accounting"
 msgstr "Edition of costs accounting"
 
-#: views_other.py:26
+#: views_other.py:40
 msgid "Costs accounting"
 msgstr "Costs accounting"
 
-#: views_other.py:43
+#: views_other.py:57
 msgid "- without fiscal year -"
 msgstr "- without fiscal year -"
 
-#: views_other.py:59
+#: views_other.py:73
 msgid "By date"
 msgstr "By date"
 
-#: views_other.py:65
+#: views_other.py:79
 msgid "Print by date"
 msgstr "Print by date"
 
-#: views_other.py:78
+#: views_other.py:92
 msgid "Define date range to determine accounting cost list."
 msgstr "Define date range to determine accounting cost list."
 
-#: views_other.py:101
+#: views_other.py:115
 msgid "No cost accounting finds for this range !"
 msgstr "No cost accounting finds for this range !"
 
-#: views_other.py:118 views_other.py:124
+#: views_other.py:132 views_other.py:138
 msgid "Close"
 msgstr "Close"
 
-#: views_other.py:132
+#: views_other.py:146
 msgid "Do you want to close this cost accounting?"
 msgstr "Do you want to close this cost accounting?"
 
-#: views_other.py:143
+#: views_other.py:157
 msgid "Add cost accounting"
 msgstr "Add cost accounting"
 
-#: views_other.py:144
+#: views_other.py:158
 msgid "Modify cost accounting"
 msgstr "Modify cost accounting"
 
-#: views_other.py:160
+#: views_other.py:174
 msgid "Delete cost accounting"
 msgstr "Delete cost accounting"
 
-#: views_other.py:174 views_other.py:180
+#: views_other.py:188 views_other.py:194
 msgid "Recreate"
 msgstr "Recreate"
 
-#: views_other.py:186
+#: views_other.py:200
 #, python-format
 msgid ""
 "Do you want to try to import %d old cost accounting in this fiscal year ?"
 msgstr ""
 "Do you want to try to import %d old cost accounting in this fiscal year ?"
 
-#: views_other.py:189
+#: views_other.py:203
 #, python-format
 msgid "Some last cost accounting have not be imported:{[br]}%s"
 msgstr "Some last cost accounting have not be imported:{[br]}%s"
 
-#: views_other.py:191
+#: views_other.py:205
 msgid "All last cost accounting have be imported."
 msgstr "All last cost accounting have be imported."
 
-#: views_other.py:194
+#: views_other.py:208
 msgid "Edition of entry model"
 msgstr "Edition of entry model"
 
-#: views_other.py:209
+#: views_other.py:223
 msgid "Add model of entry"
 msgstr "Add model of entry"
 
-#: views_other.py:210
+#: views_other.py:224
 msgid "Modify model of entry"
 msgstr "Modify model of entry"
 
-#: views_other.py:219
+#: views_other.py:233
 msgid "Show Model of entry"
 msgstr "Show Model of entry"
 
-#: views_other.py:228
+#: views_other.py:242
 msgid "Delete Model of entry"
 msgstr "Delete Model of entry"
 
-#: views_other.py:238
+#: views_other.py:252
 msgid "Add model line  of entry"
 msgstr "Add model line  of entry"
 
-#: views_other.py:239
+#: views_other.py:253
 msgid "Modify model line  of entry"
 msgstr "Modify model line  of entry"
 
-#: views_other.py:248
+#: views_other.py:262
 msgid "Delete Model line  of entry"
 msgstr "Delete Model line  of entry"
+
+#: views_other.py:282 views_other.py:376
+msgid "add this seller"
+msgstr "add this seller"
+
+#: views_other.py:302
+msgid "Import e-invoice form file"
+msgstr "Import e-invoice form file"
+
+#: views_other.py:305
+msgid "Import e-invoice"
+msgstr "Import e-invoice"
+
+#: views_other.py:314
+msgid "e-invoice file"
+msgstr "e-invoice file"
+
+#: views_other.py:330
+msgid "buyer"
+msgstr "buyer"
+
+#: views_other.py:334
+msgid "Our structure is well referenced as a buyer"
+msgstr "Our structure is well referenced as a buyer"
+
+#: views_other.py:344
+msgid ""
+"Our structure is not defined as a buyer:{[br/]}force this import anyway ?"
+msgstr ""
+"Our structure is not defined as a buyer:{[br/]}force this import anyway ?"
+
+#: views_other.py:352 views_other.py:460
+msgid "seller"
+msgstr "seller"
+
+#: views_other.py:362
+msgid "Select the seller in the contacts"
+msgstr "Select the seller in the contacts"
+
+#: views_other.py:370
+msgid "update this seller"
+msgstr "update this seller"
+
+#: views_other.py:383
+msgid "detail"
+msgstr "detail"
+
+#: views_other.py:399
+msgid "vat"
+msgstr "vat"
+
+#: views_other.py:452
+msgid "VAT is not recoverable"
+msgstr "VAT is not recoverable"
+
+#: views_other.py:468
+msgid "Total excl"
+msgstr "total excl. taxes"
+
+#: views_other.py:476
+msgid "Total VAT"
+msgstr "Total VAT"
+
+#: views_other.py:484
+msgid "Total"
+msgstr "Total"
+
+#: views_other.py:496
+#, python-format
+msgid "e-invoice import ref. %s"
+msgstr "e-invoice import ref. %s"
+
+#: views_other.py:558
+msgid "import progression"
+msgstr "import progression"
+
+#: views_other.py:571
+msgid "No e-invoice file found !"
+msgstr "No e-invoice file found !"
+
+#: views_other.py:576
+#, python-format
+msgid ""
+"This e-invoice uses the currency \"%s\" while it is \"%s\" that is "
+"supported !"
+msgstr ""
+"This e-invoice uses the currency \"%s\" while it is \"%s\" that is "
+"supported !"
 
 #: views_reports.py:50
 msgid "Reports"

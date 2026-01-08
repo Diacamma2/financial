@@ -44,4 +44,6 @@ def validateUBL(xml_content):
     ret_val = schema.validate(tree)
     if not ret_val:
         getLogger("diacamma.accounting").error(schema.error_log)
-    return ret_val
+        return False
+    else:
+        return tree

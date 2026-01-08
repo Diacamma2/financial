@@ -153,8 +153,8 @@ class Third(LucteriosModel, CustomizeObject):
 
     @property
     def legal_identification(self):
-        if hasattr(self.contact, 'legal_identification'):
-            return self.contact.legal_identification
+        if hasattr(self.contact, 'get_legal_identification'):
+            return self.contact.get_legal_identification()
         else:
             return ""
 
@@ -2003,7 +2003,7 @@ def pre_save_datadb(sender, **kwargs):
             kwargs['instance'].costaccounting_id = None
 
 
-def get_meta_currency_iso():
+def get_meta_currency_iso_list():
     currency_file = join(dirname(__file__), 'currency_iso.csv')
     if isfile(currency_file):
         currency_list = []
@@ -2016,6 +2016,15 @@ def get_meta_currency_iso():
                     if iso_ident != symbole:
                         symbole = "%s / %s" % (iso_ident, symbole)
                     currency_list.append((iso_ident, "%s (%s)" % (title, symbole)))
+        return currency_list
+    else:
+        return None
+
+
+def get_meta_currency_iso():
+    currency_list = get_meta_currency_iso_list()
+    if currency_list is not None:
+        currency_list = get_meta_currency_iso_list()
         return '("","",%s,"",True)' % str(currency_list)
     else:
         return None
