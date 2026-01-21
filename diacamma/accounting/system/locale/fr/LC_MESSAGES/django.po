@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-08 18:09+0100\n"
-"PO-Revision-Date: 2023-07-31 11:32+0200\n"
+"POT-Creation-Date: 2026-01-21 09:36+0100\n"
+"PO-Revision-Date: 2026-01-21 09:37+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 3.8\n"
 
 #: system/__init__.py:33
 msgid "French system acounting"
@@ -25,6 +25,10 @@ msgstr "Plan comptable générale Français"
 #: system/__init__.py:34
 msgid "Belgium system acounting"
 msgstr "Plan comptable Belge"
+
+#: system/__init__.py:35
+msgid "Morocco system acounting"
+msgstr "Plan comptable Marocain"
 
 #: system/default.py:42
 msgid "Fiscal year closing - Result"

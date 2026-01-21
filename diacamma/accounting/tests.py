@@ -719,7 +719,12 @@ class AdminTest(LucteriosTest):
         self.factory.xfer = Configuration()
         self.calljson('/diacamma.accounting/configuration', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
-        self.assert_select_equal('account_system', {'': '---', 'diacamma.accounting.system.french.FrenchSystemAcounting': 'Plan comptable générale Français', 'diacamma.accounting.system.belgium.BelgiumSystemAcounting': 'Plan comptable Belge'})
+        self.assert_select_equal('account_system', {
+            '': '---',
+            'diacamma.accounting.system.french.FrenchSystemAcounting': 'Plan comptable générale Français',
+            'diacamma.accounting.system.belgium.BelgiumSystemAcounting': 'Plan comptable Belge',
+            'diacamma.accounting.system.morocco.MoroccoSystemAcounting': 'Plan comptable Marocain'
+        })
 
         self.factory.xfer = ConfigurationAccountingSystem()
         self.calljson('/diacamma.accounting/configurationAccountingSystem', {'account_system': 'diacamma.accounting.system.french.FrenchSystemAcounting'}, False)

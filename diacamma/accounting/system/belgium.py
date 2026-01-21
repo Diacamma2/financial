@@ -953,8 +953,11 @@ class BelgiumSystemAcounting(DefaultSystemAccounting):
     ANNEXE_MASK = r'X'
 
     VAT_DEDUCTIVE_MASK = r'^411[0-9a-zA-Z]*$'
+
     VAT_COLLECTED_MASK = r'^451[0-9a-zA-Z]*$'
+
     VAT_INTRACOMMUNITY_MASK = ''
+
     EINVOICE = 'UBL'
 
     def has_minium_code_size(self):

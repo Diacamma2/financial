@@ -32,6 +32,7 @@ def accounting_system_list():
     res = {}
     res['diacamma.accounting.system.french.FrenchSystemAcounting'] = _('French system acounting')
     res['diacamma.accounting.system.belgium.BelgiumSystemAcounting'] = _('Belgium system acounting')
+    res['diacamma.accounting.system.morocco.MoroccoSystemAcounting'] = _('Morocco system acounting')
     return res
 
 

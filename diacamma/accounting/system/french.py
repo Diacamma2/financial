@@ -181,54 +181,12 @@ class FrenchSystemAcounting(DefaultSystemAccounting):
     ANNEXE_MASK = r'^8[0-9][0-9][0-9a-zA-Z]*$'
 
     VAT_DEDUCTIVE_MASK = r'^4456[0-9a-zA-Z]*$'
+
     VAT_COLLECTED_MASK = r'^4457[0-9a-zA-Z]*$'
+
     VAT_INTRACOMMUNITY_MASK = r'^4452[0-9a-zA-Z]*$'
+
     EINVOICE = 'facturX'
-
-    def get_general_mask(self):
-        return self.GENERAL_MASK
-
-    def get_cash_mask(self):
-        return self.CASH_MASK
-
-    def get_cash_begin(self):
-        return self.CASH_MASK_BEGIN
-
-    def get_provider_mask(self):
-        return self.PROVIDER_MASK
-
-    def get_customer_mask(self):
-        return self.CUSTOMER_MASK
-
-    def get_employed_mask(self):
-        return self.EMPLOYED_MASK
-
-    def get_societary_mask(self):
-        return self.SOCIETARY_MASK
-
-    def get_third_mask(self):
-        return self.THIRD_MASK
-
-    def get_revenue_mask(self):
-        return self.REVENUE_MASK
-
-    def get_expence_mask(self):
-        return self.EXPENSE_MASK
-
-    def get_annexe_mask(self):
-        return self.ANNEXE_MASK
-
-    def get_vat_deductible_mask(self):
-        return self.VAT_DEDUCTIVE_MASK
-
-    def get_vat_collected_mask(self):
-        return self.VAT_COLLECTED_MASK
-
-    def get_vat_intracommunity_mask(self):
-        return self.VAT_INTRACOMMUNITY_MASK
-
-    def get_einvoice_format(self):
-        return self.EINVOICE
 
     def get_export_xmlfiles(self):
         file_path = dirname(__file__)

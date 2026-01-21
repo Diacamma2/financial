@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-08 18:09+0100\n"
+"POT-Creation-Date: 2026-01-21 09:36+0100\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -238,11 +238,11 @@ msgstr "en cours"
 msgid "finished year"
 msgstr "terminé"
 
-#: models.py:281 views_other.py:98 views_reports.py:822
+#: models.py:281 views_other.py:95 views_reports.py:822
 msgid "begin"
 msgstr "début"
 
-#: models.py:282 views_other.py:104 views_reports.py:823
+#: models.py:282 views_other.py:101 views_reports.py:823
 msgid "end"
 msgstr "fin"
 
@@ -366,7 +366,7 @@ msgstr "résultat"
 msgid "This cost accounting is closed!"
 msgstr "Cette comptabilité analytique est clôturée !"
 
-#: models.py:642 views_other.py:144 views_other.py:164
+#: models.py:642 views_other.py:141 views_other.py:161
 msgid "This cost accounting is protected by other modules!"
 msgstr "Cette comptabilité analytique est protégée par un autre module !"
 
@@ -609,7 +609,7 @@ msgstr "lignes d'écriture"
 msgid "Model of entry"
 msgstr "Modèle d'écriture"
 
-#: models.py:1757 views_other.py:213
+#: models.py:1757 views_other.py:210
 msgid "Models of entry"
 msgstr "Modèles d'écriture"
 
@@ -862,7 +862,7 @@ msgstr "TVA récupérable"
 msgid "intracommunity VAT liability"
 msgstr "TVA due intracommunautaire"
 
-#: views.py:412 views_other.py:425
+#: views.py:412 views_other.py:422
 msgid "VAT"
 msgstr "TVA"
 
@@ -1121,7 +1121,7 @@ msgstr "Modifier un journal"
 msgid "Delete accounting journal"
 msgstr "Supprimer un journal"
 
-#: views_admin.py:290 views_admin.py:296 views_other.py:119 views_other.py:125
+#: views_admin.py:290 views_admin.py:296 views_other.py:116 views_other.py:122
 msgid "Default"
 msgstr "Défaut"
 
@@ -1370,61 +1370,61 @@ msgstr "Modifier une ligne d'écriture"
 msgid "Delete entry line of account"
 msgstr "Suprimer une ligne d'écriture"
 
-#: views_other.py:35
+#: views_other.py:32
 msgid "Edition of costs accounting"
 msgstr "Édition des comptabilités analytiques"
 
-#: views_other.py:40
+#: views_other.py:37
 msgid "Costs accounting"
 msgstr "Comptabilités analytiques"
 
-#: views_other.py:57
+#: views_other.py:54
 msgid "- without fiscal year -"
 msgstr "- sans exercice -"
 
-#: views_other.py:73
+#: views_other.py:70
 msgid "By date"
 msgstr "Par date"
 
-#: views_other.py:79
+#: views_other.py:76
 msgid "Print by date"
 msgstr "Impression par date"
 
-#: views_other.py:92
+#: views_other.py:89
 msgid "Define date range to determine accounting cost list."
 msgstr ""
 "Définissez l'intervalle de dates où déterminer la liste des comptabilités "
 "analytiques à analyser."
 
-#: views_other.py:115
+#: views_other.py:112
 msgid "No cost accounting finds for this range !"
 msgstr "Aucune comptabilité analytique n'est trouvée sur cet intervalle !"
 
-#: views_other.py:132 views_other.py:138
+#: views_other.py:129 views_other.py:135
 msgid "Close"
 msgstr "Fermer"
 
-#: views_other.py:146
+#: views_other.py:143
 msgid "Do you want to close this cost accounting?"
 msgstr "Voulez-vous clôturer cette comptabilité analytique ?"
 
-#: views_other.py:157
+#: views_other.py:154
 msgid "Add cost accounting"
 msgstr "Ajouter une comptabilité analytique"
 
-#: views_other.py:158
+#: views_other.py:155
 msgid "Modify cost accounting"
 msgstr "Modifier une comptabilité analytique"
 
-#: views_other.py:174
+#: views_other.py:171
 msgid "Delete cost accounting"
 msgstr "Supprimer une comptabilité analytique"
 
-#: views_other.py:188 views_other.py:194
+#: views_other.py:185 views_other.py:191
 msgid "Recreate"
 msgstr "Re-créaction"
 
-#: views_other.py:200
+#: views_other.py:197
 #, python-format
 msgid ""
 "Do you want to try to import %d old cost accounting in this fiscal year ?"
@@ -1432,128 +1432,128 @@ msgstr ""
 "Voulez-vous essayer d'importer les %d anciennes comptabilités analytiques "
 "dans cette exercice ?"
 
-#: views_other.py:203
+#: views_other.py:200
 #, python-format
 msgid "Some last cost accounting have not be imported:{[br]}%s"
 msgstr "Des comptabilités analytiques n'ont pas pu être importées:{[br]}%s"
 
-#: views_other.py:205
+#: views_other.py:202
 msgid "All last cost accounting have be imported."
 msgstr "Toutes les comptabilités analytiques précédentes ont été importées."
 
-#: views_other.py:208
+#: views_other.py:205
 msgid "Edition of entry model"
 msgstr "Édition des modèles d'écriture"
 
-#: views_other.py:223
+#: views_other.py:220
 msgid "Add model of entry"
 msgstr "Ajouter un modèle d'écriture"
 
-#: views_other.py:224
+#: views_other.py:221
 msgid "Modify model of entry"
 msgstr "Modifier un modèle d'écriture"
 
-#: views_other.py:233
+#: views_other.py:230
 msgid "Show Model of entry"
 msgstr "Voir un modèle d'écriture"
 
-#: views_other.py:242
+#: views_other.py:239
 msgid "Delete Model of entry"
 msgstr "Supprimer un modèle d'écriture"
 
-#: views_other.py:252
+#: views_other.py:249
 msgid "Add model line  of entry"
 msgstr "Ajouter une ligne de modèle"
 
-#: views_other.py:253
+#: views_other.py:250
 msgid "Modify model line  of entry"
 msgstr "Modifier une ligne de modèle"
 
-#: views_other.py:262
+#: views_other.py:259
 msgid "Delete Model line  of entry"
 msgstr "Supprimer une ligne de modèle"
 
-#: views_other.py:282 views_other.py:376
+#: views_other.py:279 views_other.py:373
 msgid "add this seller"
 msgstr ""
 
-#: views_other.py:302
+#: views_other.py:299
 msgid "Import e-invoice form file"
 msgstr "Importer e-facture depuis un fichier"
 
-#: views_other.py:305
+#: views_other.py:302
 msgid "Import e-invoice"
 msgstr "Importer e-facture"
 
-#: views_other.py:314
+#: views_other.py:311
 msgid "e-invoice file"
 msgstr "fichier e-facture"
 
-#: views_other.py:330
+#: views_other.py:327
 msgid "buyer"
 msgstr "acheteur"
 
-#: views_other.py:334
+#: views_other.py:331
 msgid "Our structure is well referenced as a buyer"
 msgstr "Notre structure est bien référencée en tant qu’acheteur"
 
-#: views_other.py:344
+#: views_other.py:341
 msgid ""
 "Our structure is not defined as a buyer:{[br/]}force this import anyway ?"
 msgstr ""
 "Notre structure n’est pas définie comme l'acheteur : {[br/]}force-t-on quand "
 "même cette importation ?"
 
-#: views_other.py:352 views_other.py:460
+#: views_other.py:349 views_other.py:457
 msgid "seller"
 msgstr "vendeur"
 
-#: views_other.py:362
+#: views_other.py:359
 msgid "Select the seller in the contacts"
 msgstr "Sélectionner le vendeur dans les contacts"
 
-#: views_other.py:370
+#: views_other.py:367
 msgid "update this seller"
 msgstr "mettre  à jour ce vendeur"
 
-#: views_other.py:383
+#: views_other.py:380
 msgid "detail"
 msgstr "détail"
 
-#: views_other.py:399
+#: views_other.py:396
 msgid "vat"
 msgstr "TVA"
 
-#: views_other.py:452
+#: views_other.py:449
 msgid "VAT is not recoverable"
 msgstr "la TVA n’est pas récupérable"
 
-#: views_other.py:468
+#: views_other.py:465
 msgid "Total excl"
 msgstr "Total excl. TVA"
 
-#: views_other.py:476
+#: views_other.py:473
 msgid "Total VAT"
 msgstr "Total TVA"
 
-#: views_other.py:484
+#: views_other.py:481
 msgid "Total"
 msgstr "Total"
 
-#: views_other.py:496
+#: views_other.py:493
 #, python-format
 msgid "e-invoice import ref. %s"
 msgstr "import de l'e-facture ref. %s"
 
-#: views_other.py:558
+#: views_other.py:555
 msgid "import progression"
 msgstr "progression d'import"
 
-#: views_other.py:571
+#: views_other.py:568
 msgid "No e-invoice file found !"
 msgstr "Fichier e-facture non trouvé !"
 
-#: views_other.py:576
+#: views_other.py:573
 #, python-format
 msgid ""
 "This e-invoice uses the currency \"%s\" while it is \"%s\" that is "

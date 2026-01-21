@@ -43,9 +43,11 @@ from diacamma.accounting.models import FiscalYear, ChartsAccount
 from diacamma.payoff.models import BankAccount, PaymentMethod
 from diacamma.payoff.views_deposit import BankTransactionList, BankTransactionShow
 from diacamma.payoff.payment_type import PaymentTypeMoneticoPaiement, PaymentTypeHelloAsso
+from lucterios.CORE.parameters import Params
 
 
 def default_bankaccount_fr():
+    Params.setvalue("payoff-cash-account", "531")
     create_account(['581'], 0, FiscalYear.get_current())
     BankAccount.objects.create(designation="My bank", reference="0123 456789 321654 12", account_code="512")
     BankAccount.objects.create(designation="PayPal", reference="paypal@moi.com", account_code="581", fee_account_code='627')
@@ -53,10 +55,19 @@ def default_bankaccount_fr():
 
 
 def default_bankaccount_be():
+    Params.setvalue("payoff-cash-account", "570000")
     create_account(['552000'], 0, FiscalYear.get_current())
     BankAccount.objects.create(designation="My bank", reference="0123 456789 321654 12", account_code="550000")
     BankAccount.objects.create(designation="PayPal", reference="paypal@moi.com", account_code="552000")
     BankAccount.objects.create(designation="Old", reference="Old", account_code="570000", is_disabled=True)
+
+
+def default_bankaccount_ma():
+    Params.setvalue("payoff-cash-account", "5161")
+    create_account(['5122'], 0, FiscalYear.get_current())
+    BankAccount.objects.create(designation="My bank", reference="0123 456789 321654 12", account_code="5121")
+    BankAccount.objects.create(designation="PayPal", reference="paypal@moi.com", account_code="5122")
+    BankAccount.objects.create(designation="Old", reference="Old", account_code="5123", is_disabled=True)
 
 
 def default_paymentmethod():
