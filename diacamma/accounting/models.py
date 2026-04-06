@@ -1321,7 +1321,7 @@ class EntryAccount(LucteriosModel):
             return False
 
     def create_linked(self):
-        if (self.year.status != 2) and (self.link is None):
+        if (self.year.status != FiscalYear.STATUS_FINISHED) and (self.link is None):
             paym_journ = Journal.objects.get(id=4)
             paym_desig = _('payment of %s') % self.designation
             new_entry = EntryAccount.objects.create(

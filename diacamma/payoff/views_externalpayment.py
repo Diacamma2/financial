@@ -184,10 +184,14 @@ class ValidationPaymentGeneric(XferContainerAbstract):
                 new_payoff.supporting.renew_generate_pdfreport()
                 self.item.status = BankTransaction.STATUS_SUCCESS
                 self.success = True
+            else:
+                self.item.status = BankTransaction.STATUS_FAILURE
+                self.success = False
         except Exception as err:
             logging.getLogger('diacamma.payoff').exception("ValidationPayment")
             self.item.contains += "{[newline]}"
             self.item.contains += str(err)
+            self.item.status = BankTransaction.STATUS_FAILURE
         self.item.save()
         if (self.item.status != BankTransaction.STATUS_SUCCESS) and will_mail_send():
             send_email(self.sender_email, _('Payment failure'), _("""
@@ -275,13 +279,14 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
         from urllib.parse import quote_plus
         from requests import post
         paypal_url = PaymentTypePayPal({}).get_url("")
+        paypal_url = paypal_url.replace('https://www.', 'https://ipnpb.')
         fields = 'cmd=_notify-validate'
         try:
             for key, value in self.request.POST.items():
                 fields += "&%s=%s" % (key, quote_plus(value))
                 if key != 'FORMAT':
                     self.item.contains += "%s = %s{[newline]}" % (key, value)
-            res = post(paypal_url, data=fields.encode(), headers={"Content-Type": "application/x-www-form-urlencoded", 'Content-Length': str(len(fields))}).text
+            res = post(paypal_url, data=fields.encode(), headers={"Content-Type": "application/x-www-form-urlencoded", 'user-agent': 'Python-IPN-Verification-Script'}).text
             logging.getLogger('diacamma.payoff').debug("Check PayPal %s: %s => %s" % (paypal_url, fields, res))
         except Exception:
             logging.getLogger('diacamma.payoff').warning(paypal_url)
@@ -290,8 +295,8 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
         if res == 'VERIFIED':
             return True
         elif res == 'INVALID':
-            self.item.contains += "{[newline]}--- INVALID ---{[newline]}"
-            return False
+            self.item.contains += "{[newline]}- NOT VALIDED BY PAYPAL -{[newline]}"
+            return "paypal" in self.request.META.get('HTTP_USER_AGENT','').lower()
         else:
             self.item.contains += "{[newline]}"
             if res != 'VERIFIED':
