@@ -696,7 +696,7 @@ class EntryAccountReverse(XferContainerAcknowledge):
         self.redirect_action(EntryAccountEdit.get_action(), {})
 
 
-@ActionsManage.affect_show(_('Payment'), short_icon='mdi:mdi-checkbook', condition=lambda xfer: (xfer.item.entrylineaccount_set.filter(link__isnull=False).count() == 0) and xfer.item.has_third and not xfer.item.has_cash and (self.year.status != FiscalYear.STATUS_FINISHED))
+@ActionsManage.affect_show(_('Payment'), short_icon='mdi:mdi-checkbook', condition=lambda xfer: (xfer.item.entrylineaccount_set.filter(link__isnull=False).count() == 0) and xfer.item.has_third and not xfer.item.has_cash and (xfer.item.year.status != FiscalYear.STATUS_FINISHED))
 @MenuManage.describ('accounting.add_entryaccount')
 class EntryAccountCreateLinked(XferContainerAcknowledge):
     short_icon = "mdi:mdi-checkbook"
