@@ -54,8 +54,9 @@ class PaymentType(object):
     form_method = 'post'
     help_content = ''
 
-    def __init__(self, extra_data):
+    def __init__(self, extra_data, parentid):
         self.extra_data = extra_data
+        self.parentid = parentid
 
     def get_extra_fields(self):
         return []
@@ -409,9 +410,9 @@ class PaymentTypeHelloAsso(PaymentType):
                 value = new_value[0]
         return value
 
-    def __init__(self, extra_data):
+    def __init__(self, extra_data, parentid):
         from requests_oauthlib.oauth2_session import log
-        PaymentType.__init__(self, extra_data)
+        PaymentType.__init__(self, extra_data, parentid)
         payoff_logger = logging.getLogger('diacamma.payoff')
         log.setLevel(payoff_logger.level)
         for hdl in payoff_logger.handlers:
@@ -488,4 +489,52 @@ class PaymentTypeHelloAsso(PaymentType):
         return self.get_html_link(root_url, 'diacamma.payoff/checkPaymentHelloAsso', supporting.id)
 
 
-PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement, PaymentTypeHelloAsso)
+class PaymentTypeStripe(PaymentType):
+    name = _('Stripe')
+    num = 6
+    logo_bank = 'stripe_logo_icon.png'
+    help_content = _("help_payoff_stripe")
+    form_method = 'get'
+
+    def get_extra_fields(self):
+        return [(1, _('secret key'), PaymentType.FIELDTYPE_PWD)]
+
+    def get_price_id(self, amount):
+        import stripe
+        items = self.get_items()
+        stripe.api_key = items[0]
+        prices = stripe.Price.list(active=True, currency=Params.getvalue("accounting-devise-iso"))
+        for price in prices['data']:
+            if abs(price['unit_amount'] - amount * 100) < 1e-1:
+                return price['id']
+        price = stripe.Price.create(
+            currency=Params.getvalue("accounting-devise-iso"),
+            unit_amount_decimal=str(amount * 100),
+            active=True,
+            product_data={"name": _("Purchase with Stripe")},
+        )
+        return price['id']
+
+    def get_url(self, root_url, supporting=None):
+        from stripe import StripeClient
+        items = self.get_items()
+        client = StripeClient(items[0])
+        checkout_session = client.v1.checkout.sessions.create(params={
+            "currency": Params.getvalue("accounting-devise-iso"),
+            "line_items": [
+                {"price": self.get_price_id(supporting.get_total_rest_topay()), "quantity": 1}
+            ],
+            'mode': 'payment',
+            'metadata': {"custom": str(supporting.id)},
+            'custom_text': {
+                "submit": {'message': str(supporting)}
+            },
+            'success_url': root_url + '/diacamma.payoff/validationPaymentStripe?session_id={CHECKOUT_SESSION_ID}&parent_id=%d' % self.parentid,
+        })
+        return checkout_session.url
+
+    def show_pay(self, root_url, lang, supporting):
+        return self.get_html_link(root_url, 'diacamma.payoff/checkPaymentStripe', supporting.id)
+
+
+PAYMENTTYPE_LIST = (PaymentTypeTransfer, PaymentTypeCheque, PaymentTypeStripe, PaymentTypePayPal, PaymentTypeOnline, PaymentTypeMoneticoPaiement, PaymentTypeHelloAsso)

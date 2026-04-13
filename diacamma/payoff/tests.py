@@ -153,7 +153,7 @@ class PayoffTest(LucteriosTest):
         self.calljson('/diacamma.payoff/paymentMethodAddModify', {}, False)
         self.assert_observer('core.custom', 'diacamma.payoff', 'paymentMethodAddModify')
         self.assert_count_equal('', 5)
-        self.assert_select_equal('paytype', {0: "virement", 1: "chèque", 2: "PayPal",
+        self.assert_select_equal('paytype', {0: "virement", 1: "chèque", 2: "PayPal", 6: "Stripe",
                                              3: "en ligne", 4: "MoneticoPaiement", 5: "Hello-Asso"})  # TODO : 5: "Hello-Asso"
         self.assert_select_equal('bank_account', 1)  # nb=1
         self.assert_attrib_equal('item_1', 'description', 'IBAN')
@@ -260,7 +260,7 @@ De plus, vous devez déclarer à la plateforme cet adresse de retour {[b]}http:/
         self.assert_count_equal('paymentmethod', 6)
         self.assert_json_equal('', '#paymentmethod/headers/@0/@0', 'paytype')
         self.assert_json_equal('', '#paymentmethod/headers/@0/@1', 'type')
-        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '2': 'PayPal', '3': 'en ligne', '4': 'MoneticoPaiement', '5': 'Hello-Asso'})
+        self.assert_json_equal('', '#paymentmethod/headers/@0/@2', {'0': 'virement', '1': 'chèque', '6': 'Stripe', '2': 'PayPal', '3': 'en ligne', '4': 'MoneticoPaiement', '5': 'Hello-Asso'})
         self.assert_json_equal('', '#paymentmethod/headers/@0/@4', "%s")
 
         self.assert_json_equal('', 'paymentmethod/@0/paytype', 0)

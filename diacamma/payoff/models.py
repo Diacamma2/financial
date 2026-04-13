@@ -952,10 +952,10 @@ class PaymentMethod(LucteriosModel):
     def paymentType(self):
         if not hasattr(self, "_paymentType"):
             self.paytype = int(self.paytype)
-            self._paymentType = PaymentType(self.extra_data)
+            self._paymentType = PaymentType(self.extra_data, self.id)
             for payitem in PAYMENTTYPE_LIST:
                 if self.paytype == payitem.num:
-                    self._paymentType = payitem(self.extra_data)
+                    self._paymentType = payitem(self.extra_data, self.id)
         return self._paymentType
 
     @classmethod

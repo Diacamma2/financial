@@ -41,7 +41,8 @@ from lucterios.mailing.email_functions import will_mail_send, send_email
 
 from diacamma.payoff.models import BankTransaction, PaymentMethod, Supporting, Payoff
 from diacamma.payoff.payment_type import PaymentType, PaymentTypePayPal, PaymentTypeMoneticoPaiement, \
-    PaymentTypeHelloAsso
+    PaymentTypeHelloAsso, PaymentTypeStripe
+from time import sleep
 
 
 class CheckPaymentGeneric(XferContainerAbstract):
@@ -278,7 +279,7 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
     def confirm(self):
         from urllib.parse import quote_plus
         from requests import post
-        paypal_url = PaymentTypePayPal({}).get_url("")
+        paypal_url = PaymentTypePayPal({}, 0).get_url("")
         paypal_url = paypal_url.replace('https://www.', 'https://ipnpb.')
         fields = 'cmd=_notify-validate'
         try:
@@ -296,7 +297,7 @@ class ValidationPaymentPaypal(ValidationPaymentGeneric):
             return True
         elif res == 'INVALID':
             self.item.contains += "{[newline]}- NOT VALIDED BY PAYPAL -{[newline]}"
-            return "paypal" in self.request.META.get('HTTP_USER_AGENT','').lower()
+            return "paypal" in self.request.META.get('HTTP_USER_AGENT', '').lower()
         else:
             self.item.contains += "{[newline]}"
             if res != 'VERIFIED':
@@ -467,3 +468,89 @@ class ValidationPaymentHelloAsso(ValidationPaymentGeneric):
         self.helloasso_meta = return_content['metadata'] if 'metadata' in return_content else {}
         logging.getLogger('diacamma.payoff').debug("eventType = %s / data = %s / metadata = %s" % (self.helloasso_eventtype, self.helloasso_data, self.helloasso_meta))
         ValidationPaymentGeneric._initialize(self, request, *_, **kwargs)
+
+
+@MenuManage.describ('')
+class CheckPaymentStripe(CheckPaymentGeneric):
+
+    payment_name = "Stripe"
+
+    @property
+    def payment_meth(self):
+        return PaymentMethod.objects.filter(paytype=PaymentTypeStripe.num).first()
+
+
+@MenuManage.describ('')
+class ValidationPaymentStripe(ValidationPaymentGeneric):
+    observer_name = 'Stripe'
+    caption = 'ValidationPaymentStripe'
+
+    @property
+    def payer(self):
+        name = self.data['customer_details']['name']
+        if name is not None:
+            return name
+        else:
+            return str(self.supporting.third)
+
+    @property
+    def amount(self):
+        return float(self.data['amount_total'] / 100.0)
+
+    @property
+    def date(self):
+        datetime.fromtimestamp(self.data['created'])
+        return timezone.now()
+
+    @property
+    def payment_meth(self):
+        return PaymentMethod.objects.get(id=self.getparam('parent_id', 0))
+
+    @property
+    def payment_items(self):
+        if not hasattr(self, '_payment_items'):
+            self._payment_items = self.payment_meth.paymentType.get_items()
+        return self._payment_items
+
+    @property
+    def customid(self):
+        import stripe
+        stripe.api_key = self.payment_items[0]
+        checkout_session = stripe.checkout.Session.retrieve(self.getparam('session_id', ''))
+        self.data = dict(checkout_session.last_response.data)
+        return int(self.data['metadata']['custom'])
+
+    @property
+    def reference(self):
+        return self.data['payment_intent']
+
+    @property
+    def bank_fee(self):
+        import stripe
+        stripe.api_key = self.payment_items[0]
+        loop_nb = 0
+        while (loop_nb < 3):
+            charge = stripe.Charge.list(payment_intent=self.data['payment_intent'])
+            if charge.last_response.data['data'][0]["balance_transaction"] is not None:
+                break
+            sleep(0.5 * loop_nb)
+            loop_nb += 1
+        self.item.contains += "%s = %s{[newline]}" % ('Charge[payment_intent](%d)' % loop_nb, str(charge))
+        fee_sum = 0.0
+        for charge_item in charge.last_response.data['data']:
+            if charge_item["balance_transaction"] is not None:
+                balance = stripe.BalanceTransaction.retrieve(charge_item["balance_transaction"])
+                self.item.contains += "%s = %s{[newline]}" % ('BalanceTransaction[balance_transaction]', str(balance))
+                fee_sum += balance['fee']
+        return float(fee_sum / 100.0)
+
+    def confirm(self):
+        is_ok = self.data['payment_status'] == 'paid'
+        self.params['ret'] = 'OK' if is_ok else 'BAD'
+        for key, value in self.data.items():
+            self.item.contains += "%s = %s{[newline]}" % (key, dumps(value))
+        return is_ok
+
+    def fillresponse(self):
+        ValidationPaymentGeneric.fillresponse(self)
+        self._supporting = None
