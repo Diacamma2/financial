@@ -1896,7 +1896,7 @@ class Bill(Supporting):
                 IMPORTANT, _("This item can't be validated!"))
         if (self.bill_type == Bill.BILLTYPE_QUOTATION):
             if (Params.getvalue('invoice-order-mode') == Bill.INVOICE_ORDER_CONVERT) and (self.categoryBill is not None) and (self.categoryBill.workflow_order != CategoryBill.WORKFLOWS_NEVER_ORDER):
-                new_bill = self.convert_to_order()()
+                new_bill = self.convert_to_order()
             else:
                 new_bill = self.convert_to_bill()
             new_bill.date = validate_date

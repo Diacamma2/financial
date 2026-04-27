@@ -966,6 +966,10 @@ class PaymentMethod(LucteriosModel):
     def get_edit_fields(cls):
         return ['paytype', 'bank_account']
 
+    @property
+    def bank_account_query(self):
+        return BankAccount.objects.filter(Q(is_disabled=False))
+
     def get_extra_fields(self):
         return self.paymentType.get_extra_fields()
 
