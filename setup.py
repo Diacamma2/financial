@@ -66,5 +66,5 @@ setup(
         "diacamma.payoff.migrations": ['*'],
         "diacamma.payoff": ['build', 'images/*', 'locale/*/*/*', 'help/*'],
     },
-    install_requires=["lucterios ~=2.7", "lucterios-contacts ~=2.7", "requests", "requests-oauthlib ~=2.0", "factur-x ~=3.8", "stripe"],
+    install_requires=["lucterios ~=2.7", "lucterios-contacts ~=2.7", "requests", "requests-oauthlib ~=2.0", "digital_invoice ~=0.9", "stripe"],
 )

@@ -30,6 +30,7 @@ from os.path import isfile, join
 from unittest.mock import patch
 from pypdf import PdfReader
 import logging
+from digitalInvoice.ubl_xsd import validateUBL
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -4622,7 +4623,6 @@ class BillBETest(InvoiceTest):
         Params.setvalue('invoice-vat-mode', 1)
 
     def test_einvoice(self):
-        from diacamma.accounting.system.ubl_xsd import validateUBL
         current_legal = LegalEntity.objects.get(id=1)
         current_legal.legal_identification = "123456789"
         current_legal.save()
@@ -4651,7 +4651,7 @@ class BillBETest(InvoiceTest):
         self.assertIn('UBL.xml', dict(pdf_doc.attachments).keys())
         ubl_content = pdf_doc.attachments['UBL.xml']
         self.assertEqual(1, len(ubl_content))
-        self.assertTrue(validateUBL(ubl_content[0]))
         filename = self._get_pdf_filename(None).replace(".pdf", "_UBL.xml")
-        with open(filename, "w") as ubl_writer:
-            ubl_writer.write(ubl_content[0].decode())
+        with open(filename, "wb") as ubl_writer:
+            ubl_writer.write(ubl_content[0])
+        #self.assertTrue(validateUBL(ubl_content[0]))

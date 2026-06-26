@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from json import dumps, loads
 from time import sleep
+from digitalInvoice.reader import ReaderInvoice
 
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -25,7 +26,6 @@ from diacamma.accounting.models import CostAccounting, ModelLineEntry, ModelEntr
     EntryAccount, Journal, Third, AccountThird, EntryLineAccount, get_meta_currency_iso_list
 from diacamma.accounting.views_reports import CostAccountingIncomeStatement
 from diacamma.accounting.views_entries import EntryAccountValidate
-from diacamma.accounting.system.einvoice import read_file
 from diacamma.accounting.tools import get_amount_from_format_devise, currency_round, current_system_account
 
 
@@ -267,7 +267,7 @@ def get_contact_from_json(contact_json):
     new_contact.address = '\n'.join(contact_json['address']).strip().replace('\n', '{[br/]}')
     new_contact.postal_code = contact_json['postalcode']
     new_contact.city = contact_json['city']
-    new_contact.country = contact_json['country']
+    new_contact.country = contact_json['country_id']
     new_contact.tel1 = contact_json['phone']
     new_contact.email = contact_json['email']
     return new_contact
@@ -558,7 +558,9 @@ class ImportEInvoice(XferContainerCustom):
 
     def fillresponse(self, step=1):
         if 'importcontent' in self.request.FILES:
-            einvoice_content = read_file(self.request.FILES['importcontent'])
+            reader = ReaderInvoice()
+            reader.run(self.request.FILES['importcontent'])
+            einvoice_content =  reader.data
             self.params['einvoice'] = dumps(einvoice_content)
         else:
             einvoice_content = loads(self.getparam('einvoice', 'null'))

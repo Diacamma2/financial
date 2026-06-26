@@ -199,6 +199,19 @@ class Third(LucteriosModel, CustomizeObject):
             raise LucteriosException(IMPORTANT, _("third has not correct account"))
         return third_account
 
+    def from_einvoice(self):
+        return {
+            'name': str(self.contact),
+            'legal_ident': self.legal_identification,
+            'vat_ident': self.vat_identification,
+            'postalcode': self.contact.postal_code,
+            'address': self.contact.address_list,
+            'city': self.contact.city,
+            'country_id': self.contact.country_id,
+            'email': self.contact.email,
+            'phone': self.contact.tel1,
+        }
+
     class Meta(object):
         verbose_name = _('third')
         verbose_name_plural = _('thirds')

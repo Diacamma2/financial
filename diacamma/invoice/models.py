@@ -29,6 +29,7 @@ from datetime import timedelta
 from logging import getLogger
 from json import dumps, loads
 from json.decoder import JSONDecodeError
+import locale
 
 from django.db import models
 from django.db.models.query import QuerySet
@@ -59,7 +60,6 @@ from diacamma.accounting.models import FiscalYear, Third, EntryAccount, CostAcco
     AccountLink, is_with_VAT
 from diacamma.accounting.tools import current_system_account, currency_round, correct_accounting_code, format_with_devise, get_amount_from_format_devise
 from diacamma.payoff.models import Supporting, Payoff, BankAccount, BankTransaction, DepositSlip, PaymentMethod
-import locale
 
 
 class Vat(LucteriosModel):
@@ -1998,6 +1998,28 @@ class Bill(Supporting):
             payment_methods.insert(0, InvoiceValidQuotation.PaymentMethodValidate(self))
         return payment_methods
 
+    def from_einvoice(self):
+        return {
+            "date": self.date,
+            'num': self.num,
+            'origin': str(self.origin),
+            'detail': [detail.from_einvoice() for detail in self.detail_set.all()],
+            'vat_info': [
+                {
+                    'calculate': vat_item[1],
+                    'basic': vat_item[2],
+                    'rate': vat_item[0],
+                } for vat_item in self.vat_list_info
+            ],
+            'total': {
+                'excltax': self.total_excltax,
+                'incltax': self.total_incltax,
+                'payed': self.total_payed,
+                'topay': self.total_rest_topay,
+                'tax': self.get_tax_sum()
+            },
+        }
+
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
         self.bill_type = int(self.bill_type)
         if self.id is not None:
@@ -2273,6 +2295,18 @@ class Detail(LucteriosModel):
                             self.reduce = min(float(self.reduce), new_reduce)
             return float(self.reduce) > 0.0001
         return False
+
+    def from_einvoice(self):
+        return {
+            'id': str(self.id),
+            'reference': self.article.reference if self.article_id is not None else "",
+            'designation': self.get_designation_txt(),
+            'price': float(self.price),
+            'quantity': float(self.quantity),
+            'vat_rate': float(self.vta_rate * 100),
+            'reduce': self.get_reduce(),
+            'total': self.total_excltax,
+        }
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None, check_autoreduce=True):
         if check_autoreduce:
