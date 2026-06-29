@@ -4652,6 +4652,7 @@ class BillBETest(InvoiceTest):
         ubl_content = pdf_doc.attachments['UBL.xml']
         self.assertEqual(1, len(ubl_content))
         filename = self._get_pdf_filename(None).replace(".pdf", "_UBL.xml")
+        ubl_content_first = ubl_content[0]
         with open(filename, "wb") as ubl_writer:
             ubl_writer.write(ubl_content[0])
-        #self.assertTrue(validateUBL(ubl_content[0]))
+        self.assertTrue(validateUBL(ubl_content_first))
