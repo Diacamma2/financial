@@ -2084,6 +2084,7 @@ def accounting_checkparam():
     Parameter.check_and_create(name='accounting-datecurrent', typeparam=Parameter.TYPE_BOOL, title=_("accounting-datecurrent"), args="{}", value='True')
     Parameter.check_and_create(name='accounting-VAT-arrangements', typeparam=Parameter.TYPE_SELECT, title=_("accounting-VAT-arrangements"),
                                args="{'Enum':2, 'Min':0}", value='-1', param_titles=(_("accounting-VAT-arrangements.-1"), _("accounting-VAT-arrangements.0"), _("accounting-VAT-arrangements.1")))
+    Parameter.check_and_create(name='accounting-einvoicing-conf', typeparam=Parameter.TYPE_STRING, title=_("accounting-einvoicing-conf"), args="{'Multi':True}", value='{}')
 
     LucteriosGroup.redefine_generic(_("# accounting (administrator)"), FiscalYear.get_permission(True, True, True),
                                     ChartsAccount.get_permission(True, True, True), Budget.get_permission(True, True, True),
