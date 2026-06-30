@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-29 19:15+0200\n"
+"POT-Creation-Date: 2026-06-30 09:36+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.9\n"
 
-#: __init__.py:42 views_admin.py:406 views_admin.py:410 views_admin.py:414
+#: __init__.py:42 views_admin.py:409 views_admin.py:413 views_admin.py:417
 msgid "Diacamma accounting"
 msgstr "Diacamma accounting"
 
@@ -1024,64 +1024,64 @@ msgstr "Accounting configuration"
 msgid "Management of fiscal year and financial parameters"
 msgstr "Management of fiscal year and financial parameters"
 
-#: views_admin.py:131 views_admin.py:410
+#: views_admin.py:131 views_admin.py:413
 msgid "Fiscal year list"
 msgstr "Fiscal year list"
 
 #: views_admin.py:157
-msgid "einvoice type"
-msgstr "e-invoice type"
+msgid "einvoice provider"
+msgstr "einvoice provider"
 
-#: views_admin.py:165
+#: views_admin.py:166
 msgid "flow url"
 msgstr "Flow API URL"
 
-#: views_admin.py:170
+#: views_admin.py:172
 msgid "auth url"
 msgstr "Authentification URL"
 
-#: views_admin.py:175
+#: views_admin.py:177
 msgid "client id"
 msgstr "Client ID"
 
-#: views_admin.py:180
+#: views_admin.py:182
 msgid "secret id"
 msgstr "Secrete ID"
 
-#: views_admin.py:186 views_admin.py:285
+#: views_admin.py:189 views_admin.py:288
 msgid "Check"
 msgstr "Check"
 
-#: views_admin.py:197
+#: views_admin.py:200
 msgid "Connexion successfull"
 msgstr "Connexion successfull"
 
-#: views_admin.py:200
+#: views_admin.py:203
 #, python-format
 msgid "Error of Connexion : %s"
 msgstr "Error of Connexion : %s"
 
-#: views_admin.py:207
+#: views_admin.py:210
 msgid "Save"
 msgstr "Save"
 
-#: views_admin.py:214 views_admin.py:414
+#: views_admin.py:217 views_admin.py:417
 msgid "Journals"
 msgstr "Journals"
 
-#: views_admin.py:216 views_admin.py:406
+#: views_admin.py:219 views_admin.py:409
 msgid "Parameters"
 msgstr "Parameters"
 
-#: views_admin.py:218
+#: views_admin.py:221
 msgid "Third Custom field"
 msgstr "Third Custom field"
 
-#: views_admin.py:222
+#: views_admin.py:225
 msgid "e-invoicing"
 msgstr "e-invoicing"
 
-#: views_admin.py:232
+#: views_admin.py:235
 #, python-format
 msgid ""
 "Do you confirm to select \"%s\" like accounting system?{[br/]}{[br/]}{[i]}"
@@ -1090,47 +1090,47 @@ msgstr ""
 "Do you confirm to select \"%s\" like accounting system?{[br/]}{[br/]}{[i]}"
 "{[u]}Warning{[/u]}: This choose is definitive.{[/i]}"
 
-#: views_admin.py:240 views_admin.py:246
+#: views_admin.py:243 views_admin.py:249
 msgid "Activate"
 msgstr "Activate"
 
-#: views_admin.py:252 views_admin.py:258
+#: views_admin.py:255 views_admin.py:261
 msgid "Export"
 msgstr "Export"
 
-#: views_admin.py:271
+#: views_admin.py:274
 msgid "Export fiscal year"
 msgstr "Export fiscal year"
 
-#: views_admin.py:291
+#: views_admin.py:294
 msgid "Check saved reports"
 msgstr "Check saved reports"
 
-#: views_admin.py:294
+#: views_admin.py:297
 msgid "Do you want to check saving reports for this year?"
 msgstr "Do you want to check saving reports for this year?"
 
-#: views_admin.py:296
+#: views_admin.py:299
 msgid "All registration reports will be verified within minutes"
 msgstr "All registration reports will be verified within minutes"
 
-#: views_admin.py:306 views_admin.py:324
+#: views_admin.py:309 views_admin.py:327
 msgid "Add fiscal year"
 msgstr "Add fiscal year"
 
-#: views_admin.py:307
+#: views_admin.py:310
 msgid "Modify fiscal year"
 msgstr "Modify fiscal year"
 
-#: views_admin.py:313
+#: views_admin.py:316
 msgid "Account system not defined!"
 msgstr "Account system not defined!"
 
-#: views_admin.py:339
+#: views_admin.py:342
 msgid "Delete fiscal year"
 msgstr "Delete fiscal year"
 
-#: views_admin.py:343
+#: views_admin.py:346
 msgid ""
 "Do you want delete this fiscal year ?{[br]}Warning: all accounting entries "
 "and financial vouchers for this year will also be destroyed."
@@ -1138,31 +1138,31 @@ msgstr ""
 "Do you want delete this fiscal year ?{[br]}Warning: all accounting entries "
 "and financial vouchers for this year will also be destroyed."
 
-#: views_admin.py:356
+#: views_admin.py:359
 msgid "Add accounting journal"
 msgstr "Add accounting journal"
 
-#: views_admin.py:357
+#: views_admin.py:360
 msgid "Modify accounting journal"
 msgstr "Add accounting journal"
 
-#: views_admin.py:366
+#: views_admin.py:369
 msgid "Delete accounting journal"
 msgstr "Delete accounting journal"
 
-#: views_admin.py:369 views_admin.py:375 views_other.py:116 views_other.py:122
+#: views_admin.py:372 views_admin.py:378 views_other.py:116 views_other.py:122
 msgid "Default"
 msgstr "Default"
 
-#: views_admin.py:406
+#: views_admin.py:409
 msgid "Configuration of accounting parameters"
 msgstr "Configuration of account system and currency"
 
-#: views_admin.py:410
+#: views_admin.py:413
 msgid "Configuration of fiscal years"
 msgstr "Define your fiscal year"
 
-#: views_admin.py:414
+#: views_admin.py:417
 msgid "Configuration of journals"
 msgstr "Manage your accounting journals"
 

@@ -26,6 +26,8 @@ from __future__ import unicode_literals
 from shutil import rmtree
 from datetime import date, timedelta
 from base64 import b64decode
+from unittest import mock
+from json import loads
 
 from lucterios.framework.test import LucteriosTest
 from lucterios.framework.filetools import get_user_dir
@@ -684,9 +686,9 @@ class AdminTest(LucteriosTest):
         self.factory.xfer = Configuration()
         self.calljson('/diacamma.accounting/configuration', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
-        self.assertTrue('__tab_4' in self.json_data.keys(), self.json_data.keys())
-        self.assertFalse('__tab_5' in self.json_data.keys(), self.json_data.keys())
-        self.assert_count_equal('', 4 + 5 + 2 + 8)
+        self.assertTrue('__tab_5' in self.json_data.keys(), self.json_data.keys())
+        self.assertFalse('__tab_6' in self.json_data.keys(), self.json_data.keys())
+        self.assert_count_equal('', 4 + 5 + 2 + 8 + 3)
         self.assert_grid_equal('fiscalyear', {"begin": "début", "end": "fin", "status": "statut", "is_actif": "actif", "prefix": "prefix"}, 0)  # nb=4
 
         self.assert_grid_equal('journal', {'name': "nom", "is_default": "défaut"}, 5)  # nb=1
@@ -982,6 +984,85 @@ class AdminTest(LucteriosTest):
         self.calljson('/diacamma.accounting/configuration', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
         self.assert_count_equal('custom_field', 1)
+
+    @staticmethod
+    def mocked_requests_request(*args, **kwargs):
+        class MockResponse:
+            def __init__(self, content, status_code):
+                self.content = content
+                self.status_code = status_code
+
+            def json(self):
+                return loads(self.content)
+
+            def raise_for_status(self):
+                pass
+
+        if args[1] == 'https://api.superpdp.tech/afnor-flow':
+            return MockResponse("", 200)
+        elif args[1] == 'https://api.superpdp.tech/oauth2/token':
+            return MockResponse('{"access_token": "AzerTy123456"}', 200)
+
+        return MockResponse(None, 404)
+
+    @mock.patch('diacamma.accounting.einvoicing_flow.request', side_effect=mocked_requests_request)
+    def test_einvoicing(self, mock_request):
+        self.factory.xfer = Configuration()
+        self.calljson('/diacamma.accounting/configuration', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
+        self.assert_count_equal('', 4 + 5 + 2 + 8 + 3)
+
+        self.assert_json_equal('SELECT', 'einvoice_type', 0)
+        self.assert_json_equal('BUTTON', 'save-einvoice', '')
+
+        self.factory.xfer = Configuration()
+        self.calljson('/diacamma.accounting/configuration', {"einvoice_type": 1}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
+        self.assert_count_equal('', 4 + 5 + 2 + 8 + 8)
+
+        self.assert_json_equal('SELECT', 'einvoice_type', 1)
+        self.assert_json_equal('EDIT', 'flow_url', 'https://api.superpdp.tech/afnor-flow')
+        self.assert_json_equal('EDIT', 'auth_url', 'https://api.superpdp.tech/oauth2/token')
+        self.assert_json_equal('EDIT', 'client_id', '')
+        self.assert_json_equal('PASSWD', 'secret_id', '')
+        self.assert_json_equal('BUTTON', 'save-einvoice', '')
+        self.assert_json_equal('LABELFORM', 'resutl-check', '')
+
+        self.factory.xfer = Configuration()
+        self.calljson('/diacamma.accounting/configuration', {"einvoice_type": 1,
+                                                             'flow_url': 'https://api.superpdp.tech/afnor-flow',
+                                                             'auth_url': 'https://api.superpdp.tech/oauth2/token',
+                                                             'client_id': 'MyClientID',
+                                                             'secret_id': 'WOnd3rfu11+P@ssw0rd',
+                                                             'SAVE': 'OK'}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
+
+        self.factory.xfer = Configuration()
+        self.calljson('/diacamma.accounting/configuration', {}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
+        self.assert_count_equal('', 4 + 5 + 2 + 8 + 9)
+        self.assert_json_equal('SELECT', 'einvoice_type', 1)
+        self.assert_json_equal('EDIT', 'flow_url', 'https://api.superpdp.tech/afnor-flow')
+        self.assert_json_equal('EDIT', 'auth_url', 'https://api.superpdp.tech/oauth2/token')
+        self.assert_json_equal('EDIT', 'client_id', 'MyClientID')
+        self.assert_json_equal('PASSWD', 'secret_id', 'WOnd3rfu11+P@ssw0rd')
+        self.assert_json_equal('BUTTON', 'save-einvoice', '')
+        self.assert_json_equal('BUTTON', 'check-einvoice', '')
+        self.assert_json_equal('LABELFORM', 'resutl-check', '')
+
+        self.assertEqual(len(mock_request.call_args_list), 0)
+        self.factory.xfer = Configuration()
+        self.calljson('/diacamma.accounting/configuration', {"CHECK": "OK"}, False)
+        self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
+        self.assert_json_equal('LABELFORM', 'resutl-check', 'Connexion réussi')
+        self.assertEqual(len(mock_request.call_args_list), 2)
+        self.assertEqual(mock.call('POST', 'https://api.superpdp.tech/oauth2/token',
+                                   data={"grant_type": "client_credentials", "client_id": 'MyClientID', "client_secret": 'WOnd3rfu11+P@ssw0rd'}),
+                         mock_request.call_args_list[0])
+        self.assertEqual(mock.call('GET', 'https://api.superpdp.tech/afnor-flow/v1/healthcheck',
+                                   headers={'Accept': 'application/json', "Authorization": "Bearer AzerTy123456"},
+                                   params=None, json=None, data=None, files=None),
+                         mock_request.call_args_list[1])
 
 
 class ModelTest(LucteriosTest):

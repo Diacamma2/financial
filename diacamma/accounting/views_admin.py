@@ -154,7 +154,7 @@ class Configuration(XferListEditor):
         einvoice_type.set_location(0, 0, 2)
         einvoice_type.set_select([(default_item['id'], default_item['name']) for default_item in DEFAULT_CONFIG])
         einvoice_type.set_value(einvoice_config['einvoice_type'])
-        einvoice_type.description = _('einvoice type')
+        einvoice_type.description = _('einvoice provider')
         einvoice_type.set_action(self.request, self.return_action(), close=CLOSE_NO, modal=FORMTYPE_REFRESH)
         self.add_component(einvoice_type)
 
@@ -162,11 +162,13 @@ class Configuration(XferListEditor):
             flow_url = XferCompEdit("flow_url")
             flow_url.set_location(0, 1)
             flow_url.set_value(einvoice_config['flow_url'])
+            flow_url.mask = r"(?:http[s]?:\/\/.)?(?:www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)"
             flow_url.description = _('flow url')
             self.add_component(flow_url)
             auth_url = XferCompEdit("auth_url")
             auth_url.set_location(1, 1)
             auth_url.set_value(einvoice_config['auth_url'])
+            auth_url.mask = r"(?:http[s]?:\/\/.)?(?:www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)"
             auth_url.description = _('auth url')
             self.add_component(auth_url)
             client_id = XferCompEdit("client_id")
@@ -180,11 +182,12 @@ class Configuration(XferListEditor):
             secret_id.description = _('secret id')
             self.add_component(secret_id)
 
-            btn = XferCompButton('check-einvoice')
-            btn.set_is_mini(False)
-            btn.set_location(1, 3)
-            btn.set_action(self.request, self.return_action(_('Check'), "mdi:mdi-refresh"), close=CLOSE_NO, modal=FORMTYPE_REFRESH, params={'CHECK': 'OK'})
-            self.add_component(btn)
+            if (einvoice_config['flow_url'] != '')  and (einvoice_config['auth_url'] != '') and (einvoice_config['client_id'] != '') and (einvoice_config['secret_id'] != ''):
+                btn = XferCompButton('check-einvoice')
+                btn.set_is_mini(False)
+                btn.set_location(1, 3)
+                btn.set_action(self.request, self.return_action(_('Check'), "mdi:mdi-refresh"), close=CLOSE_NO, modal=FORMTYPE_REFRESH, params={'CHECK': 'OK'})
+                self.add_component(btn)
 
             lbl = XferCompLabelForm('resutl-check')
             lbl.set_location(0, 4, 2)
