@@ -6,7 +6,9 @@ Created on 2026 Jun 29
 from requests import request
 import json
 
+from lucterios.CORE.parameters import Params
 from django.utils.translation import gettext_lazy as _
+from abc import ABC
 
 DEFAULT_CONFIG = [
     {"id": 0, 'name': None, 'flow_url': '', 'auth_url': ''},
@@ -22,12 +24,33 @@ def extract_config(config_id):
     return {}
 
 
-class EInvoicingFlow(object):
+def get_einvoice_config(xfer=None):
+    config = json.loads(Params.getvalue('accounting-einvoicing-conf'))
+    if xfer is not None:
+        type_changed = xfer.getparam("einvoice_type") != config.get("einvoice_type")
+        config = {
+            "einvoice_type": xfer.getparam("einvoice_type", config.get("einvoice_type", 0)),
+            "flow_url": xfer.getparam("flow_url", config.get("flow_url", "")),
+            "auth_url": xfer.getparam("auth_url", config.get("auth_url", "")),
+            "client_id": xfer.getparam("client_id", config.get("client_id", "")),
+            "secret_id": xfer.getparam("secret_id", config.get("secret_id", "")),
+        }
+    else:
+        type_changed = False
+    return config, type_changed
+
+
+def get_einvoicing_flow(xfer=None):
+    config, _changed = get_einvoice_config(xfer)
+    return EInvoicingFlow(**config)
+
+
+class EInvoicingAbstract(ABC):
 
     http_timeout = 30
 
-    def __init__(self, flow_url, auth_url, client_id, secret_id, **kwarg):
-        self.flow_url = flow_url
+    def __init__(self, base_url, auth_url, client_id, secret_id, **kwarg):
+        self.base_url = base_url
         self.auth_url = auth_url
         self.client_id = client_id
         self.secret_id = secret_id
@@ -58,7 +81,7 @@ class EInvoicingFlow(object):
         return headers
 
     def _request(self, method, path, params=None, json=None, data=None, files=None, retry_on_401=True):
-        url = f"{self.flow_url}{path}"
+        url = f"{self.base_url}{path}"
         headers = self.get_headers()
         if json is not None and files is None:
             headers["Content-Type"] = "application/json"
@@ -71,11 +94,26 @@ class EInvoicingFlow(object):
         response.raise_for_status()
         return response
 
+    def healthcheck(self):
+        response = self._request("GET", "/v1/healthcheck")
+        try:
+            return response.json()
+        except Exception:
+            return {"status": "ok", "http_status": response.status_code}
+
+
+class EInvoicingFlow(EInvoicingAbstract):
+
+    def __init__(self, flow_url, auth_url, client_id, secret_id, **kwarg):
+        super().__init__(flow_url, auth_url, client_id, secret_id, **kwarg)
+
     def submit_flow(self, file_content, file_name, flow_syntax,
-                    processing_rule=None, flow_type=None, tracking_id=None, sha256=None):
+                    processing_rule=None, flow_profile=None, flow_type=None, tracking_id=None, sha256=None):
         flow_info = {"flowSyntax": flow_syntax, "name": file_name}
         if processing_rule:
             flow_info["processingRule"] = processing_rule
+        if flow_profile:
+            flow_info["flowProfile"] = flow_profile
         if flow_type:
             flow_info["flowType"] = flow_type
         if tracking_id:
@@ -123,9 +161,8 @@ class EInvoicingFlow(object):
             return response.json()
         return response.content
 
-    def healthcheck(self):
-        response = self._request("GET", "/v1/healthcheck")
-        try:
-            return response.json()
-        except Exception:
-            return {"status": "ok", "http_status": response.status_code}
+
+class EInvoicingDirectory(EInvoicingAbstract):
+
+    def __init__(self, directory_url, auth_url, client_id, secret_id, **kwarg):
+        super().__init__(directory_url, auth_url, client_id, secret_id, **kwarg)

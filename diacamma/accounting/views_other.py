@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from json import dumps, loads
 from time import sleep
+from io import BytesIO
 from digitalInvoice.reader import ReaderInvoice
 
 from django.utils.translation import gettext_lazy as _
@@ -9,9 +10,10 @@ from django.utils import timezone
 from django.db.models import Q
 
 from lucterios.framework.xferadvance import XferDelete, XferShowEditor, TITLE_ADD, TITLE_MODIFY, TITLE_DELETE, TITLE_EDIT, TITLE_CANCEL, TITLE_OK, \
-    TITLE_CREATE
-from lucterios.framework.tools import FORMTYPE_NOMODAL, SELECT_SINGLE, FORMTYPE_REFRESH, SELECT_MULTI, SELECT_NONE, CLOSE_NO, CLOSE_YES
+    TITLE_CREATE, TITLE_CLOSE
+from lucterios.framework.tools import FORMTYPE_NOMODAL, SELECT_SINGLE, FORMTYPE_REFRESH, SELECT_MULTI, SELECT_NONE, CLOSE_NO, CLOSE_YES, FORMTYPE_MODAL
 from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
+from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.xfercomponents import XferCompImage, XferCompLabelForm, XferCompDate,\
     XferCompStep, XferCompUpLoad, XferCompCheck, XferCompSelect, XferCompButton,\
     XferCompGrid
@@ -27,6 +29,7 @@ from diacamma.accounting.models import CostAccounting, ModelLineEntry, ModelEntr
 from diacamma.accounting.views_reports import CostAccountingIncomeStatement
 from diacamma.accounting.views_entries import EntryAccountValidate
 from diacamma.accounting.tools import get_amount_from_format_devise, currency_round, current_system_account
+from diacamma.accounting.einvoicing_flow import get_einvoice_config, get_einvoicing_flow
 
 
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of costs accounting'))
@@ -296,7 +299,7 @@ def right_importEinvoice(request):
         return False
 
 
-@MenuManage.describ(right_importEinvoice, FORMTYPE_NOMODAL, 'financial', _('Import e-invoice form file'),)
+@MenuManage.describ(right_importEinvoice)
 class ImportEInvoice(XferContainerCustom):
     short_icon = "mdi:mdi-invoice-import-outline"
     caption = _("Import e-invoice")
@@ -556,12 +559,19 @@ class ImportEInvoice(XferContainerCustom):
         self.add_component(stepcomp)
         return stepcomp
 
-    def fillresponse(self, step=1):
-        if 'importcontent' in self.request.FILES:
+    def fillresponse(self, step=1, import_flow=None):
+        if (import_flow is not None) and (step == 1):
+            flow = get_einvoicing_flow()
+            reader = ReaderInvoice()
+            reader.run(BytesIO(flow.get_flow(import_flow, doc_type='Original')))
+            einvoice_content = reader.data
+            self.params['einvoice'] = dumps(einvoice_content, default=str)
+            step = 2
+        elif 'importcontent' in self.request.FILES:
             reader = ReaderInvoice()
             reader.run(self.request.FILES['importcontent'])
-            einvoice_content =  reader.data
-            self.params['einvoice'] = dumps(einvoice_content)
+            einvoice_content = reader.data
+            self.params['einvoice'] = dumps(einvoice_content, default=str)
         else:
             einvoice_content = loads(self.getparam('einvoice', 'null'))
 
@@ -589,3 +599,50 @@ class ImportEInvoice(XferContainerCustom):
             if (debit_rest < 0.0001) and (credit_rest < 0.0001):
                 self.add_action(EntryAccountValidate.get_action(TITLE_OK, short_icon='mdi:mdi-check'), params={'serial_entry': serial_entry})
         self.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
+
+
+@MenuManage.describ(right_importEinvoice, FORMTYPE_NOMODAL, 'financial', _('Manage e-invoicing from platform connecting'))
+class EInvoicingManage(XferContainerCustom):
+    short_icon = "mdi:mdi-invoice-import-outline"
+    caption = _("E-invoicing")
+
+    def fillresponse(self):
+        try:
+            flow = get_einvoicing_flow()
+            flow.healthcheck()
+            Signal.call_signal("EInvoicing", self, flow)
+        except Exception:
+            lbl = XferCompLabelForm('title')
+            lbl.set_value_as_infocenter(_('No e-invoicing platform is avalable !'))
+            lbl.set_location(0, 0)
+            self.add_component(lbl)
+
+            act = XferCompButton('btn')
+            act.set_location(0, 1)
+            act.set_action(self.request, ImportEInvoice.get_action(_("Manual import")), modal=FORMTYPE_MODAL, close=CLOSE_YES)
+            self.add_component(act)
+        self.add_action(WrapAction(TITLE_CLOSE, short_icon='mdi:mdi-close'))
+
+
+@Signal.decorate('EInvoicing')
+def accounting_EInvoicing(xfer, flow):
+    year = FiscalYear.get_current()
+    xfer.new_tab(_("Import"))
+    data_to_import = flow.search_flows(flow_direction=['In'], flow_type=['SupplierInvoice'], updated_after=str(year.begin) + 'T00:00:00Z', updated_before=str(year.end) + 'T23:59:59Z')
+    grid = XferCompGrid('import_flow')
+    grid.no_pager = True
+    grid.description = _('Supplier invoices available on the platform')
+    grid.add_header('flowId', _('ID'))
+    grid.add_header('flowSyntax', _('syntax'))
+    grid.add_header('submittedAt', _('submitted at'), 'H')
+    grid.add_header('updatedAt', _('updated at'), 'H')
+    grid.add_header('acknowledgement', _('acknowledgement'))
+    for record in data_to_import['results']:
+        grid.set_value(record['flowId'], 'flowId', record['flowId'])
+        grid.set_value(record['flowId'], 'flowSyntax', record['flowSyntax'])
+        grid.set_value(record['flowId'], 'submittedAt', record['submittedAt'])
+        grid.set_value(record['flowId'], 'updatedAt', record['updatedAt'])
+        grid.set_value(record['flowId'], 'acknowledgement', [f"{key}={val}" for key, val in record['acknowledgement'].items()])
+    grid.set_location(0, 0)
+    grid.add_action(xfer.request, ImportEInvoice.get_action(_('Download e-invoice'), 'mdi:mdi-invoice-import-outline'), close=CLOSE_NO, unique=SELECT_SINGLE)
+    xfer.add_component(grid)

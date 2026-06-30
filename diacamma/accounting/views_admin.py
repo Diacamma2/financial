@@ -22,7 +22,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from __future__ import unicode_literals
-from json import loads, dumps
+from json import dumps
 
 from django.utils.translation import gettext_lazy as _
 
@@ -44,8 +44,7 @@ from diacamma.accounting.models import FiscalYear, Journal, AccountThird, Charts
 from diacamma.accounting.system import accounting_system_list, accounting_system_name
 from diacamma.accounting.tools import clear_system_account, correct_accounting_code, \
     current_system_account
-from diacamma.accounting.einvoicing_flow import EInvoicingFlow, DEFAULT_CONFIG,\
-    extract_config
+from diacamma.accounting.einvoicing_flow import DEFAULT_CONFIG, extract_config, get_einvoice_config, get_einvoicing_flow
 from lucterios.contacts.models import CustomField
 from diacamma.accounting.views_accounts import ChartsAccountInitial, \
     ChartsAccountImportFiscalYear
@@ -136,15 +135,7 @@ class Configuration(XferListEditor):
         return items.order_by('-begin', '-end')
 
     def fill_invoicing(self):
-        einvoice_config = loads(Params.getvalue('accounting-einvoicing-conf'))
-        einvoice_type_changed = self.getparam("einvoice_type") != einvoice_config.get("einvoice_type")
-        einvoice_config = {
-            "einvoice_type": self.getparam("einvoice_type", einvoice_config.get("einvoice_type", 0)),
-            "flow_url": self.getparam("flow_url", einvoice_config.get("flow_url", "")),
-            "auth_url": self.getparam("auth_url", einvoice_config.get("auth_url", "")),
-            "client_id": self.getparam("client_id", einvoice_config.get("client_id", "")),
-            "secret_id": self.getparam("secret_id", einvoice_config.get("secret_id", "")),
-        }
+        einvoice_config, einvoice_type_changed = get_einvoice_config(self)
         if einvoice_type_changed:
             einvoice_config.update(extract_config(einvoice_config['einvoice_type']))
         if self.getparam("SAVE", "") == "OK":
@@ -182,7 +173,7 @@ class Configuration(XferListEditor):
             secret_id.description = _('secret id')
             self.add_component(secret_id)
 
-            if (einvoice_config['flow_url'] != '')  and (einvoice_config['auth_url'] != '') and (einvoice_config['client_id'] != '') and (einvoice_config['secret_id'] != ''):
+            if (einvoice_config['flow_url'] != '') and (einvoice_config['auth_url'] != '') and (einvoice_config['client_id'] != '') and (einvoice_config['secret_id'] != ''):
                 btn = XferCompButton('check-einvoice')
                 btn.set_is_mini(False)
                 btn.set_location(1, 3)
@@ -195,8 +186,7 @@ class Configuration(XferListEditor):
             lbl.set_centered()
             if self.getparam("CHECK", "") == "OK":
                 try:
-                    einvoicing = EInvoicingFlow(**einvoice_config)
-                    einvoicing.healthcheck()
+                    get_einvoicing_flow(self).healthcheck()
                     lbl.set_value(_("Connexion successfull"))
                     lbl.set_color('BLUE')
                 except Exception as err:

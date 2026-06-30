@@ -992,6 +992,7 @@ class Bill(Supporting):
     description = LucteriosVirtualField(verbose_name='', compute_from='get_description')
 
     billtype = LucteriosVirtualField(verbose_name=_('type title'), compute_from='get_billtype')
+    einvoicing = LucteriosVirtualField(verbose_name=_('e-invoicing'), compute_from=lambda item: item.get_internal_value('einvoicing'))
 
     def __str__(self):
         if self.num is None:

@@ -25,6 +25,7 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 from datetime import date
 import logging
+from io import BytesIO
 
 from django.utils.translation import gettext_lazy as _
 from django.utils import formats
@@ -65,6 +66,7 @@ from diacamma.accounting.models import FiscalYear, Third, EntryLineAccount, Entr
 from diacamma.accounting.views import get_main_third
 from diacamma.accounting.views_entries import EntryAccountOpenFromLine
 from diacamma.accounting.tools import current_system_account, format_with_devise, get_amount_from_format_devise
+from diacamma.accounting.einvoicing_flow import get_einvoicing_flow
 
 MenuManage.add_sub("invoice", None, short_icon='mdi:mdi-invoice-outline', caption=_("Invoice"), desc=_("Manage of billing"), pos=45)
 
@@ -1571,3 +1573,49 @@ def show_contact_invoice(contact, xfer):
                 xfer.params['third'] = third.id
                 xfer.with_individual = True
                 thirdaddon_invoice(third, xfer)
+
+
+@MenuManage.describ('invoice.add_bill')
+class BillUploadEInvoicing(XferContainerAcknowledge):
+    caption = _("Upload e-invoicing")
+    short_icon = 'mdi:mdi-invoice-edit-outline'
+    model = Bill
+    field_id = 'export_bill'
+
+    def fillresponse(self):
+        doc = self.item.get_final_child().get_saved_pdfreport(False)
+        if doc is not None:
+            pdf_content = doc.content.read()
+            flow = get_einvoicing_flow()
+            flow.submit_flow(file_content=pdf_content, file_name=doc.name, flow_syntax="Factur-X", processing_rule="B2B")
+
+
+@signal_and_lock.Signal.decorate('EInvoicing')
+def invoice_EInvoicing(xfer, flow):
+    year = FiscalYear.get_current()
+    xfer.new_tab(_("Export"))
+    data_to_import = flow.search_flows(flow_direction=['Out'], flow_type=['CustomerInvoice'], updated_after=str(year.begin) + 'T00:00:00Z', updated_before=str(year.end) + 'T23:59:59Z')
+
+    grid = XferCompGrid('export_bill')
+    grid.set_model(Bill.objects.filter(bill_type=Bill.BILLTYPE_BILL, status=Bill.STATUS_VALID, date__gt=year.begin, date__lt=year.end), fieldnames=["num_txt", "date", "third", "comment", 'total_incltax', 'einvoicing'], xfer_custom=xfer)
+    grid.set_location(0, 0)
+    grid.description = _('Invoices ready to be uploaded')
+    grid.add_action(xfer.request, BillUploadEInvoicing.get_action(), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE)
+    xfer.add_component(grid)
+
+    grid = XferCompGrid('export_flow')
+    grid.no_pager = True
+    grid.description = _('Customer invoices already present on the platform')
+    grid.add_header('flowId', _('ID'))
+    grid.add_header('flowSyntax', _('syntax'))
+    grid.add_header('submittedAt', _('submitted at'), 'H')
+    grid.add_header('updatedAt', _('updated at'), 'H')
+    grid.add_header('acknowledgement', _('acknowledgement'))
+    for record in data_to_import['results']:
+        grid.set_value(record['flowId'], 'flowId', record['flowId'])
+        grid.set_value(record['flowId'], 'flowSyntax', record['flowSyntax'])
+        grid.set_value(record['flowId'], 'submittedAt', record['submittedAt'])
+        grid.set_value(record['flowId'], 'updatedAt', record['updatedAt'])
+        grid.set_value(record['flowId'], 'acknowledgement', [f"{key}={val}" for key, val in record['acknowledgement'].items()])
+    grid.set_location(0, 1)
+    xfer.add_component(grid)
