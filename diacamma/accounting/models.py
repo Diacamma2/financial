@@ -153,15 +153,29 @@ class Third(LucteriosModel, CustomizeObject):
 
     @property
     def legal_identification(self):
-        if hasattr(self.contact, 'get_legal_identification'):
-            return self.contact.get_legal_identification()
+        final_contact = self.contact.get_final_child()
+        if hasattr(final_contact, 'get_legal_identification'):
+            return final_contact.get_legal_identification()
         else:
             return ""
 
     @property
     def vat_identification(self):
-        if hasattr(self.contact, 'vat_identification'):
-            return self.contact.vat_identification
+        final_contact = self.contact.get_final_child()
+        if hasattr(final_contact, 'vat_identification'):
+            return final_contact.vat_identification
+        else:
+            return ""
+
+    def extract_form_identify_number(self, name):
+        def build_item(line):
+            import re
+            line_splied = re.split('[:=]', line)
+            return line_splied[0], re.sub('[^0-9_:]+', '', line[len(line_splied[0]) + 1:])
+        final_contact = self.contact.get_final_child()
+        if hasattr(final_contact, 'identify_number'):
+            identify_number_list = dict([build_item(line) for line in final_contact.identify_number.split('\n')])
+            return identify_number_list.get(name, '')
         else:
             return ""
 
@@ -208,6 +222,7 @@ class Third(LucteriosModel, CustomizeObject):
             'address': self.contact.address_list,
             'city': self.contact.city,
             'country_id': self.contact.country_id,
+            'electronic_address': self.extract_form_identify_number('e-address'),
             'email': self.contact.email,
             'phone': self.contact.tel1,
         }

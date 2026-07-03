@@ -16,7 +16,7 @@ from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.xfercomponents import XferCompImage, XferCompLabelForm, XferCompDate,\
     XferCompStep, XferCompUpLoad, XferCompCheck, XferCompSelect, XferCompButton,\
-    XferCompGrid
+    XferCompGrid, GRID_SIZE
 from lucterios.framework.xferadvance import XferListEditor
 from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XFER_DBOX_WARNING, XferContainerCustom
@@ -29,7 +29,7 @@ from diacamma.accounting.models import CostAccounting, ModelLineEntry, ModelEntr
 from diacamma.accounting.views_reports import CostAccountingIncomeStatement
 from diacamma.accounting.views_entries import EntryAccountValidate
 from diacamma.accounting.tools import get_amount_from_format_devise, currency_round, current_system_account
-from diacamma.accounting.einvoicing_flow import get_einvoice_config, get_einvoicing_flow
+from diacamma.accounting.einvoicing_flow import get_einvoice_config, get_einvoicing_flow, get_einvoicing_directory
 
 
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of costs accounting'))
@@ -297,6 +297,105 @@ def right_importEinvoice(request):
         return (current_contact.legal_identification != '') and (current_system_account().get_einvoice_format() != '')
     else:
         return False
+
+
+@MenuManage.describ(right_importEinvoice)
+class UpdateContactEInvoice(XferContainerAcknowledge):
+    short_icon = "mdi:mdi-invoice-import-outline"
+    caption = _("E-invoicing upgrade")
+    model = LegalEntity
+    field_id = 'contactid'
+
+    def fillresponse(self, search_siret=''):
+        directory = get_einvoicing_directory()
+        data_searching = directory.get_establishment_by_siret(search_siret)
+        self.item.name = data_searching['name']
+        self.item.address = "{[br]}".join([data_searching['address'].get('addressLine1', ''), data_searching['address'].get('addressLine2', ''), data_searching['address'].get('addressLine3', '')])
+        self.item.postal_code = data_searching['address']['postalCode']
+        self.item.city = data_searching['address']['locality']
+        self.item.country_id = data_searching['address']['countryCode']
+        self.item.legal_identification = data_searching['siret']
+        self.item.save()
+
+
+@MenuManage.describ(right_importEinvoice)
+class SearchContactEInvoice(XferContainerCustom):
+    short_icon = "mdi:mdi-invoice-import-outline"
+    caption = _("E-invoicing search")
+    model = LegalEntity
+    field_id = 'contactid'
+
+    def fillresponse(self):
+        img = XferCompImage('img')
+        img.set_value(self.short_icon, '#')
+        img.set_location(0, 0, 1, 4)
+        self.add_component(img)
+        lbl = XferCompLabelForm('title')
+        lbl.set_value_as_title(self.caption)
+        lbl.set_location(1, 0)
+        self.add_component(lbl)
+        self.filltab_from_model(1, 1, True, ['name', ('postal_code', 'city'), 'legal_identification'])
+
+        check_name = XferCompCheck('check_name')
+        check_name.set_value(self.getparam('check_name', False))
+        check_name.set_location(0, 5)
+        check_name.description = _('search by name')
+        self.add_component(check_name)
+
+        check_location = XferCompCheck('check_location')
+        check_location.set_value(self.getparam('check_location', False))
+        check_location.set_location(1, 5)
+        check_location.description = _('search by location')
+        self.add_component(check_location)
+
+        check_identification = XferCompCheck('check_identification')
+        check_identification.set_value(self.getparam('check_identification', True))
+        check_identification.set_location(2, 5)
+        check_identification.description = _('search by identification')
+        self.add_component(check_identification)
+
+        act = XferCompButton('btn_einvoicing_contact')
+        act.set_location(3, 5)
+        act.set_action(self.request, self.return_action(_('Refresh'), short_icon='mdi:mdi-refresh'), modal=FORMTYPE_REFRESH, close=CLOSE_NO)
+        self.add_component(act)
+
+        grid = XferCompGrid('search_siret')
+        record_min, record_max = grid.define_page(self)
+        grid.add_header("siret", "siret")
+        grid.add_header("siren", "siren")
+        grid.add_header("name", _("name"))
+        grid.add_header("address", _("address"))
+        directory = get_einvoicing_directory()
+        data_searching = directory.search_company(name=self.item.name if self.getparam('check_name', False) else None,
+                                                  postalcode=self.item.postal_code if self.getparam('check_location', False) else None,
+                                                  locality=self.item.city if self.getparam('check_location', False) else None,
+                                                  siren_siret=self.item.get_legal_identification() if self.getparam('check_identification', True) else None,
+                                                  status="A",
+                                                  ignore=record_min,
+                                                  limit=record_max)
+        for record in data_searching['results']:
+            for header, cell in record.items():
+                if isinstance(cell, dict):
+                    grid.set_value(record['siret'], header, [f"{name}={value}" for name, value in cell.items()])
+                else:
+                    grid.set_value(record['siret'], header, str(cell))
+        grid.set_location(0, 6, 4)
+        grid.add_action(self.request, UpdateContactEInvoice.get_action(TITLE_MODIFY, 'mdi:mdi-invoice-import-outline'), close=CLOSE_YES, unique=SELECT_SINGLE)
+        self.add_component(grid)
+
+
+@Signal.decorate('show_contact')
+def accounting_einvoicing_contact(contact, xfer):
+    if right_importEinvoice(xfer.request):
+        contact = contact.get_final_child()
+        if isinstance(contact, LegalEntity):
+            old_tab = xfer.tab
+            xfer.tab = 1
+            act = XferCompButton('btn_einvoicing_contact')
+            act.set_location(1, xfer.get_max_row() + 1, 2)
+            act.set_action(xfer.request, SearchContactEInvoice.get_action(), modal=FORMTYPE_MODAL, close=CLOSE_NO, params={'contactid': contact.id})
+            xfer.add_component(act)
+            xfer.tab = old_tab
 
 
 @MenuManage.describ(right_importEinvoice)

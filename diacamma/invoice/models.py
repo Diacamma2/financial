@@ -2002,7 +2002,8 @@ class Bill(Supporting):
     def from_einvoice(self):
         return {
             "date": self.date,
-            'num': self.num,
+            "due_date": self.date + timedelta(days=180),
+            'num': self.num_txt,
             'origin': str(self.origin),
             'detail': [detail.from_einvoice() for detail in self.detail_set.all()],
             'vat_info': [

@@ -44,7 +44,7 @@ from diacamma.accounting.models import FiscalYear, Journal, AccountThird, Charts
 from diacamma.accounting.system import accounting_system_list, accounting_system_name
 from diacamma.accounting.tools import clear_system_account, correct_accounting_code, \
     current_system_account
-from diacamma.accounting.einvoicing_flow import DEFAULT_CONFIG, extract_config, get_einvoice_config, get_einvoicing_flow
+from diacamma.accounting.einvoicing_flow import DEFAULT_CONFIG, extract_config, get_einvoice_config, get_einvoicing_flow, get_einvoicing_directory
 from lucterios.contacts.models import CustomField
 from diacamma.accounting.views_accounts import ChartsAccountInitial, \
     ChartsAccountImportFiscalYear
@@ -150,25 +150,32 @@ class Configuration(XferListEditor):
         self.add_component(einvoice_type)
 
         if einvoice_config['einvoice_type'] != 0:
-            flow_url = XferCompEdit("flow_url")
-            flow_url.set_location(0, 1)
-            flow_url.set_value(einvoice_config['flow_url'])
-            flow_url.mask = r"(?:http[s]?:\/\/.)?(?:www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)"
-            flow_url.description = _('flow url')
-            self.add_component(flow_url)
             auth_url = XferCompEdit("auth_url")
-            auth_url.set_location(1, 1)
+            auth_url.set_location(0, 1, 2)
             auth_url.set_value(einvoice_config['auth_url'])
             auth_url.mask = r"(?:http[s]?:\/\/.)?(?:www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)"
             auth_url.description = _('auth url')
             self.add_component(auth_url)
+
+            directory_url = XferCompEdit("directory_url")
+            directory_url.set_location(0, 2)
+            directory_url.set_value(einvoice_config['directory_url'])
+            directory_url.mask = r"(?:http[s]?:\/\/.)?(?:www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)"
+            directory_url.description = _('directory url')
+            self.add_component(directory_url)
+            flow_url = XferCompEdit("flow_url")
+            flow_url.set_location(1, 2)
+            flow_url.set_value(einvoice_config['flow_url'])
+            flow_url.mask = r"(?:http[s]?:\/\/.)?(?:www\.)?[-a-zA-Z0-9@%._\+~#=]{2,256}\.[a-z]{2,6}\b(?:[-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)"
+            flow_url.description = _('flow url')
+            self.add_component(flow_url)
             client_id = XferCompEdit("client_id")
-            client_id.set_location(0, 2)
+            client_id.set_location(0, 3)
             client_id.set_value(einvoice_config['client_id'])
             client_id.description = _('client id')
             self.add_component(client_id)
             secret_id = XferCompPassword("secret_id")
-            secret_id.set_location(1, 2)
+            secret_id.set_location(1, 3)
             secret_id.set_value(einvoice_config['secret_id'])
             secret_id.description = _('secret id')
             self.add_component(secret_id)
@@ -176,17 +183,18 @@ class Configuration(XferListEditor):
             if (einvoice_config['flow_url'] != '') and (einvoice_config['auth_url'] != '') and (einvoice_config['client_id'] != '') and (einvoice_config['secret_id'] != ''):
                 btn = XferCompButton('check-einvoice')
                 btn.set_is_mini(False)
-                btn.set_location(1, 3)
+                btn.set_location(1, 4)
                 btn.set_action(self.request, self.return_action(_('Check'), "mdi:mdi-refresh"), close=CLOSE_NO, modal=FORMTYPE_REFRESH, params={'CHECK': 'OK'})
                 self.add_component(btn)
 
             lbl = XferCompLabelForm('resutl-check')
-            lbl.set_location(0, 4, 2)
+            lbl.set_location(0, 5, 2)
             lbl.set_value("")
             lbl.set_centered()
             if self.getparam("CHECK", "") == "OK":
                 try:
                     get_einvoicing_flow(self).healthcheck()
+                    get_einvoicing_directory(self).healthcheck()
                     lbl.set_value(_("Connexion successfull"))
                     lbl.set_color('BLUE')
                 except Exception as err:
@@ -196,7 +204,7 @@ class Configuration(XferListEditor):
 
         btn = XferCompButton('save-einvoice')
         btn.set_is_mini(False)
-        btn.set_location(0, 3)
+        btn.set_location(0, 4)
         btn.set_action(self.request, self.return_action(_('Save'), "mdi:mdi-content-save-outline"), close=CLOSE_NO, modal=FORMTYPE_REFRESH, params={'SAVE': 'OK'})
         self.add_component(btn)
 
