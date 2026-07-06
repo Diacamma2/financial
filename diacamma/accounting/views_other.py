@@ -16,7 +16,7 @@ from lucterios.framework.tools import ActionsManage, MenuManage, WrapAction
 from lucterios.framework.signal_and_lock import Signal
 from lucterios.framework.xfercomponents import XferCompImage, XferCompLabelForm, XferCompDate,\
     XferCompStep, XferCompUpLoad, XferCompCheck, XferCompSelect, XferCompButton,\
-    XferCompGrid, GRID_SIZE
+    XferCompGrid, GRID_SIZE, GRID_PAGE
 from lucterios.framework.xferadvance import XferListEditor
 from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XFER_DBOX_WARNING, XferContainerCustom
@@ -29,7 +29,7 @@ from diacamma.accounting.models import CostAccounting, ModelLineEntry, ModelEntr
 from diacamma.accounting.views_reports import CostAccountingIncomeStatement
 from diacamma.accounting.views_entries import EntryAccountValidate
 from diacamma.accounting.tools import get_amount_from_format_devise, currency_round, current_system_account
-from diacamma.accounting.einvoicing_flow import get_einvoice_config, get_einvoicing_flow, get_einvoicing_directory
+from diacamma.accounting.einvoicing_flow import get_einvoicing_flow, get_einvoicing_directory
 
 
 @MenuManage.describ('accounting.change_entryaccount', FORMTYPE_NOMODAL, 'bookkeeping', _('Edition of costs accounting'))
@@ -360,7 +360,8 @@ class SearchContactEInvoice(XferContainerCustom):
         self.add_component(act)
 
         grid = XferCompGrid('search_siret')
-        record_min, record_max = grid.define_page(self)
+        size_by_page = self.getparam(GRID_SIZE + grid.name, grid.size_by_page)
+        page_num = self.getparam(GRID_PAGE + grid.name, 0)
         grid.add_header("siret", "siret")
         grid.add_header("siren", "siren")
         grid.add_header("name", _("name"))
@@ -371,8 +372,10 @@ class SearchContactEInvoice(XferContainerCustom):
                                                   locality=self.item.city if self.getparam('check_location', False) else None,
                                                   siren_siret=self.item.get_legal_identification() if self.getparam('check_identification', True) else None,
                                                   status="A",
-                                                  ignore=record_min,
-                                                  limit=record_max)
+                                                  ignore=page_num * size_by_page,
+                                                  limit=(page_num + 1) * size_by_page)
+        grid.nb_lines = data_searching['totalNumberOfResults'] if 'totalNumberOfResults' in data_searching else 0
+        grid.define_page(self)
         for record in data_searching['results']:
             for header, cell in record.items():
                 if isinstance(cell, dict):
@@ -727,9 +730,17 @@ class EInvoicingManage(XferContainerCustom):
 def accounting_EInvoicing(xfer, flow):
     year = FiscalYear.get_current()
     xfer.new_tab(_("Import"))
-    data_to_import = flow.search_flows(flow_direction=['In'], flow_type=['SupplierInvoice'], updated_after=str(year.begin) + 'T00:00:00Z', updated_before=str(year.end) + 'T23:59:59Z')
     grid = XferCompGrid('import_flow')
-    grid.no_pager = True
+    size_by_page = xfer.getparam(GRID_SIZE + grid.name, grid.size_by_page)
+    page_num = xfer.getparam(GRID_PAGE + grid.name, 0)
+    data_to_import = flow.search_flows(flow_direction=['In'],
+                                       flow_type=['SupplierInvoice', 'SupplierInvoiceLC'],
+                                       updated_after=str(year.begin) + 'T00:00:00Z',
+                                       updated_before=str(year.end) + 'T23:59:59Z',
+                                       ignore=page_num * size_by_page,
+                                       limit=(page_num + 1) * size_by_page)
+    grid.nb_lines = len(data_to_import['results'])
+    grid.define_page(xfer)
     grid.description = _('Supplier invoices available on the platform')
     grid.add_header('flowId', _('ID'))
     grid.add_header('flowSyntax', _('syntax'))

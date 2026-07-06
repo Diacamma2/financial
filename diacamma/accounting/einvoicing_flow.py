@@ -141,7 +141,8 @@ class EInvoicingFlow(EInvoicingAbstract):
 
     def search_flows(self, processing_rule=None, flow_type=None, status=None,
                      flow_direction=None, ack_status=None, updated_after=None, updated_before=None,
-                     tracking_id=None, limit=25):
+                     tracking_id=None,
+                     ignore=0, limit=25):
         where = {}
         if processing_rule:
             where["processingRule"] = (
@@ -163,7 +164,7 @@ class EInvoicingFlow(EInvoicingAbstract):
             where["updatedBefore"] = updated_before
         if tracking_id:
             where["trackingId"] = tracking_id
-        body = {"limit": limit, "where": where}
+        body = {"ignore": ignore, "limit": limit, "where": where}
         response = self._request("POST", "/v1/flows/search", json=body)
         return response.json()
 
@@ -186,7 +187,7 @@ class EInvoicingDirectory(EInvoicingAbstract):
                           "managesLegalCommitment", "managesLegalCommitmentOrService", "serviceCodeStatus"]
         filters = {}
         if name:
-            filters["name"] = {"op": "strict", "value": name}
+            filters["name"] = {"op": "contains", "value": name}
         if siren_siret:
             if len(siren_siret) < 10:
                 filters["siren"] = {"op": "strict", "value": siren_siret}
