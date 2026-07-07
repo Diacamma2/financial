@@ -40,7 +40,8 @@ from lucterios.framework.xferadvance import TITLE_PRINT, TITLE_CLOSE, TITLE_DELE
     TITLE_LABEL, TITLE_CREATE, TITLE_NO, TITLE_SEARCH
 from lucterios.framework.xferadvance import XferListEditor, XferShowEditor, XferAddEditor, XferDelete, XferTransition
 from lucterios.framework.xfercomponents import XferCompLabelForm, XferCompSelect, XferCompImage, XferCompGrid, XferCompCheck, XferCompEdit, XferCompCheckList, XferCompMemo, \
-    XferCompButton, XferCompFloat, XferCompDate, GRID_ORDER
+    XferCompButton, XferCompFloat, XferCompDate, GRID_ORDER, GRID_SIZE,\
+    GRID_PAGE
 from lucterios.framework.tools import FORMTYPE_NOMODAL, ActionsManage, MenuManage, FORMTYPE_MODAL, CLOSE_YES, SELECT_SINGLE, FORMTYPE_REFRESH, CLOSE_NO, SELECT_MULTI, WrapAction, \
     get_format_from_field
 from lucterios.framework.xfergraphic import XferContainerAcknowledge, XferContainerCustom
@@ -1577,48 +1578,54 @@ def show_contact_invoice(contact, xfer):
                 thirdaddon_invoice(third, xfer)
 
 
-@MenuManage.describ('invoice.add_bill')
-class BillUploadEInvoicing(XferContainerAcknowledge):
-    caption = _("Upload e-invoicing")
-    short_icon = 'mdi:mdi-invoice-edit-outline'
-    model = Bill
-    field_id = 'export_bill'
-
-    def fillresponse(self):
-        doc = self.item.get_final_child().get_saved_pdfreport(False)
-        if doc is not None:
-            reader = ReaderInvoice()
-            einvoice_format = reader.run(BytesIO(doc.content.read()))
-            if reader.data['buyer']['legal_ident'] == '':
-                raise LucteriosException(MINOR, _('%s has not legal identification') % self.item.third)
-            hash_sha = hashlib_new('sha256')
-            hash_sha.update(reader.einvoice_xml)
-            flow = get_einvoicing_flow()
-            flow.submit_flow(file_content=reader.einvoice_xml, file_name=doc.name,
-                             flow_syntax="CII" if einvoice_format == ReaderInvoice.facturX else 'UBL',
-                             processing_rule="B2B",
-                             tracking_id=self.item.num_txt,
-                             sha256=hash_sha.hexdigest())
+# @MenuManage.describ('invoice.add_bill')
+# class BillUploadEInvoicing(XferContainerAcknowledge):
+#     caption = _("Upload e-invoicing")
+#     short_icon = 'mdi:mdi-invoice-edit-outline'
+#     model = Bill
+#     field_id = 'export_bill'
+#
+#     def fillresponse(self):
+#         doc = self.item.get_final_child().get_saved_pdfreport(False)
+#         if doc is not None:
+#             reader = ReaderInvoice()
+#             einvoice_format = reader.run(BytesIO(doc.content.read()))
+#             if reader.data['buyer']['legal_ident'] == '':
+#                 raise LucteriosException(MINOR, _('%s has not legal identification') % self.item.third)
+#             hash_sha = hashlib_new('sha256')
+#             hash_sha.update(reader.einvoice_xml)
+#             flow = get_einvoicing_flow()
+#             flow.submit_flow(file_content=reader.einvoice_xml, file_name=doc.name,
+#                              flow_syntax="CII" if einvoice_format == ReaderInvoice.facturX else 'UBL',
+#                              processing_rule="B2B",
+#                              tracking_id=self.item.num_txt,
+#                              sha256=hash_sha.hexdigest())
 
 
 @signal_and_lock.Signal.decorate('EInvoicing')
 def invoice_EInvoicing(xfer, flow):
     year = FiscalYear.get_current()
-    xfer.new_tab(_("Export"))
+    xfer.new_tab(_("Transmitting"))
 
-    grid = XferCompGrid('export_bill')
-    grid.set_model(Bill.objects.filter(bill_type=Bill.BILLTYPE_BILL, status=Bill.STATUS_VALID, date__gt=year.begin, date__lt=year.end), fieldnames=["num_txt", "date", "third", "comment", 'total_incltax', 'einvoicing'], xfer_custom=xfer)
-    grid.set_location(0, 0)
-    grid.description = _('Invoices ready to be uploaded')
-    grid.add_action(xfer.request, BillUploadEInvoicing.get_action(), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE)
-    xfer.add_component(grid)
+    # grid = XferCompGrid('export_bill')
+    # grid.set_model(Bill.objects.filter(bill_type=Bill.BILLTYPE_BILL, status=Bill.STATUS_VALID, date__gt=year.begin, date__lt=year.end), fieldnames=["num_txt", "date", "third", "comment", 'total_incltax', 'einvoicing'], xfer_custom=xfer)
+    # grid.set_location(0, 0)
+    # grid.description = _('Invoices ready to be uploaded')
+    # grid.add_action(xfer.request, BillUploadEInvoicing.get_action(), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE)
+    # xfer.add_component(grid)
 
-    data_to_import = flow.search_flows(flow_direction=['Out', 'In'], 
-                                       flow_type=['CustomerInvoice'], 
-                                       updated_after=str(year.begin) + 'T00:00:00Z', 
-                                       updated_before=str(year.end) + 'T23:59:59Z')
     grid = XferCompGrid('export_flow')
-    grid.no_pager = True
+    grid.size_by_page = 500
+    size_by_page = xfer.getparam(GRID_SIZE + grid.name, grid.size_by_page)
+    page_num = xfer.getparam(GRID_PAGE + grid.name, 0)
+    data_to_import = flow.search_flows(flow_direction=['Out', 'In'],
+                                       flow_type=['CustomerInvoice'],
+                                       updated_after=str(year.begin) + 'T00:00:00Z',
+                                       updated_before=str(year.end) + 'T23:59:59Z',
+                                       ignore=page_num * size_by_page,
+                                       limit=(page_num + 1) * size_by_page)
+    grid.nb_lines = len(data_to_import['results'])
+    grid.define_page(xfer)
     grid.description = _('Customer invoices already present on the platform')
     grid.add_header('flowId', _('ID'))
     grid.add_header('flowSyntax', _('syntax'))
@@ -1626,12 +1633,13 @@ def invoice_EInvoicing(xfer, flow):
     grid.add_header('submittedAt', _('submitted at'), 'H')
     grid.add_header('updatedAt', _('updated at'), 'H')
     grid.add_header('acknowledgement', _('acknowledgement'))
-    for record in data_to_import['results']:
-        grid.set_value(record['flowId'], 'flowId', record['flowId'])
-        grid.set_value(record['flowId'], 'flowSyntax', record['flowSyntax'])
-        grid.set_value(record['flowId'], 'trackingId', record.get('trackingId'))
-        grid.set_value(record['flowId'], 'submittedAt', record['submittedAt'])
-        grid.set_value(record['flowId'], 'updatedAt', record['updatedAt'])
-        grid.set_value(record['flowId'], 'acknowledgement', [f"{key}={val}" for key, val in record['acknowledgement'].items()])
+    for index, record in enumerate(data_to_import['results']):
+        Ident = "%s#%d" % (record['flowId'], index)
+        grid.set_value(Ident, 'flowId', record['flowId'])
+        grid.set_value(Ident, 'flowSyntax', record['flowSyntax'])
+        grid.set_value(Ident, 'trackingId', record.get('trackingId'))
+        grid.set_value(Ident, 'submittedAt', record['submittedAt'])
+        grid.set_value(Ident, 'updatedAt', record['updatedAt'])
+        grid.set_value(Ident, 'acknowledgement', [f"{key}={val}" for key, val in record['acknowledgement'].items()])
     grid.set_location(0, 1)
     xfer.add_component(grid)
