@@ -21,7 +21,7 @@ DEFAULT_CONFIG = [
 def extract_config(config_id):
     for default_item in DEFAULT_CONFIG:
         if default_item['id'] == config_id:
-            return {'flow_url': default_item['flow_url'], 'auth_url': default_item['auth_url']}
+            return {'flow_url': default_item['flow_url'], 'auth_url': default_item['auth_url'], "directory_url": default_item['directory_url']}
     return {}
 
 

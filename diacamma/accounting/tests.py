@@ -1018,10 +1018,11 @@ class AdminTest(LucteriosTest):
         self.factory.xfer = Configuration()
         self.calljson('/diacamma.accounting/configuration', {"einvoice_type": 1}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
-        self.assert_count_equal('', 4 + 5 + 2 + 8 + 8)
+        self.assert_count_equal('', 4 + 5 + 2 + 8 + 9)
 
         self.assert_json_equal('SELECT', 'einvoice_type', 1)
         self.assert_json_equal('EDIT', 'flow_url', 'https://api.superpdp.tech/afnor-flow')
+        self.assert_json_equal('EDIT', 'directory_url', 'https://api.superpdp.tech/afnor-directory')
         self.assert_json_equal('EDIT', 'auth_url', 'https://api.superpdp.tech/oauth2/token')
         self.assert_json_equal('EDIT', 'client_id', '')
         self.assert_json_equal('PASSWD', 'secret_id', '')
@@ -1031,6 +1032,7 @@ class AdminTest(LucteriosTest):
         self.factory.xfer = Configuration()
         self.calljson('/diacamma.accounting/configuration', {"einvoice_type": 1,
                                                              'flow_url': 'https://api.superpdp.tech/afnor-flow',
+                                                             'directory_url': 'https://api.superpdp.tech/afnor-directory',
                                                              'auth_url': 'https://api.superpdp.tech/oauth2/token',
                                                              'client_id': 'MyClientID',
                                                              'secret_id': 'WOnd3rfu11+P@ssw0rd',
@@ -1040,9 +1042,10 @@ class AdminTest(LucteriosTest):
         self.factory.xfer = Configuration()
         self.calljson('/diacamma.accounting/configuration', {}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
-        self.assert_count_equal('', 4 + 5 + 2 + 8 + 9)
+        self.assert_count_equal('', 4 + 5 + 2 + 8 + 10)
         self.assert_json_equal('SELECT', 'einvoice_type', 1)
         self.assert_json_equal('EDIT', 'flow_url', 'https://api.superpdp.tech/afnor-flow')
+        self.assert_json_equal('EDIT', 'directory_url', 'https://api.superpdp.tech/afnor-directory')
         self.assert_json_equal('EDIT', 'auth_url', 'https://api.superpdp.tech/oauth2/token')
         self.assert_json_equal('EDIT', 'client_id', 'MyClientID')
         self.assert_json_equal('PASSWD', 'secret_id', 'WOnd3rfu11+P@ssw0rd')
@@ -1055,7 +1058,7 @@ class AdminTest(LucteriosTest):
         self.calljson('/diacamma.accounting/configuration', {"CHECK": "OK"}, False)
         self.assert_observer('core.custom', 'diacamma.accounting', 'configuration')
         self.assert_json_equal('LABELFORM', 'resutl-check', 'Connexion réussi')
-        self.assertEqual(len(mock_request.call_args_list), 2)
+        self.assertEqual(len(mock_request.call_args_list), 4)
         self.assertEqual(mock.call('POST', 'https://api.superpdp.tech/oauth2/token',
                                    data={"grant_type": "client_credentials", "client_id": 'MyClientID', "client_secret": 'WOnd3rfu11+P@ssw0rd'}),
                          mock_request.call_args_list[0])
@@ -1063,6 +1066,13 @@ class AdminTest(LucteriosTest):
                                    headers={'Accept': 'application/json', "Authorization": "Bearer AzerTy123456"},
                                    params=None, json=None, data=None, files=None),
                          mock_request.call_args_list[1])
+        self.assertEqual(mock.call('POST', 'https://api.superpdp.tech/oauth2/token',
+                                   data={"grant_type": "client_credentials", "client_id": 'MyClientID', "client_secret": 'WOnd3rfu11+P@ssw0rd'}),
+                         mock_request.call_args_list[2])
+        self.assertEqual(mock.call('GET', 'https://api.superpdp.tech/afnor-directory/v1/healthcheck',
+                                   headers={'Accept': 'application/json', "Authorization": "Bearer AzerTy123456"},
+                                   params=None, json=None, data=None, files=None),
+                         mock_request.call_args_list[3])
 
 
 class ModelTest(LucteriosTest):
