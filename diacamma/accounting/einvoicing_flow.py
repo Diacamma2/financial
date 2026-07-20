@@ -6,10 +6,11 @@ Created on 2026 Jun 29
 from requests import request
 from abc import ABC
 from requests.exceptions import HTTPError
+from datetime import datetime
 import json
 
-from lucterios.CORE.parameters import Params
 from django.utils.translation import gettext_lazy as _
+from lucterios.CORE.parameters import Params
 
 DEFAULT_CONFIG = [
     {"id": 0, 'name': None, 'flow_url': '', "directory_url": "", 'auth_url': ''},
@@ -103,7 +104,7 @@ class EInvoicingAbstract(ABC):
                 response.raise_for_status()
             return response
         except HTTPError as err:
-            print('response->content', err.response.content)
+            print('response.content', err.response.content)
             raise
 
     def healthcheck(self):
@@ -120,24 +121,28 @@ class EInvoicingFlow(EInvoicingAbstract):
         super().__init__(flow_url, auth_url, client_id, secret_id, **kwarg)
 
     def submit_flow(self, file_content, file_name, flow_syntax,
-                    processing_rule=None, flow_profile=None, flow_type=None, tracking_id=None, sha256=None):
+                    processing_rule=None, flow_profile=None, tracking_id=None, sha256=None):
         flow_info = {"flowSyntax": flow_syntax, "name": file_name}
         if processing_rule:
             flow_info["processingRule"] = processing_rule
         if flow_profile:
             flow_info["flowProfile"] = flow_profile
-        if flow_type:
-            flow_info["flowType"] = flow_type
         if tracking_id:
             flow_info["trackingId"] = tracking_id
         if sha256:
             flow_info["sha256"] = sha256
         files = {
             "file": (file_name, file_content, "application/octet-stream"),
-            "flowInfo": (None, json.dumps(flow_info), "application/json"),
+            "flowInfo": (None, json.dumps(flow_info), "application/xml"),
         }
         response = self._request("POST", "/v1/flows", files=files)
         return response.json()
+
+    def submit_cdar(self, current_ident, issuer_ident, bill_ref, bill_date, status_code, reason_code):
+        hdl = CdarHandler(current_ident, issuer_ident, bill_ref, bill_date)
+        xml = hdl.generate(status_code, reason_code)
+        print("--- cdar ---", xml, "---------")
+        self.submit_flow(file_content=xml, file_name=bill_ref, flow_syntax='CDAR')
 
     def search_flows(self, processing_rule=None, flow_type=None, status=None,
                      flow_direction=None, ack_status=None, updated_after=None, updated_before=None,
@@ -212,3 +217,238 @@ class EInvoicingDirectory(EInvoicingAbstract):
     def get_establishment_by_siret(self, siret):
         response = self._request("GET", f"/v1/siret/code-insee:{siret}")
         return response.json()
+
+
+class CdarHandler(object):
+
+    ROLE_WK = 'WK'  # Platform
+    ROLE_SE = 'SE'  # Seller
+    ROLE_BY = 'BY'  # Buyer
+    ROLE_CN = 'CN'  # Consignee
+    ROLE_DP = 'DP'  # Delivery point
+
+    FORMAT_DATETIME = '204'  # YYYYMMDDHHmmss
+    FORMAT_DATE = '102'  # YYYYMMDD
+
+    SCHEME_SIREN_0225 = '0225'
+    SCHEME_SIREN_0002 = '0002'
+
+    DOC_INVOICE = '380'
+
+    namespaces = {
+        'rsm': 'urn:un:unece:uncefact:data:standard:CrossDomainAcknowledgementAndResponse:100',
+        'ram': 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100',
+        'udt': 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100',
+        'qdt': 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100',
+        'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+    }
+
+    STATUS_DEPOSITED = 200
+    STATUS_ISSUED = 201
+    STATUS_RECEIVED = 202
+    STATUS_AVAILABLE = 203
+    STATUS_TAKEN_OVER = 204
+    STATUS_APPROVED = 205
+    STATUS_PARTIALLY_APPROVED = 206
+    STATUS_DISPUTED = 207
+    STATUS_SUSPENDED = 208
+    STATUS_COMPLETED = 209
+    STATUS_REFUSED = 210
+    STATUS_PAYMENT_SENT = 211
+    STATUS_PAID = 212
+    STATUS_REJECTED = 213
+
+    STATUS_LABEL_KEYS = {
+        STATUS_DEPOSITED: 'EInvStatus200Deposited',
+        STATUS_ISSUED: 'EInvStatus201Issued',
+        STATUS_RECEIVED: 'EInvStatus202Received',
+        STATUS_AVAILABLE: 'EInvStatus203Available',
+        STATUS_TAKEN_OVER: 'EInvStatus204TakenOver',
+        STATUS_APPROVED: 'EInvStatus205Approved',
+        STATUS_PARTIALLY_APPROVED: 'EInvStatus206PartiallyApproved',
+        STATUS_DISPUTED: 'EInvStatus207Disputed',
+        STATUS_SUSPENDED: 'EInvStatus208Suspended',
+        STATUS_COMPLETED: 'EInvStatus209Completed',
+        STATUS_PAYMENT_SENT: 'EInvStatus211PaymentTransmitted',
+        STATUS_PAID: 'EInvStatus212Paid',
+        STATUS_REFUSED: 'EInvStatus210Refused',
+        STATUS_REJECTED: 'EInvStatus213Rejected',
+    }
+
+    def __init__(self, current_ident, issuer_ident, bill_ref, bill_date):
+        self.current_ident = current_ident
+        self.issuer_ident = issuer_ident
+        self.bill_ref = bill_ref
+        self.bill_date = bill_date if isinstance(bill_date, datetime) else datetime.fromisoformat(bill_date)
+        self.data = {}
+        self.cdar_id = None
+        self._initial_dom()
+
+    def _initial_dom(self):
+        from xml.dom.minidom import getDOMImplementation
+        impl = getDOMImplementation()
+        self.dom = impl.createDocument(self.namespaces['rsm'], "rsm:CrossDomainAcknowledgementAndResponse", None)
+        self.root = self.dom.documentElement
+        self.root.setAttribute('xmlns:rsm', self.namespaces['rsm'])
+        self.root.setAttribute('xmlns:xsi', self.namespaces['xsi'])
+        self.root.setAttribute('xmlns:qdt', self.namespaces['qdt'])
+        self.root.setAttribute('xmlns:ram', self.namespaces['ram'])
+        self.root.setAttribute('xmlns:udt', self.namespaces['udt'])
+
+    def get_current_datetime(self):
+        return datetime.now().strftime('%Y%m%d%H%M%S')
+
+    def generate(self, status_code, reason_code=''):
+        self.cdar_id = "%s_%s_%s#%s_%s" % (self.bill_ref,
+                                           str(status_code),
+                                           self.bill_date.strftime('%Y%m%d%H%M%S'),
+                                           self.DOC_INVOICE,
+                                           self.bill_date.strftime('%Y%m%d'))
+        process_condition = self.STATUS_LABEL_KEYS[status_code] if status_code in self.STATUS_LABEL_KEYS else 'EInvStatus%s' % status_code
+
+        self.data = {
+            'GuidelineID': 'urn.cpro.gouv.fr:1p0:CDV:invoice',
+
+            'ExchangedDocument': {
+                'ID': self.cdar_id,
+                'Name': self.cdar_id,
+                'IssueDateTime': self.get_current_datetime(),
+
+                'SenderTradeParty': {
+                    'RoleCode': self.ROLE_WK
+                },
+
+                'IssuerTradeParty': {
+                    'GlobalID': self.current_ident,  # GlobalID of CDAR SENDER
+                    'RoleCode': self.ROLE_BY
+                },
+
+                'RecipientTradeParty': {
+                    'GlobalID': self.issuer_ident,  # GlobalID of CDAR RECIPIENT
+                    'SchemeID': self.SCHEME_SIREN_0002,
+                    'RoleCode': self.ROLE_SE,
+                    'URIID': self.issuer_ident,
+                    'URISchemeID': self.SCHEME_SIREN_0225
+                }
+            },
+
+            'AcknowledgementDocument': {
+                'MultipleReferencesIndicator': False,
+                'TypeCode': '23',
+                'IssueDateTime': self.get_current_datetime(),
+
+                'ReferenceReferencedDocument': {
+                    'IssuerAssignedID': self.issuer_ident,
+                    'TypeCode': self.DOC_INVOICE,  # TODO: map DOC_INVOICE with object type
+                    'FormattedIssueDateTime': self.bill_date.strftime('%Y%m%d%H%M%S'),
+                    'ProcessConditionCode': status_code,
+                    'ProcessCondition': process_condition,
+
+                    'SpecifiedDocumentStatus': {
+                        'ReasonCode': reason_code,
+                    } if reason_code != '' else {},
+
+                    'IssuerTradeParty': {
+                        'GlobalID': self.issuer_ident,  # GlobalID of invoice sender (Supplier)
+                        'SchemeID': self.SCHEME_SIREN_0002,
+                        'RoleCode': self.ROLE_SE
+                    }
+                }
+            }
+        }
+        return self.convert_to_xml()
+
+    def convert_to_xml(self):
+        self.addContext(self.data['GuidelineID'])
+        self.addExchangedDocument(self.data['ExchangedDocument'])
+        self.addAcknowledgementDocument(self.data['AcknowledgementDocument'])
+        return self.dom.toprettyxml()
+
+    def _createElementValue(self, tagname, value):
+        el = self.dom.createElement(tagname)
+        el.appendChild(self.dom.createTextNode(str(value)))
+        return el
+
+    def addContext(self, guidelineID):
+        context = self.dom.createElement('rsm:ExchangedDocumentContext')
+
+        process = self.dom.createElement('ram:BusinessProcessSpecifiedDocumentContextParameter')
+        process.appendChild(self._createElementValue('ram:ID', 'REGULATED'))
+        context.appendChild(process)
+
+        guideline = self.dom.createElement('ram:GuidelineSpecifiedDocumentContextParameter')
+        guideline.appendChild(self._createElementValue('ram:ID', guidelineID))
+        context.appendChild(guideline)
+        self.root.appendChild(context)
+
+    def addExchangedDocument(self, doc):
+        exchanged = self.dom.createElement('rsm:ExchangedDocument')
+        exchanged.appendChild(self._createElementValue('ram:ID', doc['ID']))
+        exchanged.appendChild(self._createElementValue('ram:Name', doc['Name']))
+
+        self.addDateTimeElement(exchanged, 'ram:IssueDateTime', doc['IssueDateTime'], self.FORMAT_DATETIME)
+
+        self.addTradeParty(exchanged, 'ram:SenderTradeParty', doc['SenderTradeParty'])
+        self.addTradeParty(exchanged, 'ram:IssuerTradeParty', doc['IssuerTradeParty'])
+        self.addTradeParty(exchanged, 'ram:RecipientTradeParty', doc['RecipientTradeParty'])
+
+        self.root.appendChild(exchanged)
+
+    def addDateTimeElement(self, parent, elementName, value, dateformat):
+        element = self.dom.createElement(elementName)
+        dateTimeStr = self._createElementValue('udt:DateTimeString', value)
+        dateTimeStr.setAttribute('format', dateformat)
+        element.appendChild(dateTimeStr)
+        parent.appendChild(element)
+
+    def addTradeParty(self, parent, elementName, data):
+        party = self.dom.createElement(elementName)
+        if 'GlobalID' in data:
+            globalID = self._createElementValue('ram:GlobalID', data['GlobalID'])
+            if 'SchemeID' in data:
+                globalID.setAttribute('schemeID', data['SchemeID'])
+            party.appendChild(globalID)
+        party.appendChild(self._createElementValue('ram:RoleCode', data['RoleCode']))
+        if 'URIID' in data:
+            uriComm = self.dom.createElement('ram:URIUniversalCommunication')
+            uriID = self._createElementValue('ram:URIID', data['URIID'])
+            uriID.setAttribute('schemeID', data['URISchemeID'])
+            uriComm.appendChild(uriID)
+            party.appendChild(uriComm)
+        parent.appendChild(party)
+
+    def addAcknowledgementDocument(self, doc):
+        ack = self.dom.createElement('rsm:AcknowledgementDocument')
+        multipleRef = self.dom.createElement('ram:MultipleReferencesIndicator')
+        indicator = self._createElementValue('udt:Indicator', 'true' if doc['MultipleReferencesIndicator'] else 'false')
+        multipleRef.appendChild(indicator)
+        ack.appendChild(multipleRef)
+        ack.appendChild(self._createElementValue('ram:TypeCode', doc['TypeCode']))
+        self.addDateTimeElement(ack, 'ram:IssueDateTime', doc['IssueDateTime'], self.FORMAT_DATETIME)
+        self.addReferencedDocument(ack, doc['ReferenceReferencedDocument'])
+        self.root.appendChild(ack)
+
+    def addReferencedDocument(self, parent, doc):
+        ref = self.dom.createElement('ram:ReferenceReferencedDocument')
+        ref.appendChild(self._createElementValue('ram:IssuerAssignedID', doc['IssuerAssignedID']))
+        ref.appendChild(self._createElementValue('ram:TypeCode', doc['TypeCode']))
+
+        formattedDateTime = self.dom.createElement('ram:FormattedIssueDateTime')
+        dateTimeStr = self._createElementValue('qdt:DateTimeString', doc['FormattedIssueDateTime'])
+        dateTimeStr.setAttribute('format', self.FORMAT_DATETIME)
+        formattedDateTime.appendChild(dateTimeStr)
+        ref.appendChild(formattedDateTime)
+
+        ref.appendChild(self._createElementValue('ram:ProcessConditionCode', doc['ProcessConditionCode']))
+        ref.appendChild(self._createElementValue('ram:ProcessCondition', doc['ProcessCondition']))
+
+        self.addTradeParty(ref, 'ram:IssuerTradeParty', doc['IssuerTradeParty'])
+        parent.appendChild(ref)
+
+        if 'SpecifiedDocumentStatus' in doc:
+            status = self.dom.createElement('ram:SpecifiedDocumentStatus')
+            if 'ReasonCode' in doc['SpecifiedDocumentStatus']:
+                status.appendChild(self._createElementValue('ram:ReasonCode', doc['SpecifiedDocumentStatus']['ReasonCode']))
+            if 'Reason' in doc['SpecifiedDocumentStatus']:
+                status.appendChild(self._createElementValue('ram:Reason', doc['SpecifiedDocumentStatus']['Reason']))
+            ref.appendChild(status)

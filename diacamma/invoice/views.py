@@ -1613,6 +1613,12 @@ def invoice_EInvoicing(xfer, flow):
     # grid.description = _('Invoices ready to be uploaded')
     # grid.add_action(xfer.request, BillUploadEInvoicing.get_action(), modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_SINGLE)
     # xfer.add_component(grid)
+    lbl = XferCompLabelForm('info')
+    lbl.set_location(0, 0)
+    lbl.set_value(_('Invoice transmission is not availabled currently'))
+    lbl.set_color('orange')
+    lbl.set_centered()
+    xfer.add_component(lbl)
 
     grid = XferCompGrid('export_flow')
     grid.size_by_page = 500

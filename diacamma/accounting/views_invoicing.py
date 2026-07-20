@@ -24,7 +24,7 @@ from lucterios.contacts.models import LegalEntity
 from diacamma.accounting.models import FiscalYear, ChartsAccount, EntryAccount, Journal, Third, AccountThird, EntryLineAccount, get_meta_currency_iso_list
 from diacamma.accounting.views_entries import EntryAccountValidate
 from diacamma.accounting.tools import get_amount_from_format_devise, currency_round, current_system_account
-from diacamma.accounting.einvoicing_flow import get_einvoicing_flow, get_einvoicing_directory
+from diacamma.accounting.einvoicing_flow import get_einvoicing_flow, get_einvoicing_directory, CdarHandler
 
 
 def right_importEinvoice(request):
@@ -408,7 +408,24 @@ class ImportEInvoice(XferContainerCustom):
         if import_flow is None:
             self.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
         else:
+            self.add_action(EInvoiceRefuseInvoicing.get_action(_('Refused'), short_icon='mdi:mdi-cancel'),
+                            params={
+                                "issuer_ident": einvoice_content["seller"]['legal_ident'],
+                                "bill_ref": import_flow.split('#')[0],
+                                "bill_date": einvoice_content['bill']['date']}
+                            )
             self.add_action(WrapAction(TITLE_CLOSE, short_icon='mdi:mdi-close'))
+
+
+# @MenuManage.describ(right_importEinvoice)
+class EInvoiceRefuseInvoicing(XferContainerAcknowledge):
+    short_icon = "mdi:mdi-invoice-import-outline"
+    caption = _("Refuse e-invoice")
+
+    def fillresponse(self, issuer_ident, bill_ref, bill_date):
+        current_contact = LegalEntity.objects.get(id=1)
+        flow = get_einvoicing_flow()
+        flow.submit_cdar(current_contact.get_legal_identification(), issuer_ident, bill_ref, bill_date, CdarHandler.STATUS_REFUSED, "MONTANTTOTAL_ERR")
 
 
 @Signal.decorate('EInvoicing')

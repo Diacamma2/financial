@@ -98,7 +98,7 @@ class Category(LucteriosModel):
 
     @classmethod
     def get_show_fields(cls):
-        return ["name", "designation"]
+        return ["name", "designation", "article_set"]
 
     class Meta(object):
         verbose_name = _('Category')

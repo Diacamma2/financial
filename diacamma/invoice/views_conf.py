@@ -24,12 +24,16 @@ along with Lucterios.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import unicode_literals
 
 from django.utils.translation import gettext_lazy as _
+from django.db.models import Q
 
-from lucterios.framework.xferadvance import XferListEditor, TITLE_MODIFY, TITLE_DELETE, TITLE_ADD
+from lucterios.framework.xferadvance import XferListEditor, TITLE_MODIFY, TITLE_DELETE, TITLE_ADD,\
+    XferShowEditor, TITLE_EDIT, TITLE_CANCEL
 from lucterios.framework.xferadvance import XferAddEditor
 from lucterios.framework.xferadvance import XferDelete
-from lucterios.framework.tools import ActionsManage, MenuManage, CLOSE_NO, SELECT_MULTI, SELECT_SINGLE, FORMTYPE_MODAL
-from lucterios.framework.xfercomponents import XferCompButton, XferCompLabelForm, XferCompCheckList
+from lucterios.framework.tools import ActionsManage, MenuManage, CLOSE_NO, SELECT_MULTI, SELECT_SINGLE, FORMTYPE_MODAL,\
+    FORMTYPE_REFRESH, SELECT_NONE, WrapAction, CLOSE_YES
+from lucterios.framework.xfercomponents import XferCompButton, XferCompLabelForm, XferCompCheckList,\
+    XferCompGrid, XferCompEdit
 from lucterios.framework.xfergraphic import XferContainerAcknowledge
 from lucterios.framework import signal_and_lock
 from lucterios.CORE.parameters import Params
@@ -304,6 +308,64 @@ class VatDel(XferDelete):
     model = Vat
     field_id = 'vat'
     caption = _("Delete VAT")
+
+
+@MenuManage.describ('invoice.add_vat')
+class CategoryChangeArticle(XferContainerAcknowledge):
+    short_icon = "mdi:mdi-credit-card-settings-outline"
+    model = Category
+    field_id = 'category'
+    caption = _("Change category")
+
+    def fillresponse(self):
+        if self.getparam("REMOVE", "") == "YES":
+            for article in Article.objects.filter(id__in=self.getparam("article", ())):
+                article.categories.remove(self.item)
+                article.save()
+        elif self.getparam("ADD", "") == "YES":
+            for article in Article.objects.filter(id__in=self.getparam("article", ())):
+                article.categories.add(self.item)
+                article.save()
+        else:
+            dlg = self.create_custom(Category)
+            dlg.item = self.item
+            dlg.fill_from_model(1, 2, True, ['name'])
+
+            ref_filter = dlg.getparam('ref_filter', '')
+            edt = XferCompEdit("ref_filter")
+            edt.set_value(ref_filter)
+            edt.set_location(1, 3, 2)
+            edt.description = _('ref./designation')
+            edt.set_action(dlg.request, dlg.return_action(), modal=FORMTYPE_REFRESH, close=CLOSE_NO, params={'CHANGE_ART': 'YES'})
+            dlg.add_component(edt)
+
+            artfilter = Q()
+            if ref_filter != '':
+                artfilter &= Q(reference__icontains=ref_filter) | Q(designation__icontains=ref_filter)
+            grid = XferCompGrid('article')
+            grid.set_location(1, 5, 2)
+            grid.set_model(Article.objects.filter(artfilter).exclude(categories=self.item), None, dlg)
+            grid.add_action(self.request, self.get_action(TITLE_ADD, 'mdi:mdi-check'), modal=FORMTYPE_MODAL, close=CLOSE_YES, unique=SELECT_MULTI, params={"ADD": "YES"})
+            dlg.add_component(grid)
+            dlg.add_action(WrapAction(TITLE_CANCEL, short_icon='mdi:mdi-cancel'))
+
+
+@ActionsManage.affect_grid(TITLE_EDIT, short_icon='mdi:mdi-text-box-outline', unique=SELECT_SINGLE)
+@MenuManage.describ('invoice.add_vat')
+class CategoryShow(XferShowEditor):
+    short_icon = "mdi:mdi-credit-card-settings-outline"
+    model = Category
+    field_id = 'category'
+    caption = _("Show category")
+
+    def fillresponse(self):
+        XferShowEditor.fillresponse(self)
+        grid = self.get_components("article")
+        grid.actions = []
+        grid.add_action(self.request, CategoryChangeArticle.get_action(_('Remove'), "mdi:mdi-pencil-remove-outline"),
+                        modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_MULTI, params={"REMOVE": 'YES'})
+        grid.add_action(self.request, CategoryChangeArticle.get_action(TITLE_ADD, "mdi:mdi-pencil-plus-outline"),
+                        modal=FORMTYPE_MODAL, close=CLOSE_NO, unique=SELECT_NONE)
 
 
 @ActionsManage.affect_grid(TITLE_ADD, short_icon='mdi:mdi-pencil-plus-outline')

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 11:50+0200\n"
+"POT-Creation-Date: 2026-07-20 16:46+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -119,7 +119,7 @@ msgstr "credit"
 msgid "search code"
 msgstr "search code"
 
-#: einvoicing_flow.py:16
+#: einvoicing_flow.py:17
 msgid "Customize"
 msgstr "Customize"
 
@@ -341,7 +341,7 @@ msgstr "closed"
 
 #: models.py:650 models.py:787 models.py:939 models.py:1106 models.py:1420
 #: models.py:1421 models.py:1743 printmodel/ChartsAccount_0001.py:41
-#: printmodel/EntryLineAccount_0001.py:44 views_invoicing.py:494
+#: printmodel/EntryLineAccount_0001.py:44 views_invoicing.py:512
 #: views_reports.py:497 views_reports.py:607
 msgid "name"
 msgstr "name"
@@ -862,7 +862,7 @@ msgstr "deductible VAT"
 msgid "intracommunity VAT liability"
 msgstr "intracommunity VAT liability"
 
-#: views.py:412 views_invoicing.py:232
+#: views.py:412 views_invoicing.py:233
 msgid "VAT"
 msgstr "VAT"
 
@@ -1401,102 +1401,102 @@ msgstr "Modify entry line of account"
 msgid "Delete entry line of account"
 msgstr "Delete entry line of account"
 
-#: views_invoicing.py:38
+#: views_invoicing.py:39
 msgid "Manage e-invoicing from platform connecting"
 msgstr "Manage e-invoicing from platform connecting"
 
-#: views_invoicing.py:41
+#: views_invoicing.py:42
 msgid "E-invoicing"
 msgstr "E-invoicing"
 
-#: views_invoicing.py:50
+#: views_invoicing.py:51
 msgid "No e-invoicing platform is avalable !"
 msgstr "No e-invoicing platform is avalable !"
 
-#: views_invoicing.py:56
+#: views_invoicing.py:57
 msgid "Manual import"
 msgstr "Manual import"
 
-#: views_invoicing.py:78 views_invoicing.py:183
+#: views_invoicing.py:79 views_invoicing.py:184
 msgid "add this seller"
 msgstr "add this seller"
 
-#: views_invoicing.py:93
+#: views_invoicing.py:94
 msgid "E-invoicing upgrade"
 msgstr "E-invoicing upgrade"
 
-#: views_invoicing.py:112
+#: views_invoicing.py:113
 msgid "Import e-invoice"
 msgstr "Import e-invoice"
 
-#: views_invoicing.py:121
+#: views_invoicing.py:122
 msgid "e-invoice file"
 msgstr "e-invoice file"
 
-#: views_invoicing.py:137
+#: views_invoicing.py:138
 msgid "buyer"
 msgstr "buyer"
 
-#: views_invoicing.py:141
+#: views_invoicing.py:142
 msgid "Our structure is well referenced as a buyer"
 msgstr "Our structure is well referenced as a buyer"
 
-#: views_invoicing.py:151
+#: views_invoicing.py:152
 msgid ""
 "Our structure is not defined as a buyer:{[br/]}force this import anyway ?"
 msgstr ""
 "Our structure is not defined as a buyer:{[br/]}force this import anyway ?"
 
-#: views_invoicing.py:159 views_invoicing.py:267
+#: views_invoicing.py:160 views_invoicing.py:268
 msgid "seller"
 msgstr "seller"
 
-#: views_invoicing.py:169
+#: views_invoicing.py:170
 msgid "Select the seller in the contacts"
 msgstr "Select the seller in the contacts"
 
-#: views_invoicing.py:177
+#: views_invoicing.py:178
 msgid "update this seller"
 msgstr "update this seller"
 
-#: views_invoicing.py:190
+#: views_invoicing.py:191
 msgid "detail"
 msgstr "detail"
 
-#: views_invoicing.py:206
+#: views_invoicing.py:207
 msgid "vat"
 msgstr "vat"
 
-#: views_invoicing.py:259
+#: views_invoicing.py:260
 msgid "VAT is not recoverable"
 msgstr "VAT is not recoverable"
 
-#: views_invoicing.py:275
+#: views_invoicing.py:276
 msgid "Total excl"
 msgstr "total excl. taxes"
 
-#: views_invoicing.py:283
+#: views_invoicing.py:284
 msgid "Total VAT"
 msgstr "Total VAT"
 
-#: views_invoicing.py:291
+#: views_invoicing.py:292
 msgid "Total"
 msgstr "Total"
 
-#: views_invoicing.py:303
+#: views_invoicing.py:304
 #, python-format
 msgid "e-invoice import ref. %s"
 msgstr "e-invoice import ref. %s"
 
-#: views_invoicing.py:365
+#: views_invoicing.py:366
 msgid "import progression"
 msgstr "import progression"
 
-#: views_invoicing.py:387
+#: views_invoicing.py:388
 msgid "No e-invoice file found !"
 msgstr "No e-invoice file found !"
 
-#: views_invoicing.py:392
+#: views_invoicing.py:393
 #, python-format
 msgid ""
 "This e-invoice uses the currency \"%s\" while it is \"%s\" that is "
@@ -1505,59 +1505,69 @@ msgstr ""
 "This e-invoice uses the currency \"%s\" while it is \"%s\" that is "
 "supported !"
 
-#: views_invoicing.py:417
+#: views_invoicing.py:412
+msgid "Refused"
+msgstr ""
+
+#: views_invoicing.py:424
+#, fuzzy
+#| msgid "Import e-invoice"
+msgid "Refuse e-invoice"
+msgstr "Import e-invoice"
+
+#: views_invoicing.py:435
 msgid "Receiving"
 msgstr "Receiving"
 
-#: views_invoicing.py:430
+#: views_invoicing.py:448
 msgid "Supplier invoices available on the platform"
 msgstr "Supplier invoices available on the platform"
 
-#: views_invoicing.py:431
+#: views_invoicing.py:449
 msgid "ID"
 msgstr "ID"
 
-#: views_invoicing.py:432
+#: views_invoicing.py:450
 msgid "syntax"
 msgstr "syntax"
 
-#: views_invoicing.py:433
+#: views_invoicing.py:451
 msgid "submitted at"
 msgstr "submitted at"
 
-#: views_invoicing.py:434
+#: views_invoicing.py:452
 msgid "updated at"
 msgstr "updated at"
 
-#: views_invoicing.py:435
+#: views_invoicing.py:453
 msgid "acknowledgement"
 msgstr "acknowledgement"
 
-#: views_invoicing.py:444
+#: views_invoicing.py:462
 msgid "Download e-invoice"
 msgstr "Download e-invoice"
 
-#: views_invoicing.py:451
+#: views_invoicing.py:469
 msgid "E-invoicing search"
 msgstr "E-invoicing search"
 
-#: views_invoicing.py:469
+#: views_invoicing.py:487
 msgid "search by name"
 msgstr "search by name"
 
-#: views_invoicing.py:475
+#: views_invoicing.py:493
 msgid "search by location"
 msgstr "search by location"
 
-#: views_invoicing.py:481
+#: views_invoicing.py:499
 msgid "search by identification"
 msgstr "search by identification"
 
-#: views_invoicing.py:486
+#: views_invoicing.py:504
 msgid "Refresh"
 msgstr "Refresh"
 
-#: views_invoicing.py:495
+#: views_invoicing.py:513
 msgid "address"
 msgstr "address"
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-07 11:50+0200\n"
+"POT-Creation-Date: 2026-07-20 17:17+0200\n"
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 3.9\n"
 
-#: __init__.py:42 views_conf.py:433 views_conf.py:436
+#: __init__.py:42 views_conf.py:495 views_conf.py:498
 msgid "Diacamma invoice"
 msgstr "Diacamma invoice"
 
@@ -33,8 +33,8 @@ msgstr "provider"
 msgid "categories"
 msgstr "categories"
 
-#: editors.py:90 views.py:938 views_storage.py:273 views_storage.py:314
-#: views_storage.py:448
+#: editors.py:90 views.py:938 views_conf.py:338 views_storage.py:273
+#: views_storage.py:314 views_storage.py:448
 msgid "ref./designation"
 msgstr "ref./designation"
 
@@ -137,8 +137,8 @@ msgstr "is actif"
 msgid "vat account"
 msgstr "vat account"
 
-#: models.py:80 models.py:989 printmodel/Bill_0003.py:140 views_conf.py:80
-#: views_conf.py:387 views_conf.py:436
+#: models.py:80 models.py:989 printmodel/Bill_0003.py:140 views_conf.py:84
+#: views_conf.py:449 views_conf.py:498
 msgid "VAT"
 msgstr "VAT"
 
@@ -158,7 +158,7 @@ msgstr "designation"
 msgid "Category"
 msgstr "Category"
 
-#: models.py:105 models.py:937 views_conf.py:142
+#: models.py:105 models.py:937 views_conf.py:146
 msgid "Categories"
 msgstr "Categories"
 
@@ -166,7 +166,7 @@ msgstr "Categories"
 msgid "manager"
 msgstr "manager"
 
-#: models.py:132 views_conf.py:148
+#: models.py:132 views_conf.py:152
 msgid "Storage area"
 msgstr "Storage area"
 
@@ -211,11 +211,11 @@ msgstr "cost accounting"
 msgid "provision third account"
 msgstr "provision third account"
 
-#: models.py:183 views_conf.py:394
+#: models.py:183 views_conf.py:456
 msgid "Account posting code"
 msgstr "Account posting code"
 
-#: models.py:184 views_conf.py:77
+#: models.py:184 views_conf.py:81
 msgid "Account posting codes"
 msgstr "Account posting codes"
 
@@ -329,7 +329,7 @@ msgstr "Total"
 msgid "article reference is not unique !"
 msgstr "refrence of this article is not unique !"
 
-#: models.py:697 views_conf.py:385
+#: models.py:697 views_conf.py:447
 msgid "articles"
 msgstr "articles"
 
@@ -1006,8 +1006,8 @@ msgstr "total excl. taxes"
 msgid "total incl. taxes"
 msgstr "total incl. taxes"
 
-#: views.py:74 views.py:1476 views.py:1501 views.py:1530 views_conf.py:64
-#: views_conf.py:391
+#: views.py:74 views.py:1476 views.py:1501 views.py:1530 views_conf.py:68
+#: views_conf.py:453
 msgid "Invoice"
 msgstr "Invoice"
 
@@ -1501,75 +1501,79 @@ msgstr "Reduce"
 msgid "Transmitting"
 msgstr "Transmitting"
 
-#: views.py:1629
+#: views.py:1618
+msgid "Invoice transmission is not availabled currently"
+msgstr "Invoice transmission is not availabled currently"
+
+#: views.py:1635
 msgid "Customer invoices already present on the platform"
 msgstr "Customer invoices already present on the platform"
 
-#: views.py:1630
+#: views.py:1636
 msgid "ID"
 msgstr "ID"
 
-#: views.py:1631
+#: views.py:1637
 msgid "syntax"
 msgstr "syntax"
 
-#: views.py:1632
+#: views.py:1638
 msgid "# invoice"
 msgstr "# invoice"
 
-#: views.py:1633
+#: views.py:1639
 msgid "submitted at"
 msgstr "submitted at"
 
-#: views.py:1634
+#: views.py:1640
 msgid "updated at"
 msgstr "updated at"
 
-#: views.py:1635
+#: views.py:1641
 msgid "acknowledgement"
 msgstr "acknowledgement"
 
-#: views_conf.py:67
+#: views_conf.py:71
 msgid "Management of parameters and financial configuration of invoice"
 msgstr "Management of parameters and financial configuration of invoice"
 
-#: views_conf.py:72
+#: views_conf.py:76
 msgid "Invoice financial configuration"
 msgstr "Invoice financial configuration"
 
-#: views_conf.py:75 views_conf.py:140 views_conf.py:433
+#: views_conf.py:79 views_conf.py:144 views_conf.py:495
 msgid "Parameters"
 msgstr "Parameters"
 
-#: views_conf.py:104
+#: views_conf.py:108
 msgid "Management of commercial configuration of invoice"
 msgstr "Management of commercial configuration of invoice"
 
-#: views_conf.py:109
+#: views_conf.py:113
 msgid "Invoice commercial configuration"
 msgstr "Invoice commercial configuration"
 
-#: views_conf.py:144
+#: views_conf.py:148
 msgid "Custom field"
 msgstr "Custom field"
 
-#: views_conf.py:150
+#: views_conf.py:154
 msgid "Category bill"
 msgstr "Category bill"
 
-#: views_conf.py:152 views_summary.py:239 views_summary.py:485
+#: views_conf.py:156 views_summary.py:239 views_summary.py:485
 msgid "Cart"
 msgstr "Cart"
 
-#: views_conf.py:154
+#: views_conf.py:158
 msgid "Multi-price"
 msgstr "Multi-price"
 
-#: views_conf.py:156
+#: views_conf.py:160
 msgid "Automatic reduce"
 msgstr "Automatic reduce"
 
-#: views_conf.py:166
+#: views_conf.py:170
 msgid ""
 "Use variable in email:{[br/]} - {[b]}#reference:{[/b]}identifier of "
 "proof{[br/]} - {[b]}#name:{[/b]}name of recipient{[br/]} - {[b]}#doc:{[/b]}"
@@ -1581,111 +1585,123 @@ msgstr ""
 "name of documentation sended{[br/]} - {[b]}#nb:{[/b]}number of quotation "
 "created{[br/]}"
 
-#: views_conf.py:179
+#: views_conf.py:183
 msgid "Add account posting code"
 msgstr "Add account posting code"
 
-#: views_conf.py:180
+#: views_conf.py:184
 msgid "Modify account posting code"
 msgstr "Modify account posting code"
 
-#: views_conf.py:189
+#: views_conf.py:193
 msgid "Delete account posting code"
 msgstr "Delete account posting code"
 
-#: views_conf.py:199
+#: views_conf.py:203
 msgid "Add automatic reduce"
 msgstr "Add automatic reduce"
 
-#: views_conf.py:200
+#: views_conf.py:204
 msgid "Modify automatic reduce"
 msgstr "Modify automatic reduce"
 
-#: views_conf.py:209
+#: views_conf.py:213
 msgid "Delete automatic reduce"
 msgstr "Delete automatic reduce"
 
-#: views_conf.py:219
+#: views_conf.py:223
 msgid "Add multi-price"
 msgstr "Add multi-price"
 
-#: views_conf.py:220
+#: views_conf.py:224
 msgid "Modify multi-price"
 msgstr "Modify multi-price"
 
-#: views_conf.py:229
+#: views_conf.py:233
 msgid "Delete multi-price"
 msgstr "Delete multi-price"
 
-#: views_conf.py:247
+#: views_conf.py:251
 msgid "Change manager"
 msgstr "Change manager"
 
-#: views_conf.py:263
+#: views_conf.py:267
 msgid "Add storage area"
 msgstr "Add storage area"
 
-#: views_conf.py:264
+#: views_conf.py:268
 msgid "Modify storage area"
 msgstr "Modify storage area"
 
-#: views_conf.py:275
+#: views_conf.py:279
 msgid "change"
 msgstr "change"
 
-#: views_conf.py:286
+#: views_conf.py:290
 msgid "Delete storage area"
 msgstr "Delete storage area"
 
-#: views_conf.py:296
+#: views_conf.py:300
 msgid "Add VAT"
 msgstr "Add VAT"
 
-#: views_conf.py:297
+#: views_conf.py:301
 msgid "Modify VAT"
 msgstr "Modify VAT"
 
-#: views_conf.py:306
+#: views_conf.py:310
 msgid "Delete VAT"
 msgstr "Delete VAT"
 
-#: views_conf.py:316 views_conf.py:336
+#: views_conf.py:318
+msgid "Change category"
+msgstr "Change category"
+
+#: views_conf.py:359
+msgid "Show category"
+msgstr "Show category"
+
+#: views_conf.py:365
+msgid "Remove"
+msgstr "Remove"
+
+#: views_conf.py:378 views_conf.py:398
 msgid "Add category"
 msgstr "Add category"
 
-#: views_conf.py:317 views_conf.py:337
+#: views_conf.py:379 views_conf.py:399
 msgid "Modify category"
 msgstr "Modify category"
 
-#: views_conf.py:326 views_conf.py:354
+#: views_conf.py:388 views_conf.py:416
 msgid "Delete Category"
 msgstr "Delete Category"
 
-#: views_conf.py:357
+#: views_conf.py:419
 msgid "Default"
 msgstr "Default"
 
-#: views_conf.py:360
+#: views_conf.py:422
 msgid "Set default category"
 msgstr "Set default category"
 
-#: views_conf.py:369
+#: views_conf.py:431
 msgid "Tool to import articles from CSV file."
 msgstr "Tool to import articles from CSV file."
 
-#: views_conf.py:371
+#: views_conf.py:433
 msgid "Article import"
 msgstr "Article import"
 
-#: views_conf.py:389
+#: views_conf.py:451
 msgid "parameters"
 msgstr "parameters"
 
-#: views_conf.py:433
+#: views_conf.py:495
 msgid "Configuration of parameters"
 msgstr "Define parameters for invoice"
 
-#: views_conf.py:436
+#: views_conf.py:498
 msgid "Configuration of vat"
 msgstr "Configuration of vat"
 
