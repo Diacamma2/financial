@@ -66,7 +66,7 @@ def get_contact_from_json(contact_json):
     new_contact.address = '\n'.join(contact_json['address']).strip().replace('\n', '{[br/]}')
     new_contact.postal_code = contact_json['postalcode']
     new_contact.city = contact_json['city']
-    new_contact.country = contact_json['country_id']
+    new_contact.country_id = contact_json['country_id']
     new_contact.tel1 = contact_json['phone']
     new_contact.email = contact_json['email']
     return new_contact
@@ -84,6 +84,9 @@ class EInvoiceAddSeller(XferContainerAcknowledge):
         if 'seller' in einvoice_content:
             new_contact = get_contact_from_json(einvoice_content['seller'])
             new_contact.id = legal_entity
+            for fieldname in ['address', 'postal_code', 'city', 'tel1', 'email']:
+                if getattr(new_contact, fieldname).replace('{[br/]}', '\n').strip() == "":
+                    setattr(new_contact, fieldname, getattr(self.item, fieldname))
             new_contact.save()
 
 
@@ -98,11 +101,15 @@ class UpdateContactEInvoice(XferContainerAcknowledge):
         directory = get_einvoicing_directory()
         data_searching = directory.get_establishment_by_siret(search_siret)
         self.item.name = data_searching['name']
-        self.item.address = "{[br]}".join([data_searching['address'].get('addressLine1', ''), data_searching['address'].get('addressLine2', ''), data_searching['address'].get('addressLine3', '')])
-        self.item.postal_code = data_searching['address']['postalCode']
-        self.item.city = data_searching['address']['locality']
+        new_address = "/n".join([data_searching['address'].get('addressLine1', ''), data_searching['address'].get('addressLine2', ''), data_searching['address'].get('addressLine3', '')])
+        if new_address.strip() == '':
+            self.item.address = new_address.strip().replace('/n', '{[br/]}')
+        if data_searching['address']['postalCode'] != '':
+            self.item.postal_code = data_searching['address']['postalCode']
+        if data_searching['address']['locality'] != '':
+            self.item.city = data_searching['address']['locality']
         self.item.country_id = data_searching['address']['countryCode']
-        self.item.legal_identification = data_searching['siret']
+        self.item.legal_identification = data_searching['siren']
         self.item.save()
 
 
